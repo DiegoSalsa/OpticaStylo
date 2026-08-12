@@ -24,12 +24,19 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
    npm run dev
    ```
 
+4. Verificar la conexión con PostgreSQL:
+
+   ```bash
+   npm run db:check
+   ```
+
 ## Comandos disponibles
 
 - `npm run dev`: inicia el servidor de desarrollo.
 - `npm run build`: genera la compilación de producción.
 - `npm run start`: inicia una compilación de producción.
 - `npm run lint`: comprueba la calidad estática del código.
+- `npm run db:check`: comprueba la conexión configurada con PostgreSQL.
 
 ## Estructura principal
 
