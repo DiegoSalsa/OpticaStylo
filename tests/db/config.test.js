@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { getDatabaseConfig } from "../../src/db/config.js";
+
+test("crea la configuración de PostgreSQL con valores predeterminados", () => {
+  const config = getDatabaseConfig({
+    DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
+  });
+
+  assert.equal(config.application_name, "optica-stylo");
+  assert.equal(config.connectionTimeoutMillis, 5_000);
+  assert.equal(config.idleTimeoutMillis, 10_000);
+  assert.equal(config.max, 10);
+  assert.equal(config.ssl, false);
+});
+
+test("rechaza una configuración sin DATABASE_URL", () => {
+  assert.throws(
+    () => getDatabaseConfig({}),
+    /La variable DATABASE_URL es obligatoria/,
+  );
+});
+
+test("rechaza valores inválidos del pool", () => {
+  assert.throws(
+    () =>
+      getDatabaseConfig({
+        DATABASE_POOL_MAX: "0",
+        DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
+      }),
+    /DATABASE_POOL_MAX debe ser un número entero positivo/,
+  );
+});
+
+test("activa SSL con verificación de certificados", () => {
+  const config = getDatabaseConfig({
+    DATABASE_SSL: "true",
+    DATABASE_URL: "postgresql://postgres@example.com:5432/opticastylo",
+  });
+
+  assert.deepEqual(config.ssl, { rejectUnauthorized: true });
+});
