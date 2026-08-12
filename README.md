@@ -41,6 +41,7 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
 - `npm run db:check`: comprueba la conexión configurada con PostgreSQL.
 - `npm run db:migrate`: aplica las migraciones SQL pendientes.
 - `npm run db:migrate:status`: muestra el estado de las migraciones.
+- `npm run users:bootstrap-admin`: crea interactivamente el primer administrador cuando la base no contiene usuarios.
 
 ## Estructura principal
 
@@ -62,6 +63,14 @@ Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servic
 ## Migraciones
 
 Las migraciones se almacenan en `src/db/migrations` y utilizan nombres como `001_crear_usuarios.sql`. Una migración aplicada es inmutable: cualquier modificación posterior será detectada mediante su checksum.
+
+Después de aplicar las migraciones en una base nueva, ejecutar una sola vez:
+
+```bash
+npm run users:bootstrap-admin
+```
+
+El comando solicita la contraseña sin mostrarla ni recibirla mediante argumentos del shell.
 
 ## Comprobación inicial de la API
 
