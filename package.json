@@ -12,7 +12,8 @@
     "test:watch": "node --test --watch",
     "db:check": "node scripts/db-check.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "db:migrate:status": "node scripts/db-migration-status.mjs"
+    "db:migrate:status": "node scripts/db-migration-status.mjs",
+    "users:bootstrap-admin": "node scripts/bootstrap-admin.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
