@@ -37,6 +37,7 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
 - `npm run build`: genera la compilación de producción.
 - `npm run start`: inicia una compilación de producción.
 - `npm run lint`: comprueba la calidad estática del código.
+- `npm test`: ejecuta las pruebas automatizadas.
 - `npm run db:check`: comprueba la conexión configurada con PostgreSQL.
 - `npm run db:migrate`: aplica las migraciones SQL pendientes.
 - `npm run db:migrate:status`: muestra el estado de las migraciones.
