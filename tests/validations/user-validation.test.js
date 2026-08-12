@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { ROLES } from "../../src/auth/roles.js";
-import { validateCreateUserInput } from "../../src/validations/user-validation.js";
+import {
+  validateCreateUserInput,
+  validateLoginInput,
+} from "../../src/validations/user-validation.js";
 
 const validInput = {
   email: "Profesional@Example.com ",
@@ -51,5 +54,12 @@ test("rechaza roles desconocidos", () => {
   assert.throws(
     () => validateCreateUserInput({ ...validInput, roles: ["UNKNOWN"] }),
     /roles no son válidos/,
+  );
+});
+
+test("el inicio de sesión acepta contraseñas anteriores más cortas", () => {
+  assert.deepEqual(
+    validateLoginInput({ email: "USER@EXAMPLE.COM", password: "anterior" }),
+    { email: "user@example.com", password: "anterior" },
   );
 });
