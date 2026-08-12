@@ -24,10 +24,11 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
    npm run dev
    ```
 
-4. Verificar la conexión con PostgreSQL:
+4. Verificar PostgreSQL y aplicar las migraciones pendientes:
 
    ```bash
    npm run db:check
+   npm run db:migrate
    ```
 
 ## Comandos disponibles
@@ -37,6 +38,8 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
 - `npm run start`: inicia una compilación de producción.
 - `npm run lint`: comprueba la calidad estática del código.
 - `npm run db:check`: comprueba la conexión configurada con PostgreSQL.
+- `npm run db:migrate`: aplica las migraciones SQL pendientes.
+- `npm run db:migrate:status`: muestra el estado de las migraciones.
 
 ## Estructura principal
 
@@ -54,6 +57,10 @@ src/
 ```
 
 Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servicios deben acceder a PostgreSQL mediante repositorios.
+
+## Migraciones
+
+Las migraciones se almacenan en `src/db/migrations` y utilizan nombres como `001_crear_usuarios.sql`. Una migración aplicada es inmutable: cualquier modificación posterior será detectada mediante su checksum.
 
 ## Comprobación inicial de la API
 
