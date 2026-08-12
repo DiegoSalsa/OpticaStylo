@@ -1,4 +1,4 @@
-import { executeQuery } from "../db/query.js";
+import { executeQuery, executeTransaction } from "../db/query.js";
 
 export async function findActiveSessionByTokenHash(tokenHash) {
   const result = await executeQuery(
@@ -57,4 +57,60 @@ export async function findActiveSessionByTokenHash(tokenHash) {
     sessionId: session.session_id,
     userId: session.user_id,
   };
+}
+
+export async function createSessionForSuccessfulLogin({
+  expiresAt,
+  ipAddress,
+  tokenHash,
+  userAgent,
+  userId,
+}) {
+  return executeTransaction(async (client) => {
+    await client.query(
+      `
+        UPDATE users
+        SET
+          failed_login_attempts = 0,
+          locked_until = NULL,
+          last_login_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const result = await client.query(
+      `
+        INSERT INTO user_sessions (
+          user_id,
+          token_hash,
+          expires_at,
+          created_ip,
+          user_agent
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, expires_at
+      `,
+      [userId, tokenHash, expiresAt, ipAddress, userAgent],
+    );
+
+    return {
+      expiresAt: result.rows[0].expires_at,
+      id: result.rows[0].id,
+    };
+  });
+}
+
+export async function revokeSession(sessionId, userId) {
+  const result = await executeQuery(
+    `
+      UPDATE user_sessions
+      SET revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP)
+      WHERE id = $1 AND user_id = $2
+      RETURNING id
+    `,
+    [sessionId, userId],
+  );
+
+  return result.rowCount > 0;
 }
