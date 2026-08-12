@@ -69,6 +69,20 @@ function validatePassword(value) {
   return value;
 }
 
+function validateLoginPassword(value) {
+  if (typeof value !== "string" || value.length === 0) {
+    throwValidationError("La contraseña es obligatoria.");
+  }
+
+  if (value.length > MAX_PASSWORD_LENGTH) {
+    throwValidationError(
+      `La contraseña no puede superar ${MAX_PASSWORD_LENGTH} caracteres.`,
+    );
+  }
+
+  return value;
+}
+
 function validateRoles(value) {
   if (!Array.isArray(value) || value.length === 0) {
     throwValidationError("Debe asignar al menos un rol al usuario.");
@@ -99,5 +113,16 @@ export function validateCreateUserInput(input) {
     lastName: validateName(input.lastName, "El apellido"),
     password: validatePassword(input.password),
     roles: validateRoles(input.roles),
+  };
+}
+
+export function validateLoginInput(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throwValidationError("El cuerpo de la solicitud no es válido.");
+  }
+
+  return {
+    email: validateEmail(input.email),
+    password: validateLoginPassword(input.password),
   };
 }
