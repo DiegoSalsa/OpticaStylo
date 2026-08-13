@@ -78,13 +78,36 @@ test("crea un bloqueo en la agenda propia", async () => {
     },
     actor,
     {
-      createScheduleBlock: async () => expected,
+      createScheduleBlock: async () => ({ block: expected, conflict: null }),
       currentDate: new Date("2026-08-13T12:00:00.000Z"),
       findProfessionalById: async () => professional,
     },
   );
 
   assert.equal(result, expected);
+});
+
+test("rechaza un bloqueo que se superpone con una reserva vigente", async () => {
+  await assert.rejects(
+    () =>
+      createProfessionalScheduleBlock(
+        professionalId,
+        {
+          endAt: "2026-08-20T16:00:00.000Z",
+          startAt: "2026-08-20T15:00:00.000Z",
+        },
+        actor,
+        {
+          createScheduleBlock: async () => ({
+            block: null,
+            conflict: "APPOINTMENT",
+          }),
+          currentDate: new Date("2026-08-13T12:00:00.000Z"),
+          findProfessionalById: async () => professional,
+        },
+      ),
+    (error) => error.code === "SCHEDULE_BLOCK_OVERLAPS_APPOINTMENT",
+  );
 });
 
 test("consulta disponibilidad combinando horario, excepción y bloqueos", async () => {
