@@ -1,5 +1,13 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
 
+function formatDateOnly(value) {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  return value;
+}
+
 function mapPatient(row) {
   if (!row) {
     return null;
@@ -7,7 +15,7 @@ function mapPatient(row) {
 
   return {
     address: row.address,
-    birthDate: row.birth_date,
+    birthDate: formatDateOnly(row.birth_date),
     createdAt: row.created_at,
     email: row.email,
     firstNames: row.first_names,
