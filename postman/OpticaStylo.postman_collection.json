@@ -1,0 +1,589 @@
+{
+  "info": {
+    "_postman_id": "8e4d5d6d-67ac-4d85-b1af-0f74f7e13944",
+    "name": "Óptica Stylo API",
+    "description": "Pruebas manuales y automatizadas de la API backend de Óptica Stylo. Antes de ejecutar la colección, configure adminEmail y adminPassword con la cuenta creada mediante npm run users:bootstrap-admin. Las cuentas SALES y CLINICAL_PROFESSIONAL usan correos únicos generados durante cada ejecución.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "salesEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "salesPassword",
+      "value": "Contraseña-prueba-ventas-2026",
+      "type": "string"
+    },
+    {
+      "key": "clinicalEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clinicalPassword",
+      "value": "Contraseña-prueba-clinica-2026",
+      "type": "string"
+    },
+    {
+      "key": "adminCookie",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "salesCookie",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Estado del servicio",
+      "item": [
+        {
+          "name": "Health check responde correctamente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Comprueba que la API esté disponible antes de ejecutar el resto de la colección."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Respeta el contrato exitoso', () => {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.service).to.eql('optica-stylo');",
+                  "  pm.expect(json.data.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Seguridad sin sesión",
+      "item": [
+        {
+          "name": "Rechaza registro sin autenticación",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "opticastylo_session=token-invalido" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sin-sesion@example.test\",\n  \"firstName\": \"Usuario\",\n  \"lastName\": \"Sin sesión\",\n  \"password\": \"Contraseña-prueba-sin-sesion\",\n  \"roles\": [\"SALES\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "const json = pm.response.json();",
+                  "pm.test('Informa autenticación requerida', () => {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.code).to.eql('AUTHENTICATION_REQUIRED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza credenciales inválidas",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario-inexistente@example.test\",\n  \"password\": \"Contraseña-inexistente-2026\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "const json = pm.response.json();",
+                  "pm.test('No revela cuál credencial falló', () => {",
+                  "  pm.expect(json.error.code).to.eql('INVALID_CREDENTIALS');",
+                  "  pm.expect(json.error.message).to.include('correo electrónico o la contraseña');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Administración de usuarios",
+      "item": [
+        {
+          "name": "Iniciar sesión como administrador",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Configure adminEmail y adminPassword antes de ejecutar esta carpeta."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Devuelve el usuario sin datos sensibles', () => {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.user.email).to.eql(pm.collectionVariables.get('adminEmail').toLowerCase());",
+                  "  pm.expect(json.data.user).not.to.have.property('passwordHash');",
+                  "});",
+                  "const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "pm.test('Entrega una cookie HttpOnly', () => {",
+                  "  pm.expect(setCookie).to.include('opticastylo_session=');",
+                  "  pm.expect(setCookie).to.include('HttpOnly');",
+                  "});",
+                  "pm.collectionVariables.set('adminCookie', setCookie.split(';')[0]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza JSON inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{" },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Informa JSON inválido', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_JSON'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza datos de usuario inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"correo-invalido\",\n  \"firstName\": \"\",\n  \"lastName\": \"Prueba\",\n  \"password\": \"corta\",\n  \"roles\": [\"ROL_INEXISTENTE\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Informa datos inválidos', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_USER_DATA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza cuerpo mayor a 16 KiB",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('largePayload', JSON.stringify({ padding: 'x'.repeat(17000) }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 413 Content Too Large', () => pm.response.to.have.status(413));",
+                  "pm.test('Informa cuerpo demasiado grande', () => pm.expect(pm.response.json().error.code).to.eql('REQUEST_BODY_TOO_LARGE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{{largePayload}}" },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar usuario de ventas",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const uniqueEmail = `ventas.${Date.now()}.${Math.floor(Math.random() * 100000)}@example.test`;",
+                  "pm.collectionVariables.set('salesEmail', uniqueEmail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Crea ventas sin exponer credenciales', () => {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.email).to.eql(pm.collectionVariables.get('salesEmail'));",
+                  "  pm.expect(json.data.roles).to.include('SALES');",
+                  "  pm.expect(json.data).not.to.have.property('password');",
+                  "  pm.expect(json.data).not.to.have.property('passwordHash');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{salesEmail}}\",\n  \"firstName\": \"Usuario\",\n  \"lastName\": \"Ventas\",\n  \"password\": \"{{salesPassword}}\",\n  \"roles\": [\"SALES\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rechaza correo duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{salesEmail}}\",\n  \"firstName\": \"Usuario\",\n  \"lastName\": \"Duplicado\",\n  \"password\": \"{{salesPassword}}\",\n  \"roles\": [\"SALES\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Informa correo duplicado', () => pm.expect(pm.response.json().error.code).to.eql('USER_EMAIL_ALREADY_EXISTS'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar profesional clínico",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const uniqueEmail = `clinica.${Date.now()}.${Math.floor(Math.random() * 100000)}@example.test`;",
+                  "pm.collectionVariables.set('clinicalEmail', uniqueEmail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Asigna el rol clínico', () => {",
+                  "  pm.expect(json.data.email).to.eql(pm.collectionVariables.get('clinicalEmail'));",
+                  "  pm.expect(json.data.roles).to.include('CLINICAL_PROFESSIONAL');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clinicalEmail}}\",\n  \"firstName\": \"Profesional\",\n  \"lastName\": \"Clínico\",\n  \"password\": \"{{clinicalPassword}}\",\n  \"roles\": [\"CLINICAL_PROFESSIONAL\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cerrar sesión de administrador",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('No devuelve cuerpo', () => pm.expect(pm.response.text()).to.eql(''));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza sesión de administrador revocada",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{adminCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sesion-revocada@example.test\",\n  \"firstName\": \"Sesión\",\n  \"lastName\": \"Revocada\",\n  \"password\": \"Contraseña-prueba-revocada-2026\",\n  \"roles\": [\"SALES\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('La sesión revocada no autentica', () => pm.expect(pm.response.json().error.code).to.eql('AUTHENTICATION_REQUIRED'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Restricciones del rol ventas",
+      "item": [
+        {
+          "name": "Iniciar sesión como ventas",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{salesEmail}}\",\n  \"password\": \"{{salesPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Inicia con rol SALES', () => pm.expect(json.data.user.roles).to.include('SALES'));",
+                  "const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "pm.collectionVariables.set('salesCookie', setCookie.split(';')[0]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ventas no puede crear usuarios",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{salesCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"prohibido@example.test\",\n  \"firstName\": \"Intento\",\n  \"lastName\": \"Prohibido\",\n  \"password\": \"Contraseña-prueba-prohibida-2026\",\n  \"roles\": [\"ADMIN\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Informa permisos insuficientes', () => pm.expect(pm.response.json().error.code).to.eql('INSUFFICIENT_PERMISSIONS'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar sesión de ventas",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Cookie", "value": "{{salesCookie}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
