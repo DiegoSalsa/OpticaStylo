@@ -96,6 +96,7 @@ test("consulta disponibilidad combinando horario, excepción y bloqueos", async 
       currentDate: new Date("2026-08-01T12:00:00.000Z"),
       findProfessionalById: async () => professional,
       findScheduleOverride: async () => null,
+      getBusyAppointments: async () => [],
       getScheduleBlocks: async () => [],
       getWeeklySchedule: async () => [
         {
@@ -114,5 +115,41 @@ test("consulta disponibilidad combinando horario, excepción y bloqueos", async 
   assert.deepEqual(
     result.slots.map((slot) => slot.startAt),
     ["2026-08-10T13:00:00.000Z", "2026-08-10T14:00:00.000Z"],
+  );
+});
+
+test("retira de la disponibilidad las horas que ya están reservadas", async () => {
+  const result = await getProfessionalAvailability(
+    professionalId,
+    new URLSearchParams("date=2026-08-10"),
+    actor,
+    {
+      currentDate: new Date("2026-08-01T12:00:00.000Z"),
+      findProfessionalById: async () => professional,
+      findScheduleOverride: async () => null,
+      getBusyAppointments: async () => [
+        {
+          endAt: new Date("2026-08-10T14:00:00.000Z"),
+          startAt: new Date("2026-08-10T13:00:00.000Z"),
+        },
+      ],
+      getScheduleBlocks: async () => [],
+      getWeeklySchedule: async () => [
+        {
+          breakEnd: null,
+          breakStart: null,
+          dayOfWeek: 1,
+          endTime: "11:00",
+          isWorking: true,
+          startTime: "09:00",
+        },
+      ],
+      timeZone: "America/Santiago",
+    },
+  );
+
+  assert.deepEqual(
+    result.slots.map((slot) => slot.startAt),
+    ["2026-08-10T14:00:00.000Z"],
   );
 });
