@@ -194,22 +194,46 @@ export async function createScheduleBlock(
   block,
   actorUserId,
 ) {
-  const result = await executeQuery(
-    `
-      INSERT INTO professional_schedule_blocks (
-        professional_id,
-        start_at,
-        end_at,
-        reason,
-        created_by
-      )
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, start_at, end_at, reason, created_at
-    `,
-    [professionalId, block.startAt, block.endAt, block.reason, actorUserId],
-  );
+  return executeTransaction(async (client) => {
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+      professionalId,
+    ]);
 
-  return mapBlock(result.rows[0]);
+    const appointmentResult = await client.query(
+      `
+        SELECT id
+        FROM appointments
+        WHERE
+          professional_id = $1
+          AND status <> 'CANCELLED'
+          AND start_at < $3
+          AND end_at > $2
+        LIMIT 1
+      `,
+      [professionalId, block.startAt, block.endAt],
+    );
+
+    if (appointmentResult.rowCount > 0) {
+      return { block: null, conflict: "APPOINTMENT" };
+    }
+
+    const result = await client.query(
+      `
+        INSERT INTO professional_schedule_blocks (
+          professional_id,
+          start_at,
+          end_at,
+          reason,
+          created_by
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, start_at, end_at, reason, created_at
+      `,
+      [professionalId, block.startAt, block.endAt, block.reason, actorUserId],
+    );
+
+    return { block: mapBlock(result.rows[0]), conflict: null };
+  });
 }
 
 export async function getScheduleBlocks(professionalId, from, to) {

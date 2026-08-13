@@ -106,7 +106,7 @@ async function requireBookableSlot({
     professionalId,
     new URLSearchParams({ date }),
     actor,
-    { currentDate, excludedAppointmentId },
+    { currentDate, excludedAppointmentId, timeZone },
   );
   const matchingSlot = availability.slots.find(
     (slot) => new Date(slot.startAt).getTime() === startAt.getTime(),

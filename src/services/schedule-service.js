@@ -164,7 +164,17 @@ export async function createProfessionalScheduleBlock(
   await requireProfessional(normalizedId, findRepository);
 
   const block = validateCreateScheduleBlockInput(input, dependencies.currentDate);
-  return createRepository(normalizedId, block, actor.userId);
+  const result = await createRepository(normalizedId, block, actor.userId);
+
+  if (result.conflict === "APPOINTMENT") {
+    throw new AppError({
+      code: "SCHEDULE_BLOCK_OVERLAPS_APPOINTMENT",
+      message: "El bloqueo coincide con una reserva vigente.",
+      status: 409,
+    });
+  }
+
+  return result.block;
 }
 
 export async function getProfessionalScheduleBlocks(
