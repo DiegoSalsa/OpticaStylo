@@ -20,6 +20,8 @@
   },
   "dependencies": {
     "@next/env": "^16.3.0",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "next": "16.3.0",
     "pg": "^8.23.0"
   },
