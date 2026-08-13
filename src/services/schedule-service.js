@@ -1,10 +1,8 @@
-import { addDays } from "date-fns";
-import { fromZonedTime } from "date-fns-tz";
-
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { requireScheduleManagement } from "../auth/schedule-access.js";
 import { getSchedulingTimeZone } from "../config/scheduling.js";
+import { getBusyAppointments } from "../repositories/appointment-repository.js";
 import { findProfessionalById } from "../repositories/professional-repository.js";
 import {
   createScheduleBlock as createScheduleBlockRepository,
@@ -18,6 +16,7 @@ import {
   upsertScheduleOverride,
 } from "../repositories/schedule-repository.js";
 import { AppError } from "../utils/app-error.js";
+import { getZonedDayRange } from "../utils/zoned-date.js";
 import {
   validateAvailabilityQuery,
   validateCreateScheduleBlockInput,
@@ -228,6 +227,8 @@ export async function getProfessionalAvailability(
   const overrideRepository =
     dependencies.findScheduleOverride ?? findScheduleOverride;
   const blockRepository = dependencies.getScheduleBlocks ?? getScheduleBlocks;
+  const busyAppointmentRepository =
+    dependencies.getBusyAppointments ?? getBusyAppointments;
 
   requirePermissions(actor, [PERMISSIONS.SCHEDULES_READ]);
   const query = validateAvailabilityQuery(professionalId, searchParams);
@@ -236,12 +237,17 @@ export async function getProfessionalAvailability(
     findRepository,
   );
   const timeZone = dependencies.timeZone ?? getSchedulingTimeZone();
-  const dayStart = fromZonedTime(`${query.date}T00:00:00`, timeZone);
-  const dayEnd = addDays(dayStart, 1);
-  const [weeklySchedule, override, blocks] = await Promise.all([
+  const dayRange = getZonedDayRange(query.date, timeZone);
+  const [weeklySchedule, override, blocks, busyAppointments] = await Promise.all([
     scheduleRepository(query.professionalId),
     overrideRepository(query.professionalId, query.date),
-    blockRepository(query.professionalId, dayStart, dayEnd),
+    blockRepository(query.professionalId, dayRange.startAt, dayRange.endAt),
+    busyAppointmentRepository(
+      query.professionalId,
+      dayRange.startAt,
+      dayRange.endAt,
+      dependencies.excludedAppointmentId,
+    ),
   ]);
 
   return {
@@ -249,7 +255,7 @@ export async function getProfessionalAvailability(
     professionalId: query.professionalId,
     slots: buildAvailabilitySlots({
       appointmentDurationMinutes: professional.appointmentDurationMinutes,
-      blocks,
+      blocks: [...blocks, ...busyAppointments],
       date: query.date,
       isBookable: professional.isBookable,
       now: dependencies.currentDate,
