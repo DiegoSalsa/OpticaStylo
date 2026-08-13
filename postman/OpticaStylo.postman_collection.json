@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "8e4d5d6d-67ac-4d85-b1af-0f74f7e13944",
-    "name": "Óptica Stylo API",
-    "description": "Pruebas manuales y automatizadas de la API backend de Óptica Stylo. Antes de ejecutar la colección, configure adminEmail y adminPassword con la cuenta creada mediante npm run users:bootstrap-admin. Las cuentas SALES y CLINICAL_PROFESSIONAL usan correos únicos generados durante cada ejecución.",
+    "_postman_id": "f234e7a8-f8c8-47b8-9e7d-36ec7a9e0a13",
+    "name": "Óptica Stylo API - Completa",
+    "description": "Pruebas manuales y automatizadas de la API backend de Óptica Stylo. Configure adminEmail y adminPassword con la cuenta creada mediante npm run users:bootstrap-admin. La ejecución completa crea datos sintéticos permanentes identificables como Postman para validar usuarios, pacientes, agenda, reservas e historial.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -75,6 +75,81 @@
       "key": "guardianRut",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "agendaClinicalEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agendaProfessionalId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agendaDate",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agendaBlockId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "firstSlotStartAt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "firstSlotEndAt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "secondSlotStartAt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "secondSlotEndAt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "thirdSlotStartAt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "thirdSlotEndAt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentPatientRut",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentPatientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cancellableAppointmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clinicalCookie",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -88,8 +163,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
             },
             "description": "Comprueba que la API esté disponible antes de ejecutar el resto de la colección."
           },
@@ -122,8 +202,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "opticastylo_session=token-invalido" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "opticastylo_session=token-invalido"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -131,8 +217,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": [],
@@ -157,15 +248,26 @@
           "name": "Rechaza credenciales inválidas",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"usuario-inexistente@example.test\",\n  \"password\": \"Contraseña-inexistente-2026\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           },
           "response": [],
@@ -195,15 +297,26 @@
           "name": "Iniciar sesión como administrador",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             },
             "description": "Configure adminEmail y adminPassword antes de ejecutar esta carpeta."
           },
@@ -237,14 +350,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{" },
+            "body": {
+              "mode": "raw",
+              "raw": "{"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": [],
@@ -266,8 +393,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -275,8 +408,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": [],
@@ -319,14 +457,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{{largePayload}}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{{largePayload}}"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": []
@@ -365,8 +517,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -374,8 +532,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": []
@@ -385,8 +548,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -394,8 +563,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": [],
@@ -443,8 +617,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -452,8 +632,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": []
@@ -462,11 +647,22 @@
           "name": "Cerrar sesión de administrador",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
             }
           },
           "response": [],
@@ -488,8 +684,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -497,8 +699,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": [],
@@ -524,15 +731,26 @@
           "name": "Iniciar sesión como ventas",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{salesEmail}}\",\n  \"password\": \"{{salesPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           },
           "response": [],
@@ -557,8 +775,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{salesCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{salesCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -566,8 +790,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             }
           },
           "response": [],
@@ -588,11 +817,22 @@
           "name": "Cerrar sesión de ventas",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Cookie", "value": "{{salesCookie}}" }],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{salesCookie}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
             }
           },
           "response": [],
@@ -617,15 +857,26 @@
           "name": "Iniciar sesión administrativa para pacientes",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           },
           "response": [],
@@ -663,8 +914,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -672,8 +929,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ]
             }
           },
           "response": [],
@@ -695,8 +957,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -704,8 +972,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ]
             }
           },
           "response": [],
@@ -729,8 +1002,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -738,8 +1017,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ]
             }
           },
           "response": [],
@@ -760,15 +1044,34 @@
           "name": "Listar y buscar pacientes",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/patients?page=1&pageSize=10&search=Adulto%20Postman",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "10" },
-                { "key": "search", "value": "Adulto Postman" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "Adulto Postman"
+                }
               ]
             }
           },
@@ -795,11 +1098,22 @@
           "name": "Consultar paciente por identificador",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}"
+              ]
             }
           },
           "response": [],
@@ -821,8 +1135,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -830,8 +1150,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}"
+              ]
             }
           },
           "response": [],
@@ -853,8 +1179,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Cookie", "value": "{{adminCookie}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -862,8 +1194,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients"
+              ]
             }
           },
           "response": [],
@@ -886,11 +1223,22 @@
           "name": "No permite eliminar pacientes",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}"
+              ]
             }
           },
           "response": [],
@@ -910,11 +1258,22 @@
           "name": "Cerrar sesión administrativa de pacientes",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Cookie", "value": "{{adminCookie}}" }],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
             }
           },
           "response": [],
@@ -925,6 +1284,1044 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Responde 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Profesionales y disponibilidad",
+      "description": "Crea un profesional clínico sintético, configura su agenda y comprueba excepciones, bloqueos y cupos. Puede ejecutarse después de configurar adminEmail y adminPassword.",
+      "item": [
+        {
+          "name": "Iniciar sesión administrativa para agenda",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "pm.collectionVariables.set('adminCookie', setCookie.split(';')[0]);",
+                  "const date = new Date();",
+                  "date.setUTCDate(date.getUTCDate() + 7);",
+                  "pm.collectionVariables.set('agendaDate', date.toISOString().slice(0, 10));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar usuario profesional para agenda",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{agendaClinicalEmail}}\",\n  \"firstName\": \"Profesional\",\n  \"lastName\": \"Agenda Postman\",\n  \"password\": \"{{clinicalPassword}}\",\n  \"roles\": [\"CLINICAL_PROFESSIONAL\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/users"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = `agenda.clinica.${Date.now()}.${Math.floor(Math.random() * 100000)}@example.test`;",
+                  "pm.collectionVariables.set('agendaClinicalEmail', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Asigna el rol clínico', () => pm.expect(json.data.roles).to.include('CLINICAL_PROFESSIONAL'));",
+                  "pm.collectionVariables.set('agendaProfessionalId', json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear perfil profesional",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{agendaProfessionalId}}\",\n  \"appointmentDurationMinutes\": 60,\n  \"slotIntervalMinutes\": 60,\n  \"isBookable\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/professionals"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Conserva la identidad del usuario', () => pm.expect(json.data.id).to.eql(pm.collectionVariables.get('agendaProfessionalId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza perfil profesional duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{agendaProfessionalId}}\",\n  \"appointmentDurationMinutes\": 60,\n  \"slotIntervalMinutes\": 60\n}"
+            },
+            "url": "{{baseUrl}}/api/professionals"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Informa perfil duplicado', () => pm.expect(pm.response.json().error.code).to.eql('PROFESSIONAL_ALREADY_EXISTS'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configurar horario semanal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"days\": [\n    {\n      \"dayOfWeek\": 0,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    },\n    {\n      \"dayOfWeek\": 1,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    },\n    {\n      \"dayOfWeek\": 2,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    },\n    {\n      \"dayOfWeek\": 3,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    },\n    {\n      \"dayOfWeek\": 4,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    },\n    {\n      \"dayOfWeek\": 5,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    },\n    {\n      \"dayOfWeek\": 6,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"18:00\",\n      \"isWorking\": true,\n      \"breakStart\": \"13:00\",\n      \"breakEnd\": \"14:00\"\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Guarda los siete días', () => pm.expect(pm.response.json().data).to.have.lengthOf(7));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar horario semanal",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Ordena domingo a sábado', () => pm.expect(pm.response.json().data.map(day => day.dayOfWeek)).to.eql([0,1,2,3,4,5,6]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar fecha con excepción",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isWorking\": false\n}"
+            },
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule/overrides/{{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Marca el día cerrado', () => pm.expect(pm.response.json().data.isWorking).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "No ofrece cupos en fecha cerrada",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/availability?date={{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('No devuelve cupos', () => pm.expect(pm.response.json().data.slots).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar excepción de cierre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule/overrides/{{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener cupos para las reservas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/availability?date={{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const slots = pm.response.json().data.slots;",
+                  "pm.test('Ofrece al menos tres cupos', () => pm.expect(slots.length).to.be.at.least(3));",
+                  "pm.collectionVariables.set('firstSlotStartAt', slots[0].startAt);",
+                  "pm.collectionVariables.set('firstSlotEndAt', slots[0].endAt);",
+                  "pm.collectionVariables.set('secondSlotStartAt', slots[1].startAt);",
+                  "pm.collectionVariables.set('secondSlotEndAt', slots[1].endAt);",
+                  "pm.collectionVariables.set('thirdSlotStartAt', slots[2].startAt);",
+                  "pm.collectionVariables.set('thirdSlotEndAt', slots[2].endAt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bloquear un cupo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{thirdSlotStartAt}}\",\n  \"endAt\": \"{{thirdSlotEndAt}}\",\n  \"reason\": \"Reunión clínica de prueba\"\n}"
+            },
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule/blocks"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('agendaBlockId', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Oculta el cupo bloqueado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/availability?date={{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const starts = pm.response.json().data.slots.map(slot => slot.startAt);",
+                  "pm.test('No incluye el inicio bloqueado', () => pm.expect(starts).not.to.include(pm.collectionVariables.get('thirdSlotStartAt')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar bloqueo de prueba",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule/blocks/{{agendaBlockId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Reservas e historial",
+      "description": "Requiere ejecutar primero la carpeta 06 para disponer del profesional, fecha y cupos sintéticos.",
+      "item": [
+        {
+          "name": "Iniciar sesión administrativa para reservas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "pm.collectionVariables.set('adminCookie', setCookie.split(';')[0]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar paciente para reservas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rut\": \"{{appointmentPatientRut}}\",\n  \"firstNames\": \"Paciente\",\n  \"lastNames\": \"Reserva Postman\",\n  \"birthDate\": \"1990-05-20\",\n  \"phone\": \"+56944444444\",\n  \"email\": \"reserva.postman.{{appointmentPatientRut}}@example.test\",\n  \"address\": \"Dirección sintética para agenda\"\n}"
+            },
+            "url": "{{baseUrl}}/api/patients"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function createRut() {",
+                  "  const body = String(10000000 + (Date.now() % 80000000));",
+                  "  let sum = 0; let multiplier = 2;",
+                  "  for (let index = body.length - 1; index >= 0; index -= 1) { sum += Number(body[index]) * multiplier; multiplier = multiplier === 7 ? 2 : multiplier + 1; }",
+                  "  const result = 11 - (sum % 11);",
+                  "  return `${body}-${result === 11 ? '0' : result === 10 ? 'K' : result}`;",
+                  "}",
+                  "pm.collectionVariables.set('appointmentPatientRut', createRut());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('appointmentPatientId', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear reserva confirmada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{appointmentPatientId}}\",\n  \"professionalId\": \"{{agendaProfessionalId}}\",\n  \"startAt\": \"{{firstSlotStartAt}}\",\n  \"internalNotes\": \"Control anual creado desde Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "const appointment = pm.response.json().data;",
+                  "pm.test('Nace confirmada', () => pm.expect(appointment.status).to.eql('CONFIRMED'));",
+                  "pm.collectionVariables.set('appointmentId', appointment.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza reserva superpuesta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{appointmentPatientId}}\",\n  \"professionalId\": \"{{agendaProfessionalId}}\",\n  \"startAt\": \"{{firstSlotStartAt}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Informa hora ocupada', () => pm.expect(pm.response.json().error.code).to.eql('APPOINTMENT_TIME_NOT_AVAILABLE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retira la reserva de los cupos libres",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/availability?date={{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const starts = pm.response.json().data.slots.map(slot => slot.startAt);",
+                  "pm.test('No ofrece el cupo reservado', () => pm.expect(starts).not.to.include(pm.collectionVariables.get('firstSlotStartAt')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar reserva por identificador",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Devuelve paciente y profesional', () => { const item = pm.response.json().data; pm.expect(item.patient.id).to.eql(pm.collectionVariables.get('appointmentPatientId')); pm.expect(item.professional.id).to.eql(pm.collectionVariables.get('agendaProfessionalId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar reservas del rango",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments?from={{firstSlotStartAt}}&to={{thirdSlotEndAt}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Incluye la reserva creada', () => pm.expect(pm.response.json().data.map(item => item.id)).to.include(pm.collectionVariables.get('appointmentId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reagendar reserva",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{secondSlotStartAt}}\",\n  \"internalNotes\": \"Hora cambiada por solicitud del paciente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Conserva la misma reserva', () => pm.expect(pm.response.json().data.id).to.eql(pm.collectionVariables.get('appointmentId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza bloqueo sobre una reserva vigente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{secondSlotStartAt}}\",\n  \"endAt\": \"{{secondSlotEndAt}}\",\n  \"reason\": \"Intento sobre una reserva vigente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/schedule/blocks"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Protege la reserva vigente', () => pm.expect(pm.response.json().error.code).to.eql('SCHEDULE_BLOCK_OVERLAPS_APPOINTMENT'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar historial de la reserva",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/history"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const types = pm.response.json().data.events.map(event => event.eventType);",
+                  "pm.test('Registra creación, reagenda y notas', () => { pm.expect(types).to.include('CREATED'); pm.expect(types).to.include('RESCHEDULED'); pm.expect(types).to.include('NOTES_UPDATED'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza completar sin registrar llegada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Informa transición inválida', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_APPOINTMENT_STATUS_TRANSITION'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión como profesional de agenda",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{agendaClinicalEmail}}\",\n  \"password\": \"{{clinicalPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "pm.collectionVariables.set('clinicalCookie', setCookie.split(';')[0]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profesional lista sus propias reservas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{clinicalCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments?from={{firstSlotStartAt}}&to={{thirdSlotEndAt}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Solo devuelve reservas propias', () => pm.response.json().data.forEach(item => pm.expect(item.professional.id).to.eql(pm.collectionVariables.get('agendaProfessionalId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profesional registra llegada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{clinicalCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CHECKED_IN\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Cambia a CHECKED_IN', () => pm.expect(pm.response.json().data.status).to.eql('CHECKED_IN'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profesional completa la atención",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{clinicalCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Cambia a COMPLETED', () => pm.expect(pm.response.json().data.status).to.eql('COMPLETED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear segunda reserva para cancelar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{appointmentPatientId}}\",\n  \"professionalId\": \"{{agendaProfessionalId}}\",\n  \"startAt\": \"{{firstSlotStartAt}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('cancellableAppointmentId', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar reserva con motivo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\",\n  \"cancellationReason\": \"Paciente informa que no podrá asistir\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{cancellableAppointmentId}}/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Conserva motivo y estado', () => { const item = pm.response.json().data; pm.expect(item.status).to.eql('CANCELLED'); pm.expect(item.cancellationReason).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "La cancelación libera el cupo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/professionals/{{agendaProfessionalId}}/availability?date={{agendaDate}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "const starts = pm.response.json().data.slots.map(slot => slot.startAt);",
+                  "pm.test('Libera la reserva cancelada y conserva ocupada la completada', () => { pm.expect(starts).to.include(pm.collectionVariables.get('firstSlotStartAt')); pm.expect(starts).not.to.include(pm.collectionVariables.get('secondSlotStartAt')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechaza cancelar una atención completada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{adminCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\",\n  \"cancellationReason\": \"Intento sobre estado terminal\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Mantiene el estado terminal', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_APPOINTMENT_STATUS_TRANSITION'));"
                 ]
               }
             }
