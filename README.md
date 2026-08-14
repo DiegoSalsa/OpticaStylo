@@ -67,6 +67,7 @@ Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servic
 - `docs/patients-api.md`: datos básicos de pacientes y responsables.
 - `docs/scheduling-api.md`: profesionales, disponibilidad y reservas.
 - `docs/clinical-api.md`: ficha clínica, atenciones, adendas y recetas ópticas.
+- `docs/commercial-api.md`: clientes, catálogo, cotizaciones, ventas y abonos.
 
 ## Migraciones
 
