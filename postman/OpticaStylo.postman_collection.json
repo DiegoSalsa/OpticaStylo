@@ -210,6 +210,16 @@
       "key": "prescriptionSaleId",
       "type": "string",
       "value": ""
+    },
+    {
+      "key": "mercadoPagoSaleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mercadoPagoAttemptId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -4838,6 +4848,291 @@
         }
       ],
       "name": "09 - Clientes, catálogo y ventas"
+    },
+    {
+      "name": "10 - Mercado Pago Checkout Pro",
+      "description": "Crea una preferencia real en el ambiente de prueba de Mercado Pago. No guarda credenciales del proveedor y no ejecuta un pago.",
+      "item": [
+        {
+          "name": "Iniciar sesión como ventas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"{{salesEmail}}\",\n  \"password\": \"{{salesPassword}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "pm.collectionVariables.set('salesCookie', setCookie.split(';')[0]);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear cotización para Mercado Pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "type": "text",
+                "value": "{{salesCookie}}"
+              },
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sales",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{frameProductId}}\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Nace como cotización', () => pm.expect(data.status).to.eql('QUOTATION'));",
+                  "pm.collectionVariables.set('mercadoPagoSaleId', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar venta para Mercado Pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "type": "text",
+                "value": "{{salesCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sales/{{mercadoPagoSaleId}}/confirm"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('La venta queda pendiente', () => pm.expect(pm.response.json().data.status).to.eql('PENDING'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear checkout de Mercado Pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "type": "text",
+                "value": "{{salesCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sales/{{mercadoPagoSaleId}}/checkout/mercado-pago"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Guarda la preferencia pendiente', () => { pm.expect(data.status).to.eql('PENDING'); pm.expect(data.externalPreferenceId).to.be.a('string').and.not.empty; });",
+                  "pm.test('Entrega una URL HTTPS', () => pm.expect(data.checkoutUrl).to.match(/^https:\\/\\//));",
+                  "pm.collectionVariables.set('mercadoPagoAttemptId', data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reutilizar checkout vigente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "type": "text",
+                "value": "{{salesCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sales/{{mercadoPagoSaleId}}/checkout/mercado-pago"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No duplica el intento', () => pm.expect(pm.response.json().data.id).to.eql(pm.collectionVariables.get('mercadoPagoAttemptId')));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar intentos de la venta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "type": "text",
+                "value": "{{salesCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sales/{{mercadoPagoSaleId}}/checkout/mercado-pago"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const attempts = pm.response.json().data;",
+                  "pm.test('Conserva un solo intento vigente', () => { pm.expect(attempts).to.have.lengthOf(1); pm.expect(attempts[0].id).to.eql(pm.collectionVariables.get('mercadoPagoAttemptId')); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar abono manual con checkout vigente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "type": "text",
+                "value": "{{salesCookie}}"
+              },
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sales/{{mercadoPagoSaleId}}/payments",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amountCents\": 1000,\n  \"paymentMethod\": \"CASH\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Evita cobros simultáneos', () => pm.expect(pm.response.json().error.code).to.eql('PAYMENT_ATTEMPT_ACTIVE'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar webhook no confiable",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              },
+              {
+                "key": "x-request-id",
+                "type": "text",
+                "value": "postman-fake-{{$guid}}"
+              },
+              {
+                "key": "x-signature",
+                "type": "text",
+                "value": "ts=1700000000,v1=firma-falsa"
+              }
+            ],
+            "url": "{{baseUrl}}/api/webhooks/mercado-pago?data.id=123456789",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"action\": \"payment.created\",\n  \"api_version\": \"v1\",\n  \"data\": {\n    \"id\": \"123456789\"\n  },\n  \"live_mode\": false,\n  \"type\": \"payment\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rechaza la notificación', () => pm.expect(pm.response.code).to.be.oneOf([401, 503]));",
+                  "pm.test('No procesa una firma falsa', () => pm.expect(pm.response.json().error.code).to.be.oneOf(['INVALID_PAYMENT_NOTIFICATION_SIGNATURE', 'PAYMENT_PROVIDER_NOT_CONFIGURED']));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
