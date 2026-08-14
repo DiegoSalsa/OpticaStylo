@@ -22,6 +22,7 @@ import {
 const REPOSITORY_ERRORS = Object.freeze({
   CUSTOMER_NOT_FOUND: ["CUSTOMER_NOT_FOUND", "No se encontró el cliente de la venta.", 404],
   INVALID_STATUS_TRANSITION: ["INVALID_SALE_STATUS_TRANSITION", "La venta no admite ese cambio de estado.", 409],
+  PAYMENT_ATTEMPT_ACTIVE: ["PAYMENT_ATTEMPT_ACTIVE", "Existe un cobro electrónico pendiente para esta venta.", 409],
   PAYMENT_EXCEEDS_BALANCE: ["PAYMENT_EXCEEDS_BALANCE", "El abono supera el saldo pendiente.", 409],
   PAYMENT_METHOD_MISMATCH: ["PAYMENT_METHOD_MISMATCH", "Todos los abonos de la venta deben usar el mismo medio de pago.", 409],
   PRESCRIPTION_NOT_FOUND: ["PRESCRIPTION_NOT_FOUND", "No se encontró la receta indicada.", 404],
