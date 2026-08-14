@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "f234e7a8-f8c8-47b8-9e7d-36ec7a9e0a13",
     "name": "Óptica Stylo API - Completa",
-    "description": "Pruebas manuales y automatizadas de la API backend de Óptica Stylo. Configure adminEmail y adminPassword con la cuenta creada mediante npm run users:bootstrap-admin. La ejecución completa crea datos sintéticos permanentes identificables como Postman para validar seguridad, usuarios, pacientes, agenda, reservas, ficha clínica, atenciones y recetas ópticas.",
+    "description": "Pruebas manuales y automatizadas de la API backend de Óptica Stylo. Configure adminEmail y adminPassword con la cuenta creada mediante npm run users:bootstrap-admin. La ejecución completa crea datos sintéticos permanentes identificables como Postman para validar seguridad, usuarios, pacientes, agenda, reservas, ficha clínica, atenciones y recetas ópticas También cubre clientes, catálogo, cotizaciones, ventas, abonos y entrega.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -163,6 +163,51 @@
     },
     {
       "key": "replacementPrescriptionId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "commercialRunId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "commercialCustomerRut",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "commercialCustomerId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "patientCustomerId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "frameProductId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "lensProductId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "commercialSaleId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "commercialCancelSaleId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "prescriptionSaleId",
       "type": "string",
       "value": ""
     }
@@ -3156,6 +3201,1643 @@
           ]
         }
       ]
+    },
+    {
+      "description": "Valida la separación cliente/paciente, catálogo con precios, receta opcional u obligatoria según producto, cotizaciones, un único medio de pago con varios abonos, estados e historial permanente.",
+      "item": [
+        {
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "function createRut(offset) {",
+                      "  const body = String(10000000 + ((Date.now() + offset) % 80000000));",
+                      "  let sum = 0; let multiplier = 2;",
+                      "  for (let index = body.length - 1; index >= 0; index -= 1) {",
+                      "    sum += Number(body[index]) * multiplier;",
+                      "    multiplier = multiplier === 7 ? 2 : multiplier + 1;",
+                      "  }",
+                      "  const result = 11 - (sum % 11);",
+                      "  const checkDigit = result === 11 ? '0' : result === 10 ? 'K' : String(result);",
+                      "  return `${body}-${checkDigit}`;",
+                      "}",
+                      "pm.collectionVariables.set('commercialRunId', String(Date.now()));",
+                      "pm.collectionVariables.set('commercialCustomerRut', createRut(30));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "const setCookie = pm.response.headers.get('Set-Cookie');",
+                      "pm.collectionVariables.set('adminCookie', setCookie.split(';')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Iniciar sesión administrativa para etapa comercial",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ],
+                  "raw": "{{baseUrl}}/api/auth/login"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "const setCookie = pm.response.headers.get('Set-Cookie');",
+                      "pm.collectionVariables.set('salesCookie', setCookie.split(';')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Iniciar sesión como ventas para etapa comercial",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"email\": \"{{salesEmail}}\",\n  \"password\": \"{{salesPassword}}\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ],
+                  "raw": "{{baseUrl}}/api/auth/login"
+                }
+              },
+              "response": []
+            }
+          ],
+          "name": "01 - Sesiones comerciales"
+        },
+        {
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const json = pm.response.json();",
+                      "pm.test('El cliente no requiere ser paciente', () => pm.expect(json.data.patientId).to.eql(null));",
+                      "pm.collectionVariables.set('commercialCustomerId', json.data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Registrar cliente independiente",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"rut\": \"{{commercialCustomerRut}}\",\n  \"firstNames\": \"Cliente\",\n  \"lastNames\": \"Comercial Postman\",\n  \"phone\": \"+56955555555\",\n  \"email\": \"cliente-{{commercialRunId}}@example.test\",\n  \"address\": \"Dirección comercial sintética 100\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "customers"
+                  ],
+                  "raw": "{{baseUrl}}/api/customers"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('Informa RUT duplicado', () => pm.expect(pm.response.json().error.code).to.eql('CUSTOMER_RUT_ALREADY_EXISTS'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar RUT de cliente duplicado",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"rut\": \"{{commercialCustomerRut}}\",\n  \"firstNames\": \"Cliente\",\n  \"lastNames\": \"Duplicado\",\n  \"phone\": \"+56955555555\",\n  \"email\": \"duplicado-{{commercialRunId}}@example.test\",\n  \"address\": \"Dirección sintética\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "customers"
+                  ],
+                  "raw": "{{baseUrl}}/api/customers"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const json = pm.response.json();",
+                      "pm.test('Conserva el vínculo opcional', () => pm.expect(json.data.patientId).to.eql(pm.collectionVariables.get('patientId')));",
+                      "pm.collectionVariables.set('patientCustomerId', json.data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Registrar cliente copiando un paciente",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"patientId\": \"{{patientId}}\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "customers"
+                  ],
+                  "raw": "{{baseUrl}}/api/customers"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Devuelve una lista paginada', () => pm.expect(pm.response.json().data.items).to.be.an('array'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Listar y buscar clientes",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "customers?page=1&pageSize=20&search=Comercial"
+                  ],
+                  "raw": "{{baseUrl}}/api/customers?page=1&pageSize=20&search=Comercial"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Devuelve el cliente solicitado', () => pm.expect(pm.response.json().data.id).to.eql(pm.collectionVariables.get('commercialCustomerId')));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar cliente",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "customers",
+                    "{{commercialCustomerId}}"
+                  ],
+                  "raw": "{{baseUrl}}/api/customers/{{commercialCustomerId}}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Actualiza el teléfono', () => pm.expect(pm.response.json().data.phone).to.eql('+56966666666'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Actualizar snapshot comercial",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"phone\": \"+56966666666\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "customers",
+                    "{{commercialCustomerId}}"
+                  ],
+                  "raw": "{{baseUrl}}/api/customers/{{commercialCustomerId}}"
+                }
+              },
+              "response": []
+            }
+          ],
+          "name": "03 - Clientes separados de pacientes"
+        },
+        {
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 403', () => pm.response.to.have.status(403));",
+                      "pm.test('Protege la lista de precios', () => pm.expect(pm.response.json().error.code).to.eql('INSUFFICIENT_PERMISSIONS'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Ventas no puede crear productos",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"sku\": \"PROHIBIDO-{{commercialRunId}}\",\n  \"name\": \"Producto prohibido\",\n  \"category\": \"OTHER\",\n  \"requiresPrescription\": false,\n  \"unitPriceCents\": 1000\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "products"
+                  ],
+                  "raw": "{{baseUrl}}/api/products"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const json = pm.response.json();",
+                      "pm.test('El marco tiene precio definido', () => pm.expect(json.data.unitPriceCents).to.eql(50000));",
+                      "pm.collectionVariables.set('frameProductId', json.data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear marco sin receta",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"sku\": \"MARCO-{{commercialRunId}}\",\n  \"name\": \"Marco Postman etapa comercial\",\n  \"category\": \"FRAME\",\n  \"requiresPrescription\": false,\n  \"unitPriceCents\": 50000\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{adminCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "products"
+                  ],
+                  "raw": "{{baseUrl}}/api/products"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const json = pm.response.json();",
+                      "pm.test('Marca la exigencia de receta', () => pm.expect(json.data.requiresPrescription).to.eql(true));",
+                      "pm.collectionVariables.set('lensProductId', json.data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear lente que exige receta",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"sku\": \"LENTE-{{commercialRunId}}\",\n  \"name\": \"Lente óptico Postman\",\n  \"category\": \"PRESCRIPTION_LENS\",\n  \"requiresPrescription\": true,\n  \"unitPriceCents\": 70000\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{adminCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "products"
+                  ],
+                  "raw": "{{baseUrl}}/api/products"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Ventas puede leer el catálogo', () => pm.expect(pm.response.json().data.items.length).to.be.at.least(2));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Listar catálogo activo como ventas",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "products?isActive=true&pageSize=100"
+                  ],
+                  "raw": "{{baseUrl}}/api/products?isActive=true&pageSize=100"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Aplica el nuevo precio', () => pm.expect(pm.response.json().data.unitPriceCents).to.eql(52000));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Actualizar precio del marco",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"unitPriceCents\": 52000\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{adminCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "products",
+                    "{{frameProductId}}"
+                  ],
+                  "raw": "{{baseUrl}}/api/products/{{frameProductId}}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Conserva creación y actualización', () => pm.expect(pm.response.json().data.length).to.eql(2));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar historial del producto",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{adminCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "products",
+                    "{{frameProductId}}",
+                    "history"
+                  ],
+                  "raw": "{{baseUrl}}/api/products/{{frameProductId}}/history"
+                }
+              },
+              "response": []
+            }
+          ],
+          "name": "04 - Catálogo y lista de precios"
+        },
+        {
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('Exige receta para el lente', () => pm.expect(pm.response.json().error.code).to.eql('PRESCRIPTION_REQUIRED'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar lentes sin receta",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"items\": [{ \"productId\": \"{{lensProductId}}\", \"quantity\": 1 }]\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const json = pm.response.json();",
+                      "pm.test('Nace como cotización', () => pm.expect(json.data.status).to.eql('QUOTATION'));",
+                      "pm.test('Congela el precio vigente', () => pm.expect(json.data.items[0].unitPriceCents).to.eql(52000));",
+                      "pm.collectionVariables.set('commercialSaleId', json.data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear cotización de marco sin receta",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"items\": [{ \"productId\": \"{{frameProductId}}\", \"quantity\": 1 }]\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Sigue editable como cotización', () => pm.expect(pm.response.json().data.status).to.eql('QUOTATION'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Editar cotización antes de confirmar",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"items\": [{ \"productId\": \"{{frameProductId}}\", \"quantity\": 1 }]\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Pasa a pendiente', () => pm.expect(pm.response.json().data.status).to.eql('PENDING'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Confirmar cotización",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "confirm"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/confirm"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('Congela líneas confirmadas', () => pm.expect(pm.response.json().error.code).to.eql('SALE_NOT_EDITABLE'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar edición después de confirmar",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"items\": [{ \"productId\": \"{{frameProductId}}\", \"quantity\": 2 }]\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Mantiene saldo pendiente', () => { const data=pm.response.json().data; pm.expect(data.paidCents).to.eql(20000); pm.expect(data.balanceCents).to.eql(32000); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Registrar primer abono en efectivo",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"amountCents\": 20000,\n  \"paymentMethod\": \"CASH\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "payments"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/payments"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('Mantiene un medio por venta', () => pm.expect(pm.response.json().error.code).to.eql('PAYMENT_METHOD_MISMATCH'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar mezcla de medios de pago",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"amountCents\": 10000,\n  \"paymentMethod\": \"TRANSBANK\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "payments"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/payments"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('Protege el saldo', () => pm.expect(pm.response.json().error.code).to.eql('PAYMENT_EXCEEDS_BALANCE'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar abono superior al saldo",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"amountCents\": 33000,\n  \"paymentMethod\": \"CASH\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "payments"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/payments"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Cambia automáticamente a pagada', () => { const data=pm.response.json().data; pm.expect(data.status).to.eql('PAID'); pm.expect(data.balanceCents).to.eql(0); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Completar pago de la venta",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"amountCents\": 32000,\n  \"paymentMethod\": \"CASH\",\n  \"reference\": \"Pago final Postman\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "payments"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/payments"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('Exige la secuencia de preparación', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_SALE_STATUS_TRANSITION'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar salto directo a lista",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"status\": \"READY\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "status"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/status"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Avanza a preparación', () => pm.expect(pm.response.json().data.status).to.eql('IN_PREPARATION'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Marcar venta en preparación",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"status\": \"IN_PREPARATION\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "status"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/status"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Avanza a lista', () => pm.expect(pm.response.json().data.status).to.eql('READY'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Marcar venta lista",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"status\": \"READY\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "status"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/status"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Finaliza entregada', () => pm.expect(pm.response.json().data.status).to.eql('DELIVERED'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Entregar venta",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"status\": \"DELIVERED\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "status"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/status"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Incluye toda la operación', () => pm.expect(pm.response.json().data.length).to.be.at.least(7));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar historial permanente",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialSaleId}}",
+                    "history"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialSaleId}}/history"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const json=pm.response.json();",
+                      "pm.test('Permite que cliente y paciente sean distintos', () => pm.expect(json.data.prescription.patient.id).to.not.eql(json.data.customer.id));",
+                      "pm.collectionVariables.set('prescriptionSaleId', json.data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Vender lente con receta activa",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"prescriptionId\": \"{{replacementPrescriptionId}}\",\n  \"items\": [{ \"productId\": \"{{lensProductId}}\", \"quantity\": 1 }]\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "pm.collectionVariables.set('commercialCancelSaleId', pm.response.json().data.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear cotización para cancelar",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"customerId\": \"{{commercialCustomerId}}\",\n  \"items\": [{ \"productId\": \"{{frameProductId}}\", \"quantity\": 1 }]\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Conserva motivo y estado', () => { const data=pm.response.json().data; pm.expect(data.status).to.eql('CANCELLED'); pm.expect(data.cancellationReason).to.include('Postman'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Cancelar cotización con motivo",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"status\": \"CANCELLED\",\n  \"cancellationReason\": \"Prueba de cancelación Postman\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialCancelSaleId}}",
+                    "status"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialCancelSaleId}}/status"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                      "pm.test('La cancelación es terminal', () => pm.expect(pm.response.json().error.code).to.eql('SALE_NOT_PAYABLE'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar pago de venta cancelada",
+              "request": {
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"amountCents\": 1000,\n  \"paymentMethod\": \"CASH\"\n}"
+                },
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales",
+                    "{{commercialCancelSaleId}}",
+                    "payments"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales/{{commercialCancelSaleId}}/payments"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Encuentra la venta entregada', () => { const ids=pm.response.json().data.items.map(item=>item.id); pm.expect(ids).to.include(pm.collectionVariables.get('commercialSaleId')); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Listar ventas por estado",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{salesCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": {
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sales?status=DELIVERED&pageSize=100"
+                  ],
+                  "raw": "{{baseUrl}}/api/sales?status=DELIVERED&pageSize=100"
+                }
+              },
+              "response": []
+            }
+          ],
+          "name": "05 - Cotizaciones, abonos y entrega"
+        }
+      ],
+      "name": "09 - Clientes, catálogo y ventas"
     }
   ]
 }
