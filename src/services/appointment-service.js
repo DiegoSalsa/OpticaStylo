@@ -23,7 +23,7 @@ import {
 import { getProfessionalAvailability } from "./schedule-service.js";
 
 const STATUS_TRANSITIONS = Object.freeze({
-  CHECKED_IN: Object.freeze(["COMPLETED"]),
+  CHECKED_IN: Object.freeze([]),
   CONFIRMED: Object.freeze(["CHECKED_IN", "CANCELLED", "NO_SHOW"]),
 });
 
@@ -258,6 +258,15 @@ export async function changeAppointmentStatus(
   const normalizedId = validateAppointmentId(appointmentId);
   const statusData = validateAppointmentStatusInput(input);
   const current = await requireAppointment(normalizedId, findRepository);
+
+  if (statusData.status === "COMPLETED") {
+    throw new AppError({
+      code: "APPOINTMENT_COMPLETION_REQUIRES_FINALIZED_ENCOUNTER",
+      message:
+        "La reserva se completa automáticamente al finalizar su atención clínica.",
+      status: 409,
+    });
+  }
 
   if (statusData.status === "CANCELLED") {
     requirePermissions(actor, [PERMISSIONS.APPOINTMENTS_CANCEL]);
