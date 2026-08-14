@@ -3,6 +3,9 @@
 Estas decisiones permiten avanzar con la etapa 5 antes de la validación final
 con la clienta. Deben revisarse cuando se confirme el proceso operativo real.
 
+El backend correspondiente ya está implementado. Los puntos marcados como mock
+o no configurados siguen pendientes de definición externa, no de interfaz.
+
 ## Compradores y entrega
 
 - La tienda aceptará compras con cuenta y como invitado.
