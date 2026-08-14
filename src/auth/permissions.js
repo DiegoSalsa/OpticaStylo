@@ -18,6 +18,7 @@ export const PERMISSIONS = Object.freeze({
   PRODUCTS_READ: "products.read",
   REPORTS_READ: "reports.read",
   SALES_CREATE: "sales.create",
+  SALES_MERCADO_PAGO_CHECKOUT: "sales.mercado_pago_checkout",
   SALES_PAYMENTS_REGISTER: "sales.payments_register",
   SALES_READ: "sales.read",
   SALES_UPDATE: "sales.update",
