@@ -5,6 +5,8 @@ const UUID_PATTERN =
 export const PRODUCT_CATEGORIES = Object.freeze([
   "FRAME",
   "PRESCRIPTION_LENS",
+  "TREATMENT",
+  "ACCESSORY",
   "OTHER",
 ]);
 const DEFAULT_PAGE_SIZE = 20;
