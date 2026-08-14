@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title description">
+  <title id="title">Marco cat eye de demostración</title>
+  <description id="description">Marco burdeo con extremos superiores elevados.</description>
+  <g fill="none" stroke="#6f163b" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 185 160 104" stroke-width="32"/>
+    <path d="m1040 104 136 81" stroke-width="32"/>
+    <path d="M165 90c120 3 264 27 376 101-14 126-84 187-190 184-123-4-176-83-186-285Z" stroke-width="38"/>
+    <path d="M1035 90c-120 3-264 27-376 101 14 126 84 187 190 184 123-4 176-83 186-285Z" stroke-width="38"/>
+    <path d="M541 192c35-38 83-38 118 0" stroke-width="30"/>
+  </g>
+  <g fill="#ffffff" opacity="0.08">
+    <path d="M220 130c92 10 170 32 238 69-42 4-109 23-179 72-40-42-57-89-59-141Z"/>
+    <path d="M980 130c-92 10-170 32-238 69 42 4 109 23 179 72 40-42 57-89 59-141Z"/>
+  </g>
+</svg>

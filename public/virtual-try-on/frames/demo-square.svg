@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title description">
+  <title id="title">Marco óptico rectangular de demostración</title>
+  <description id="description">Marco color carey con lentes rectangulares de esquinas suaves.</description>
+  <defs>
+    <linearGradient id="tortoise" x1="0" x2="1">
+      <stop offset="0" stop-color="#3b2119"/>
+      <stop offset="0.28" stop-color="#9b5d2e"/>
+      <stop offset="0.52" stop-color="#2b1b18"/>
+      <stop offset="0.78" stop-color="#b97738"/>
+      <stop offset="1" stop-color="#3b2119"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#tortoise)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 180 166 126" stroke-width="34"/>
+    <path d="m1034 126 138 54" stroke-width="34"/>
+    <rect x="172" y="70" width="365" height="286" rx="82" stroke-width="38"/>
+    <rect x="663" y="70" width="365" height="286" rx="82" stroke-width="38"/>
+    <path d="M537 186c39-31 87-31 126 0" stroke-width="31"/>
+  </g>
+  <g fill="#ffffff" opacity="0.08">
+    <path d="M238 106h180c-57 21-105 59-143 113h-62c-2-51 6-88 25-113Z"/>
+    <path d="M729 106h180c-57 21-105 59-143 113h-62c-2-51 6-88 25-113Z"/>
+  </g>
+</svg>
