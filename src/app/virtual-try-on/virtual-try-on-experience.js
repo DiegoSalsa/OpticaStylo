@@ -33,7 +33,7 @@ function priceLabel(value) {
 
 function cameraErrorMessage(error) {
   if (error?.name === "NotAllowedError") {
-    return "No se pudo usar la cámara. Revisa el permiso del navegador e inténtalo nuevamente.";
+    return "El permiso fue rechazado. Habilita la cámara para este sitio y presiona Reintentar permiso.";
   }
   if (error?.name === "NotFoundError") {
     return "No se encontró una cámara disponible en este dispositivo.";
@@ -41,7 +41,35 @@ function cameraErrorMessage(error) {
   if (error?.name === "NotReadableError") {
     return "Otra aplicación está usando la cámara. Ciérrala e inténtalo nuevamente.";
   }
+  if (error?.name === "SecurityError") {
+    return "El navegador exige una conexión HTTPS para permitir la cámara.";
+  }
   return "No fue posible iniciar la cámara. Puedes volver a intentarlo o usar otro dispositivo.";
+}
+
+async function createFaceLandmarker() {
+  const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+  const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
+  const options = {
+    baseOptions: {
+      delegate: "GPU",
+      modelAssetPath: FACE_LANDMARKER_MODEL_URL,
+    },
+    minFaceDetectionConfidence: 0.55,
+    minFacePresenceConfidence: 0.55,
+    minTrackingConfidence: 0.5,
+    numFaces: 1,
+    runningMode: "VIDEO",
+  };
+
+  try {
+    return await FaceLandmarker.createFromOptions(vision, options);
+  } catch {
+    return FaceLandmarker.createFromOptions(vision, {
+      ...options,
+      baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_URL },
+    });
+  }
 }
 
 export default function VirtualTryOnExperience() {
@@ -58,6 +86,7 @@ export default function VirtualTryOnExperience() {
   const selectedFrameRef = useRef(DEMO_VIRTUAL_FRAMES[0]);
   const adjustmentsRef = useRef(INITIAL_ADJUSTMENTS);
   const trackingModeRef = useRef("automatic");
+  const cameraRequestRef = useRef(0);
 
   const [frames, setFrames] = useState(DEMO_VIRTUAL_FRAMES);
   const [selectedAssetId, setSelectedAssetId] = useState(DEMO_VIRTUAL_FRAMES[0].assetId);
@@ -65,8 +94,9 @@ export default function VirtualTryOnExperience() {
   const [trackingMode, setTrackingMode] = useState("automatic");
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [statusMessage, setStatusMessage] = useState(
-    "La cámara permanece apagada hasta que presiones Activar cámara.",
+    "Solicitaremos permiso para usar la cámara en este dispositivo.",
   );
+  const [cameraAspectRatio, setCameraAspectRatio] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
   const [automaticTrackingAvailable, setAutomaticTrackingAvailable] = useState(true);
 
@@ -121,12 +151,16 @@ export default function VirtualTryOnExperience() {
   }, [trackingMode]);
 
   const releaseResources = useCallback(() => {
+    cameraRequestRef.current += 1;
     runningRef.current = false;
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = null;
     for (const track of streamRef.current?.getTracks?.() ?? []) track.stop();
     streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
+    if (videoRef.current) {
+      videoRef.current.onresize = null;
+      videoRef.current.srcObject = null;
+    }
     faceLandmarkerRef.current?.close?.();
     faceLandmarkerRef.current = null;
     latestLandmarksRef.current = null;
@@ -139,6 +173,7 @@ export default function VirtualTryOnExperience() {
     releaseResources();
     const canvas = canvasRef.current;
     canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    setCameraAspectRatio(null);
     setCameraStatus("idle");
     setFaceDetected(false);
     setStatusMessage("La cámara está apagada y no se conserva ningún fotograma.");
@@ -201,6 +236,13 @@ export default function VirtualTryOnExperience() {
   }, []);
 
   const startCamera = useCallback(async () => {
+    if (!window.isSecureContext) {
+      setCameraStatus("error");
+      setStatusMessage(
+        "La cámara no puede solicitarse desde una dirección HTTP de red. Abre el probador mediante HTTPS.",
+      );
+      return;
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraStatus("error");
       setStatusMessage("Este navegador no permite acceder a la cámara desde esta página.");
@@ -208,61 +250,47 @@ export default function VirtualTryOnExperience() {
     }
 
     releaseResources();
+    const requestId = cameraRequestRef.current;
+    setCameraAspectRatio(null);
     setCameraStatus("loading");
-    setStatusMessage("Preparando el seguimiento facial…");
+    setStatusMessage("Esperando que autorices el uso de la cámara…");
     setAutomaticTrackingAvailable(true);
 
-    let landmarker = null;
-    try {
-      const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
-      const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
-      const options = {
-        baseOptions: {
-          delegate: "GPU",
-          modelAssetPath: FACE_LANDMARKER_MODEL_URL,
-        },
-        minFaceDetectionConfidence: 0.55,
-        minFacePresenceConfidence: 0.55,
-        minTrackingConfidence: 0.5,
-        numFaces: 1,
-        runningMode: "VIDEO",
-      };
-      try {
-        landmarker = await FaceLandmarker.createFromOptions(vision, options);
-      } catch {
-        landmarker = await FaceLandmarker.createFromOptions(vision, {
-          ...options,
-          baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_URL },
-        });
-      }
-      faceLandmarkerRef.current = landmarker;
-    } catch {
-      setAutomaticTrackingAvailable(false);
-      trackingModeRef.current = "manual";
-      setTrackingMode("manual");
-      setStatusMessage("El seguimiento automático no cargó. Se activará el ajuste manual.");
-    }
+    const isMobilePortrait = window.matchMedia(
+      "(max-width: 768px) and (orientation: portrait)",
+    ).matches;
+    const landmarkerPromise = createFaceLandmarker().catch(() => null);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: "user",
-          height: { ideal: 720 },
-          width: { ideal: 1280 },
+          aspectRatio: { ideal: isMobilePortrait ? 0.75 : 16 / 9 },
+          height: { ideal: isMobilePortrait ? 960 : 720 },
+          width: { ideal: isMobilePortrait ? 720 : 1280 },
         },
       });
+      if (cameraRequestRef.current !== requestId) {
+        for (const track of stream.getTracks()) track.stop();
+        const staleLandmarker = await landmarkerPromise;
+        staleLandmarker?.close?.();
+        return;
+      }
       streamRef.current = stream;
       const video = videoRef.current;
       video.srcObject = stream;
+      const syncCameraAspectRatio = () => {
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          setCameraAspectRatio(video.videoWidth / video.videoHeight);
+        }
+      };
+      video.onresize = syncCameraAspectRatio;
       await video.play();
+      syncCameraAspectRatio();
       runningRef.current = true;
       setCameraStatus("ready");
-      setStatusMessage(
-        landmarker
-          ? "Cámara activa. Mira de frente para alinear el marco."
-          : "Cámara activa en modo manual. Usa los controles para alinear el marco.",
-      );
+      setStatusMessage("Cámara activa. Preparando la alineación automática…");
 
       let previousFaceState = false;
       const renderFrame = (timestamp) => {
@@ -290,13 +318,36 @@ export default function VirtualTryOnExperience() {
         animationFrameRef.current = requestAnimationFrame(renderFrame);
       };
       animationFrameRef.current = requestAnimationFrame(renderFrame);
+
+      const landmarker = await landmarkerPromise;
+      if (cameraRequestRef.current !== requestId) {
+        landmarker?.close?.();
+        return;
+      }
+      if (landmarker) {
+        faceLandmarkerRef.current = landmarker;
+        setStatusMessage("Cámara activa. Mira de frente para alinear el marco.");
+      } else {
+        setAutomaticTrackingAvailable(false);
+        trackingModeRef.current = "manual";
+        setTrackingMode("manual");
+        setStatusMessage("Cámara activa en modo manual. Usa los controles para ajustar el marco.");
+      }
     } catch (error) {
+      void landmarkerPromise.then((unusedLandmarker) => unusedLandmarker?.close?.());
       releaseResources();
       setCameraStatus("error");
       setFaceDetected(false);
       setStatusMessage(cameraErrorMessage(error));
     }
   }, [drawScene, releaseResources]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void startCamera();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [startCamera]);
 
   const captureImage = useCallback(() => {
     const canvas = canvasRef.current;
@@ -327,8 +378,14 @@ export default function VirtualTryOnExperience() {
   return (
     <section className={styles.experience} aria-label="Probador virtual de marcos">
       <div className={styles.viewerPanel}>
-        <div className={styles.viewer} data-status={cameraStatus}>
-          <video className={styles.videoSource} ref={videoRef} muted playsInline />
+        <div
+          className={styles.viewer}
+          data-status={cameraStatus}
+          style={cameraAspectRatio
+            ? { "--camera-aspect-ratio": String(cameraAspectRatio) }
+            : undefined}
+        >
+          <video className={styles.videoSource} ref={videoRef} autoPlay muted playsInline />
           <canvas
             className={styles.canvas}
             ref={canvasRef}
@@ -337,8 +394,14 @@ export default function VirtualTryOnExperience() {
           {cameraStatus !== "ready" && (
             <div className={styles.viewerPlaceholder}>
               <span className={styles.placeholderIcon} aria-hidden="true">◎</span>
-              <strong>Tu cámara está apagada</strong>
-              <span>Solo se activará con tu permiso.</span>
+              <strong>
+                {cameraStatus === "loading" ? "Autoriza tu cámara" : "Necesitamos tu cámara"}
+              </strong>
+              <span>
+                {cameraStatus === "loading"
+                  ? "Acepta el permiso que muestra tu navegador."
+                  : "Tu video se procesa solamente en este dispositivo."}
+              </span>
             </div>
           )}
           {cameraStatus === "ready" && trackingMode === "automatic" && !faceDetected && (
@@ -362,7 +425,7 @@ export default function VirtualTryOnExperience() {
               onClick={startCamera}
               disabled={cameraStatus === "loading"}
             >
-              {cameraStatus === "loading" ? "Preparando…" : "Activar cámara"}
+              {cameraStatus === "loading" ? "Esperando permiso…" : "Reintentar permiso"}
             </button>
           )}
           <button

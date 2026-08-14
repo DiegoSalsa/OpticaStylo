@@ -18,8 +18,9 @@ export default function VirtualTryOnPage() {
           <p className={styles.eyebrow}>Prueba virtual · versión experimental</p>
           <h1>Encuentra el marco que se siente como tú.</h1>
           <p>
-            Activa tu cámara, mira de frente y cambia de estilo en tiempo real.
-            El análisis ocurre en este dispositivo y la óptica no recibe tu video.
+            Autoriza la cámara cuando el navegador la solicite, mira de frente y
+            cambia de estilo. El análisis ocurre en este dispositivo y la óptica
+            no recibe tu video.
           </p>
         </div>
       </header>
