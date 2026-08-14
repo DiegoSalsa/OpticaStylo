@@ -19,6 +19,7 @@
     "node": ">=20.9.0"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1",
     "@next/env": "^16.3.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title description">
+  <title id="title">Marco óptico redondo de demostración</title>
+  <description id="description">Marco negro con aros redondos y patillas delgadas.</description>
+  <g fill="none" stroke="#171817" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 190 178 138" stroke-width="31"/>
+    <path d="m1022 138 148 52" stroke-width="31"/>
+    <circle cx="350" cy="220" r="168" stroke-width="34"/>
+    <circle cx="850" cy="220" r="168" stroke-width="34"/>
+    <path d="M518 211c52-43 112-43 164 0" stroke-width="29"/>
+    <path d="M187 151c-31-4-56 6-75 30" stroke-width="18"/>
+    <path d="M1013 151c31-4 56 6 75 30" stroke-width="18"/>
+  </g>
+  <g fill="#ffffff" opacity="0.09">
+    <ellipse cx="318" cy="178" rx="74" ry="38" transform="rotate(-28 318 178)"/>
+    <ellipse cx="818" cy="178" rx="74" ry="38" transform="rotate(-28 818 178)"/>
+  </g>
+</svg>
