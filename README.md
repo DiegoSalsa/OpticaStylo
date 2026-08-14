@@ -60,6 +60,14 @@ src/
 
 Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servicios deben acceder a PostgreSQL mediante repositorios.
 
+## Documentación de la API
+
+- `docs/authentication-api.md`: sesiones y administración de usuarios.
+- `docs/authorization.md`: roles y permisos efectivos.
+- `docs/patients-api.md`: datos básicos de pacientes y responsables.
+- `docs/scheduling-api.md`: profesionales, disponibilidad y reservas.
+- `docs/clinical-api.md`: ficha clínica, atenciones, adendas y recetas ópticas.
+
 ## Migraciones
 
 Las migraciones se almacenan en `src/db/migrations` y utilizan nombres como `001_crear_usuarios.sql`. Una migración aplicada es inmutable: cualquier modificación posterior será detectada mediante su checksum.
