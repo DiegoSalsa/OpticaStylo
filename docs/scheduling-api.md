@@ -147,13 +147,18 @@ o una cadena vacía.
 
 ## Estados e historial
 
-Las transiciones permitidas son:
+Las transiciones de agenda son:
 
 ```text
-CONFIRMED -> CHECKED_IN -> COMPLETED
+CONFIRMED -> CHECKED_IN
 CONFIRMED -> NO_SHOW
 CONFIRMED -> CANCELLED
 ```
+
+`CHECKED_IN -> COMPLETED` no se ejecuta mediante el endpoint genérico de
+estado. La reserva cambia automáticamente a `COMPLETED` cuando el profesional
+finaliza la atención clínica asociada. Así, la reserva y su registro clínico se
+confirman dentro de la misma transacción.
 
 `COMPLETED`, `NO_SHOW` y `CANCELLED` son terminales. Para cancelar se exige
 `appointments.cancel` y un `cancellationReason` de hasta 500 caracteres. Las
@@ -174,4 +179,5 @@ contenido anterior de las notas para evitar duplicar información sensible.
 | `APPOINTMENT_OVERLAPS_SCHEDULE_BLOCK` | 409 | Un bloqueo fue creado mientras se reservaba. |
 | `SCHEDULE_BLOCK_OVERLAPS_APPOINTMENT` | 409 | El bloqueo solicitado coincide con una reserva vigente. |
 | `INVALID_APPOINTMENT_STATUS_TRANSITION` | 409 | El cambio no respeta el flujo de estados. |
+| `APPOINTMENT_COMPLETION_REQUIRES_FINALIZED_ENCOUNTER` | 409 | Se intentó completar la reserva sin finalizar su atención clínica. |
 | `PROFESSIONAL_ALREADY_EXISTS` | 409 | El usuario clínico ya posee perfil. |
