@@ -167,6 +167,10 @@ Confirmar no recibe cuerpo. Los precios y productos se vuelven inmutables.
 Respuesta: `201 Created`. `reference` es opcional. La respuesta devuelve
 `paidCents`, `balanceCents`, todos los abonos y el estado resultante.
 
+Si la venta mantiene un intento electrónico vigente, el abono manual responde
+`409 PAYMENT_ATTEMPT_ACTIVE`. El checkout y la conciliación de Mercado Pago se
+documentan en `docs/mercado-pago.md`.
+
 ### Avanzar o cancelar
 
 `PATCH /api/sales/{saleId}/status`
@@ -203,6 +207,7 @@ metadatos internos: solo identificador, versión, estado y paciente.
 - `409 PRODUCT_INACTIVE`: un producto fue desactivado.
 - `409 PAYMENT_METHOD_MISMATCH`: se intentó mezclar medios de pago.
 - `409 PAYMENT_EXCEEDS_BALANCE`: el abono supera el saldo.
+- `409 PAYMENT_ATTEMPT_ACTIVE`: existe un cobro electrónico vigente.
 - `409 INVALID_SALE_STATUS_TRANSITION`: la transición no respeta el flujo.
 - `409 SALE_HAS_PAYMENTS`: no se cancela por este flujo una venta con abonos.
 
