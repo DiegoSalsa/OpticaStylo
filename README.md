@@ -72,6 +72,8 @@ Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servic
 - `docs/ecommerce-decisions.md`: decisiones provisionales para la tienda en línea.
 - `docs/ecommerce-api.md`: cuentas, catálogo público, carritos, recetas y pedidos.
 
+- `docs/virtual-try-on.md`: prueba virtual, recursos por marco y criterios de viabilidad.
+
 ## Migraciones
 
 Las migraciones se almacenan en `src/db/migrations` y utilizan nombres como `001_crear_usuarios.sql`. Una migración aplicada es inmutable: cualquier modificación posterior será detectada mediante su checksum.
