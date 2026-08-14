@@ -10,9 +10,11 @@ function mapSaleBase(row) {
     cancelledAt: row.cancelled_at,
     createdAt: row.created_at,
     customer: {
+      email: row.customer_email,
       firstNames: row.customer_first_names,
       id: row.customer_id,
       lastNames: row.customer_last_names,
+      phone: row.customer_phone,
       rut: row.customer_rut,
     },
     id: row.id,
@@ -43,8 +45,10 @@ const SALE_SELECT = `
   SELECT
     sales.*,
     customers.rut AS customer_rut,
+    customers.email AS customer_email,
     customers.first_names AS customer_first_names,
     customers.last_names AS customer_last_names,
+    customers.phone AS customer_phone,
     optical_prescriptions.status AS prescription_status,
     optical_prescriptions.version AS prescription_version,
     clinical_encounters.patient_id,
@@ -74,7 +78,8 @@ async function findSaleWithClient(client, saleId) {
       [saleId],
     ),
     client.query(
-      `SELECT id, amount_cents, payment_method, reference, received_by, paid_at
+      `SELECT id, amount_cents, payment_method, reference, received_by, paid_at,
+              source, provider_attempt_id
        FROM sale_payments WHERE sale_id = $1 ORDER BY paid_at, id`,
       [saleId],
     ),
@@ -99,8 +104,10 @@ async function findSaleWithClient(client, saleId) {
       id: row.id,
       paidAt: row.paid_at,
       paymentMethod: row.payment_method,
+      providerAttemptId: row.provider_attempt_id,
       receivedBy: row.received_by,
       reference: row.reference,
+      source: row.source,
     })),
   };
 }
@@ -289,6 +296,16 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
     if (sale.status !== "PENDING") return { reason: "SALE_NOT_PAYABLE", sale: null };
     if (sale.payment_method && sale.payment_method !== payment.paymentMethod) {
       return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
+    }
+    const activeAttemptResult = await client.query(
+      `SELECT id FROM payment_attempts
+       WHERE sale_id = $1 AND status IN ('CREATED', 'PENDING')
+         AND expires_at > CURRENT_TIMESTAMP
+       LIMIT 1`,
+      [saleId],
+    );
+    if (activeAttemptResult.rowCount > 0) {
+      return { reason: "PAYMENT_ATTEMPT_ACTIVE", sale: null };
     }
     const paidResult = await client.query(
       "SELECT COALESCE(SUM(amount_cents), 0) AS paid_cents FROM sale_payments WHERE sale_id = $1",
