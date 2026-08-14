@@ -220,6 +220,76 @@
       "key": "mercadoPagoAttemptId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "storeAccountCartCookie",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeAccountCookie",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeAccountEmail",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeAccountOrderId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeAccountPassword",
+      "type": "string",
+      "value": "CuentaSeguraPostman2026!"
+    },
+    {
+      "key": "storeAccountRut",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeExternalPrescriptionId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeFrameProductId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeGuestCartCookie",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeGuestOrderId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeGuestPaymentAttemptId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeGuestRut",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeLensProductId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "storeRunId",
+      "type": "string",
+      "value": ""
     }
   ],
   "item": [
@@ -5129,6 +5199,691 @@
                 ],
                 "type": "text/javascript"
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 - Comercio electrónico",
+      "description": "Backend de tienda: catálogo público, cuenta o invitado, carrito, retiro/despacho mock, receta externa, pedidos y Checkout Pro. Los checkouts crean preferencias reales en el ambiente de prueba, pero no ejecutan pagos.",
+      "item": [
+        {
+          "name": "01 - Catálogo público",
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "const items = pm.response.json().data.items;",
+                      "pm.test('Solo expone productos disponibles', () => pm.expect(items.every(item => item.availability.available)).to.eql(true));",
+                      "const frame = items.find(item => item.category === 'FRAME' && !item.requiresPrescription);",
+                      "const lens = items.find(item => item.requiresPrescription);",
+                      "pm.expect(frame, 'Debe existir un marco sin receta').to.exist;",
+                      "pm.expect(lens, 'Debe existir un producto con receta').to.exist;",
+                      "pm.collectionVariables.set('storeFrameProductId', frame.id);",
+                      "pm.collectionVariables.set('storeLensProductId', lens.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Listar productos disponibles",
+              "request": {
+                "header": [],
+                "method": "GET",
+                "url": "{{baseUrl}}/api/store/products?pageSize=100"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Incluye disponibilidad mock explícita', () => pm.expect(pm.response.json().data.availability.source).to.eql('MOCK'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar detalle público",
+              "request": {
+                "header": [],
+                "method": "GET",
+                "url": "{{baseUrl}}/api/store/products/{{storeFrameProductId}}"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "02 - Compra con cuenta",
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "function createRut(offset) {",
+                      "  const body = String(3000000 + ((Date.now() + offset) % 4000000));",
+                      "  let sum = 0; let multiplier = 2;",
+                      "  for (let index = body.length - 1; index >= 0; index -= 1) {",
+                      "    sum += Number(body[index]) * multiplier;",
+                      "    multiplier = multiplier === 7 ? 2 : multiplier + 1;",
+                      "  }",
+                      "  const result = 11 - (sum % 11);",
+                      "  const digit = result === 11 ? '0' : result === 10 ? 'K' : String(result);",
+                      "  return `${body}-${digit}`;",
+                      "}",
+                      "const runId = String(Date.now());",
+                      "pm.collectionVariables.set('storeRunId', runId);",
+                      "pm.collectionVariables.set('storeAccountRut', createRut(101));",
+                      "pm.collectionVariables.set('storeGuestRut', createRut(202));",
+                      "pm.collectionVariables.set('storeAccountEmail', `cuenta-${runId}@example.com`);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const setCookie = pm.response.headers.get('Set-Cookie');",
+                      "pm.collectionVariables.set('storeAccountCookie', setCookie.split(';')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Registrar cuenta de cliente",
+              "request": {
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/accounts/register",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"address\": \"Av. Prueba 100\",\n  \"email\": \"{{storeAccountEmail}}\",\n  \"firstNames\": \"Cliente\",\n  \"lastNames\": \"Cuenta Postman\",\n  \"password\": \"{{storeAccountPassword}}\",\n  \"phone\": \"+56911223344\",\n  \"rut\": \"{{storeAccountRut}}\"\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Devuelve la cuenta propia', () => pm.expect(pm.response.json().data.email).to.eql(pm.collectionVariables.get('storeAccountEmail')));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar perfil de la cuenta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": "{{baseUrl}}/api/store/accounts/me"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const setCookie = pm.response.headers.get('Set-Cookie');",
+                      "pm.collectionVariables.set('storeAccountCartCookie', setCookie.split(';')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear carrito de la cuenta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/cart"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Marca que requiere receta', () => pm.expect(pm.response.json().data.items[0].requiresPrescription).to.eql(true));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Agregar lentes que requieren receta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}; {{storeAccountCartCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/store/cart/items/{{storeLensProductId}}",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"quantity\": 1\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('No oculta que la cotización es mock', () => { const data=pm.response.json().data; pm.expect(data.shippingQuoteSource).to.eql('MOCK'); pm.expect(data.shippingFeeCents).to.eql(0); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Configurar despacho mock",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}; {{storeAccountCartCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": "{{baseUrl}}/api/store/cart",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"buyer\": {\n    \"address\": \"Av. Prueba 100\",\n    \"email\": \"{{storeAccountEmail}}\",\n    \"firstNames\": \"Cliente\",\n    \"lastNames\": \"Cuenta Postman\",\n    \"phone\": \"+56911223344\",\n    \"rut\": \"{{storeAccountRut}}\"\n  },\n  \"fulfillment\": {\n    \"address\": \"Av. Prueba 100\",\n    \"city\": \"Santiago\",\n    \"method\": \"DELIVERY\",\n    \"notes\": \"Despacho de prueba\",\n    \"region\": \"Región Metropolitana\"\n  }\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "const prescription = pm.response.json().data.externalPrescription;",
+                      "pm.test('La receta queda lista', () => pm.expect(prescription.status).to.eql('READY'));",
+                      "pm.collectionVariables.set('storeExternalPrescriptionId', prescription.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Completar receta externa manual",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}; {{storeAccountCartCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/store/cart/prescription/manual",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"fulfillmentNotes\": \"Receta externa Postman\",\n  \"leftEye\": {\n    \"addition\": null,\n    \"axis\": null,\n    \"cylinder\": 0,\n    \"sphere\": -1\n  },\n  \"pupillaryDistance\": 62,\n  \"rightEye\": {\n    \"addition\": null,\n    \"axis\": 90,\n    \"cylinder\": -0.5,\n    \"sphere\": -1.25\n  }\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const data = pm.response.json().data;",
+                      "pm.test('Crea preferencia de prueba', () => { pm.expect(data.order.status).to.eql('PENDING'); pm.expect(data.payment.externalPreferenceId).to.be.a('string').and.not.empty; });",
+                      "pm.collectionVariables.set('storeAccountOrderId', data.order.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear pedido y checkout de la cuenta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}; {{storeAccountCartCookie}}"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/cart/checkout"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Incluye el pedido propio', () => pm.expect(pm.response.json().data.some(order => order.id === pm.collectionVariables.get('storeAccountOrderId'))).to.eql(true));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Listar pedidos de la cuenta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": "{{baseUrl}}/api/store/orders"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Cerrar sesión de la cuenta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeAccountCookie}}"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/accounts/logout"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "03 - Compra como invitado",
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const setCookie = pm.response.headers.get('Set-Cookie');",
+                      "pm.collectionVariables.set('storeGuestCartCookie', setCookie.split(';')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear carrito invitado",
+              "request": {
+                "header": [],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/cart"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Agregar marco sin receta",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeGuestCartCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/store/cart/items/{{storeFrameProductId}}",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"quantity\": 1\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Configura retiro sin despacho', () => pm.expect(pm.response.json().data.fulfillment.method).to.eql('PICKUP'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Configurar retiro en tienda",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeGuestCartCookie}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "url": "{{baseUrl}}/api/store/cart",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"buyer\": {\n    \"address\": \"Dirección invitado 456\",\n    \"email\": \"invitado-{{storeRunId}}@example.com\",\n    \"firstNames\": \"Invitado\",\n    \"lastNames\": \"Compra Postman\",\n    \"phone\": \"+56987654321\",\n    \"rut\": \"{{storeGuestRut}}\"\n  },\n  \"fulfillment\": {\n    \"method\": \"PICKUP\"\n  }\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "const data = pm.response.json().data;",
+                      "pm.collectionVariables.set('storeGuestOrderId', data.order.id);",
+                      "pm.collectionVariables.set('storeGuestPaymentAttemptId', data.payment.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Crear pedido invitado",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeGuestCartCookie}}"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/cart/checkout"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                      "pm.test('No duplica el cobro', () => pm.expect(pm.response.json().data.payment.id).to.eql(pm.collectionVariables.get('storeGuestPaymentAttemptId')));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Reutilizar checkout del invitado",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeGuestCartCookie}}"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/store/cart/checkout"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Devuelve solo el pedido del token', () => pm.expect(pm.response.json().data.id).to.eql(pm.collectionVariables.get('storeGuestOrderId')));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar pedido invitado",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeGuestCartCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": "{{baseUrl}}/api/store/orders/{{storeGuestOrderId}}"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "04 - Receta externa y acceso interno",
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "const setCookie = pm.response.headers.get('Set-Cookie');",
+                      "pm.collectionVariables.set('adminCookie', setCookie.split(';')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Iniciar sesión administrativa",
+              "request": {
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Entrega los datos confirmados', () => pm.expect(pm.response.json().data.confirmedData.rightEye.sphere).to.eql(-1.25));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Consultar receta externa como negocio",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{adminCookie}}"
+                  }
+                ],
+                "method": "GET",
+                "url": "{{baseUrl}}/api/external-prescriptions/{{storeExternalPrescriptionId}}"
+              },
+              "response": []
+            },
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Responde 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Valida el archivo', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_PRESCRIPTION_IMAGE'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "name": "Rechazar carga sin imagen",
+              "request": {
+                "header": [
+                  {
+                    "key": "Cookie",
+                    "type": "text",
+                    "value": "{{storeGuestCartCookie}}"
+                  }
+                ],
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/store/cart/prescription/image",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "image",
+                      "src": [],
+                      "type": "file"
+                    }
+                  ]
+                }
+              },
+              "response": []
             }
           ]
         }
