@@ -51,18 +51,13 @@ function providerUnavailable(cause) {
   });
 }
 
-export async function createMercadoPagoCheckout(
-  saleId,
-  actor,
-  dependencies = {},
-) {
-  requirePermissions(actor, [PERMISSIONS.SALES_MERCADO_PAGO_CHECKOUT]);
+async function createCheckout(saleId, initiatedBy, dependencies) {
   const id = validateSaleId(saleId);
   const currentDate = dependencies.currentDate ?? new Date();
   const expiresAt = new Date(currentDate.getTime() + 30 * 60 * 1000);
   const reservation = await (
     dependencies.reserveMercadoPagoAttempt ?? reserveMercadoPagoAttempt
-  )(id, actor.userId, expiresAt);
+  )(id, initiatedBy, expiresAt);
   if (reservation.reason) throwAttemptReason(reservation.reason);
 
   const attempt = reservation.attempt;
@@ -91,6 +86,19 @@ export async function createMercadoPagoCheckout(
     );
     throw providerUnavailable(error);
   }
+}
+
+export async function createMercadoPagoCheckout(
+  saleId,
+  actor,
+  dependencies = {},
+) {
+  requirePermissions(actor, [PERMISSIONS.SALES_MERCADO_PAGO_CHECKOUT]);
+  return createCheckout(saleId, actor.userId, dependencies);
+}
+
+export async function createStoreMercadoPagoCheckout(saleId, dependencies = {}) {
+  return createCheckout(saleId, null, dependencies);
 }
 
 export async function getMercadoPagoCheckouts(saleId, actor, dependencies = {}) {
