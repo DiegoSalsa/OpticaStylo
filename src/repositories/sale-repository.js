@@ -18,8 +18,21 @@ function mapSaleBase(row) {
       rut: row.customer_rut,
     },
     id: row.id,
+    origin: row.origin,
     paidCents,
     paymentMethod: row.payment_method,
+    fulfillment: row.fulfillment_method ? {
+      address: row.delivery_address,
+      city: row.delivery_city,
+      method: row.fulfillment_method,
+      notes: row.delivery_notes,
+      region: row.delivery_region,
+    } : null,
+    externalPrescription: row.external_prescription_id ? {
+      id: row.external_prescription_id,
+      source: row.external_prescription_source,
+      status: row.external_prescription_status,
+    } : null,
     prescription: row.prescription_id
       ? {
           id: row.prescription_id,
@@ -35,6 +48,8 @@ function mapSaleBase(row) {
       : null,
     saleNumber: Number(row.sale_number),
     status: row.status,
+    shippingFeeCents: Number(row.shipping_fee_cents),
+    shippingQuoteSource: row.shipping_quote_source,
     subtotalCents: Number(row.subtotal_cents),
     totalCents,
     updatedAt: row.updated_at,
@@ -44,17 +59,19 @@ function mapSaleBase(row) {
 const SALE_SELECT = `
   SELECT
     sales.*,
-    customers.rut AS customer_rut,
-    customers.email AS customer_email,
-    customers.first_names AS customer_first_names,
-    customers.last_names AS customer_last_names,
-    customers.phone AS customer_phone,
+    COALESCE(store_carts.buyer_rut, customers.rut) AS customer_rut,
+    COALESCE(store_carts.buyer_email, customers.email) AS customer_email,
+    COALESCE(store_carts.buyer_first_names, customers.first_names) AS customer_first_names,
+    COALESCE(store_carts.buyer_last_names, customers.last_names) AS customer_last_names,
+    COALESCE(store_carts.buyer_phone, customers.phone) AS customer_phone,
     optical_prescriptions.status AS prescription_status,
     optical_prescriptions.version AS prescription_version,
     clinical_encounters.patient_id,
     patients.rut AS patient_rut,
     patients.first_names AS patient_first_names,
     patients.last_names AS patient_last_names,
+    external_prescriptions.source AS external_prescription_source,
+    external_prescriptions.status AS external_prescription_status,
     COALESCE((
       SELECT SUM(sale_payments.amount_cents)
       FROM sale_payments
@@ -62,7 +79,10 @@ const SALE_SELECT = `
     ), 0) AS paid_cents
   FROM sales
   JOIN customers ON customers.id = sales.customer_id
+  LEFT JOIN store_carts ON store_carts.sale_id = sales.id
   LEFT JOIN optical_prescriptions ON optical_prescriptions.id = sales.prescription_id
+  LEFT JOIN external_prescriptions
+    ON external_prescriptions.id = sales.external_prescription_id
   LEFT JOIN clinical_encounters ON clinical_encounters.id = optical_prescriptions.encounter_id
   LEFT JOIN patients ON patients.id = clinical_encounters.patient_id
 `;
