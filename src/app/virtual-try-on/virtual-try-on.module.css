@@ -93,10 +93,11 @@
 }
 
 .viewer {
+  --viewer-fallback-aspect: 16 / 10;
   position: relative;
   display: grid;
   overflow: hidden;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: var(--camera-aspect-ratio, var(--viewer-fallback-aspect));
   place-items: center;
   border-radius: 24px;
   background:
@@ -476,25 +477,63 @@
 
 @media (max-width: 640px) {
   .page {
-    padding: 18px 10px 38px;
+    padding: 14px 0 34px;
   }
 
   .hero {
-    padding: 0 8px;
+    margin-bottom: 16px;
+    padding: 0 16px;
+  }
+
+  .brand {
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+
+  .brandMark {
+    width: 34px;
+    height: 34px;
   }
 
   .heroCopy {
-    margin-top: 48px;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .heroCopy h1 {
+    max-width: 350px;
+    font-size: clamp(2.25rem, 11.2vw, 3rem);
+    line-height: 0.94;
+  }
+
+  .heroCopy > p:last-child {
+    font-size: 0.9rem;
+    line-height: 1.52;
+  }
+
+  .eyebrow {
+    margin-bottom: -4px;
+    font-size: 0.64rem;
   }
 
   .experience {
-    padding: 8px;
-    border-radius: 24px;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .viewerPanel {
+    padding: 0 10px;
   }
 
   .viewer {
-    aspect-ratio: 4 / 5;
-    border-radius: 18px;
+    --viewer-fallback-aspect: 3 / 4;
+    max-height: 72svh;
+    border-radius: 22px;
   }
 
   .canvas {
@@ -504,23 +543,109 @@
   .actionBar {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
   }
 
   .primaryButton,
   .secondaryButton {
-    padding: 0 12px;
-    font-size: 0.84rem;
+    min-height: 50px;
+    padding: 0 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
   }
 
   .controlsPanel {
     display: flex;
-    padding: 18px 10px 10px;
+    gap: 20px;
+    padding: 22px 16px 8px;
+  }
+
+  .controlsPanel h2 {
+    font-size: 1.85rem;
+  }
+
+  .frameList {
+    display: flex;
+    max-height: none;
+    margin: 0 -16px;
+    padding: 0 16px 8px;
+    overflow-x: auto;
+    scroll-padding-left: 16px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .frameList::-webkit-scrollbar {
+    display: none;
+  }
+
+  .frameCard {
+    grid-template-columns: 1fr;
+    min-width: 164px;
+    padding: 8px;
+    scroll-snap-align: start;
+  }
+
+  .frameCard:hover,
+  .frameCard[data-selected="true"] {
+    transform: none;
+  }
+
+  .framePreview {
+    height: 82px;
+  }
+
+  .framePreview img {
+    width: 118px;
+  }
+
+  .liveBadge {
+    top: 12px;
+    left: 12px;
+  }
+
+  .placeholderIcon {
+    width: 62px;
+    height: 62px;
+    font-size: 2rem;
+  }
+
+  .viewerPlaceholder {
+    max-width: 280px;
+    padding: 20px;
+  }
+
+  .viewerPlaceholder span:last-child {
+    font-size: 0.82rem;
   }
 
   .faceHint {
     max-width: calc(100% - 32px);
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .status {
+    margin: 9px 4px 0;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+
+  .segmentedControl button {
+    min-height: 42px;
+  }
+
+  .sliderLabel {
+    gap: 12px;
+  }
+
+  .sliderLabel input {
+    min-height: 30px;
+  }
+
+  .privacyCard {
+    margin-top: 4px;
   }
 }
 

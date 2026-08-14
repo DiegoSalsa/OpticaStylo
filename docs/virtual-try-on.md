@@ -38,7 +38,8 @@ GET /virtual-try-on
 
 Incluye:
 
-- cámara apagada hasta una acción explícita;
+- solicitud automática del permiso de cámara al entrar en el probador;
+- reintento explícito cuando el permiso fue rechazado o retirado;
 - seguimiento facial automático de una sola persona;
 - respaldo manual cuando el modelo no puede cargarse;
 - selección de marcos;
@@ -50,7 +51,9 @@ Incluye:
 - tres marcos ilustrativos mientras no existan recursos reales activos.
 
 La cámara requiere `HTTPS` en producción. Los navegadores también permiten usarla
-desde `localhost` durante el desarrollo.
+desde `localhost` durante el desarrollo, pero una dirección HTTP de la red local,
+como `http://192.168.x.x`, no es un contexto seguro y no puede mostrar el permiso
+de cámara. Las pruebas en teléfonos deben realizarse mediante HTTPS.
 
 ## Recursos necesarios por marco
 
@@ -128,7 +131,8 @@ Las imágenes usan `ETag`, caché pública y `X-Content-Type-Options: nosniff`.
 La prueba se considera técnicamente viable si, al evaluarla con los dispositivos
 objetivo de la óptica:
 
-- la cámara inicia después de un consentimiento comprensible;
+- el navegador solicita consentimiento al entrar y la cámara inicia después de
+  que la persona lo acepta;
 - el seguimiento mantiene el marco estable mirando de frente;
 - cambiar de marco no reinicia la cámara;
 - el modo manual permite continuar en dispositivos no compatibles;
