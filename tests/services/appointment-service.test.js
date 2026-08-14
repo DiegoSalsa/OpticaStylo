@@ -192,7 +192,25 @@ test("impide saltar desde confirmada directamente a completada", async () => {
         admin,
         { findAppointmentById: async () => buildAppointment() },
       ),
-    (error) => error.code === "INVALID_APPOINTMENT_STATUS_TRANSITION",
+    (error) =>
+      error.code === "APPOINTMENT_COMPLETION_REQUIRES_FINALIZED_ENCOUNTER",
+  );
+});
+
+test("reserva la finalización para el flujo clínico", async () => {
+  await assert.rejects(
+    () =>
+      changeAppointmentStatus(
+        appointmentId,
+        { status: "COMPLETED" },
+        professionalActor,
+        {
+          findAppointmentById: async () =>
+            buildAppointment({ status: "CHECKED_IN" }),
+        },
+      ),
+    (error) =>
+      error.code === "APPOINTMENT_COMPLETION_REQUIRES_FINALIZED_ENCOUNTER",
   );
 });
 
