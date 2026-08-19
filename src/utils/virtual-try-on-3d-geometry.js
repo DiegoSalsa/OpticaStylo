@@ -81,7 +81,10 @@ export function landmarksToGlassesPose(
   }
 
   // -- Scale: proportional to eye distance ---------------------------------
-  const baseScale = eyeDistance / 160; // tuned so 160px eye distance ≈ scale 1
+  // GLB models are typically in metres (≈0.14 m wide for glasses), but our
+  // orthographic camera works in pixel-space.  We need a large multiplier
+  // so the model is visible at the right size.
+  const baseScale = eyeDistance * 6;
 
   // -- Apply calibration offsets -------------------------------------------
   return {
