@@ -41,3 +41,39 @@ export const DEMO_VIRTUAL_FRAMES = Object.freeze([
     widthScale: 2.3,
   },
 ]);
+
+// ── 3D try-on ──────────────────────────────────────────────────────────
+
+export const DEMO_3D_GLASSES = Object.freeze({
+  name: "Harley-Davidson HD0896",
+  sku: "HD0896-001",
+  modelUrl: "/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.glb",
+});
+
+/** Default calibration for aligning the 3D model to face landmarks. */
+export const DEFAULT_3D_CALIBRATION = Object.freeze({
+  positionOffsetX: 0,
+  positionOffsetY: 0.15,
+  positionOffsetZ: 0,
+  rotationOffsetX: 0,
+  rotationOffsetY: 0,
+  rotationOffsetZ: 0,
+  scaleMultiplier: 1.0,
+});
+
+/**
+ * Key MediaPipe Face Landmarker indices for 3D pose estimation.
+ * @see https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png
+ */
+export const FACE_LANDMARK_INDICES = Object.freeze({
+  LEFT_EYE_OUTER: 33,
+  RIGHT_EYE_OUTER: 263,
+  LEFT_EYE_INNER: 133,
+  RIGHT_EYE_INNER: 362,
+  NOSE_BRIDGE: 6,
+  NOSE_TIP: 1,
+  FOREHEAD: 10,
+  CHIN: 152,
+  LEFT_EAR: 234,
+  RIGHT_EAR: 454,
+});

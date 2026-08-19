@@ -1,0 +1,626 @@
+.page {
+  min-height: 100vh;
+  padding: 28px clamp(18px, 4vw, 64px) 64px;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(165, 199, 187, 0.38), transparent 28rem),
+    linear-gradient(145deg, #f7f4ed 0%, #eee9df 100%);
+}
+
+.hero {
+  width: min(1440px, 100%);
+  margin: 0 auto 30px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #173e37;
+  font-size: 0.93rem;
+  font-weight: 760;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.brandMark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(23, 62, 55, 0.26);
+  border-radius: 50%;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.82rem;
+}
+
+.heroCopy {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(270px, 0.7fr);
+  gap: 32px;
+  align-items: end;
+  margin-top: clamp(44px, 7vw, 92px);
+}
+
+.heroCopy h1 {
+  max-width: 920px;
+  margin: 0;
+  color: #173e37;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.6rem, 6vw, 6.4rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+}
+
+.heroCopy > p:last-child {
+  max-width: 540px;
+  margin: 0;
+  color: #535b57;
+  font-size: clamp(1rem, 1.4vw, 1.14rem);
+  line-height: 1.68;
+}
+
+.eyebrow,
+.stepLabel {
+  color: #0d7564;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  grid-column: 1 / -1;
+  margin: 0 0 -12px;
+}
+
+/* ── Experience layout ────────────────────────────────────────────────── */
+
+.experience {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(310px, 0.65fr);
+  gap: clamp(18px, 2.5vw, 38px);
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: clamp(12px, 1.5vw, 22px);
+  border: 1px solid rgba(23, 62, 55, 0.13);
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 34px 90px rgba(47, 51, 47, 0.13);
+  backdrop-filter: blur(16px);
+}
+
+/* ── Viewer panel ─────────────────────────────────────────────────────── */
+
+.viewerPanel {
+  min-width: 0;
+}
+
+.viewer {
+  --viewer-fallback-aspect: 16 / 10;
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  aspect-ratio: var(--camera-aspect-ratio, var(--viewer-fallback-aspect));
+  place-items: center;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(239, 235, 222, 0.8), transparent 34%),
+    #ced8d2;
+  isolation: isolate;
+}
+
+.viewer::after {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+
+.videoElement {
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.videoElement[data-hidden="true"] {
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.threeCanvas {
+  position: absolute !important;
+  z-index: 3;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+
+.viewerPlaceholder {
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: #29443f;
+  text-align: center;
+}
+
+.viewerPlaceholder strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.3rem, 2.5vw, 2rem);
+  font-weight: 500;
+}
+
+.viewerPlaceholder span:last-child {
+  color: #5d6a65;
+  font-size: 0.92rem;
+}
+
+.placeholderIcon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
+  place-items: center;
+  border: 1px solid rgba(23, 62, 55, 0.2);
+  border-radius: 50%;
+  font-size: 2.4rem;
+}
+
+/* ── Badges ───────────────────────────────────────────────────────────── */
+
+.liveBadge,
+.faceHint,
+.badge3d {
+  position: absolute;
+  z-index: 7;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: #f7fbf9;
+  background: rgba(20, 34, 30, 0.62);
+  box-shadow: 0 9px 25px rgba(13, 24, 21, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+.liveBadge {
+  top: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  font-weight: 760;
+  letter-spacing: 0.03em;
+}
+
+.liveBadge span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #aab6b1;
+}
+
+.liveBadge[data-active="true"] span {
+  background: #50dda5;
+  box-shadow: 0 0 0 4px rgba(80, 221, 165, 0.18);
+}
+
+.badge3d {
+  top: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, rgba(13, 117, 100, 0.78), rgba(20, 34, 30, 0.72));
+}
+
+.badge3d::before {
+  content: "◆";
+  font-size: 0.55rem;
+  color: #50dda5;
+}
+
+.faceHint {
+  bottom: 18px;
+  left: 50%;
+  padding: 9px 14px;
+  font-size: 0.78rem;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* ── Action bar ───────────────────────────────────────────────────────── */
+
+.actionBar {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.primaryButton {
+  border: 1px solid #173e37;
+  color: white;
+  background: #173e37;
+}
+
+.secondaryButton {
+  border: 1px solid rgba(23, 62, 55, 0.24);
+  color: #173e37;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.status {
+  min-height: 1.5em;
+  margin: 11px 4px 0;
+  color: #626b67;
+  font-size: 0.81rem;
+}
+
+/* ── Controls panel ───────────────────────────────────────────────────── */
+
+.controlsPanel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 24px;
+  padding: clamp(16px, 2.3vw, 32px) clamp(8px, 1.5vw, 20px) 12px;
+}
+
+.controlsPanel h2 {
+  margin: 7px 0 2px;
+  color: #173e37;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.7rem, 2.5vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.stepLabel {
+  margin: 0;
+}
+
+.modelLabel {
+  margin: 0;
+  color: #69716e;
+  font-size: 0.86rem;
+}
+
+/* ── Control group ────────────────────────────────────────────────────── */
+
+.controlGroup {
+  display: grid;
+  gap: 15px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(23, 62, 55, 0.11);
+}
+
+.controlGroup .stepLabel {
+  margin-top: 16px;
+}
+
+.segmentedControl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: 999px;
+  background: #e9e7df;
+}
+
+.segmentedControl button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  color: #5d6662;
+  background: transparent;
+  cursor: pointer;
+}
+
+.segmentedControl button[data-selected="true"] {
+  color: #173e37;
+  background: white;
+  box-shadow: 0 4px 14px rgba(47, 51, 47, 0.1);
+}
+
+.segmentedControl button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.sliderLabel {
+  display: grid;
+  gap: 8px;
+  color: #4c5652;
+  font-size: 0.79rem;
+  font-weight: 650;
+}
+
+.sliderLabel span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.sliderLabel output {
+  color: #0d7564;
+  font-variant-numeric: tabular-nums;
+}
+
+.sliderLabel input {
+  width: 100%;
+  accent-color: #0d7564;
+  cursor: pointer;
+}
+
+.textButton {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  color: #0d7564;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ── Link to 2D ───────────────────────────────────────────────────────── */
+
+.linkCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid rgba(23, 62, 55, 0.12);
+  border-radius: 14px;
+  color: #173e37;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 650;
+  background: rgba(255, 255, 255, 0.48);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.linkCard:hover {
+  border-color: rgba(13, 117, 100, 0.35);
+  background: #f8faf7;
+}
+
+.linkCard span:first-child {
+  font-size: 1.1rem;
+}
+
+/* ── Privacy card ─────────────────────────────────────────────────────── */
+
+.privacyCard {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 10px;
+  margin-top: auto;
+  padding: 15px;
+  border-radius: 16px;
+  color: #d8e9e3;
+  background: #173e37;
+}
+
+.privacyCard > span {
+  font-size: 1.35rem;
+}
+
+.privacyCard strong {
+  color: white;
+  font-size: 0.78rem;
+}
+
+.privacyCard p {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 980px) {
+  .heroCopy,
+  .experience {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCopy {
+    gap: 18px;
+  }
+
+  .heroCopy > p:last-child {
+    max-width: 680px;
+  }
+
+  .controlsPanel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .privacyCard,
+  .linkCard {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 14px 0 34px;
+  }
+
+  .hero {
+    margin-bottom: 16px;
+    padding: 0 16px;
+  }
+
+  .brand {
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+
+  .brandMark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .heroCopy {
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .heroCopy h1 {
+    max-width: 350px;
+    font-size: clamp(2.25rem, 11.2vw, 3rem);
+    line-height: 0.94;
+  }
+
+  .heroCopy > p:last-child {
+    font-size: 0.9rem;
+    line-height: 1.52;
+  }
+
+  .eyebrow {
+    margin-bottom: -4px;
+    font-size: 0.64rem;
+  }
+
+  .experience {
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .viewerPanel {
+    padding: 0 10px;
+  }
+
+  .viewer {
+    --viewer-fallback-aspect: 3 / 4;
+    max-height: 72svh;
+    border-radius: 22px;
+  }
+
+  .actionBar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    min-height: 50px;
+    padding: 0 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .controlsPanel {
+    display: flex;
+    gap: 20px;
+    padding: 22px 16px 8px;
+  }
+
+  .controlsPanel h2 {
+    font-size: 1.85rem;
+  }
+
+  .liveBadge {
+    top: 12px;
+    left: 12px;
+  }
+
+  .badge3d {
+    top: 12px;
+    right: 12px;
+  }
+
+  .placeholderIcon {
+    width: 62px;
+    height: 62px;
+    font-size: 2rem;
+  }
+
+  .viewerPlaceholder {
+    max-width: 280px;
+    padding: 20px;
+  }
+
+  .viewerPlaceholder span:last-child {
+    font-size: 0.82rem;
+  }
+
+  .faceHint {
+    max-width: calc(100% - 32px);
+    text-align: center;
+    white-space: normal;
+  }
+
+  .status {
+    margin: 9px 4px 0;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+
+  .segmentedControl button {
+    min-height: 42px;
+  }
+
+  .sliderLabel {
+    gap: 12px;
+  }
+
+  .sliderLabel input {
+    min-height: 30px;
+  }
+
+  .privacyCard {
+    margin-top: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .secondaryButton {
+    transition: none;
+  }
+}
