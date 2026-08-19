@@ -301,6 +301,7 @@ export default function Glasses3DOverlay() {
                 <GlassesModel
                   modelUrl={DEMO_3D_GLASSES.modelUrl}
                   poseRef={poseRef}
+                  videoDimensions={videoDimensions}
                 />
               </Suspense>
             </Canvas>
@@ -364,8 +365,8 @@ export default function Glasses3DOverlay() {
             <span>Escala <output>{Math.round(calibration.scaleMultiplier * 100)}%</output></span>
             <input
               type="range"
-              min="0.3"
-              max="3"
+              min="0.1"
+              max="5"
               step="0.05"
               value={calibration.scaleMultiplier}
               onChange={(e) => updateCalibration("scaleMultiplier", e.target.value)}
