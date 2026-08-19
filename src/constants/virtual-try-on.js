@@ -56,9 +56,9 @@ export const DEFAULT_3D_CALIBRATION = Object.freeze({
   positionOffsetY: 0.15,
   positionOffsetZ: 0,
   rotationOffsetX: 0,
-  rotationOffsetY: 0,
+  rotationOffsetY: 180,
   rotationOffsetZ: 0,
-  scaleMultiplier: 1.0,
+  scaleMultiplier: 15.0,
 });
 
 /**

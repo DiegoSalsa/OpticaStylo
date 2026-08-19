@@ -366,8 +366,8 @@ export default function Glasses3DOverlay() {
             <input
               type="range"
               min="0.1"
-              max="5"
-              step="0.05"
+              max="50"
+              step="0.1"
               value={calibration.scaleMultiplier}
               onChange={(e) => updateCalibration("scaleMultiplier", e.target.value)}
             />
