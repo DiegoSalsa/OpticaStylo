@@ -1,0 +1,12 @@
+.guardian-fields {
+  border: 0;
+  border-top: 1px solid #e5eeeb;
+  margin: 1.4rem 0 0;
+  padding: 1.2rem 0 0;
+}
+.guardian-fields legend {
+  color: #38524c;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding-right: 0.7rem;
+}

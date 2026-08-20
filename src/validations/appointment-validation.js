@@ -1,5 +1,8 @@
 import { AppError } from "../utils/app-error.js";
-import { validatePatientId } from "./patient-validation.js";
+import {
+  validateCreatePatientInput,
+  validatePatientId,
+} from "./patient-validation.js";
 import { validateProfessionalId } from "./professional-validation.js";
 
 export const APPOINTMENT_STATUSES = Object.freeze([
@@ -88,6 +91,33 @@ export function validateCreateAppointmentInput(input, currentDate = new Date()) 
     patientId: validatePatientId(input.patientId),
     professionalId: validateProfessionalId(input.professionalId),
     startAt,
+  };
+}
+
+export function validatePublicBookingInput(input, currentDate = new Date()) {
+  validateObject(input);
+
+  if (input.acceptsPrivacy !== true) {
+    throwValidationError("Debe aceptar el tratamiento de sus datos para reservar.");
+  }
+
+  if (input.website) {
+    throwValidationError("No fue posible procesar la reserva.");
+  }
+
+  const appointment = validateCreateAppointmentInput(
+    {
+      patientId: "00000000-0000-4000-8000-000000000001",
+      professionalId: input.professionalId,
+      startAt: input.startAt,
+    },
+    currentDate,
+  );
+
+  return {
+    patient: validateCreatePatientInput(input.patient, currentDate),
+    professionalId: appointment.professionalId,
+    startAt: appointment.startAt,
   };
 }
 

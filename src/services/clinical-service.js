@@ -4,6 +4,7 @@ import {
   addClinicalEncounterAddendum,
   createClinicalEncounter,
   finalizeClinicalEncounter,
+  findClinicalEncounterByAppointmentId,
   findClinicalEncounterById,
   findMedicalRecordByPatientId,
   hasClinicalAssignment,
@@ -21,6 +22,7 @@ import {
   validateMedicalRecordInput,
   validateUpdateEncounterInput,
 } from "../validations/clinical-validation.js";
+import { validateAppointmentId } from "../validations/appointment-validation.js";
 
 function throwClinicalAccessNotAssigned() {
   throw new AppError({
@@ -205,6 +207,20 @@ export async function getEncounter(encounterId, actor, dependencies = {}) {
     actor,
     assignmentRepository,
   );
+  return encounter;
+}
+
+export async function getEncounterForAppointment(appointmentId, actor, dependencies = {}) {
+  const findRepository = dependencies.findClinicalEncounterByAppointmentId
+    ?? findClinicalEncounterByAppointmentId;
+  const assignmentRepository = dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
+  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED]);
+  const encounter = await findRepository(validateAppointmentId(appointmentId));
+  if (!encounter) return null;
+  if (encounter.status === "DRAFT" && encounter.professional.id !== actor.userId) {
+    return null;
+  }
+  await requireAssignment(encounter.patient.id, actor, assignmentRepository);
   return encounter;
 }
 

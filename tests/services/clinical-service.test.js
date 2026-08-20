@@ -7,6 +7,7 @@ import {
   createEncounter,
   finalizeEncounter,
   getEncounter,
+  getEncounterForAppointment,
   getMedicalRecord,
   getPatientClinicalHistory,
   updateMedicalRecord,
@@ -43,6 +44,29 @@ test("entrega una ficha vacía cuando aún no fue creada", async () => {
   });
 
   assert.deepEqual(result, { patientId, record: null });
+});
+
+test("recupera la atención de una reserva solo para el profesional asignado", async () => {
+  const expected = buildEncounter();
+  const result = await getEncounterForAppointment(appointmentId, professional, {
+    findClinicalEncounterByAppointmentId: async (id) => {
+      assert.equal(id, appointmentId);
+      return expected;
+    },
+    hasClinicalAssignment: async (id, userId) =>
+      id === patientId && userId === professionalId,
+  });
+  assert.equal(result, expected);
+});
+
+test("oculta el borrador ligado a una reserva de otro profesional", async () => {
+  const result = await getEncounterForAppointment(appointmentId, professional, {
+    findClinicalEncounterByAppointmentId: async () =>
+      buildEncounter({
+        professional: { id: otherProfessionalId },
+      }),
+  });
+  assert.equal(result, null);
 });
 
 test("impide leer fichas de pacientes no asignados", async () => {

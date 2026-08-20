@@ -1,0 +1,256 @@
+.agenda-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+.agenda-toolbar .app-button {
+  height: 42px;
+}
+.agenda-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+}
+.internal-booking,
+.professional-manager {
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+.internal-booking h2,
+.professional-manager h2 {
+  font-size: 1rem;
+  margin: 0 0 0.25rem;
+}
+.internal-booking > div > p,
+.professional-manager > div > p {
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  margin: 0 0 0.9rem;
+}
+.internal-booking-grid {
+  align-items: end;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+}
+.booking-patient,
+.booking-notes {
+  grid-column: span 2;
+}
+.inline-search {
+  display: flex;
+  gap: 0.4rem;
+}
+.inline-search input {
+  min-width: 0;
+}
+.professional-list {
+  display: grid;
+  gap: 0.5rem;
+}
+.professional-row,
+.professional-create {
+  align-items: end;
+  background: #f7faf9;
+  border-radius: 10px;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(2, 90px) 115px auto;
+  padding: 0.7rem;
+}
+.professional-row > div strong,
+.professional-row > div small {
+  display: block;
+}
+.professional-row > div small,
+.professional-row label,
+.bookable-check {
+  color: var(--color-text-soft);
+  font-size: 0.62rem;
+}
+.professional-row input[type="number"] {
+  border: 1px solid #d3e1dd;
+  border-radius: 7px;
+  display: block;
+  margin-top: 0.2rem;
+  padding: 0.45rem;
+  width: 100%;
+}
+.bookable-check {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+  padding-bottom: 0.65rem;
+}
+.professional-create {
+  grid-template-columns: minmax(210px, 1fr) 110px 110px 130px auto;
+  margin-top: 0.75rem;
+}
+.agenda-list {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+}
+.appointment-card {
+  align-items: center;
+  border: 1px solid #e0eae7;
+  border-radius: 13px;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  padding: 0.85rem;
+}
+.appointment-date {
+  background: #edf8f5;
+  border-radius: 10px;
+  color: #0a5749;
+  display: grid;
+  height: 58px;
+  place-items: center;
+  text-align: center;
+}
+.appointment-date strong {
+  font-size: 1rem;
+}
+.appointment-date small {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+}
+.appointment-main strong,
+.appointment-main small {
+  display: block;
+}
+.appointment-main strong {
+  font-size: 0.8rem;
+}
+.appointment-main small {
+  color: var(--color-text-soft);
+  font-size: 0.66rem;
+  margin-top: 0.2rem;
+}
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+.appointment-actions .app-button {
+  font-size: 0.66rem;
+  padding: 0.5rem 0.65rem;
+}
+.schedule-panel {
+  display: grid;
+  gap: 1rem;
+}
+.schedule-card {
+  padding: 1rem;
+}
+.schedule-card h2 {
+  font-size: 1rem;
+  margin: 0.2rem 0 0.35rem;
+}
+.schedule-card > p {
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  margin: 0 0 1rem;
+}
+.week-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+.week-day {
+  align-items: center;
+  background: #f7faf9;
+  border-radius: 10px;
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: 74px 20px repeat(4, minmax(48px, 1fr));
+  padding: 0.55rem;
+}
+.week-day strong {
+  font-size: 0.66rem;
+}
+.week-day input[type="time"] {
+  border: 1px solid #d3e1dd;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 0.62rem;
+  min-width: 0;
+  padding: 0.45rem 0.25rem;
+  width: 100%;
+}
+.week-day input:disabled {
+  opacity: 0.45;
+}
+.schedule-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
+}
+.block-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+.block-item {
+  align-items: center;
+  background: #fff5ea;
+  border-radius: 9px;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.65rem;
+}
+.block-item span {
+  font-size: 0.66rem;
+}
+.block-item button {
+  background: transparent;
+  border: 0;
+  color: #9a4830;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+@media (max-width: 1100px) {
+  .agenda-layout {
+    grid-template-columns: 1fr;
+  }
+  .agenda-toolbar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .internal-booking-grid,
+  .professional-row,
+  .professional-create {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 650px) {
+  .agenda-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .internal-booking-grid,
+  .professional-row,
+  .professional-create {
+    grid-template-columns: 1fr;
+  }
+  .booking-patient,
+  .booking-notes {
+    grid-column: auto;
+  }
+  .appointment-card {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+  .appointment-actions {
+    grid-column: 1/-1;
+  }
+  .week-day {
+    grid-template-columns: 64px 20px repeat(2, 1fr);
+  }
+  .week-day input:nth-of-type(n + 4) {
+    grid-row: 2;
+  }
+}

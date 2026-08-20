@@ -1,0 +1,119 @@
+.clinical-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+.clinical-appointments {
+  padding: 1rem;
+}
+.clinical-appointments h2 {
+  font-size: 1rem;
+  margin: 0.2rem 0 1rem;
+}
+.clinical-workspace {
+  display: grid;
+  gap: 1rem;
+}
+.clinical-section {
+  padding: 1.4rem;
+}
+.clinical-section h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.3rem;
+}
+.clinical-section > p {
+  color: var(--color-text-soft);
+  font-size: 0.75rem;
+  margin: 0 0 1.1rem;
+}
+.clinical-textareas {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 1fr 1fr;
+}
+.clinical-textareas .field textarea {
+  min-height: 105px;
+  resize: vertical;
+}
+.clinical-textareas .field-wide textarea {
+  min-height: 130px;
+}
+.clinical-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+.prescription-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 90px repeat(4, 1fr);
+}
+.prescription-grid strong {
+  align-self: end;
+  font-size: 0.72rem;
+  padding-bottom: 0.75rem;
+}
+.prescription-grid .field > span {
+  font-size: 0.62rem;
+}
+.history-list {
+  display: grid;
+  gap: 0.7rem;
+}
+.history-entry {
+  background: #f5faf9;
+  border-radius: 10px;
+  padding: 0.8rem;
+}
+.history-entry strong,
+.history-entry small {
+  display: block;
+}
+.history-entry strong {
+  font-size: 0.76rem;
+}
+.history-entry small {
+  color: var(--color-text-soft);
+  font-size: 0.65rem;
+  margin-top: 0.2rem;
+}
+.addenda {
+  border-top: 1px solid #e5eeeb;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+}
+.addenda article {
+  background: #fff9ea;
+  border-radius: 9px;
+  margin-top: 0.6rem;
+  padding: 0.7rem;
+}
+.addenda article p {
+  font-size: 0.74rem;
+  margin: 0.25rem 0;
+}
+.addenda article small {
+  color: #7c6b45;
+  font-size: 0.62rem;
+}
+@media (max-width: 1000px) {
+  .clinical-layout {
+    grid-template-columns: 1fr;
+  }
+  .clinical-appointments .management-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .clinical-textareas {
+    grid-template-columns: 1fr;
+  }
+  .clinical-appointments .management-list {
+    grid-template-columns: 1fr;
+  }
+  .prescription-grid {
+    grid-template-columns: 70px repeat(2, 1fr);
+  }
+}

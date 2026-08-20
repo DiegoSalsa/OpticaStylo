@@ -339,6 +339,14 @@ export async function findClinicalEncounterById(encounterId) {
   });
 }
 
+export async function findClinicalEncounterByAppointmentId(appointmentId) {
+  const result = await executeQuery(
+    "SELECT id FROM clinical_encounters WHERE appointment_id = $1",
+    [appointmentId],
+  );
+  return result.rows[0] ? findClinicalEncounterById(result.rows[0].id) : null;
+}
+
 export async function updateClinicalEncounter(
   encounterId,
   changes,
