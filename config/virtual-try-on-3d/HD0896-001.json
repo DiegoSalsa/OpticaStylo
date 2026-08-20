@@ -1,0 +1,16 @@
+{
+  "source": "public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.glb",
+  "output": "public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json",
+  "identity": {
+    "modelId": "harley-davidson-hd0896-001-v4",
+    "name": "Harley-Davidson HD0896",
+    "sku": "HD0896-001"
+  },
+  "dimensionsMm": {
+    "frameWidth": 137,
+    "lensWidth": 56,
+    "bridgeWidth": 15,
+    "templeLength": 145,
+    "verticalOffsetMm": 2
+  }
+}
