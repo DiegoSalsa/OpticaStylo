@@ -48,8 +48,8 @@ La ficha de importación conserva las medidas comerciales reales en milímetros:
 - largo de patilla.
 
 El tracking estima cuántos píxeles representa un milímetro mediante el iris,
-usa el ancho facial como respaldo y toma la rotación desde la matriz facial 3D
-de MediaPipe. Una malla facial invisible de 468 puntos escribe profundidad para
+usa el ancho facial como respaldo y toma la rotación desde los landmarks 3D de
+MediaPipe. Una malla facial invisible de 468 puntos escribe profundidad para
 que nariz, pómulos y sienes oculten correctamente las partes traseras del marco.
 Por eso un marco de 150 mm se muestra mayor que uno de 137 mm: el motor no
 estira todos los productos hasta el mismo ancho de cara.
