@@ -25,6 +25,7 @@ test("crea la venta como cotización", async () => {
   const result = await createSale(draft, actor, {
     createSale: async (data, actorId) => {
       assert.equal(data.prescriptionId, null); assert.equal(actorId, userId);
+      assert.equal(data.discountCents, 0);
       return { reason: null, sale };
     },
   });
@@ -35,6 +36,14 @@ test("traduce la receta obligatoria a conflicto comercial", async () => {
   await assert.rejects(() => createSale(draft, actor, {
     createSale: async () => ({ reason: "PRESCRIPTION_REQUIRED", sale: null }),
   }), (error) => error.code === "PRESCRIPTION_REQUIRED" && error.status === 409);
+});
+
+test("traduce un descuento invÃ¡lido a conflicto comercial", async () => {
+  await assert.rejects(() => createSale({
+    ...draft, discountCents: 1000, discountReason: "Convenio",
+  }, actor, {
+    createSale: async () => ({ reason: "DISCOUNT_EXCEEDS_SUBTOTAL", sale: null }),
+  }), (error) => error.code === "DISCOUNT_EXCEEDS_SUBTOTAL" && error.status === 409);
 });
 
 test("confirma una cotización sin aceptar un cuerpo manipulable", async () => {
