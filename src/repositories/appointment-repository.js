@@ -23,6 +23,7 @@ function mapAppointment(row) {
       id: row.professional_id,
       lastName: row.professional_last_name,
     },
+    source: row.source,
     startAt: row.start_at,
     status: row.status,
     updatedAt: row.updated_at,
@@ -38,11 +39,11 @@ function mapEvent(row) {
     newEndAt: row.new_end_at,
     newStartAt: row.new_start_at,
     newStatus: row.new_status,
-    performedBy: {
+    performedBy: row.performed_by ? {
       firstName: row.performed_by_first_name,
       id: row.performed_by,
       lastName: row.performed_by_last_name,
-    },
+    } : null,
     previousEndAt: row.previous_end_at,
     previousStartAt: row.previous_start_at,
     previousStatus: row.previous_status,
@@ -62,6 +63,7 @@ const APPOINTMENT_SELECT = `
     appointments.cancelled_at,
     appointments.created_at,
     appointments.updated_at,
+    appointments.source,
     patients.rut AS patient_rut,
     patients.first_names AS patient_first_names,
     patients.last_names AS patient_last_names,
@@ -245,6 +247,111 @@ export async function createAppointment(appointmentData, actorUserId) {
         appointmentData.endAt,
         actorUserId,
       ],
+    );
+
+    return {
+      appointment: await findAppointmentByIdWithClient(client, appointmentId),
+      conflict: null,
+    };
+  });
+}
+
+export async function createPublicBooking(bookingData) {
+  return executeTransaction(async (client) => {
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+      bookingData.patient.rut,
+    ]);
+    const patientResult = await client.query(
+      `SELECT id, birth_date, email FROM patients WHERE rut = $1 FOR UPDATE`,
+      [bookingData.patient.rut],
+    );
+    let patientId = patientResult.rows[0]?.id;
+
+    if (patientId) {
+      const existing = patientResult.rows[0];
+      const birthDate = existing.birth_date instanceof Date
+        ? existing.birth_date.toISOString().slice(0, 10)
+        : String(existing.birth_date);
+      if (birthDate !== bookingData.patient.birthDate || existing.email !== bookingData.patient.email) {
+        return { appointment: null, conflict: "IDENTITY" };
+      }
+    } else {
+      const createdPatient = await client.query(
+        `INSERT INTO patients (
+          rut, first_names, last_names, birth_date, phone, email, address,
+          created_by, updated_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NULL)
+        RETURNING id`,
+        [
+          bookingData.patient.rut,
+          bookingData.patient.firstNames,
+          bookingData.patient.lastNames,
+          bookingData.patient.birthDate,
+          bookingData.patient.phone,
+          bookingData.patient.email,
+          bookingData.patient.address,
+        ],
+      );
+      patientId = createdPatient.rows[0].id;
+
+      if (bookingData.patient.guardian) {
+        const guardian = bookingData.patient.guardian;
+        await client.query(
+          `INSERT INTO patient_guardians (
+            patient_id, rut, first_names, last_names, relationship, phone, email
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [patientId, guardian.rut, guardian.firstNames, guardian.lastNames,
+            guardian.relationship, guardian.phone, guardian.email],
+        );
+      }
+    }
+
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+      bookingData.professionalId,
+    ]);
+    const conflict = await findCollision(
+      client,
+      bookingData.professionalId,
+      bookingData.startAt,
+      bookingData.endAt,
+    );
+    if (conflict) return { appointment: null, conflict };
+
+    const appointmentResult = await client.query(
+      `INSERT INTO appointments (
+        patient_id, professional_id, start_at, end_at, source,
+        public_manage_token_hash, created_by, updated_by
+      ) VALUES ($1, $2, $3, $4, 'PUBLIC', $5, NULL, NULL)
+      RETURNING id`,
+      [patientId, bookingData.professionalId, bookingData.startAt,
+        bookingData.endAt, bookingData.manageTokenHash],
+    );
+    const appointmentId = appointmentResult.rows[0].id;
+
+    await client.query(
+      `INSERT INTO appointment_events (
+        appointment_id, event_type, new_start_at, new_end_at, new_status, performed_by
+      ) VALUES ($1, 'CREATED', $2, $3, 'CONFIRMED', NULL)`,
+      [appointmentId, bookingData.startAt, bookingData.endAt],
+    );
+
+    const emailPayload = JSON.stringify({
+      appointmentId,
+      endAt: bookingData.endAt,
+      startAt: bookingData.startAt,
+    });
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key
+       ) VALUES ('APPOINTMENT_CONFIRMED', $1, $2::JSONB, $3)`,
+      [bookingData.patient.email, emailPayload, `appointment:${appointmentId}:confirmed`],
+    );
+    const reminderAt = new Date(bookingData.startAt.getTime() - 24 * 60 * 60 * 1000);
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key, scheduled_at
+       ) VALUES ('APPOINTMENT_REMINDER', $1, $2::JSONB, $3, GREATEST($4, CURRENT_TIMESTAMP))`,
+      [bookingData.patient.email, emailPayload, `appointment:${appointmentId}:reminder-24h`, reminderAt],
     );
 
     return {
@@ -476,7 +583,7 @@ export async function getAppointmentHistory(appointmentId) {
         users.first_name AS performed_by_first_name,
         users.last_name AS performed_by_last_name
       FROM appointment_events
-      JOIN users ON users.id = appointment_events.performed_by
+      LEFT JOIN users ON users.id = appointment_events.performed_by
       WHERE appointment_events.appointment_id = $1
       ORDER BY appointment_events.created_at, appointment_events.id
     `,
