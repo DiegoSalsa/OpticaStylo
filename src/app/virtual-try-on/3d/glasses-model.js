@@ -3,16 +3,29 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
+import { BufferAttribute, BufferGeometry, DoubleSide } from "three";
 
 /**
  * Three.js component that loads and renders the glasses GLB model.
  * Position, rotation, and scale are updated every frame from the
  * `poseRef` shared by the parent overlay component.
  */
-export default function GlassesModel({ modelMetadata, modelUrl, onReady, poseRef }) {
+export default function GlassesModel({
+  faceMeshTriangleIndices,
+  modelMetadata,
+  modelUrl,
+  onReady,
+  poseRef,
+}) {
   const groupRef = useRef();
   const occluderRef = useRef();
   const { scene } = useGLTF(modelUrl);
+  const faceMeshGeometry = useMemo(() => {
+    const geometry = new BufferGeometry();
+    geometry.setAttribute("position", new BufferAttribute(new Float32Array(468 * 3), 3));
+    geometry.setIndex(faceMeshTriangleIndices ?? []);
+    return geometry;
+  }, [faceMeshTriangleIndices]);
 
   const model = useMemo(() => {
     const clonedScene = scene.clone(true);
@@ -43,6 +56,8 @@ export default function GlassesModel({ modelMetadata, modelUrl, onReady, poseRef
     onReady?.();
   }, [onReady]);
 
+  useEffect(() => () => faceMeshGeometry.dispose(), [faceMeshGeometry]);
+
   useFrame(() => {
     const group = groupRef.current;
     const occluder = occluderRef.current;
@@ -61,20 +76,31 @@ export default function GlassesModel({ modelMetadata, modelUrl, onReady, poseRef
     const s = pose.scale;
     group.scale.set(s, s, s);
 
-    occluder.visible = true;
-    occluder.position.set(...pose.occluder.position);
-    occluder.rotation.set(...pose.occluder.rotation);
-    occluder.scale.set(...pose.occluder.scale);
+    const facePositions = pose.faceMesh?.positions;
+    const positionAttribute = faceMeshGeometry.getAttribute("position");
+    if (facePositions && faceMeshTriangleIndices?.length > 0) {
+      positionAttribute.array.set(facePositions);
+      positionAttribute.needsUpdate = true;
+      occluder.visible = true;
+    } else {
+      occluder.visible = false;
+    }
   });
 
   return (
     <>
-      <mesh ref={occluderRef} renderOrder={-100} visible={false}>
-        <sphereGeometry args={[1, 40, 24]} />
+      <mesh
+        ref={occluderRef}
+        geometry={faceMeshGeometry}
+        frustumCulled={false}
+        renderOrder={-100}
+        visible={false}
+      >
         <meshBasicMaterial
           colorWrite={false}
           depthTest
           depthWrite
+          side={DoubleSide}
         />
       </mesh>
       <group ref={groupRef} visible={false}>

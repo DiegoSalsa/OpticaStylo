@@ -24,7 +24,24 @@ function faceLandmarks() {
   landmarks[454] = { x: 0.75, y: 0.51, z: 0 };
   landmarks[127] = { x: 0.28, y: 0.36, z: 0 };
   landmarks[356] = { x: 0.72, y: 0.36, z: 0 };
+  landmarks[468] = { x: 0.38, y: 0.4, z: 0 };
+  landmarks[473] = { x: 0.62, y: 0.4, z: 0 };
   return landmarks;
+}
+
+function yawTransform(angle) {
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
+  return {
+    columns: 4,
+    data: [
+      cosine, 0, -sine, 0,
+      0, 1, 0, 0,
+      sine, 0, cosine, 0,
+      0, 0, 0, 1,
+    ],
+    rows: 4,
+  };
 }
 
 test("calcula una escala física sin ajustes específicos del marco", () => {
@@ -34,8 +51,11 @@ test("calcula una escala física sin ajustes específicos del marco", () => {
   assert.ok(Math.abs(pose.position[1] - (50 - (2 * 500 / 135))) < 0.000001);
   assert.equal(pose.rotation[1], Math.PI);
   assert.equal(pose.rotation[2], 0);
-  assert.deepEqual(pose.occluder.scale, [220, 159, 154]);
-  assert.ok(pose.occluder.position[2] < -pose.occluder.scale[2]);
+  assert.equal(pose.faceMesh.positions.length, 468 * 3);
+  assert.ok(Math.abs(
+    pose.faceMesh.positions[6 * 3 + 2]
+      + modelMetadata.occlusion.maskFrontDepthMm * pose.scale,
+  ) < 0.00001);
 });
 
 test("conserva las diferencias físicas entre marcos", () => {
@@ -61,26 +81,43 @@ test("mantiene la escala frontal cuando el rostro gira", () => {
   assert.ok(Math.abs(turned.scale * Math.cos(yaw) - frontal.scale) < 0.0001);
 });
 
+test("usa la matriz facial 3D para mantener el giro del marco", () => {
+  const turnedLandmarks = faceLandmarks();
+  turnedLandmarks[1].x = 0.45;
+  const pose = landmarksToGlassesPose(
+    turnedLandmarks,
+    1000,
+    500,
+    modelMetadata,
+    yawTransform(0.5),
+  );
+  assert.ok(Math.abs(pose.headRotation[1] - 0.5) < 0.000001);
+  assert.ok(Math.abs(pose.rotation[1] - (Math.PI + 0.5)) < 0.000001);
+});
+
 test("refleja la posición horizontal para acompañar el video espejo", () => {
   const landmarks = faceLandmarks();
-  for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356]) {
+  for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356, 468, 473]) {
     landmarks[index].x -= 0.1;
   }
   const pose = landmarksToGlassesPose(landmarks, 1000, 500, modelMetadata);
   assert.equal(pose.position[0], 100);
-  assert.equal(pose.occluder.position[0], 100);
+  assert.equal(pose.faceMesh.positions[234 * 3], 350);
 });
 
 test("rechaza datos incompletos y suaviza también el oclusor", () => {
   assert.equal(landmarksToGlassesPose([], 1000, 500, modelMetadata), null);
   const previous = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
   const nextLandmarks = faceLandmarks();
-  for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356]) {
+  for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356, 468, 473]) {
     nextLandmarks[index].x -= 0.05;
   }
   const next = landmarksToGlassesPose(nextLandmarks, 1000, 500, modelMetadata);
   const pose = smoothGlassesPose3D(previous, next, 0.5);
   assert.equal(pose.position[0], 25);
-  assert.equal(pose.occluder.position[0], 25);
+  assert.equal(
+    pose.faceMesh.positions[234 * 3],
+    (previous.faceMesh.positions[234 * 3] + next.faceMesh.positions[234 * 3]) / 2,
+  );
   assert.ok(Math.abs(pose.scale - previous.scale) < 0.000001);
 });

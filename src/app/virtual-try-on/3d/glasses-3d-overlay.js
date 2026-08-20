@@ -37,7 +37,7 @@ function cameraErrorMessage(error) {
   return "No pudimos iniciar la cámara. Inténtalo otra vez o prueba en otro dispositivo.";
 }
 
-async function createFaceLandmarker() {
+async function createFaceTracking() {
   const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
   const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
   const options = {
@@ -49,17 +49,26 @@ async function createFaceLandmarker() {
     minFacePresenceConfidence: 0.58,
     minTrackingConfidence: 0.55,
     numFaces: 1,
+    outputFacialTransformationMatrixes: true,
     runningMode: "VIDEO",
   };
 
+  let landmarker;
   try {
-    return await FaceLandmarker.createFromOptions(vision, options);
+    landmarker = await FaceLandmarker.createFromOptions(vision, options);
   } catch {
-    return FaceLandmarker.createFromOptions(vision, {
+    landmarker = await FaceLandmarker.createFromOptions(vision, {
       ...options,
       baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_URL },
     });
   }
+  const faceMeshTriangleIndices = FaceLandmarker.FACE_LANDMARKS_TESSELATION
+    .filter((_, index) => index % 3 === 0)
+    .flatMap((edge, triangleIndex) => {
+      const nextEdge = FaceLandmarker.FACE_LANDMARKS_TESSELATION[triangleIndex * 3 + 1];
+      return [edge.start, edge.end, nextEdge.end];
+    });
+  return { faceMeshTriangleIndices, landmarker };
 }
 
 export default function Glasses3DOverlay() {
@@ -84,6 +93,7 @@ export default function Glasses3DOverlay() {
   const [modelReady, setModelReady] = useState(false);
   const [modelMetadata, setModelMetadata] = useState(null);
   const [modelError, setModelError] = useState(false);
+  const [faceMeshTriangleIndices, setFaceMeshTriangleIndices] = useState(null);
   const [videoDimensions, setVideoDimensions] = useState({ width: 1280, height: 720 });
 
   const releaseResources = useCallback(() => {
@@ -158,7 +168,7 @@ export default function Glasses3DOverlay() {
     const isMobilePortrait = window.matchMedia(
       "(max-width: 768px) and (orientation: portrait)",
     ).matches;
-    const landmarkerPromise = createFaceLandmarker().catch(() => null);
+    const trackingPromise = createFaceTracking().catch(() => null);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -173,8 +183,8 @@ export default function Glasses3DOverlay() {
 
       if (cameraRequestRef.current !== requestId) {
         for (const track of stream.getTracks()) track.stop();
-        const staleLandmarker = await landmarkerPromise;
-        staleLandmarker?.close?.();
+        const staleTracking = await trackingPromise;
+        staleTracking?.landmarker.close?.();
         return;
       }
 
@@ -219,6 +229,7 @@ export default function Glasses3DOverlay() {
               video.videoWidth,
               video.videoHeight,
               modelMetadataRef.current,
+              result.facialTransformationMatrixes?.[0] ?? null,
             );
             if (nextPose) {
               smoothedPoseRef.current = smoothGlassesPose3D(
@@ -243,19 +254,20 @@ export default function Glasses3DOverlay() {
       };
       animationFrameRef.current = requestAnimationFrame(renderFrame);
 
-      const landmarker = await landmarkerPromise;
+      const tracking = await trackingPromise;
       if (cameraRequestRef.current !== requestId) {
-        landmarker?.close?.();
+        tracking?.landmarker.close?.();
         return;
       }
-      if (landmarker) {
-        faceLandmarkerRef.current = landmarker;
+      if (tracking) {
+        faceLandmarkerRef.current = tracking.landmarker;
+        setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
         setStatusMessage("Cámara activa. Centra tu rostro para probarte el marco.");
       } else {
         setStatusMessage("La cámara funciona, pero el seguimiento facial no pudo cargarse. Recarga la página.");
       }
     } catch (error) {
-      void landmarkerPromise.then((unusedLandmarker) => unusedLandmarker?.close?.());
+      void trackingPromise.then((unusedTracking) => unusedTracking?.landmarker.close?.());
       releaseResources();
       setCameraStatus("error");
       setFaceDetected(false);
@@ -320,6 +332,7 @@ export default function Glasses3DOverlay() {
               <Suspense fallback={null}>
                 {modelMetadata && (
                   <GlassesModel
+                    faceMeshTriangleIndices={faceMeshTriangleIndices}
                     modelMetadata={modelMetadata}
                     modelUrl={DEMO_3D_GLASSES.modelUrl}
                     onReady={handleModelReady}
