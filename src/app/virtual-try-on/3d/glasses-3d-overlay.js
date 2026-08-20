@@ -2,6 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -104,6 +105,8 @@ export default function Glasses3DOverlay() {
   const [modelError, setModelError] = useState(false);
   const [faceMeshTriangleIndices, setFaceMeshTriangleIndices] = useState(null);
   const [videoDimensions, setVideoDimensions] = useState({ width: 1280, height: 720 });
+  const [models, setModels] = useState([{ ...DEMO_3D_GLASSES, assetId: "demo", isDemo: true }]);
+  const [selectedModel, setSelectedModel] = useState({ ...DEMO_3D_GLASSES, assetId: "demo", isDemo: true });
 
   const releaseResources = useCallback(() => {
     cameraRequestRef.current += 1;
@@ -127,13 +130,37 @@ export default function Glasses3DOverlay() {
 
   useEffect(() => {
     const controller = new AbortController();
-    async function loadModelMetadata() {
+    async function loadCatalog() {
       try {
-        const response = await fetch(DEMO_3D_GLASSES.metadataUrl, {
+        const response = await fetch("/api/store/virtual-try-on/models", { signal: controller.signal });
+        const payload = await response.json();
+        if (response.ok && payload.success && payload.data.length > 0) {
+          setModels(payload.data);
+          setSelectedModel(payload.data[0]);
+        }
+      } catch (error) {
+        if (error?.name !== "AbortError") {
+          // El GLB de demostración mantiene utilizable el prototipo sin fingir catálogo.
+        }
+      }
+    }
+    void loadCatalog();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadModelMetadata() {
+      setModelError(false);
+      setModelReady(false);
+      setModelMetadata(null);
+      try {
+        const response = await fetch(selectedModel.metadataUrl, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const metadata = validateTryOnModelMetadata(await response.json());
+        const payload = await response.json();
+        const metadata = validateTryOnModelMetadata(payload.success ? payload.data.metadata : payload);
         if (metadata.analysis.status !== "valid") {
           throw new Error("El modelo 3D requiere revisión.");
         }
@@ -145,7 +172,7 @@ export default function Glasses3DOverlay() {
     }
     void loadModelMetadata();
     return () => controller.abort();
-  }, []);
+  }, [selectedModel]);
 
   const stopCamera = useCallback(() => {
     releaseResources();
@@ -351,9 +378,10 @@ export default function Glasses3DOverlay() {
               <Suspense fallback={null}>
                 {modelMetadata && (
                   <GlassesModel
+                    key={selectedModel.assetId}
                     faceMeshTriangleIndices={faceMeshTriangleIndices}
                     modelMetadata={modelMetadata}
-                    modelUrl={DEMO_3D_GLASSES.modelUrl}
+                    modelUrl={selectedModel.modelUrl}
                     onReady={handleModelReady}
                     poseRef={poseRef}
                   />
@@ -435,10 +463,17 @@ export default function Glasses3DOverlay() {
           </div>
           <div>
             <p className={styles.stepLabel}>Marco de prueba</p>
-            <h2>{DEMO_3D_GLASSES.name}</h2>
-            <p className={styles.modelLabel}>{DEMO_3D_GLASSES.sku} · Modelo 3D real</p>
+            <h2>{selectedModel.name}</h2>
+            <p className={styles.modelLabel}>{selectedModel.sku} · {selectedModel.isDemo ? "Prototipo GLB" : "Modelo del catálogo"}</p>
           </div>
         </div>
+
+        {models.length > 1 && <div className={styles.modelPicker}>
+          <p className={styles.stepLabel}>Cambiar marco</p>
+          <div>{models.map((model) => <button aria-pressed={selectedModel.assetId === model.assetId} key={model.assetId} onClick={() => setSelectedModel(model)} type="button"><span>{model.name}</span><small>{model.sku}</small></button>)}</div>
+        </div>}
+
+        {!selectedModel.isDemo && <p className={styles.licenseNote}>Activo {selectedModel.licenseCode}{selectedModel.attribution ? ` · ${selectedModel.attribution}` : ""}</p>}
 
         <div className={styles.autoFitCard} data-active={faceDetected}>
           <span className={styles.autoFitIcon} aria-hidden="true">
@@ -463,10 +498,10 @@ export default function Glasses3DOverlay() {
         </div>
 
         <div className={styles.panelFooter}>
-          <a href="/virtual-try-on" className={styles.linkCard}>
+          <Link href="/tienda" className={styles.linkCard}>
             <span aria-hidden="true">←</span>
-            Probar otros marcos en 2D
-          </a>
+            Volver al catálogo
+          </Link>
           <div className={styles.privacyNote}>
             <span aria-hidden="true">●</span>
             <p><strong>Privado por diseño.</strong> El video no sale de tu dispositivo.</p>
