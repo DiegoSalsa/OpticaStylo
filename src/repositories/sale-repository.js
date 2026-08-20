@@ -18,21 +18,27 @@ function mapSaleBase(row) {
       rut: row.customer_rut,
     },
     id: row.id,
+    discountCents: Number(row.discount_cents ?? 0),
+    discountReason: row.discount_reason,
     origin: row.origin,
     paidCents,
     paymentMethod: row.payment_method,
-    fulfillment: row.fulfillment_method ? {
-      address: row.delivery_address,
-      city: row.delivery_city,
-      method: row.fulfillment_method,
-      notes: row.delivery_notes,
-      region: row.delivery_region,
-    } : null,
-    externalPrescription: row.external_prescription_id ? {
-      id: row.external_prescription_id,
-      source: row.external_prescription_source,
-      status: row.external_prescription_status,
-    } : null,
+    fulfillment: row.fulfillment_method
+      ? {
+          address: row.delivery_address,
+          city: row.delivery_city,
+          method: row.fulfillment_method,
+          notes: row.delivery_notes,
+          region: row.delivery_region,
+        }
+      : null,
+    externalPrescription: row.external_prescription_id
+      ? {
+          id: row.external_prescription_id,
+          source: row.external_prescription_source,
+          status: row.external_prescription_status,
+        }
+      : null,
     prescription: row.prescription_id
       ? {
           id: row.prescription_id,
@@ -88,7 +94,9 @@ const SALE_SELECT = `
 `;
 
 async function findSaleWithClient(client, saleId) {
-  const baseResult = await client.query(`${SALE_SELECT} WHERE sales.id = $1`, [saleId]);
+  const baseResult = await client.query(`${SALE_SELECT} WHERE sales.id = $1`, [
+    saleId,
+  ]);
   const sale = mapSaleBase(baseResult.rows[0]);
   if (!sale) return null;
 
@@ -140,7 +148,10 @@ export async function findSaleById(saleId) {
 }
 
 async function loadDraftReferences(client, draft) {
-  const customerResult = await client.query("SELECT id FROM customers WHERE id = $1 FOR SHARE", [draft.customerId]);
+  const customerResult = await client.query(
+    "SELECT id FROM customers WHERE id = $1 FOR SHARE",
+    [draft.customerId],
+  );
   if (customerResult.rowCount === 0) return { reason: "CUSTOMER_NOT_FOUND" };
 
   const productResult = await client.query(
@@ -148,10 +159,13 @@ async function loadDraftReferences(client, draft) {
      FROM products WHERE id = ANY($1::UUID[]) FOR SHARE`,
     [draft.items.map((item) => item.productId)],
   );
-  if (productResult.rowCount !== draft.items.length) return { reason: "PRODUCT_NOT_FOUND" };
-  if (productResult.rows.some((product) => !product.is_active)) return { reason: "PRODUCT_INACTIVE" };
+  if (productResult.rowCount !== draft.items.length)
+    return { reason: "PRODUCT_NOT_FOUND" };
+  if (productResult.rows.some((product) => !product.is_active))
+    return { reason: "PRODUCT_INACTIVE" };
 
   let prescription = null;
+  let externalPrescription = null;
   if (draft.prescriptionId) {
     const prescriptionResult = await client.query(
       `SELECT optical_prescriptions.id, optical_prescriptions.status,
@@ -163,26 +177,61 @@ async function loadDraftReferences(client, draft) {
     );
     prescription = prescriptionResult.rows[0];
     if (!prescription) return { reason: "PRESCRIPTION_NOT_FOUND" };
-    if (prescription.status !== "ACTIVE" || prescription.encounter_status !== "FINALIZED") {
+    if (
+      prescription.status !== "ACTIVE" ||
+      prescription.encounter_status !== "FINALIZED"
+    ) {
       return { reason: "PRESCRIPTION_NOT_USABLE" };
     }
   }
 
-  if (productResult.rows.some((product) => product.requires_prescription) && !prescription) {
+  if (draft.externalPrescriptionId) {
+    const result = await client.query(
+      `SELECT id, status, customer_id
+       FROM external_prescriptions
+       WHERE id = $1 FOR SHARE`,
+      [draft.externalPrescriptionId],
+    );
+    externalPrescription = result.rows[0];
+    if (!externalPrescription)
+      return { reason: "EXTERNAL_PRESCRIPTION_NOT_FOUND" };
+    if (
+      externalPrescription.status !== "READY" ||
+      externalPrescription.customer_id !== draft.customerId
+    ) {
+      return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE" };
+    }
+  }
+
+  if (
+    productResult.rows.some((product) => product.requires_prescription) &&
+    !prescription &&
+    !externalPrescription
+  ) {
     return { reason: "PRESCRIPTION_REQUIRED" };
   }
 
-  const productsById = new Map(productResult.rows.map((product) => [product.id, product]));
+  const productsById = new Map(
+    productResult.rows.map((product) => [product.id, product]),
+  );
   const lines = draft.items.map((item, index) => ({
     ...productsById.get(item.productId),
     position: index + 1,
     quantity: item.quantity,
   }));
-  const totalCents = lines.reduce(
+  const subtotalCents = lines.reduce(
     (total, line) => total + Number(line.unit_price_cents) * line.quantity,
     0,
   );
-  return { lines, reason: null, totalCents };
+  if (draft.discountCents >= subtotalCents) {
+    return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL" };
+  }
+  return {
+    lines,
+    reason: null,
+    subtotalCents,
+    totalCents: subtotalCents - draft.discountCents,
+  };
 }
 
 async function insertItems(client, saleId, lines) {
@@ -192,9 +241,17 @@ async function insertItems(client, saleId, lines) {
          sale_id, product_id, product_sku, product_name, product_category,
          requires_prescription, position, quantity, unit_price_cents
        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [saleId, line.id, line.sku, line.name, line.category,
-        line.requires_prescription, line.position, line.quantity,
-        line.unit_price_cents],
+      [
+        saleId,
+        line.id,
+        line.sku,
+        line.name,
+        line.category,
+        line.requires_prescription,
+        line.position,
+        line.quantity,
+        line.unit_price_cents,
+      ],
     );
   }
 }
@@ -210,8 +267,14 @@ async function insertSaleEvent(
     `INSERT INTO sale_events (
        sale_id, event_type, previous_status, new_status, details, performed_by
      ) VALUES ($1, $2, $3, $4, $5, $6)`,
-    [saleId, eventType, previousStatus, newStatus,
-      details == null ? null : JSON.stringify(details), actorUserId],
+    [
+      saleId,
+      eventType,
+      previousStatus,
+      newStatus,
+      details == null ? null : JSON.stringify(details),
+      actorUserId,
+    ],
   );
 }
 
@@ -222,15 +285,32 @@ export async function createSale(draft, actorUserId) {
 
     const saleResult = await client.query(
       `INSERT INTO sales (
-         customer_id, prescription_id, subtotal_cents, total_cents,
+         customer_id, prescription_id, external_prescription_id,
+         subtotal_cents, discount_cents,
+         discount_reason, total_cents,
          created_by, updated_by
-       ) VALUES ($1, $2, $3, $3, $4, $4) RETURNING id`,
-      [draft.customerId, draft.prescriptionId, references.totalCents, actorUserId],
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8) RETURNING id`,
+      [
+        draft.customerId,
+        draft.prescriptionId,
+        draft.externalPrescriptionId,
+        references.subtotalCents,
+        draft.discountCents,
+        draft.discountReason,
+        references.totalCents,
+        actorUserId,
+      ],
     );
     const saleId = saleResult.rows[0].id;
     await insertItems(client, saleId, references.lines);
     await insertSaleEvent(client, saleId, "CREATED", actorUserId, {
-      details: { totalCents: references.totalCents }, newStatus: "QUOTATION",
+      details: {
+        discountCents: draft.discountCents,
+        discountReason: draft.discountReason,
+        subtotalCents: references.subtotalCents,
+        totalCents: references.totalCents,
+      },
+      newStatus: "QUOTATION",
     });
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
@@ -238,22 +318,45 @@ export async function createSale(draft, actorUserId) {
 
 export async function updateSaleDraft(saleId, draft, actorUserId) {
   return executeTransaction(async (client) => {
-    const saleResult = await client.query("SELECT status FROM sales WHERE id = $1 FOR UPDATE", [saleId]);
-    if (saleResult.rowCount === 0) return { reason: "SALE_NOT_FOUND", sale: null };
-    if (saleResult.rows[0].status !== "QUOTATION") return { reason: "SALE_NOT_EDITABLE", sale: null };
+    const saleResult = await client.query(
+      "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
+      [saleId],
+    );
+    if (saleResult.rowCount === 0)
+      return { reason: "SALE_NOT_FOUND", sale: null };
+    if (saleResult.rows[0].status !== "QUOTATION")
+      return { reason: "SALE_NOT_EDITABLE", sale: null };
     const references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
 
     await client.query("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
     await client.query(
       `UPDATE sales SET customer_id = $2, prescription_id = $3,
-         subtotal_cents = $4, total_cents = $4, updated_by = $5 WHERE id = $1`,
-      [saleId, draft.customerId, draft.prescriptionId, references.totalCents, actorUserId],
+         external_prescription_id = $4, subtotal_cents = $5,
+         discount_cents = $6, discount_reason = $7,
+         total_cents = $8, updated_by = $9 WHERE id = $1`,
+      [
+        saleId,
+        draft.customerId,
+        draft.prescriptionId,
+        draft.externalPrescriptionId,
+        references.subtotalCents,
+        draft.discountCents,
+        draft.discountReason,
+        references.totalCents,
+        actorUserId,
+      ],
     );
     await insertItems(client, saleId, references.lines);
     await insertSaleEvent(client, saleId, "UPDATED", actorUserId, {
-      details: { totalCents: references.totalCents },
-      previousStatus: "QUOTATION", newStatus: "QUOTATION",
+      details: {
+        discountCents: draft.discountCents,
+        discountReason: draft.discountReason,
+        subtotalCents: references.subtotalCents,
+        totalCents: references.totalCents,
+      },
+      previousStatus: "QUOTATION",
+      newStatus: "QUOTATION",
     });
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
@@ -262,12 +365,13 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
 export async function confirmSale(saleId, actorUserId) {
   return executeTransaction(async (client) => {
     const saleResult = await client.query(
-      "SELECT status, prescription_id FROM sales WHERE id = $1 FOR UPDATE",
+      "SELECT status, prescription_id, external_prescription_id, customer_id FROM sales WHERE id = $1 FOR UPDATE",
       [saleId],
     );
     const sale = saleResult.rows[0];
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
-    if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
+    if (sale.status !== "QUOTATION")
+      return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
     const productsResult = await client.query(
       `SELECT sale_items.requires_prescription, products.is_active
        FROM sale_items JOIN products ON products.id = sale_items.product_id
@@ -277,7 +381,11 @@ export async function confirmSale(saleId, actorUserId) {
     if (productsResult.rows.some((product) => !product.is_active)) {
       return { reason: "PRODUCT_INACTIVE", sale: null };
     }
-    if (productsResult.rows.some((product) => product.requires_prescription) && !sale.prescription_id) {
+    if (
+      productsResult.rows.some((product) => product.requires_prescription) &&
+      !sale.prescription_id &&
+      !sale.external_prescription_id
+    ) {
       return { reason: "PRESCRIPTION_REQUIRED", sale: null };
     }
     if (sale.prescription_id) {
@@ -289,8 +397,27 @@ export async function confirmSale(saleId, actorUserId) {
         [sale.prescription_id],
       );
       const prescription = prescriptionResult.rows[0];
-      if (!prescription || prescription.status !== "ACTIVE" || prescription.encounter_status !== "FINALIZED") {
+      if (
+        !prescription ||
+        prescription.status !== "ACTIVE" ||
+        prescription.encounter_status !== "FINALIZED"
+      ) {
         return { reason: "PRESCRIPTION_NOT_USABLE", sale: null };
+      }
+    }
+    if (sale.external_prescription_id) {
+      const result = await client.query(
+        `SELECT status, customer_id FROM external_prescriptions
+         WHERE id = $1 FOR SHARE`,
+        [sale.external_prescription_id],
+      );
+      const prescription = result.rows[0];
+      if (
+        !prescription ||
+        prescription.status !== "READY" ||
+        prescription.customer_id !== sale.customer_id
+      ) {
+        return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE", sale: null };
       }
     }
 
@@ -299,7 +426,8 @@ export async function confirmSale(saleId, actorUserId) {
       [saleId, actorUserId],
     );
     await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, {
-      previousStatus: "QUOTATION", newStatus: "PENDING",
+      previousStatus: "QUOTATION",
+      newStatus: "PENDING",
     });
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
@@ -313,7 +441,8 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
     );
     const sale = result.rows[0];
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
-    if (sale.status !== "PENDING") return { reason: "SALE_NOT_PAYABLE", sale: null };
+    if (sale.status !== "PENDING")
+      return { reason: "SALE_NOT_PAYABLE", sale: null };
     if (sale.payment_method && sale.payment_method !== payment.paymentMethod) {
       return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
     }
@@ -341,16 +470,27 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
       `INSERT INTO sale_payments (
          sale_id, amount_cents, payment_method, reference, received_by
        ) VALUES ($1, $2, $3, $4, $5)`,
-      [saleId, payment.amountCents, payment.paymentMethod, payment.reference, actorUserId],
+      [
+        saleId,
+        payment.amountCents,
+        payment.paymentMethod,
+        payment.reference,
+        actorUserId,
+      ],
     );
-    const newStatus = paidCents + payment.amountCents === totalCents ? "PAID" : "PENDING";
+    const newStatus =
+      paidCents + payment.amountCents === totalCents ? "PAID" : "PENDING";
     await client.query(
       `UPDATE sales SET payment_method = $2, status = $3, updated_by = $4 WHERE id = $1`,
       [saleId, payment.paymentMethod, newStatus, actorUserId],
     );
     await insertSaleEvent(client, saleId, "PAYMENT_REGISTERED", actorUserId, {
-      details: { amountCents: payment.amountCents, paymentMethod: payment.paymentMethod },
-      previousStatus: "PENDING", newStatus,
+      details: {
+        amountCents: payment.amountCents,
+        paymentMethod: payment.paymentMethod,
+      },
+      previousStatus: "PENDING",
+      newStatus,
     });
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
@@ -364,7 +504,10 @@ const ALLOWED_TRANSITIONS = Object.freeze({
 
 export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
   return executeTransaction(async (client) => {
-    const result = await client.query("SELECT status FROM sales WHERE id = $1 FOR UPDATE", [saleId]);
+    const result = await client.query(
+      "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
+      [saleId],
+    );
     const current = result.rows[0];
     if (!current) return { reason: "SALE_NOT_FOUND", sale: null };
 
@@ -373,7 +516,8 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
         return { reason: "SALE_NOT_CANCELLABLE", sale: null };
       }
       const payments = await client.query(
-        "SELECT COUNT(*) AS count FROM sale_payments WHERE sale_id = $1", [saleId],
+        "SELECT COUNT(*) AS count FROM sale_payments WHERE sale_id = $1",
+        [saleId],
       );
       if (Number(payments.rows[0].count) > 0) {
         return { reason: "SALE_HAS_PAYMENTS", sale: null };
@@ -385,10 +529,13 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
       );
       await insertSaleEvent(client, saleId, "CANCELLED", actorUserId, {
         details: { reason: change.cancellationReason },
-        previousStatus: current.status, newStatus: "CANCELLED",
+        previousStatus: current.status,
+        newStatus: "CANCELLED",
       });
     } else {
-      if (!(ALLOWED_TRANSITIONS[current.status] ?? []).includes(change.status)) {
+      if (
+        !(ALLOWED_TRANSITIONS[current.status] ?? []).includes(change.status)
+      ) {
         return { reason: "INVALID_STATUS_TRANSITION", sale: null };
       }
       await client.query(
@@ -396,7 +543,8 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
         [saleId, change.status, actorUserId],
       );
       await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, {
-        previousStatus: current.status, newStatus: change.status,
+        previousStatus: current.status,
+        newStatus: change.status,
       });
     }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
@@ -416,7 +564,10 @@ export async function listSales({ customerId, page, pageSize, status }) {
        ORDER BY sales.created_at DESC, sales.sale_number DESC LIMIT $3 OFFSET $4`,
       [...parameters, pageSize, offset],
     ),
-    executeQuery(`SELECT COUNT(*) AS total FROM sales WHERE ${filters}`, parameters),
+    executeQuery(
+      `SELECT COUNT(*) AS total FROM sales WHERE ${filters}`,
+      parameters,
+    ),
   ]);
   const total = Number(countResult.rows[0].total);
   return {
