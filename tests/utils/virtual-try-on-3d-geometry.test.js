@@ -21,13 +21,15 @@ function faceLandmarks() {
 
 test("calcula el calce desde el ancho real del rostro", () => {
   const pose = landmarksToGlassesPose(faceLandmarks(), 1000, 500);
-  assert.equal(pose.scale, 460);
+  assert.equal(pose.scale, 580);
   assert.equal(pose.position[0], 0);
   assert.equal(pose.position[1], 42.5);
   assert.equal(pose.rotation[1], Math.PI);
   assert.equal(pose.rotation[2], 0);
   assert.deepEqual(pose.occluder.scale, [250, 159, 170]);
   assert.ok(pose.occluder.position[2] < -pose.occluder.scale[2]);
+  const templeInnerEdgeRatio = 0.061621711730957034 / 0.13875067138671876;
+  assert.ok(pose.scale * templeInnerEdgeRatio > pose.occluder.scale[0]);
 });
 
 test("mantiene el ancho proyectado cuando el rostro gira", () => {
@@ -61,5 +63,5 @@ test("rechaza puntos incompletos y suaviza también la máscara facial", () => {
   const pose = smoothGlassesPose3D(previous, next, 0.5);
   assert.equal(pose.position[0], 25);
   assert.equal(pose.occluder.position[0], 25);
-  assert.equal(pose.scale, 460);
+  assert.equal(pose.scale, 580);
 });
