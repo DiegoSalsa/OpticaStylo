@@ -5,6 +5,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 15;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_NAME_LENGTH = 100;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function throwValidationError(message) {
   throw new AppError({
@@ -125,4 +127,49 @@ export function validateLoginInput(input) {
     email: validateEmail(input.email),
     password: validateLoginPassword(input.password),
   };
+}
+
+export function validateUserId(value) {
+  if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
+    throwValidationError("El identificador del usuario no es válido.");
+  }
+  return value.toLowerCase();
+}
+
+export function validateUpdateUserInput(input, currentUser) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throwValidationError("El cuerpo de la solicitud no es válido.");
+  }
+  const fields = ["email", "firstName", "isActive", "lastName", "password", "roles"];
+  if (!fields.some((field) => Object.hasOwn(input, field))) {
+    throwValidationError("Debe indicar al menos un dato para actualizar.");
+  }
+  if (Object.hasOwn(input, "isActive") && typeof input.isActive !== "boolean") {
+    throwValidationError("El estado activo del usuario debe ser booleano.");
+  }
+
+  return {
+    email: Object.hasOwn(input, "email") ? validateEmail(input.email) : currentUser.email,
+    firstName: Object.hasOwn(input, "firstName")
+      ? validateName(input.firstName, "El nombre")
+      : currentUser.firstName,
+    isActive: Object.hasOwn(input, "isActive") ? input.isActive : currentUser.isActive,
+    lastName: Object.hasOwn(input, "lastName")
+      ? validateName(input.lastName, "El apellido")
+      : currentUser.lastName,
+    password: Object.hasOwn(input, "password") ? validatePassword(input.password) : null,
+    roles: Object.hasOwn(input, "roles") ? validateRoles(input.roles) : currentUser.roles,
+  };
+}
+
+export function validateUserListQuery(searchParams) {
+  const page = Number(searchParams.get("page") ?? "1");
+  const pageSize = Number(searchParams.get("pageSize") ?? "20");
+  const search = (searchParams.get("search") ?? "").trim();
+  if (!Number.isInteger(page) || page < 1) throwValidationError("La página no es válida.");
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    throwValidationError("El tamaño de página debe estar entre 1 y 100.");
+  }
+  if (search.length > 100) throwValidationError("La búsqueda no puede superar 100 caracteres.");
+  return { page, pageSize, search };
 }
