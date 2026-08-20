@@ -215,28 +215,38 @@ export default function Glasses3DOverlay() {
         ) {
           lastDetectionAtRef.current = timestamp;
           let landmarks = null;
+          let faceTransform = null;
           try {
             const result = faceLandmarkerRef.current.detectForVideo(video, timestamp);
             landmarks = result.faceLandmarks?.[0] ?? null;
+            faceTransform = result.facialTransformationMatrixes?.[0] ?? null;
           } catch {
             landmarks = null;
           }
 
           if (landmarks) {
-            lastFaceSeenAtRef.current = timestamp;
-            const nextPose = landmarksToGlassesPose(
-              landmarks,
-              video.videoWidth,
-              video.videoHeight,
-              modelMetadataRef.current,
-              result.facialTransformationMatrixes?.[0] ?? null,
-            );
+            let nextPose = null;
+            try {
+              nextPose = landmarksToGlassesPose(
+                landmarks,
+                video.videoWidth,
+                video.videoHeight,
+                modelMetadataRef.current,
+                faceTransform,
+              );
+            } catch {
+              nextPose = null;
+            }
             if (nextPose) {
+              lastFaceSeenAtRef.current = timestamp;
               smoothedPoseRef.current = smoothGlassesPose3D(
                 smoothedPoseRef.current,
                 nextPose,
               );
               poseRef.current = smoothedPoseRef.current;
+            } else if (timestamp - lastFaceSeenAtRef.current > FACE_LOST_GRACE_MS) {
+              poseRef.current = null;
+              smoothedPoseRef.current = null;
             }
           } else if (timestamp - lastFaceSeenAtRef.current > FACE_LOST_GRACE_MS) {
             poseRef.current = null;
