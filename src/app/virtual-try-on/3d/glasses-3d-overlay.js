@@ -40,35 +40,44 @@ function cameraErrorMessage(error) {
 async function createFaceTracking() {
   const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
   const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
-  const options = {
-    baseOptions: {
-      delegate: "GPU",
-      modelAssetPath: FACE_LANDMARKER_MODEL_URL,
-    },
-    minFaceDetectionConfidence: 0.58,
-    minFacePresenceConfidence: 0.58,
-    minTrackingConfidence: 0.55,
+  const commonOptions = {
+    minFaceDetectionConfidence: 0.5,
+    minFacePresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
     numFaces: 1,
-    outputFacialTransformationMatrixes: true,
     runningMode: "VIDEO",
   };
 
-  let landmarker;
-  try {
-    landmarker = await FaceLandmarker.createFromOptions(vision, options);
-  } catch {
-    landmarker = await FaceLandmarker.createFromOptions(vision, {
-      ...options,
-      baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_URL },
-    });
+  let tracking = null;
+  let lastError = null;
+  const attempts = [
+    { delegate: "GPU" },
+    { delegate: null },
+  ];
+  for (const attempt of attempts) {
+    try {
+      const baseOptions = { modelAssetPath: FACE_LANDMARKER_MODEL_URL };
+      if (attempt.delegate) baseOptions.delegate = attempt.delegate;
+      const landmarker = await FaceLandmarker.createFromOptions(vision, {
+        ...commonOptions,
+        baseOptions,
+        outputFacialTransformationMatrixes: false,
+      });
+      tracking = { landmarker };
+      break;
+    } catch (error) {
+      lastError = error;
+    }
   }
+  if (!tracking) throw lastError ?? new Error("No se pudo iniciar el seguimiento facial.");
+
   const faceMeshTriangleIndices = FaceLandmarker.FACE_LANDMARKS_TESSELATION
     .filter((_, index) => index % 3 === 0)
     .flatMap((edge, triangleIndex) => {
       const nextEdge = FaceLandmarker.FACE_LANDMARKS_TESSELATION[triangleIndex * 3 + 1];
       return [edge.start, edge.end, nextEdge.end];
     });
-  return { faceMeshTriangleIndices, landmarker };
+  return { faceMeshTriangleIndices, ...tracking };
 }
 
 export default function Glasses3DOverlay() {
