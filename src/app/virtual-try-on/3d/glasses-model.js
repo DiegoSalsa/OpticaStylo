@@ -1,7 +1,7 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Box3, Vector3 } from "three";
 
@@ -10,10 +10,10 @@ import { Box3, Vector3 } from "three";
  * Position, rotation, and scale are updated every frame from the
  * `poseRef` shared by the parent overlay component.
  */
-export default function GlassesModel({ modelUrl, onReady, poseRef, videoDimensions }) {
+export default function GlassesModel({ modelUrl, onReady, poseRef }) {
   const groupRef = useRef();
+  const occluderRef = useRef();
   const { scene } = useGLTF(modelUrl);
-  const { camera } = useThree();
 
   const model = useMemo(() => {
     const clonedScene = scene.clone(true);
@@ -48,25 +48,15 @@ export default function GlassesModel({ modelUrl, onReady, poseRef, videoDimensio
     onReady?.();
   }, [onReady]);
 
-  // Keep the orthographic camera frustum in sync with the video dimensions
-  useEffect(() => {
-    if (!videoDimensions) return;
-    const halfW = videoDimensions.width / 2;
-    const halfH = videoDimensions.height / 2;
-    camera.left = -halfW;
-    camera.right = halfW;
-    camera.top = halfH;
-    camera.bottom = -halfH;
-    camera.updateProjectionMatrix();
-  }, [camera, videoDimensions]);
-
   useFrame(() => {
     const group = groupRef.current;
+    const occluder = occluderRef.current;
     const pose = poseRef.current;
-    if (!group) return;
+    if (!group || !occluder) return;
 
     if (!pose) {
       group.visible = false;
+      occluder.visible = false;
       return;
     }
 
@@ -75,13 +65,28 @@ export default function GlassesModel({ modelUrl, onReady, poseRef, videoDimensio
     group.rotation.set(pose.rotation[0], pose.rotation[1], pose.rotation[2]);
     const s = pose.scale;
     group.scale.set(s, s, s);
+
+    occluder.visible = true;
+    occluder.position.set(...pose.occluder.position);
+    occluder.rotation.set(...pose.occluder.rotation);
+    occluder.scale.set(...pose.occluder.scale);
   });
 
   return (
-    <group ref={groupRef}>
-      <group scale={model.normalisingScale}>
-        <primitive object={model.scene} position={model.offset} />
+    <>
+      <mesh ref={occluderRef} renderOrder={-100} visible={false}>
+        <sphereGeometry args={[1, 40, 24]} />
+        <meshBasicMaterial
+          colorWrite={false}
+          depthTest
+          depthWrite
+        />
+      </mesh>
+      <group ref={groupRef} visible={false}>
+        <group scale={model.normalisingScale}>
+          <primitive object={model.scene} position={model.offset} />
+        </group>
       </group>
-    </group>
+    </>
   );
 }

@@ -1,4 +1,7 @@
-import { FACE_LANDMARK_INDICES } from "../constants/virtual-try-on.js";
+import {
+  DEFAULT_3D_CALIBRATION,
+  FACE_LANDMARK_INDICES,
+} from "../constants/virtual-try-on.js";
 
 const {
   LEFT_EYE_OUTER,
@@ -7,6 +10,8 @@ const {
   NOSE_TIP,
   FOREHEAD,
   CHIN,
+  LEFT_EAR,
+  RIGHT_EAR,
 } = FACE_LANDMARK_INDICES;
 
 function finitePoint(point) {
@@ -19,93 +24,187 @@ function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function mirroredPoint(point, videoWidth, videoHeight) {
+  return {
+    x: (1 - point.x) * videoWidth,
+    y: point.y * videoHeight,
+  };
+}
+
+function smoothValues(previous, next, factor) {
+  return previous.map(
+    (value, index) => value + (next[index] - value) * factor,
+  );
+}
+
+function smoothAngles(previous, next, factor) {
+  return previous.map((value, index) => {
+    const difference = next[index] - value;
+    const wrappedDifference = Math.atan2(Math.sin(difference), Math.cos(difference));
+    return value + wrappedDifference * factor;
+  });
+}
+
 /**
- * Converts MediaPipe landmarks into the pixel-based coordinate system used by
- * the orthographic Three.js camera. Horizontal coordinates are mirrored to
- * match the selfie video shown to the visitor.
+ * Converts MediaPipe landmarks into a self-fitting glasses pose. The frame
+ * width comes from the detected face sides and is constrained by eye distance,
+ * so it remains stable without visitor-facing calibration controls.
  */
 export function landmarksToGlassesPose(
   landmarks,
   videoWidth,
   videoHeight,
-  calibration,
+  calibration = DEFAULT_3D_CALIBRATION,
 ) {
   if (!landmarks || videoWidth <= 0 || videoHeight <= 0) return null;
 
-  const leftEye = landmarks[LEFT_EYE_OUTER];
-  const rightEye = landmarks[RIGHT_EYE_OUTER];
-  const noseBridge = landmarks[NOSE_BRIDGE];
-  const noseTip = landmarks[NOSE_TIP];
-  const forehead = landmarks[FOREHEAD];
-  const chin = landmarks[CHIN];
+  const leftEyeLandmark = landmarks[LEFT_EYE_OUTER];
+  const rightEyeLandmark = landmarks[RIGHT_EYE_OUTER];
+  const noseBridgeLandmark = landmarks[NOSE_BRIDGE];
+  const noseTipLandmark = landmarks[NOSE_TIP];
+  const foreheadLandmark = landmarks[FOREHEAD];
+  const chinLandmark = landmarks[CHIN];
+  const leftFaceLandmark = landmarks[LEFT_EAR];
+  const rightFaceLandmark = landmarks[RIGHT_EAR];
 
-  if (!finitePoint(leftEye) || !finitePoint(rightEye) || !finitePoint(noseBridge)) {
+  const requiredPoints = [
+    leftEyeLandmark,
+    rightEyeLandmark,
+    noseBridgeLandmark,
+    noseTipLandmark,
+    foreheadLandmark,
+    chinLandmark,
+    leftFaceLandmark,
+    rightFaceLandmark,
+  ];
+  if (!requiredPoints.every(finitePoint)) return null;
+
+  const leftEye = mirroredPoint(leftEyeLandmark, videoWidth, videoHeight);
+  const rightEye = mirroredPoint(rightEyeLandmark, videoWidth, videoHeight);
+  const noseTip = mirroredPoint(noseTipLandmark, videoWidth, videoHeight);
+  const forehead = mirroredPoint(foreheadLandmark, videoWidth, videoHeight);
+  const chin = mirroredPoint(chinLandmark, videoWidth, videoHeight);
+  const leftFace = mirroredPoint(leftFaceLandmark, videoWidth, videoHeight);
+  const rightFace = mirroredPoint(rightFaceLandmark, videoWidth, videoHeight);
+
+  const eyeDistance = Math.hypot(
+    rightEye.x - leftEye.x,
+    rightEye.y - leftEye.y,
+  );
+  const projectedFaceWidth = Math.hypot(
+    rightFace.x - leftFace.x,
+    rightFace.y - leftFace.y,
+  );
+  const projectedFaceHeight = Math.hypot(
+    chin.x - forehead.x,
+    chin.y - forehead.y,
+  );
+  if (eyeDistance < 8 || projectedFaceWidth < eyeDistance || projectedFaceHeight < 8) {
     return null;
   }
 
-  const leftX = (1 - leftEye.x) * videoWidth;
-  const leftY = leftEye.y * videoHeight;
-  const rightX = (1 - rightEye.x) * videoWidth;
-  const rightY = rightEye.y * videoHeight;
-  const noseY = noseBridge.y * videoHeight;
-  const eyeDistance = Math.hypot(rightX - leftX, rightY - leftY);
+  const eyeCenter = {
+    x: (leftEye.x + rightEye.x) / 2,
+    y: (leftEye.y + rightEye.y) / 2,
+  };
+  const faceCenter = {
+    x: (leftFace.x + rightFace.x) / 2,
+    y: (forehead.y + chin.y) / 2,
+  };
 
-  if (!Number.isFinite(eyeDistance) || eyeDistance < 8) return null;
+  const noseDeviation = (noseTip.x - eyeCenter.x) / eyeDistance;
+  const yawAngle = Math.asin(clamp(noseDeviation * 2.4, -0.72, 0.72));
+  const rollAngle = Math.atan2(
+    leftEye.y - rightEye.y,
+    leftEye.x - rightEye.x,
+  );
 
-  const centerX = (leftX + rightX) / 2;
-  const centerY = (leftY + rightY) / 2;
-  const worldX = centerX - videoWidth / 2;
-  const worldY = videoHeight / 2 - centerY;
-  const rollAngle = Math.atan2(leftY - rightY, leftX - rightX);
+  const faceHeight = chin.y - forehead.y;
+  const noseBridgeY = noseBridgeLandmark.y * videoHeight;
+  const noseRatio = faceHeight > 0
+    ? (noseBridgeY - forehead.y) / faceHeight
+    : 0.38;
+  const pitchAngle = clamp((noseRatio - 0.38) * 1.15, -0.42, 0.42);
 
-  let yawAngle = 0;
-  if (finitePoint(noseTip)) {
-    const noseTipX = (1 - noseTip.x) * videoWidth;
-    const noseDeviation = (noseTipX - centerX) / eyeDistance;
-    yawAngle = clamp(noseDeviation * 1.45, -0.65, 0.65);
-  }
+  // Both face width and eye distance are corrected back to their approximate
+  // frontal measurements. Rotating the GLB then creates the projected shrink
+  // exactly once instead of making the frame collapse as the head turns.
+  const yawCosine = Math.max(0.68, Math.cos(yawAngle));
+  const frontalEyeDistance = eyeDistance / yawCosine;
+  const frontalFaceWidth = projectedFaceWidth / yawCosine;
+  const faceBasedFrameWidth = frontalFaceWidth * calibration.faceWidthRatio;
+  const frameWidth = clamp(
+    faceBasedFrameWidth,
+    frontalEyeDistance * calibration.minimumEyeWidthScale,
+    frontalEyeDistance * calibration.maximumEyeWidthScale,
+  );
 
-  let pitchAngle = 0;
-  if (finitePoint(forehead) && finitePoint(chin)) {
-    const foreheadY = forehead.y * videoHeight;
-    const chinY = chin.y * videoHeight;
-    const faceHeight = chinY - foreheadY;
-    if (faceHeight > 0) {
-      const noseRatio = (noseY - foreheadY) / faceHeight;
-      pitchAngle = clamp((noseRatio - 0.38) * 1.15, -0.42, 0.42);
-    }
-  }
+  const worldX = eyeCenter.x - videoWidth / 2;
+  const worldY = videoHeight / 2 - eyeCenter.y
+    - calibration.verticalOffset * frontalEyeDistance;
+  const headRotation = [pitchAngle, yawAngle, rollAngle];
+
+  const faceRadiusX = frontalFaceWidth * 0.5;
+  const faceRadiusY = projectedFaceHeight * 0.53;
+  const faceRadiusZ = frontalFaceWidth * 0.34;
+  const rotatedFrontRadius = Math.hypot(
+    faceRadiusX * Math.sin(yawAngle),
+    faceRadiusZ * Math.cos(yawAngle),
+  );
+  // The nearest point of the invisible head sits between the front rims and
+  // the temples in this GLB. It writes depth without covering the camera feed.
+  const occluderFrontGap = frameWidth * 0.063;
 
   return {
-    position: [
-      worldX + calibration.positionOffsetX * eyeDistance,
-      worldY - calibration.positionOffsetY * eyeDistance,
-      calibration.positionOffsetZ,
-    ],
+    headRotation,
+    occluder: {
+      position: [
+        faceCenter.x - videoWidth / 2,
+        videoHeight / 2 - faceCenter.y,
+        -occluderFrontGap - rotatedFrontRadius,
+      ],
+      rotation: headRotation,
+      scale: [faceRadiusX, faceRadiusY, faceRadiusZ],
+    },
+    position: [worldX, worldY, 0],
     rotation: [
-      pitchAngle + (calibration.rotationOffsetX * Math.PI) / 180,
-      yawAngle + (calibration.rotationOffsetY * Math.PI) / 180,
-      rollAngle + (calibration.rotationOffsetZ * Math.PI) / 180,
+      pitchAngle,
+      yawAngle + (calibration.modelYawOffsetDegrees * Math.PI) / 180,
+      rollAngle,
     ],
-    // GlassesModel normalises every asset to one unit across, so this value is
-    // the desired visible width in video pixels rather than a GLB unit guess.
-    scale: eyeDistance * calibration.widthScale,
+    scale: frameWidth,
   };
 }
 
-export function smoothGlassesPose3D(previous, next, factor = 0.38) {
+export function smoothGlassesPose3D(previous, next, factor = 0.32) {
   if (!previous) return next;
   if (!next) return previous;
   const normalizedFactor = clamp(factor, 0, 1);
   return {
-    position: previous.position.map(
-      (value, index) => value + (next.position[index] - value) * normalizedFactor,
+    headRotation: smoothAngles(
+      previous.headRotation,
+      next.headRotation,
+      normalizedFactor,
     ),
-    rotation: previous.rotation.map((value, index) => {
-      const difference = next.rotation[index] - value;
-      const wrappedDifference = Math.atan2(Math.sin(difference), Math.cos(difference));
-      return value + wrappedDifference * normalizedFactor;
-    }),
+    occluder: {
+      position: smoothValues(
+        previous.occluder.position,
+        next.occluder.position,
+        normalizedFactor,
+      ),
+      rotation: smoothAngles(
+        previous.occluder.rotation,
+        next.occluder.rotation,
+        normalizedFactor,
+      ),
+      scale: smoothValues(
+        previous.occluder.scale,
+        next.occluder.scale,
+        normalizedFactor,
+      ),
+    },
+    position: smoothValues(previous.position, next.position, normalizedFactor),
+    rotation: smoothAngles(previous.rotation, next.rotation, normalizedFactor),
     scale: previous.scale + (next.scale - previous.scale) * normalizedFactor,
   };
 }
