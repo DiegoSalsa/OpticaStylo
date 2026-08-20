@@ -15,8 +15,8 @@ export default function VirtualTryOn3DPage() {
     <main className={styles.page}>
       <header className={styles.hero}>
         <div className={styles.heroCopy}>
-          <div><p className={styles.eyebrow}>Probador virtual · 3D</p><h1>Mírate con tus próximos lentes.</h1></div>
-          <p>Mira de frente y deja que el marco se ajuste a tu rostro. Puedes girar suavemente para verlo desde distintos ángulos.</p>
+          <div><p className={styles.eyebrow}>Probador virtual · 3D</p><h1>Encuentra el marco que va contigo.</h1></div>
+          <p>Prueba los modelos 3D vinculados al catálogo real. Mira de frente y gira suavemente para comprobar el ajuste visual.</p>
         </div>
       </header>
       <Glasses3DOverlay />

@@ -5,7 +5,8 @@ import Icon from "@/components/ui/icon";
 const navigation = [
   { href: "/tienda", label: "Tienda" },
   { href: "/virtual-try-on/3d", label: "Prueba virtual 3D" },
-  { href: "/reservar", label: "Reserva tu evaluación" },
+  { href: "/reservar", label: "Reserva" },
+  { href: "/#stylo", label: "Nosotros" },
 ];
 
 export default function PublicHeader() {

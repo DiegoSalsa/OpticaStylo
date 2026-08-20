@@ -3,6 +3,7 @@ import PublicHeader from "@/components/navigation/public-header";
 
 import CartExperience from "./cart-experience";
 import "./cart.css";
+import "./checkout-stitch.css";
 
 export const metadata = { title: "Carrito | Óptica Stylo" };
 

@@ -1,14 +1,16 @@
 :root {
-  --color-background: #f6f9f8;
+  --color-background: #f7faf9;
   --color-border: #dfe9e6;
   --color-mint: #ddf7f1;
   --color-primary: #3db79f;
   --color-primary-dark: #073a32;
   --color-text: #132521;
   --color-text-soft: #5f716d;
+  --color-aqua: #00a3a3;
+  --color-charcoal: #111827;
   --radius-lg: 18px;
-  --radius-xl: 24px;
-  --shadow-card: 0 18px 50px rgba(7, 58, 50, 0.07);
+  --radius-xl: 22px;
+  --shadow-card: 0 18px 50px rgba(7, 58, 50, 0.08);
   color-scheme: light;
   font-family: Inter, Sora, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -30,6 +32,14 @@ body {
   min-width: 320px;
   color: var(--color-text);
   background: var(--color-background);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 button,
@@ -67,14 +77,14 @@ a:focus-visible {
 .brand-logo--compact .brand-logo__source { height: 56px; left: -22px; top: -8px; width: 84px; }
 .brand-logo--compact .brand-logo__wordmark small { font-size: .52rem; }
 .brand-logo--compact .brand-logo__wordmark strong { font-size: .95rem; }
-.public-header { background: rgba(255,255,255,.94); border-bottom: 1px solid rgba(223,233,230,.78); position: sticky; top: 0; z-index: 50; }
-.public-header__inner { align-items: center; display: flex; height: 78px; justify-content: space-between; margin: 0 auto; max-width: 1280px; padding: 0 1.25rem; }
+.public-header { backdrop-filter: blur(18px); background: rgba(255,255,255,.93); border-bottom: 1px solid rgba(223,233,230,.8); position: sticky; top: 0; z-index: 50; }
+.public-header__inner { align-items: center; display: flex; height: 76px; justify-content: space-between; margin: 0 auto; max-width: 1320px; padding: 0 1.5rem; }
 .public-header__brand { align-items: center; display: inline-flex; }
 .public-header__navigation { align-items: center; display: flex; gap: clamp(1.1rem,2.7vw,2.4rem); }
 .public-header__navigation a { color: var(--color-text); font-size: .9rem; font-weight: 650; text-decoration: none; }
 .public-header__navigation a:hover { color: var(--color-primary-dark); }
 .public-header__actions { align-items: center; display: flex; gap: .35rem; }
-.icon-button { align-items: center; border-radius: 50%; color: var(--color-primary-dark); display: inline-flex; height: 40px; justify-content: center; transition: background .2s ease; width: 40px; }
+.icon-button { align-items: center; border-radius: 50%; color: var(--color-primary-dark); display: inline-flex; height: 44px; justify-content: center; transition: background .2s ease; width: 44px; }
 .icon-button:hover { background: var(--color-mint); }
 .mobile-menu { display: none; position: relative; }
 .mobile-menu summary { align-items: center; border-radius: 50%; cursor: pointer; display: flex; height: 40px; justify-content: center; list-style: none; width: 40px; }
@@ -82,7 +92,7 @@ a:focus-visible {
 .mobile-menu nav { background: #fff; border: 1px solid var(--color-border); border-radius: 16px; box-shadow: var(--shadow-card); display: grid; gap: .15rem; min-width: 250px; padding: .6rem; position: absolute; right: 0; top: 50px; }
 .mobile-menu nav a { border-radius: 10px; color: var(--color-text); font-size: .9rem; font-weight: 650; padding: .8rem; text-decoration: none; }
 .mobile-menu nav a:hover { background: var(--color-mint); }
-.button { align-items: center; border: 1px solid transparent; border-radius: 999px; cursor: pointer; display: inline-flex; font-size: .9rem; font-weight: 750; gap: .55rem; justify-content: center; min-height: 48px; padding: .75rem 1.25rem; text-decoration: none; transition: transform .2s ease,box-shadow .2s ease,background .2s ease; }
+.button { align-items: center; border: 1px solid transparent; border-radius: 12px; cursor: pointer; display: inline-flex; font-size: .9rem; font-weight: 750; gap: .55rem; justify-content: center; min-height: 48px; padding: .75rem 1.25rem; text-decoration: none; transition: transform .2s ease,box-shadow .2s ease,background .2s ease; }
 .button:hover { transform: translateY(-2px); }
 .button--primary { background: var(--color-primary-dark); box-shadow: 0 12px 28px rgba(7,58,50,.18); color: #fff; }
 .button--primary:hover { background: #0a4c41; }
