@@ -72,10 +72,8 @@ export default function Glasses3DOverlay() {
   const lastFaceSeenAtRef = useRef(0);
   const smoothedPoseRef = useRef(null);
   const cameraRequestRef = useRef(0);
-  const calibrationRef = useRef(DEFAULT_3D_CALIBRATION);
   const poseRef = useRef(null);
 
-  const [calibration, setCalibration] = useState(DEFAULT_3D_CALIBRATION);
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [statusMessage, setStatusMessage] = useState(
     "Te pediremos permiso para usar la cámara de este dispositivo.",
@@ -84,11 +82,6 @@ export default function Glasses3DOverlay() {
   const [faceDetected, setFaceDetected] = useState(false);
   const [modelReady, setModelReady] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 1280, height: 720 });
-
-  useEffect(() => {
-    calibrationRef.current = calibration;
-    smoothedPoseRef.current = null;
-  }, [calibration]);
 
   const releaseResources = useCallback(() => {
     cameraRequestRef.current += 1;
@@ -200,7 +193,7 @@ export default function Glasses3DOverlay() {
               landmarks,
               video.videoWidth,
               video.videoHeight,
-              calibrationRef.current,
+              DEFAULT_3D_CALIBRATION,
             );
             if (nextPose) {
               smoothedPoseRef.current = smoothGlassesPose3D(
@@ -252,12 +245,7 @@ export default function Glasses3DOverlay() {
     return () => window.clearTimeout(timeoutId);
   }, [startCamera]);
 
-  const updateCalibration = (field, value) => {
-    setCalibration((current) => ({ ...current, [field]: Number(value) }));
-  };
-
   const handleModelReady = useCallback(() => setModelReady(true), []);
-  const resetCalibration = () => setCalibration(DEFAULT_3D_CALIBRATION);
   const halfWidth = videoDimensions.width / 2;
   const halfHeight = videoDimensions.height / 2;
   const viewerState = cameraStatus === "ready"
@@ -285,6 +273,7 @@ export default function Glasses3DOverlay() {
 
           {cameraStatus === "ready" && (
             <Canvas
+              key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
               dpr={[1, 1.5]}
               gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
@@ -308,7 +297,6 @@ export default function Glasses3DOverlay() {
                   modelUrl={DEMO_3D_GLASSES.modelUrl}
                   onReady={handleModelReady}
                   poseRef={poseRef}
-                  videoDimensions={videoDimensions}
                 />
               </Suspense>
             </Canvas>
@@ -390,74 +378,17 @@ export default function Glasses3DOverlay() {
           </div>
         </div>
 
-        <div className={styles.fitCard}>
-          <div className={styles.fitHeading}>
-            <div>
-              <p className={styles.stepLabel}>Ajusta el calce</p>
-              <p>Haz pequeños cambios solo si lo necesitas.</p>
-            </div>
-            <button className={styles.resetButton} type="button" onClick={resetCalibration}>
-              Restablecer
-            </button>
+        <div className={styles.autoFitCard} data-active={faceDetected}>
+          <span className={styles.autoFitIcon} aria-hidden="true">
+            {faceDetected ? "✓" : "⌁"}
+          </span>
+          <div>
+            <p className={styles.stepLabel}>Calce automático</p>
+            <strong>{faceDetected ? "Ajustado a tu rostro" : "Esperando tu rostro"}</strong>
+            <p>
+              El ancho, la posición y la perspectiva se calculan en tiempo real.
+            </p>
           </div>
-
-          <label className={styles.sliderLabel}>
-            <span>
-              <span>Ancho del marco</span>
-              <output>{Math.round((calibration.widthScale / DEFAULT_3D_CALIBRATION.widthScale) * 100)}%</output>
-            </span>
-            <input
-              type="range"
-              min="1.9"
-              max="2.7"
-              step="0.01"
-              value={calibration.widthScale}
-              onChange={(event) => updateCalibration("widthScale", event.target.value)}
-            />
-          </label>
-
-          <label className={styles.sliderLabel}>
-            <span>
-              <span>Altura sobre el rostro</span>
-              <output>{calibration.positionOffsetY > 0 ? "+" : ""}{Math.round(calibration.positionOffsetY * 100)}</output>
-            </span>
-            <input
-              type="range"
-              min="-0.18"
-              max="0.25"
-              step="0.01"
-              value={calibration.positionOffsetY}
-              onChange={(event) => updateCalibration("positionOffsetY", event.target.value)}
-            />
-          </label>
-
-          <details className={styles.fineTune}>
-            <summary>Ajuste fino del modelo</summary>
-            <div className={styles.fineTuneControls}>
-              <label className={styles.sliderLabel}>
-                <span><span>Inclinación vertical</span><output>{calibration.rotationOffsetX}°</output></span>
-                <input
-                  type="range"
-                  min="-20"
-                  max="20"
-                  step="1"
-                  value={calibration.rotationOffsetX}
-                  onChange={(event) => updateCalibration("rotationOffsetX", event.target.value)}
-                />
-              </label>
-              <label className={styles.sliderLabel}>
-                <span><span>Nivel del marco</span><output>{calibration.rotationOffsetZ}°</output></span>
-                <input
-                  type="range"
-                  min="-15"
-                  max="15"
-                  step="1"
-                  value={calibration.rotationOffsetZ}
-                  onChange={(event) => updateCalibration("rotationOffsetZ", event.target.value)}
-                />
-              </label>
-            </div>
-          </details>
         </div>
 
         <div className={styles.tipsCard}>

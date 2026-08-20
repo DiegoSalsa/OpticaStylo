@@ -382,8 +382,7 @@
 }
 
 .primaryButton,
-.cameraButton,
-.resetButton {
+.cameraButton {
   border: 0;
   font-weight: 760;
   cursor: pointer;
@@ -482,83 +481,56 @@
   font-size: 0.72rem;
 }
 
-.fitCard,
+.autoFitCard,
 .tipsCard {
   border: 1px solid rgba(22, 60, 53, 0.1);
   border-radius: 18px;
   background: rgba(250, 250, 247, 0.76);
 }
 
-.fitCard {
+.autoFitCard {
   display: grid;
-  gap: 18px;
-  padding: 17px;
-}
-
-.fitHeading {
-  display: flex;
-  gap: 14px;
-  align-items: start;
-  justify-content: space-between;
-}
-
-.fitHeading p:last-child {
-  margin: 5px 0 0;
-  color: #737c78;
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-
-.resetButton {
-  padding: 3px 0;
-  color: #0b7562;
-  font-size: 0.7rem;
-  background: transparent;
-}
-
-.sliderLabel {
-  display: grid;
-  gap: 9px;
-  color: #414d49;
-  font-size: 0.75rem;
-  font-weight: 660;
-}
-
-.sliderLabel > span {
-  display: flex;
+  grid-template-columns: 40px 1fr;
   gap: 12px;
-  justify-content: space-between;
+  align-items: start;
+  padding: 16px 17px;
+  transition: border-color 180ms ease, background 180ms ease;
 }
 
-.sliderLabel output {
-  color: #0b7562;
-  font-variant-numeric: tabular-nums;
+.autoFitCard[data-active="true"] {
+  border-color: rgba(11, 117, 98, 0.3);
+  background: rgba(237, 248, 243, 0.9);
 }
 
-.sliderLabel input {
-  width: 100%;
-  margin: 0;
-  accent-color: #0b7562;
-  cursor: pointer;
-}
-
-.fineTune {
-  padding-top: 2px;
-  border-top: 1px solid rgba(22, 60, 53, 0.09);
-}
-
-.fineTune summary {
-  padding-top: 13px;
-  color: #52605b;
-  font-size: 0.73rem;
-  font-weight: 710;
-  cursor: pointer;
-}
-
-.fineTuneControls {
+.autoFitIcon {
   display: grid;
-  gap: 17px;
-  padding-top: 17px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  color: #53645e;
+  background: #e5e9e5;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.autoFitCard[data-active="true"] .autoFitIcon {
+  color: #0e674f;
+  background: #96edc9;
+}
+
+.autoFitCard strong {
+  display: block;
+  margin-top: 5px;
+  color: #294a43;
+  font-size: 0.82rem;
+}
+
+.autoFitCard p:last-child {
+  margin: 4px 0 0;
+  color: #6b7671;
+  font-size: 0.71rem;
+  line-height: 1.45;
 }
 
 .tipsCard {
@@ -785,13 +757,6 @@
     font-size: 1.45rem;
   }
 
-  .sliderLabel {
-    gap: 12px;
-  }
-
-  .sliderLabel input {
-    min-height: 28px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

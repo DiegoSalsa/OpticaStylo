@@ -52,12 +52,13 @@ Incluye:
 - tres marcos ilustrativos mientras no existan recursos reales activos.
 
 La ruta 3D es un piloto independiente que usa un archivo GLB real. El modelo se
-normaliza por su ancho antes de alinearlo con la distancia entre los ojos, de
-modo que la calibración no dependa de las unidades usadas al exportarlo. Incluye
-seguimiento de inclinación y giro, suavizado entre detecciones, una breve
-tolerancia ante pérdidas de rostro y ajustes acotados de ancho y altura. Por
-ahora sirve para validar la experiencia con un solo marco; no representa todavía
-el catálogo completo.
+normaliza por su ancho y calcula el calce desde los laterales del rostro y la
+distancia entre los ojos, de modo que no dependa de las unidades usadas al
+exportarlo ni de ajustes manuales del visitante. Incluye seguimiento de
+inclinación y giro, compensación de perspectiva, suavizado entre detecciones,
+una breve tolerancia ante pérdidas de rostro y una máscara de profundidad para
+ocultar las patillas detrás de la cabeza. Por ahora sirve para validar la
+experiencia con un solo marco; no representa todavía el catálogo completo.
 
 La cámara requiere `HTTPS` en producción. Los navegadores también permiten usarla
 desde `localhost` durante el desarrollo, pero una dirección HTTP de la red local,
