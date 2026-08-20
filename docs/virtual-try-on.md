@@ -17,7 +17,7 @@ La elección considera estas alternativas:
 | Alternativa | Ventajas | Costos o límites | Decisión |
 | --- | --- | --- | --- |
 | MediaPipe + superposición 2D | Código abierto, sin licencia por usuario, procesamiento local y recursos sencillos | No representa con precisión las patillas ni la profundidad al girar mucho el rostro | Elegida para el MVP |
-| MediaPipe + modelos 3D | Mejor perspectiva y rotación | Requiere un modelo 3D calibrado para cada marco y una canalización de Three.js/WebGL | Evolución posible |
+| MediaPipe + modelos 3D | Mejor perspectiva y rotación | Requiere un modelo 3D calibrado para cada marco y una canalización de Three.js/WebGL | Piloto disponible con un modelo real |
 | SDK comercial especializado | Seguimiento, renderizado y herramientas de autor más completas | Licencia, dependencia del proveedor y preparación de efectos propia | Reevaluar si el MVP demuestra valor |
 
 Referencias evaluadas:
@@ -34,6 +34,7 @@ La página está disponible en:
 
 ```text
 GET /virtual-try-on
+GET /virtual-try-on/3d
 ```
 
 Incluye:
@@ -49,6 +50,14 @@ Incluye:
 - diseño adaptable para escritorio y teléfono;
 - mensajes para permisos rechazados, cámara ausente u ocupada;
 - tres marcos ilustrativos mientras no existan recursos reales activos.
+
+La ruta 3D es un piloto independiente que usa un archivo GLB real. El modelo se
+normaliza por su ancho antes de alinearlo con la distancia entre los ojos, de
+modo que la calibración no dependa de las unidades usadas al exportarlo. Incluye
+seguimiento de inclinación y giro, suavizado entre detecciones, una breve
+tolerancia ante pérdidas de rostro y ajustes acotados de ancho y altura. Por
+ahora sirve para validar la experiencia con un solo marco; no representa todavía
+el catálogo completo.
 
 La cámara requiere `HTTPS` en producción. Los navegadores también permiten usarla
 desde `localhost` durante el desarrollo, pero una dirección HTTP de la red local,

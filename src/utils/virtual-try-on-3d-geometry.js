@@ -1,4 +1,4 @@
-import { FACE_LANDMARK_INDICES } from "@/constants/virtual-try-on";
+import { FACE_LANDMARK_INDICES } from "../constants/virtual-try-on.js";
 
 const {
   LEFT_EYE_OUTER,
@@ -9,12 +9,20 @@ const {
   CHIN,
 } = FACE_LANDMARK_INDICES;
 
+function finitePoint(point) {
+  return point
+    && Number.isFinite(point.x)
+    && Number.isFinite(point.y);
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
 /**
- * Convert normalised MediaPipe landmarks into a glasses pose
- * that can be used directly with Three.js (orthographic camera).
- *
- * The orthographic camera maps [0..videoWidth] → [-halfW..+halfW]
- * and [0..videoHeight] → [+halfH..-halfH]  (Y is flipped).
+ * Converts MediaPipe landmarks into the pixel-based coordinate system used by
+ * the orthographic Three.js camera. Horizontal coordinates are mirrored to
+ * match the selfie video shown to the visitor.
  */
 export function landmarksToGlassesPose(
   landmarks,
@@ -22,71 +30,52 @@ export function landmarksToGlassesPose(
   videoHeight,
   calibration,
 ) {
-  if (!landmarks || !videoWidth || !videoHeight) return null;
+  if (!landmarks || videoWidth <= 0 || videoHeight <= 0) return null;
 
-  const lEye = landmarks[LEFT_EYE_OUTER];
-  const rEye = landmarks[RIGHT_EYE_OUTER];
-  const nose = landmarks[NOSE_BRIDGE];
+  const leftEye = landmarks[LEFT_EYE_OUTER];
+  const rightEye = landmarks[RIGHT_EYE_OUTER];
+  const noseBridge = landmarks[NOSE_BRIDGE];
   const noseTip = landmarks[NOSE_TIP];
   const forehead = landmarks[FOREHEAD];
   const chin = landmarks[CHIN];
 
-  if (!lEye || !rEye || !nose) return null;
-
-  // -- Pixel coordinates (mirrored: MediaPipe x=0 is left of image, but
-  //    the camera is already mirrored in display, so we invert x) ----------
-  const lx = (1 - lEye.x) * videoWidth;
-  const ly = lEye.y * videoHeight;
-  const rx = (1 - rEye.x) * videoWidth;
-  const ry = rEye.y * videoHeight;
-  const nx = (1 - nose.x) * videoWidth;
-  const ny = nose.y * videoHeight;
-
-  // -- Measurement ----------------------------------------------------------
-  const eyeDistance = Math.hypot(rx - lx, ry - ly);
-  if (!Number.isFinite(eyeDistance) || eyeDistance < 8) return null;
-
-  // Centre between eyes (in pixels)
-  const cx = (lx + rx) / 2;
-  const cy = (ly + ry) / 2;
-
-  // -- Convert to orthographic world coords --------------------------------
-  const halfW = videoWidth / 2;
-  const halfH = videoHeight / 2;
-  const worldX = cx - halfW;
-  const worldY = halfH - cy; // flip Y
-
-  // -- Rotations -----------------------------------------------------------
-  // Roll: tilt between eyes
-  const rollAngle = -Math.atan2(ry - ly, rx - lx);
-
-  // Yaw: horizontal head rotation estimated from nose offset vs eye midpoint
-  let yawAngle = 0;
-  if (noseTip) {
-    const noseTipPx = (1 - noseTip.x) * videoWidth;
-    const noseDeviation = (noseTipPx - cx) / (eyeDistance * 0.5);
-    yawAngle = noseDeviation * 0.4; // dampened
+  if (!finitePoint(leftEye) || !finitePoint(rightEye) || !finitePoint(noseBridge)) {
+    return null;
   }
 
-  // Pitch: vertical head tilt
+  const leftX = (1 - leftEye.x) * videoWidth;
+  const leftY = leftEye.y * videoHeight;
+  const rightX = (1 - rightEye.x) * videoWidth;
+  const rightY = rightEye.y * videoHeight;
+  const noseY = noseBridge.y * videoHeight;
+  const eyeDistance = Math.hypot(rightX - leftX, rightY - leftY);
+
+  if (!Number.isFinite(eyeDistance) || eyeDistance < 8) return null;
+
+  const centerX = (leftX + rightX) / 2;
+  const centerY = (leftY + rightY) / 2;
+  const worldX = centerX - videoWidth / 2;
+  const worldY = videoHeight / 2 - centerY;
+  const rollAngle = Math.atan2(leftY - rightY, leftX - rightX);
+
+  let yawAngle = 0;
+  if (finitePoint(noseTip)) {
+    const noseTipX = (1 - noseTip.x) * videoWidth;
+    const noseDeviation = (noseTipX - centerX) / eyeDistance;
+    yawAngle = clamp(noseDeviation * 1.45, -0.65, 0.65);
+  }
+
   let pitchAngle = 0;
-  if (forehead && chin) {
-    const fhY = forehead.y * videoHeight;
-    const chY = chin.y * videoHeight;
-    const faceHeight = chY - fhY;
+  if (finitePoint(forehead) && finitePoint(chin)) {
+    const foreheadY = forehead.y * videoHeight;
+    const chinY = chin.y * videoHeight;
+    const faceHeight = chinY - foreheadY;
     if (faceHeight > 0) {
-      const noseRatio = (ny - fhY) / faceHeight;
-      pitchAngle = (noseRatio - 0.38) * 1.2; // 0.38 is neutral
+      const noseRatio = (noseY - foreheadY) / faceHeight;
+      pitchAngle = clamp((noseRatio - 0.38) * 1.15, -0.42, 0.42);
     }
   }
 
-  // -- Scale: proportional to eye distance ---------------------------------
-  // GLB models are typically in metres (≈0.14 m wide for glasses), but our
-  // orthographic camera works in pixel-space.  We need a large multiplier
-  // so the model is visible at the right size.
-  const baseScale = eyeDistance * 6;
-
-  // -- Apply calibration offsets -------------------------------------------
   return {
     position: [
       worldX + calibration.positionOffsetX * eyeDistance,
@@ -98,25 +87,25 @@ export function landmarksToGlassesPose(
       yawAngle + (calibration.rotationOffsetY * Math.PI) / 180,
       rollAngle + (calibration.rotationOffsetZ * Math.PI) / 180,
     ],
-    scale: baseScale * calibration.scaleMultiplier,
+    // GlassesModel normalises every asset to one unit across, so this value is
+    // the desired visible width in video pixels rather than a GLB unit guess.
+    scale: eyeDistance * calibration.widthScale,
   };
 }
 
-/**
- * Smooth a 3D glasses pose to reduce per-frame jitter.
- */
-export function smoothGlassesPose3D(previous, next, factor = 0.35) {
+export function smoothGlassesPose3D(previous, next, factor = 0.38) {
   if (!previous) return next;
   if (!next) return previous;
-  const f = Math.min(1, Math.max(0, factor));
+  const normalizedFactor = clamp(factor, 0, 1);
   return {
-    position: previous.position.map((v, i) => v + (next.position[i] - v) * f),
-    rotation: previous.rotation.map((v, i) => {
-      const diff = next.rotation[i] - v;
-      // Handle angle wrapping for smooth interpolation
-      const wrapped = Math.atan2(Math.sin(diff), Math.cos(diff));
-      return v + wrapped * f;
+    position: previous.position.map(
+      (value, index) => value + (next.position[index] - value) * normalizedFactor,
+    ),
+    rotation: previous.rotation.map((value, index) => {
+      const difference = next.rotation[index] - value;
+      const wrappedDifference = Math.atan2(Math.sin(difference), Math.cos(difference));
+      return value + wrappedDifference * normalizedFactor;
     }),
-    scale: previous.scale + (next.scale - previous.scale) * f,
+    scale: previous.scale + (next.scale - previous.scale) * normalizedFactor,
   };
 }
