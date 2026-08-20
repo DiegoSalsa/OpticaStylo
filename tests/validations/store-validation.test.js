@@ -6,6 +6,7 @@ import {
   validateCartItemInput,
   validateExternalPrescriptionData,
   validatePrescriptionImage,
+  validatePrescriptionImageBytes,
   validateStoreAccountRegistration,
 } from "../../src/validations/store-validation.js";
 
@@ -77,6 +78,19 @@ test("limita la carga a imágenes admitidas", () => {
   assert.equal(validatePrescriptionImage(image).mediaType, "image/png");
   assert.throws(
     () => validatePrescriptionImage({ ...image, type: "application/pdf" }),
+    (error) => error.code === "INVALID_PRESCRIPTION_IMAGE",
+  );
+});
+
+test("comprueba la firma binaria de las recetas cargadas", () => {
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.equal(validatePrescriptionImageBytes(png, "image/png"), png);
+  assert.throws(
+    () => validatePrescriptionImageBytes(Buffer.from("no es una imagen"), "image/png"),
+    (error) => error.code === "INVALID_PRESCRIPTION_IMAGE",
+  );
+  assert.throws(
+    () => validatePrescriptionImageBytes(png, "image/jpeg"),
     (error) => error.code === "INVALID_PRESCRIPTION_IMAGE",
   );
 });

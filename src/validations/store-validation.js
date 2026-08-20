@@ -14,6 +14,16 @@ const IMAGE_TYPES = new Set([
 ]);
 export const MAX_PRESCRIPTION_IMAGE_BYTES = 8 * 1024 * 1024;
 
+const HEIF_BRANDS = new Set([
+  "heic",
+  "heif",
+  "heix",
+  "hevc",
+  "hevx",
+  "mif1",
+  "msf1",
+]);
+
 function fail(message, code = "INVALID_STORE_DATA") {
   throw new AppError({ code, message, status: 400 });
 }
@@ -176,6 +186,37 @@ export function validatePrescriptionImage(file) {
   const filename = text(file.name || "receta", "El nombre del archivo", 255)
     .replace(/[^\p{L}\p{N}._ -]/gu, "_");
   return { file, filename, mediaType: file.type, size: file.size };
+}
+
+function bytesStartWith(data, signature, offset = 0) {
+  if (data.length < offset + signature.length) return false;
+  return signature.every((byte, index) => data[offset + index] === byte);
+}
+
+export function validatePrescriptionImageBytes(value, mediaType) {
+  const data = Buffer.isBuffer(value) ? value : Buffer.from(value ?? []);
+  if (data.length < 1 || data.length > MAX_PRESCRIPTION_IMAGE_BYTES) {
+    fail("La imagen de la receta no puede superar 8 MiB.", "INVALID_PRESCRIPTION_IMAGE");
+  }
+
+  const matches = {
+    "image/jpeg": bytesStartWith(data, [0xff, 0xd8, 0xff]),
+    "image/png": bytesStartWith(data, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    "image/webp": bytesStartWith(data, [0x52, 0x49, 0x46, 0x46])
+      && bytesStartWith(data, [0x57, 0x45, 0x42, 0x50], 8),
+    "image/heic": bytesStartWith(data, [0x66, 0x74, 0x79, 0x70], 4)
+      && HEIF_BRANDS.has(data.subarray(8, 12).toString("ascii")),
+    "image/heif": bytesStartWith(data, [0x66, 0x74, 0x79, 0x70], 4)
+      && HEIF_BRANDS.has(data.subarray(8, 12).toString("ascii")),
+  };
+
+  if (!matches[mediaType]) {
+    fail(
+      "El contenido del archivo no coincide con una imagen admitida.",
+      "INVALID_PRESCRIPTION_IMAGE",
+    );
+  }
+  return data;
 }
 
 export function validateStoreOrderId(value) {

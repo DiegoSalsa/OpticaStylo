@@ -23,6 +23,7 @@ import {
   validateCartItemInput,
   validateExternalPrescriptionData,
   validatePrescriptionImage,
+  validatePrescriptionImageBytes,
   validateStoreOrderId,
   validateStoreProductId,
 } from "../validations/store-validation.js";
@@ -154,7 +155,10 @@ export async function putManualPrescription(token, account, input, dependencies 
 export async function putPrescriptionImage(token, account, file, dependencies = {}) {
   const credentials = access(token, account);
   const image = validatePrescriptionImage(file);
-  const data = Buffer.from(await image.file.arrayBuffer());
+  const data = validatePrescriptionImageBytes(
+    Buffer.from(await image.file.arrayBuffer()),
+    image.mediaType,
+  );
   const sha256 = createHash("sha256").update(data).digest("hex");
   return unwrap(await (
     dependencies.saveImage ?? saveExternalPrescriptionImage
@@ -251,4 +255,19 @@ export async function getStoreOrders(account, dependencies = {}) {
     dependencies.findSaleById ?? findSaleById
   )(id)));
   return sales.filter(Boolean).map(publicOrder);
+}
+
+export async function retryStoreOrderCheckout(orderId, token, account, dependencies = {}) {
+  const order = await getStoreOrder(orderId, token, account, dependencies);
+  if (order.status !== "PENDING" || order.balanceCents <= 0) {
+    throw new AppError({
+      code: "STORE_ORDER_NOT_PAYABLE",
+      message: "Este pedido no tiene un saldo pendiente disponible para pago.",
+      status: 409,
+    });
+  }
+  return (dependencies.createMercadoPagoCheckout ?? createStoreMercadoPagoCheckout)(
+    order.id,
+    dependencies.mercadoPagoDependencies ?? {},
+  );
 }

@@ -226,7 +226,9 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
 
     if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
       const saleResult = await client.query(
-        "SELECT status, total_cents FROM sales WHERE id = $1 FOR UPDATE",
+        `SELECT sales.status, sales.total_cents, customers.email AS customer_email
+         FROM sales JOIN customers ON customers.id = sales.customer_id
+         WHERE sales.id = $1 FOR UPDATE OF sales`,
         [attempt.sale_id],
       );
       const sale = saleResult.rows[0];
@@ -270,6 +272,17 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
           paymentMethod: "MERCADO_PAGO",
           source: "PROVIDER",
         })],
+      );
+      await client.query(
+        `INSERT INTO transactional_email_outbox (
+           template_code, recipient_email, payload, deduplication_key
+         ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3)
+         ON CONFLICT (deduplication_key) DO NOTHING`,
+        [sale.customer_email, JSON.stringify({
+          amountCents: Number(attempt.amount_cents),
+          saleId: attempt.sale_id,
+          status: newStatus,
+        }), `payment-attempt:${attempt.id}:approved`],
       );
     }
 
