@@ -6,6 +6,7 @@
   margin-bottom: 1rem;
   padding: 1rem;
 }
+.agenda-tabs{background:#fff;border:1px solid #dfe9e6;border-radius:12px;display:flex;gap:.25rem;margin-bottom:1rem;padding:.3rem;width:max-content}.agenda-tabs a{align-items:center;border-radius:9px;color:#536763;display:flex;font-size:.68rem;font-weight:800;gap:.4rem;min-height:38px;padding:.55rem .75rem;text-decoration:none}.agenda-tabs a:first-child,.agenda-tabs a:hover{background:#ddf7f1;color:#073a32}.professional-config-panel{scroll-margin-top:84px}.schedule-panel{scroll-margin-top:84px}
 .agenda-toolbar .app-button {
   height: 42px;
 }

@@ -358,7 +358,7 @@ export default function ClinicalRecordPage() {
       <header className="app-heading">
         <div>
           <p className="eyebrow">Atención clínica</p>
-          <h1>Ficha clínica</h1>
+          <h1>Gestión clínica</h1>
           <p>
             Solo se muestran pacientes asignados al profesional autenticado.
           </p>

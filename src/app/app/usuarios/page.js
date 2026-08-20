@@ -162,7 +162,7 @@ export default function UsersPage() {
       <header className="app-heading">
         <div>
           <p className="eyebrow">Administración segura</p>
-          <h1>Usuarios</h1>
+          <h1>Gestión de usuarios</h1>
           <p>Cuentas internas y roles. No existe rol Recepcionista.</p>
         </div>
         {canCreate && (
