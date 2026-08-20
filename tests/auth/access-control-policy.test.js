@@ -27,6 +27,7 @@ test("combina permisos de varios roles sin duplicados", () => {
 test("el administrador no recibe acceso clínico", () => {
   const permissions = getPermissionsForRoles([ROLES.ADMIN]);
 
+  assert.ok(permissions.includes(PERMISSIONS.PRESCRIPTIONS_READ_FOR_SALE));
   assert.ok(!permissions.includes(PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED));
   assert.ok(!permissions.includes(PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED));
   assert.ok(!permissions.includes(PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED));
@@ -37,6 +38,11 @@ test("ventas no recibe acceso a fichas clínicas", () => {
 
   assert.ok(permissions.includes(PERMISSIONS.PRESCRIPTIONS_READ_FOR_SALE));
   assert.ok(!permissions.includes(PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED));
+  assert.ok(!permissions.includes(PERMISSIONS.SCHEDULES_READ));
+  assert.ok(!permissions.includes(PERMISSIONS.APPOINTMENTS_READ_ALL));
+  assert.ok(!permissions.includes(PERMISSIONS.APPOINTMENTS_CREATE));
+  assert.ok(!permissions.includes(PERMISSIONS.PATIENTS_READ_BASIC));
+  assert.ok(!permissions.includes(PERMISSIONS.PATIENTS_MANAGE_BASIC));
 });
 
 test("el profesional solo administra su contexto clínico", () => {

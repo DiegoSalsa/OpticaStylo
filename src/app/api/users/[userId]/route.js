@@ -1,22 +1,25 @@
 import { authenticateRequest } from "@/auth/authenticate-request";
-import { createUser, getUserList } from "@/services/user-service";
+import { getUser, updateUser } from "@/services/user-service";
 import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
-export async function GET(request) {
+export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    return createSuccessResponse(await getUserList(new URL(request.url).searchParams, actor));
+    const { userId } = await params;
+    return createSuccessResponse(await getUser(userId, actor));
   });
 }
 
-export async function POST(request) {
+export async function PATCH(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    const input = await readJsonBody(request);
-    const user = await createUser(input, actor);
-
-    return createSuccessResponse(user, { status: 201 });
+    const { userId } = await params;
+    return createSuccessResponse(await updateUser(
+      userId,
+      await readJsonBody(request),
+      actor,
+    ));
   });
 }

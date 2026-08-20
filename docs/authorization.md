@@ -16,10 +16,10 @@ Gestiona su disponibilidad, sus reservas y la información clínica de pacientes
 
 ### `SALES`
 
-Gestiona disponibilidad, reservas, datos básicos de pacientes, clientes, ventas
-y abonos. Puede leer el catálogo, pero no crearlo ni cambiar precios. Solo puede
-consultar de una receta la información necesaria para procesar una venta; no
-puede acceder a la ficha clínica completa.
+Opera el punto de venta: gestiona clientes, cotizaciones, ventas y abonos. Puede
+leer el catálogo, pero no crearlo ni cambiar precios. Solo puede consultar de una
+receta la información estrictamente necesaria para vender; no administra agenda,
+reservas ni pacientes y no puede acceder a la ficha clínica completa.
 
 ## Reglas de implementación
 

@@ -5,6 +5,8 @@ import { ROLES } from "../../src/auth/roles.js";
 import {
   validateCreateUserInput,
   validateLoginInput,
+  validateUpdateUserInput,
+  validateUserId,
 } from "../../src/validations/user-validation.js";
 
 const validInput = {
@@ -62,4 +64,22 @@ test("el inicio de sesión acepta contraseñas anteriores más cortas", () => {
     validateLoginInput({ email: "USER@EXAMPLE.COM", password: "anterior" }),
     { email: "user@example.com", password: "anterior" },
   );
+});
+
+test("valida identificadores y actualizaciones parciales de usuario", () => {
+  const current = {
+    email: validInput.email,
+    firstName: validInput.firstName,
+    isActive: true,
+    lastName: validInput.lastName,
+    roles: validInput.roles,
+  };
+  assert.equal(
+    validateUserId("00000000-0000-4000-8000-000000000001"),
+    "00000000-0000-4000-8000-000000000001",
+  );
+  const result = validateUpdateUserInput({ isActive: false }, current);
+  assert.equal(result.isActive, false);
+  assert.deepEqual(result.roles, current.roles);
+  assert.throws(() => validateUpdateUserInput({}, current));
 });
