@@ -1,8 +1,8 @@
 "use client";
 
+import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
 
 import {
   DEFAULT_3D_CALIBRATION,
@@ -18,21 +18,23 @@ import {
 import styles from "./virtual-try-on-3d.module.css";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
+const FACE_LOST_GRACE_MS = 280;
+const TRACKING_INTERVAL_MS = 50;
 
 function cameraErrorMessage(error) {
   if (error?.name === "NotAllowedError") {
-    return "El permiso fue rechazado. Habilita la cámara para este sitio y presiona Reintentar permiso.";
+    return "El permiso fue rechazado. Habilita la cámara para este sitio y vuelve a intentarlo.";
   }
   if (error?.name === "NotFoundError") {
-    return "No se encontró una cámara disponible en este dispositivo.";
+    return "No encontramos una cámara disponible en este dispositivo.";
   }
   if (error?.name === "NotReadableError") {
-    return "Otra aplicación está usando la cámara. Ciérrala e inténtalo nuevamente.";
+    return "Otra aplicación está usando la cámara. Ciérrala y vuelve a intentarlo.";
   }
   if (error?.name === "SecurityError") {
-    return "El navegador exige una conexión HTTPS para permitir la cámara.";
+    return "El navegador necesita una conexión segura para permitir la cámara.";
   }
-  return "No fue posible iniciar la cámara. Puedes volver a intentarlo o usar otro dispositivo.";
+  return "No pudimos iniciar la cámara. Inténtalo otra vez o prueba en otro dispositivo.";
 }
 
 async function createFaceLandmarker() {
@@ -43,9 +45,9 @@ async function createFaceLandmarker() {
       delegate: "GPU",
       modelAssetPath: FACE_LANDMARKER_MODEL_URL,
     },
-    minFaceDetectionConfidence: 0.55,
-    minFacePresenceConfidence: 0.55,
-    minTrackingConfidence: 0.5,
+    minFaceDetectionConfidence: 0.58,
+    minFacePresenceConfidence: 0.58,
+    minTrackingConfidence: 0.55,
     numFaces: 1,
     runningMode: "VIDEO",
   };
@@ -67,24 +69,22 @@ export default function Glasses3DOverlay() {
   const animationFrameRef = useRef(null);
   const runningRef = useRef(false);
   const lastDetectionAtRef = useRef(0);
-  const latestLandmarksRef = useRef(null);
+  const lastFaceSeenAtRef = useRef(0);
   const smoothedPoseRef = useRef(null);
   const cameraRequestRef = useRef(0);
   const calibrationRef = useRef(DEFAULT_3D_CALIBRATION);
-
-  // Shared ref that the Three.js GlassesModel reads every frame
   const poseRef = useRef(null);
 
   const [calibration, setCalibration] = useState(DEFAULT_3D_CALIBRATION);
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [statusMessage, setStatusMessage] = useState(
-    "Solicitaremos permiso para usar la cámara en este dispositivo.",
+    "Te pediremos permiso para usar la cámara de este dispositivo.",
   );
   const [cameraAspectRatio, setCameraAspectRatio] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 1280, height: 720 });
 
-  // Keep calibration ref in sync
   useEffect(() => {
     calibrationRef.current = calibration;
     smoothedPoseRef.current = null;
@@ -103,9 +103,9 @@ export default function Glasses3DOverlay() {
     }
     faceLandmarkerRef.current?.close?.();
     faceLandmarkerRef.current = null;
-    latestLandmarksRef.current = null;
     smoothedPoseRef.current = null;
     poseRef.current = null;
+    lastFaceSeenAtRef.current = 0;
   }, []);
 
   useEffect(() => releaseResources, [releaseResources]);
@@ -115,41 +115,18 @@ export default function Glasses3DOverlay() {
     setCameraAspectRatio(null);
     setCameraStatus("idle");
     setFaceDetected(false);
-    setStatusMessage("La cámara está apagada.");
+    setStatusMessage("Cámara apagada. No guardamos ningún fotograma.");
   }, [releaseResources]);
-
-  // ── Tracking loop (runs inside rAF, updates poseRef) ─────────────────
-  const updatePose = useCallback(() => {
-    const landmarks = latestLandmarksRef.current;
-    const video = videoRef.current;
-    if (!video) return;
-
-    const raw = landmarksToGlassesPose(
-      landmarks,
-      video.videoWidth,
-      video.videoHeight,
-      calibrationRef.current,
-    );
-
-    if (raw) {
-      smoothedPoseRef.current = smoothGlassesPose3D(smoothedPoseRef.current, raw);
-      poseRef.current = smoothedPoseRef.current;
-    } else {
-      poseRef.current = null;
-    }
-  }, []);
 
   const startCamera = useCallback(async () => {
     if (!window.isSecureContext) {
       setCameraStatus("error");
-      setStatusMessage(
-        "La cámara no puede solicitarse desde una dirección HTTP de red. Abre el probador mediante HTTPS.",
-      );
+      setStatusMessage("Abre el probador mediante HTTPS para poder usar la cámara.");
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraStatus("error");
-      setStatusMessage("Este navegador no permite acceder a la cámara desde esta página.");
+      setStatusMessage("Este navegador no permite usar la cámara desde esta página.");
       return;
     }
 
@@ -157,6 +134,7 @@ export default function Glasses3DOverlay() {
     const requestId = cameraRequestRef.current;
     setCameraAspectRatio(null);
     setCameraStatus("loading");
+    setFaceDetected(false);
     setStatusMessage("Esperando que autorices el uso de la cámara…");
 
     const isMobilePortrait = window.matchMedia(
@@ -174,12 +152,14 @@ export default function Glasses3DOverlay() {
           width: { ideal: isMobilePortrait ? 720 : 1280 },
         },
       });
+
       if (cameraRequestRef.current !== requestId) {
         for (const track of stream.getTracks()) track.stop();
         const staleLandmarker = await landmarkerPromise;
         staleLandmarker?.close?.();
         return;
       }
+
       streamRef.current = stream;
       const video = videoRef.current;
       video.srcObject = stream;
@@ -194,30 +174,53 @@ export default function Glasses3DOverlay() {
       syncDimensions();
       runningRef.current = true;
       setCameraStatus("ready");
-      setStatusMessage("Cámara activa. Preparando la alineación 3D…");
+      setStatusMessage("Cámara activa. Preparando el seguimiento facial…");
 
       let previousFaceState = false;
       const renderFrame = (timestamp) => {
         if (!runningRef.current) return;
+
         if (
           faceLandmarkerRef.current
-          && timestamp - lastDetectionAtRef.current >= 50
+          && timestamp - lastDetectionAtRef.current >= TRACKING_INTERVAL_MS
           && video.readyState >= 2
         ) {
           lastDetectionAtRef.current = timestamp;
+          let landmarks = null;
           try {
             const result = faceLandmarkerRef.current.detectForVideo(video, timestamp);
-            latestLandmarksRef.current = result.faceLandmarks?.[0] ?? null;
+            landmarks = result.faceLandmarks?.[0] ?? null;
           } catch {
-            latestLandmarksRef.current = null;
+            landmarks = null;
+          }
+
+          if (landmarks) {
+            lastFaceSeenAtRef.current = timestamp;
+            const nextPose = landmarksToGlassesPose(
+              landmarks,
+              video.videoWidth,
+              video.videoHeight,
+              calibrationRef.current,
+            );
+            if (nextPose) {
+              smoothedPoseRef.current = smoothGlassesPose3D(
+                smoothedPoseRef.current,
+                nextPose,
+              );
+              poseRef.current = smoothedPoseRef.current;
+            }
+          } else if (timestamp - lastFaceSeenAtRef.current > FACE_LOST_GRACE_MS) {
+            poseRef.current = null;
+            smoothedPoseRef.current = null;
+          }
+
+          const currentFaceState = Boolean(poseRef.current);
+          if (currentFaceState !== previousFaceState) {
+            previousFaceState = currentFaceState;
+            setFaceDetected(currentFaceState);
           }
         }
-        const currentFaceState = Boolean(latestLandmarksRef.current);
-        if (currentFaceState !== previousFaceState) {
-          previousFaceState = currentFaceState;
-          setFaceDetected(currentFaceState);
-        }
-        updatePose();
+
         animationFrameRef.current = requestAnimationFrame(renderFrame);
       };
       animationFrameRef.current = requestAnimationFrame(renderFrame);
@@ -229,18 +232,18 @@ export default function Glasses3DOverlay() {
       }
       if (landmarker) {
         faceLandmarkerRef.current = landmarker;
-        setStatusMessage("Cámara activa. Mira de frente para alinear los lentes 3D.");
+        setStatusMessage("Cámara activa. Centra tu rostro para probarte el marco.");
       } else {
-        setStatusMessage("Cámara activa pero el modelo facial no pudo cargarse. Intenta recargar.");
+        setStatusMessage("La cámara funciona, pero el seguimiento facial no pudo cargarse. Recarga la página.");
       }
     } catch (error) {
-      void landmarkerPromise.then((unused) => unused?.close?.());
+      void landmarkerPromise.then((unusedLandmarker) => unusedLandmarker?.close?.());
       releaseResources();
       setCameraStatus("error");
       setFaceDetected(false);
       setStatusMessage(cameraErrorMessage(error));
     }
-  }, [updatePose, releaseResources]);
+  }, [releaseResources]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -253,21 +256,24 @@ export default function Glasses3DOverlay() {
     setCalibration((current) => ({ ...current, [field]: Number(value) }));
   };
 
-  // Half-dimensions for the orthographic camera (matches pixel space)
-  const halfW = videoDimensions.width / 2;
-  const halfH = videoDimensions.height / 2;
+  const handleModelReady = useCallback(() => setModelReady(true), []);
+  const resetCalibration = () => setCalibration(DEFAULT_3D_CALIBRATION);
+  const halfWidth = videoDimensions.width / 2;
+  const halfHeight = videoDimensions.height / 2;
+  const viewerState = cameraStatus === "ready"
+    ? (faceDetected ? "tracking" : "searching")
+    : cameraStatus;
 
   return (
     <section className={styles.experience} aria-label="Probador virtual 3D">
       <div className={styles.viewerPanel}>
         <div
           className={styles.viewer}
-          data-status={cameraStatus}
+          data-status={viewerState}
           style={cameraAspectRatio
             ? { "--camera-aspect-ratio": String(cameraAspectRatio) }
             : undefined}
         >
-          {/* Live video background (mirrored via CSS) */}
           <video
             className={styles.videoElement}
             ref={videoRef}
@@ -277,29 +283,30 @@ export default function Glasses3DOverlay() {
             data-hidden={cameraStatus !== "ready"}
           />
 
-          {/* Three.js overlay – transparent background */}
           {cameraStatus === "ready" && (
             <Canvas
               className={styles.threeCanvas}
-              gl={{ alpha: true, antialias: true }}
+              dpr={[1, 1.5]}
+              gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
               orthographic
               camera={{
-                left: -halfW,
-                right: halfW,
-                top: halfH,
-                bottom: -halfH,
-                near: -1000,
-                far: 1000,
+                left: -halfWidth,
+                right: halfWidth,
+                top: halfHeight,
+                bottom: -halfHeight,
+                near: -2000,
+                far: 2000,
                 position: [0, 0, 500],
               }}
               style={{ pointerEvents: "none" }}
             >
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[0, 200, 400]} intensity={1.2} />
-              <directionalLight position={[-200, -100, 300]} intensity={0.4} />
+              <hemisphereLight args={["#ffffff", "#52635e", 1.35]} />
+              <directionalLight position={[250, 320, 480]} intensity={2.1} />
+              <directionalLight position={[-280, 40, 260]} intensity={0.8} />
               <Suspense fallback={null}>
                 <GlassesModel
                   modelUrl={DEMO_3D_GLASSES.modelUrl}
+                  onReady={handleModelReady}
                   poseRef={poseRef}
                   videoDimensions={videoDimensions}
                 />
@@ -307,34 +314,54 @@ export default function Glasses3DOverlay() {
             </Canvas>
           )}
 
+          <div className={styles.focusGuide} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+
           {cameraStatus !== "ready" && (
             <div className={styles.viewerPlaceholder}>
-              <span className={styles.placeholderIcon} aria-hidden="true">◎</span>
+              <span className={styles.placeholderIcon} aria-hidden="true">
+                <span />
+              </span>
               <strong>
-                {cameraStatus === "loading" ? "Autoriza tu cámara" : "Necesitamos tu cámara"}
+                {cameraStatus === "loading" ? "Autoriza tu cámara" : "Activa tu cámara"}
               </strong>
               <span>
                 {cameraStatus === "loading"
                   ? "Acepta el permiso que muestra tu navegador."
-                  : "Tu video se procesa solamente en este dispositivo."}
+                  : "Tu imagen se procesa solo en este dispositivo."}
               </span>
             </div>
           )}
+
           {cameraStatus === "ready" && !faceDetected && (
-            <div className={styles.faceHint}>Centra tu rostro y mira hacia la cámara</div>
+            <div className={styles.faceHint}>
+              <span aria-hidden="true" />
+              Centra tu rostro y mira de frente
+            </div>
           )}
+
+          {cameraStatus === "ready" && !modelReady && (
+            <div className={styles.modelLoading}>Preparando el marco 3D…</div>
+          )}
+
           <div className={styles.liveBadge} data-active={cameraStatus === "ready"}>
             <span aria-hidden="true" />
-            {cameraStatus === "ready" ? "Cámara activa" : "Cámara apagada"}
+            {cameraStatus === "ready" ? "En vivo" : "Cámara apagada"}
           </div>
-          {cameraStatus === "ready" && (
-            <div className={styles.badge3d}>3D</div>
-          )}
+          <div className={styles.trackingBadge} data-active={faceDetected}>
+            <span aria-hidden="true">{faceDetected ? "✓" : "⌁"}</span>
+            {faceDetected ? "Ajuste listo" : "Buscando rostro"}
+          </div>
         </div>
 
-        <div className={styles.actionBar}>
+        <div className={styles.viewerFooter}>
+          <p className={styles.status} aria-live="polite">{statusMessage}</p>
           {cameraStatus === "ready" ? (
-            <button className={styles.secondaryButton} type="button" onClick={stopCamera}>
+            <button className={styles.cameraButton} type="button" onClick={stopCamera}>
               Apagar cámara
             </button>
           ) : (
@@ -344,122 +371,112 @@ export default function Glasses3DOverlay() {
               onClick={startCamera}
               disabled={cameraStatus === "loading"}
             >
-              {cameraStatus === "loading" ? "Esperando permiso…" : "Reintentar permiso"}
+              {cameraStatus === "loading" ? "Esperando permiso…" : "Activar cámara"}
             </button>
           )}
         </div>
-        <p className={styles.status} aria-live="polite">{statusMessage}</p>
       </div>
 
       <aside className={styles.controlsPanel}>
-        <div>
-          <p className={styles.stepLabel}>Modelo 3D</p>
-          <h2>{DEMO_3D_GLASSES.name}</h2>
-          <p className={styles.modelLabel}>{DEMO_3D_GLASSES.sku}</p>
+        <div className={styles.modelHeader}>
+          <div className={styles.modelIcon} aria-hidden="true">
+            <span />
+            <span />
+          </div>
+          <div>
+            <p className={styles.stepLabel}>Marco de prueba</p>
+            <h2>{DEMO_3D_GLASSES.name}</h2>
+            <p className={styles.modelLabel}>{DEMO_3D_GLASSES.sku} · Modelo 3D real</p>
+          </div>
         </div>
 
-        <div className={styles.controlGroup}>
-          <p className={styles.stepLabel}>Calibración 3D</p>
+        <div className={styles.fitCard}>
+          <div className={styles.fitHeading}>
+            <div>
+              <p className={styles.stepLabel}>Ajusta el calce</p>
+              <p>Haz pequeños cambios solo si lo necesitas.</p>
+            </div>
+            <button className={styles.resetButton} type="button" onClick={resetCalibration}>
+              Restablecer
+            </button>
+          </div>
 
           <label className={styles.sliderLabel}>
-            <span>Escala <output>{Math.round(calibration.scaleMultiplier * 100)}%</output></span>
+            <span>
+              <span>Ancho del marco</span>
+              <output>{Math.round((calibration.widthScale / DEFAULT_3D_CALIBRATION.widthScale) * 100)}%</output>
+            </span>
             <input
               type="range"
-              min="0.1"
-              max="50"
-              step="0.1"
-              value={calibration.scaleMultiplier}
-              onChange={(e) => updateCalibration("scaleMultiplier", e.target.value)}
+              min="1.9"
+              max="2.7"
+              step="0.01"
+              value={calibration.widthScale}
+              onChange={(event) => updateCalibration("widthScale", event.target.value)}
             />
           </label>
+
           <label className={styles.sliderLabel}>
-            <span>Posición vertical <output>{calibration.positionOffsetY.toFixed(2)}</output></span>
+            <span>
+              <span>Altura sobre el rostro</span>
+              <output>{calibration.positionOffsetY > 0 ? "+" : ""}{Math.round(calibration.positionOffsetY * 100)}</output>
+            </span>
             <input
               type="range"
-              min="-1"
-              max="1"
+              min="-0.18"
+              max="0.25"
               step="0.01"
               value={calibration.positionOffsetY}
-              onChange={(e) => updateCalibration("positionOffsetY", e.target.value)}
+              onChange={(event) => updateCalibration("positionOffsetY", event.target.value)}
             />
           </label>
-          <label className={styles.sliderLabel}>
-            <span>Posición horizontal <output>{calibration.positionOffsetX.toFixed(2)}</output></span>
-            <input
-              type="range"
-              min="-1"
-              max="1"
-              step="0.01"
-              value={calibration.positionOffsetX}
-              onChange={(e) => updateCalibration("positionOffsetX", e.target.value)}
-            />
-          </label>
-          <label className={styles.sliderLabel}>
-            <span>Profundidad <output>{calibration.positionOffsetZ.toFixed(0)}</output></span>
-            <input
-              type="range"
-              min="-200"
-              max="200"
-              step="5"
-              value={calibration.positionOffsetZ}
-              onChange={(e) => updateCalibration("positionOffsetZ", e.target.value)}
-            />
-          </label>
-          <label className={styles.sliderLabel}>
-            <span>Rotación X <output>{calibration.rotationOffsetX.toFixed(0)}°</output></span>
-            <input
-              type="range"
-              min="-45"
-              max="45"
-              step="1"
-              value={calibration.rotationOffsetX}
-              onChange={(e) => updateCalibration("rotationOffsetX", e.target.value)}
-            />
-          </label>
-          <label className={styles.sliderLabel}>
-            <span>Rotación Y <output>{calibration.rotationOffsetY.toFixed(0)}°</output></span>
-            <input
-              type="range"
-              min="-45"
-              max="45"
-              step="1"
-              value={calibration.rotationOffsetY}
-              onChange={(e) => updateCalibration("rotationOffsetY", e.target.value)}
-            />
-          </label>
-          <label className={styles.sliderLabel}>
-            <span>Rotación Z <output>{calibration.rotationOffsetZ.toFixed(0)}°</output></span>
-            <input
-              type="range"
-              min="-45"
-              max="45"
-              step="1"
-              value={calibration.rotationOffsetZ}
-              onChange={(e) => updateCalibration("rotationOffsetZ", e.target.value)}
-            />
-          </label>
-          <button
-            className={styles.textButton}
-            type="button"
-            onClick={() => setCalibration(DEFAULT_3D_CALIBRATION)}
-          >
-            Restablecer calibración
-          </button>
+
+          <details className={styles.fineTune}>
+            <summary>Ajuste fino del modelo</summary>
+            <div className={styles.fineTuneControls}>
+              <label className={styles.sliderLabel}>
+                <span><span>Inclinación vertical</span><output>{calibration.rotationOffsetX}°</output></span>
+                <input
+                  type="range"
+                  min="-20"
+                  max="20"
+                  step="1"
+                  value={calibration.rotationOffsetX}
+                  onChange={(event) => updateCalibration("rotationOffsetX", event.target.value)}
+                />
+              </label>
+              <label className={styles.sliderLabel}>
+                <span><span>Nivel del marco</span><output>{calibration.rotationOffsetZ}°</output></span>
+                <input
+                  type="range"
+                  min="-15"
+                  max="15"
+                  step="1"
+                  value={calibration.rotationOffsetZ}
+                  onChange={(event) => updateCalibration("rotationOffsetZ", event.target.value)}
+                />
+              </label>
+            </div>
+          </details>
         </div>
 
-        <a href="/virtual-try-on" className={styles.linkCard}>
-          <span aria-hidden="true">←</span>
-          <span>Volver al probador 2D</span>
-        </a>
+        <div className={styles.tipsCard}>
+          <p className={styles.stepLabel}>Para verlo mejor</p>
+          <ul>
+            <li>Mantén el rostro completo dentro del cuadro.</li>
+            <li>Busca luz frontal y evita una ventana detrás.</li>
+            <li>Gira suavemente para apreciar las patillas.</li>
+          </ul>
+        </div>
 
-        <div className={styles.privacyCard}>
-          <span aria-hidden="true">⌾</span>
-          <div>
-            <strong>Privacidad por diseño</strong>
-            <p>
-              El video y los puntos faciales se procesan en este navegador. No se
-              guardan ni se envían a Óptica Stylo.
-            </p>
+        <div className={styles.panelFooter}>
+          <a href="/virtual-try-on" className={styles.linkCard}>
+            <span aria-hidden="true">←</span>
+            Probar otros marcos en 2D
+          </a>
+          <div className={styles.privacyNote}>
+            <span aria-hidden="true">●</span>
+            <p><strong>Privado por diseño.</strong> El video no sale de tu dispositivo.</p>
           </div>
         </div>
       </aside>

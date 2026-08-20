@@ -53,12 +53,12 @@ export const DEMO_3D_GLASSES = Object.freeze({
 /** Default calibration for aligning the 3D model to face landmarks. */
 export const DEFAULT_3D_CALIBRATION = Object.freeze({
   positionOffsetX: 0,
-  positionOffsetY: 0.15,
+  positionOffsetY: 0.04,
   positionOffsetZ: 0,
   rotationOffsetX: 0,
   rotationOffsetY: 180,
   rotationOffsetZ: 0,
-  scaleMultiplier: 15.0,
+  widthScale: 2.28,
 });
 
 /**
