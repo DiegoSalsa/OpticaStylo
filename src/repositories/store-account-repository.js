@@ -34,6 +34,13 @@ export async function createCustomerAccount(account) {
        RETURNING *`,
       [customerResult.rows[0].id, account.email, account.passwordHash],
     );
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key
+       ) VALUES ('ACCOUNT_CREATED', $1, $2::JSONB, $3)`,
+      [account.email, JSON.stringify({ firstNames: account.firstNames }),
+        `account:${result.rows[0].id}:created`],
+    );
     return mapAccount({
       ...result.rows[0],
       address: account.address,

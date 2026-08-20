@@ -7,6 +7,7 @@ import {
   extractPrescriptionImage,
   getStoreOrder,
   putStoreCartItem,
+  retryStoreOrderCheckout,
 } from "../../src/services/store-service.js";
 
 const productId = "00000000-0000-4000-8000-000000000001";
@@ -75,6 +76,22 @@ test("una cuenta consulta solamente sus propios pedidos", async () => {
     },
   });
   assert.equal(result.id, orderId);
+});
+
+test("reintenta el checkout solamente para un pedido propio con saldo pendiente", async () => {
+  const result = await retryStoreOrderCheckout(orderId, null, account, {
+    createMercadoPagoCheckout: async (id) => ({ checkoutUrl: `https://checkout.test/${id}` }),
+    findSaleById: async () => sale,
+    listOrders: async () => [orderId],
+  });
+  assert.equal(result.checkoutUrl, `https://checkout.test/${orderId}`);
+});
+
+test("rechaza reintentar un pedido ya pagado", async () => {
+  await assert.rejects(() => retryStoreOrderCheckout(orderId, null, account, {
+    findSaleById: async () => ({ ...sale, balanceCents: 0, status: "PAID" }),
+    listOrders: async () => [orderId],
+  }), (error) => error.code === "STORE_ORDER_NOT_PAYABLE" && error.status === 409);
 });
 
 test("mantiene cerrada la lectura automática sin proveedor autorizado", async () => {

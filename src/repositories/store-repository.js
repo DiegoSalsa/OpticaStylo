@@ -443,6 +443,13 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
        WHERE id = $1`,
       [cart.id, saleId, checkedOutAt],
     );
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key
+       ) VALUES ('ORDER_CONFIRMED', $1, $2::JSONB, $3)`,
+      [cart.buyer_email, JSON.stringify({ saleId, totalCents }),
+        `sale:${saleId}:order-confirmed`],
+    );
     return { reason: null, saleId };
   });
 }
