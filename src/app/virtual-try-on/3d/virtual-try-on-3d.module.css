@@ -3,8 +3,8 @@
   padding: 24px clamp(18px, 4vw, 64px) 56px;
   background:
     radial-gradient(circle at 8% 0%, rgba(221, 235, 228, 0.95), transparent 28rem),
-    radial-gradient(circle at 96% 20%, rgba(236, 216, 187, 0.5), transparent 30rem),
-    #f5f1e9;
+    radial-gradient(circle at 96% 20%, rgba(61, 183, 159, 0.2), transparent 30rem),
+    #f7faf9;
 }
 
 .hero {
@@ -56,7 +56,7 @@
   max-width: 820px;
   margin: 10px 0 0;
   color: #163c35;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(2.7rem, 5.4vw, 5.8rem);
   font-weight: 500;
   letter-spacing: -0.055em;
@@ -73,7 +73,7 @@
 
 .experience {
   display: grid;
-  grid-template-columns: minmax(0, 1.62fr) minmax(330px, 0.7fr);
+  grid-template-columns: minmax(210px, 0.48fr) minmax(0, 1.5fr) minmax(300px, 0.68fr);
   gap: clamp(16px, 2.1vw, 30px);
   width: min(1360px, 100%);
   margin: 0 auto;
@@ -84,6 +84,65 @@
   box-shadow: 0 30px 80px rgba(45, 52, 47, 0.12);
   backdrop-filter: blur(18px);
 }
+
+.guidePanel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+  padding: 14px 8px 8px;
+}
+
+.guidePanel h2 {
+  margin: 7px 0 8px;
+  color: #073a32;
+  font-size: 1.25rem;
+  letter-spacing: -0.035em;
+}
+
+.guidePanel > div > p:last-child {
+  margin: 0;
+  color: #6b7671;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.guidePanel ol {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guidePanel li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid rgba(7, 58, 50, 0.1);
+}
+
+.guidePanel li > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 8px;
+  color: #073a32;
+  background: #ddf7f1;
+  font-size: 0.65rem;
+  font-weight: 850;
+}
+
+.guidePanel li div { display: grid; gap: 2px; }
+.guidePanel li strong { color: #294a43; font-size: 0.7rem; }
+.guidePanel li small { color: #71807b; font-size: 0.61rem; line-height: 1.4; }
+.guidePrivacy { display: grid; grid-template-columns: 13px 1fr; gap: 7px; margin-top: auto; padding: 11px; border-radius: 12px; background: #edf8f5; }
+.guidePrivacy > span { color: #3db79f; font-size: 0.5rem; line-height: 1.9; }
+.guidePrivacy p { display: grid; margin: 0 !important; color: #68736e; font-size: 0.62rem !important; }
+.guidePrivacy strong { color: #073a32; }
 
 .viewerPanel {
   min-width: 0;
@@ -151,7 +210,7 @@
 }
 
 .viewerPlaceholder strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(1.45rem, 2.7vw, 2.2rem);
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -468,7 +527,7 @@
 .modelHeader h2 {
   margin: 5px 0 2px;
   color: #173e37;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(1.35rem, 2vw, 1.85rem);
   font-weight: 500;
   letter-spacing: -0.035em;
@@ -682,6 +741,15 @@
     padding: 12px 8px 8px;
   }
 
+  .guidePanel {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    padding: 12px 8px;
+  }
+
+  .guidePanel ol { grid-column: 2; grid-row: 1 / span 2; }
+  .guidePrivacy { margin-top: 0; }
+
   .modelHeader,
   .panelFooter {
     grid-column: 1 / -1;
@@ -730,6 +798,8 @@
     box-shadow: none;
     backdrop-filter: none;
   }
+
+  .guidePanel { display: flex; padding: 12px 16px 22px; }
 
   .viewerPanel {
     padding: 0 10px;

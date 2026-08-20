@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/icon";
 import styles from "./store.module.css";
 
 const categories = [
-  { label: "Todos los productos", value: "" }, { label: "Marcos", value: "FRAME" },
+  { label: "Todos", value: "" }, { label: "Marcos", value: "FRAME" },
   { label: "Cristales", value: "PRESCRIPTION_LENS" }, { label: "Tratamientos", value: "TREATMENT" },
   { label: "Accesorios", value: "ACCESSORY" }, { label: "Otros", value: "OTHER" },
 ];
@@ -24,10 +24,15 @@ async function requestProducts(category, query, signal) {
   return payload.data;
 }
 
-export default function CatalogBrowser() {
-  const [category, setCategory] = useState("");
+export default function CatalogBrowser({ initialCategory = "" }) {
+  const validInitialCategory = categories.some((item) => item.value === initialCategory) ? initialCategory : "";
+  const [category, setCategory] = useState(validInitialCategory);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [prescription, setPrescription] = useState("all");
+  const [availability, setAvailability] = useState("all");
+  const [sort, setSort] = useState("featured");
+  const [view, setView] = useState("grid");
   const [result, setResult] = useState({ items: [], total: 0 });
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
@@ -37,28 +42,45 @@ export default function CatalogBrowser() {
     const controller = new AbortController();
     requestProducts(category, submittedQuery, controller.signal)
       .then((data) => { setResult(data); setStatus("ready"); })
-      .catch((requestError) => {
-        if (requestError.name === "AbortError") return;
-        setError(requestError.message || "No fue posible cargar el catálogo."); setStatus("error");
-      });
+      .catch((requestError) => { if (requestError.name !== "AbortError") { setError(requestError.message || "No fue posible cargar el catálogo."); setStatus("error"); } });
     return () => controller.abort();
   }, [category, reloadKey, submittedQuery]);
 
+  const visibleItems = useMemo(() => {
+    const filtered = result.items.filter((product) => {
+      if (prescription === "required" && !product.requiresPrescription) return false;
+      if (prescription === "not-required" && product.requiresPrescription) return false;
+      if (availability === "available" && !product.availability?.available) return false;
+      return true;
+    });
+    if (sort === "price-asc") return filtered.toSorted((a, b) => a.unitPriceCents - b.unitPriceCents);
+    if (sort === "price-desc") return filtered.toSorted((a, b) => b.unitPriceCents - a.unitPriceCents);
+    if (sort === "name") return filtered.toSorted((a, b) => a.name.localeCompare(b.name, "es"));
+    return filtered;
+  }, [availability, prescription, result.items, sort]);
+
   function changeCategory(value) { setStatus("loading"); setError(""); setCategory(value); }
-  function clearFilters() { setStatus("loading"); setError(""); setCategory(""); setQuery(""); setSubmittedQuery(""); }
+  function clearFilters() { setStatus("loading"); setError(""); setCategory(""); setQuery(""); setSubmittedQuery(""); setPrescription("all"); setAvailability("all"); setSort("featured"); }
   function retry() { setStatus("loading"); setError(""); setReloadKey((value) => value + 1); }
   function submitSearch(event) { event.preventDefault(); setStatus("loading"); setError(""); setSubmittedQuery(query.trim()); }
 
-  return (
-    <div className={styles.catalog}>
-      <aside className={styles.filters}><h2>Categorías</h2><div className={styles.categoryList}>{categories.map((item) => <button className={category === item.value ? styles.categoryActive : ""} key={item.value} onClick={() => changeCategory(item.value)} type="button"><span>{item.label}</span>{category === item.value && <Icon name="check" size={17} />}</button>)}</div><div className={styles.availabilityNote}><Icon name="shield" /><p><strong>Disponibilidad informativa</strong>La cantidad exacta se confirmará cuando se conecte el inventario real.</p></div></aside>
-      <section aria-busy={status === "loading"} className={styles.results}>
-        <div className={styles.toolbar}><form className={styles.search} onSubmit={submitSearch} role="search"><Icon name="search" /><label className="sr-only" htmlFor="catalog-search">Buscar productos</label><input id="catalog-search" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o código" type="search" value={query} /><button type="submit">Buscar</button></form><p>{status === "ready" ? `${result.total} ${result.total === 1 ? "producto" : "productos"}` : status === "loading" ? "Cargando catálogo" : "Catálogo no disponible"}</p></div>
-        {status === "loading" && <div className={styles.productGrid}>{Array.from({ length: 6 }, (_, index) => <div className={styles.skeleton} key={index} />)}</div>}
-        {status === "error" && <div className={styles.state}><span><Icon name="shield" size={28} /></span><h2>No pudimos cargar el catálogo</h2><p>{error}</p><button className="button button--primary" onClick={retry} type="button">Intentar nuevamente</button></div>}
-        {status === "ready" && result.items.length === 0 && <div className={styles.state}><span><Icon name="search" size={28} /></span><h2>No encontramos productos</h2><p>Prueba con otra búsqueda o revisa una categoría diferente.</p><button className="button button--secondary" onClick={clearFilters} type="button">Limpiar filtros</button></div>}
-        {status === "ready" && result.items.length > 0 && <div className={styles.productGrid}>{result.items.map((product) => <article className={styles.productCard} key={product.id}><Link aria-label={`Ver ${product.name}`} className={styles.productImage} href={`/tienda/${product.id}`}><ProductVisual category={product.category} />{product.category === "FRAME" && <span className={styles.tryOnBadge}><Icon name="eye" size={15} /> Marco</span>}</Link><div className={styles.productBody}><p className={styles.productCategory}>{categoryNames[product.category] || "Producto"}</p><h2><Link href={`/tienda/${product.id}`}>{product.name}</Link></h2><p className={styles.sku}>Código {product.sku}</p><div className={styles.productBottom}><strong>{formatPrice(product.unitPriceCents)}</strong><span className={product.availability?.available ? styles.available : styles.unavailable}>{product.availability?.available ? "Disponible" : "Consultar"}</span></div>{product.requiresPrescription && <p className={styles.prescription}><Icon name="check" size={16} /> Requiere receta para completar la compra</p>}</div></article>)}</div>}
-      </section>
-    </div>
-  );
+  return <div className={styles.catalog}>
+    <aside className={styles.filters}>
+      <div className={styles.filterTitle}><h2>Filtros</h2><button onClick={clearFilters} type="button">Limpiar</button></div>
+      <fieldset><legend>Categoría</legend><div className={styles.categoryList}>{categories.map((item) => <button aria-pressed={category === item.value} className={category === item.value ? styles.categoryActive : ""} key={item.value} onClick={() => changeCategory(item.value)} type="button"><span>{item.label}</span>{category === item.value && <Icon name="check" size={16} />}</button>)}</div></fieldset>
+      <fieldset><legend>Receta</legend><label><input checked={prescription === "all"} name="prescription" onChange={() => setPrescription("all")} type="radio" /> Todos</label><label><input checked={prescription === "required"} name="prescription" onChange={() => setPrescription("required")} type="radio" /> Requiere receta</label><label><input checked={prescription === "not-required"} name="prescription" onChange={() => setPrescription("not-required")} type="radio" /> No requiere receta</label></fieldset>
+      <fieldset><legend>Disponibilidad</legend><label><input checked={availability === "available"} onChange={(event) => setAvailability(event.target.checked ? "available" : "all")} type="checkbox" /> Mostrar disponibles</label></fieldset>
+      <div className={styles.availabilityNote}><Icon name="shield" /><p><strong>Stock informativo</strong>La cantidad exacta se confirmará cuando se conecte el inventario real en la etapa 6.</p></div>
+    </aside>
+
+    <section aria-busy={status === "loading"} className={styles.results}>
+      <form className={styles.search} onSubmit={submitSearch} role="search"><Icon name="search" /><label className="sr-only" htmlFor="catalog-search">Buscar productos</label><input id="catalog-search" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o código" type="search" value={query} /><button type="submit">Buscar</button></form>
+      <div className={styles.toolbar}><p><strong>{status === "ready" ? visibleItems.length : "—"}</strong> {status === "ready" ? "productos visibles" : "Cargando catálogo"}</p><div><label><span>Ordenar por</span><select onChange={(event) => setSort(event.target.value)} value={sort}><option value="featured">Publicados</option><option value="price-asc">Precio: menor a mayor</option><option value="price-desc">Precio: mayor a menor</option><option value="name">Nombre</option></select></label><div className={styles.viewSwitch}><button aria-label="Vista en cuadrícula" aria-pressed={view === "grid"} onClick={() => setView("grid")} type="button">▦</button><button aria-label="Vista en lista" aria-pressed={view === "list"} onClick={() => setView("list")} type="button">☰</button></div></div></div>
+      {status === "loading" && <div className={styles.productGrid}>{Array.from({ length: 6 }, (_, index) => <div className={styles.skeleton} key={index} />)}</div>}
+      {status === "error" && <div className={styles.state}><span><Icon name="shield" size={28} /></span><h2>No pudimos cargar el catálogo</h2><p>{error}</p><button className="button button--primary" onClick={retry} type="button">Intentar nuevamente</button></div>}
+      {status === "ready" && visibleItems.length === 0 && <div className={styles.state}><span><Icon name="search" size={28} /></span><h2>No encontramos productos</h2><p>Prueba con otra búsqueda o cambia los filtros disponibles.</p><button className="button button--secondary" onClick={clearFilters} type="button">Limpiar filtros</button></div>}
+      {status === "ready" && visibleItems.length > 0 && <div className={`${styles.productGrid} ${view === "list" ? styles.productList : ""}`}>{visibleItems.map((product) => <article className={styles.productCard} key={product.id}><Link aria-label={`Ver ${product.name}`} className={styles.productImage} href={`/tienda/${product.id}`}><ProductVisual category={product.category} />{product.category === "FRAME" && <span className={styles.tryOnBadge}><Icon name="eye" size={15} /> Prueba virtual</span>}</Link><div className={styles.productBody}><p className={styles.productCategory}>{categoryNames[product.category] || "Producto"}</p><h2><Link href={`/tienda/${product.id}`}>{product.name}</Link></h2><p className={styles.sku}>Código {product.sku}</p><div className={styles.productBottom}><strong>{formatPrice(product.unitPriceCents)}</strong><span className={product.availability?.available ? styles.available : styles.unavailable}>{product.availability?.available ? "Disponible" : "Consultar"}</span></div>{product.requiresPrescription && <p className={styles.prescription}><Icon name="file" size={15} /> Requiere receta</p>}<Link className={styles.productAction} href={`/tienda/${product.id}`}>Ver producto <Icon name="arrow" size={17} /></Link></div></article>)}</div>}
+      {status === "ready" && result.total > result.items.length && <p className={styles.pageNote}>Mostrando los primeros {result.items.length} de {result.total} productos publicados.</p>}
+    </section>
+  </div>;
 }

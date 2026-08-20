@@ -337,6 +337,11 @@ export default function Glasses3DOverlay() {
 
   return (
     <section className={styles.experience} aria-label="Probador virtual 3D">
+      <aside className={styles.guidePanel}>
+        <div><p className={styles.stepLabel}>Antes de comenzar</p><h2>Prepara tu cámara</h2><p>Busca luz frontal, quítate los lentes actuales y mantén el rostro dentro de la guía.</p></div>
+        <ol><li><span>1</span><div><strong>Permite la cámara</strong><small>Solo cuando el navegador la solicite.</small></div></li><li><span>2</span><div><strong>Mira de frente</strong><small>El marco seguirá la posición de tu rostro.</small></div></li><li><span>3</span><div><strong>Compara modelos</strong><small>Elige únicamente los activos del catálogo 3D.</small></div></li></ol>
+        <div className={styles.guidePrivacy}><span aria-hidden="true">●</span><p><strong>Procesamiento local</strong>El video no se envía ni se guarda.</p></div>
+      </aside>
       <div className={styles.viewerPanel}>
         <div
           className={styles.viewer}
