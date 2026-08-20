@@ -19,6 +19,9 @@ const IRIS_DIAMETER_PAIRS = Object.freeze([
 ]);
 const AVERAGE_IRIS_DIAMETER_MM = 11.7;
 const REFERENCE_FACE_WIDTH_MM = 135;
+const LEFT_IRIS_CENTER = 468;
+const RIGHT_IRIS_CENTER = 473;
+const FACE_MESH_LANDMARK_COUNT = 468;
 
 function finitePoint(point) {
   return point
@@ -72,6 +75,70 @@ function irisPixelsPerMillimeter(landmarks, videoWidth, videoHeight, irisDiamete
     / irisDiameterMm;
 }
 
+function wrappedAngleDistance(first, second) {
+  return Math.abs(Math.atan2(Math.sin(first - second), Math.cos(first - second)));
+}
+
+function closestSignedAngle(angle, fallback) {
+  return wrappedAngleDistance(angle, fallback) <= wrappedAngleDistance(-angle, fallback)
+    ? angle
+    : -angle;
+}
+
+function rotationFromFaceTransform(faceTransform, fallbackRotation) {
+  const data = faceTransform?.data;
+  if (!Array.isArray(data) || data.length !== 16) return fallbackRotation;
+
+  const scaleX = Math.hypot(data[0], data[1], data[2]);
+  const scaleY = Math.hypot(data[4], data[5], data[6]);
+  const scaleZ = Math.hypot(data[8], data[9], data[10]);
+  if (scaleX === 0 || scaleY === 0 || scaleZ === 0) return fallbackRotation;
+
+  const m11 = data[0] / scaleX;
+  const m12 = data[4] / scaleY;
+  const m13 = data[8] / scaleZ;
+  const m22 = data[5] / scaleY;
+  const m23 = data[9] / scaleZ;
+  const m32 = data[6] / scaleY;
+  const m33 = data[10] / scaleZ;
+  const y = Math.asin(clamp(m13, -1, 1));
+  const singular = Math.abs(m13) >= 0.9999999;
+  const x = singular ? Math.atan2(m32, m22) : Math.atan2(-m23, m33);
+  const z = singular ? 0 : Math.atan2(-m12, m11);
+
+  return [
+    clamp(closestSignedAngle(x, fallbackRotation[0]), -0.55, 0.55),
+    clamp(closestSignedAngle(y, fallbackRotation[1]), -1.05, 1.05),
+    clamp(closestSignedAngle(z, fallbackRotation[2]), -0.7, 0.7),
+  ];
+}
+
+function faceMeshPositions(
+  landmarks,
+  videoWidth,
+  videoHeight,
+  noseBridgeDepth,
+  baseDepth,
+  maximumDepthOffset,
+) {
+  const positions = new Float32Array(FACE_MESH_LANDMARK_COUNT * 3);
+  for (let index = 0; index < FACE_MESH_LANDMARK_COUNT; index += 1) {
+    const landmark = landmarks[index];
+    const point = mirroredPoint(landmark, videoWidth, videoHeight);
+    const landmarkDepth = Number.isFinite(landmark.z) ? landmark.z : noseBridgeDepth;
+    const relativeDepth = clamp(
+      -(landmarkDepth - noseBridgeDepth) * videoWidth,
+      -maximumDepthOffset,
+      maximumDepthOffset,
+    );
+    const offset = index * 3;
+    positions[offset] = point.x - videoWidth / 2;
+    positions[offset + 1] = videoHeight / 2 - point.y;
+    positions[offset + 2] = baseDepth + relativeDepth;
+  }
+  return positions;
+}
+
 /**
  * Converts MediaPipe landmarks into a physical-scale glasses pose. The face
  * estimates camera pixels per millimeter; product metadata preserves each
@@ -82,6 +149,7 @@ export function landmarksToGlassesPose(
   videoWidth,
   videoHeight,
   modelMetadata,
+  faceTransform = null,
 ) {
   if (!landmarks || videoWidth <= 0 || videoHeight <= 0 || !modelMetadata) return null;
 
@@ -121,18 +189,21 @@ export function landmarksToGlassesPose(
     return null;
   }
 
+  const leftIrisLandmark = landmarks[LEFT_IRIS_CENTER];
+  const rightIrisLandmark = landmarks[RIGHT_IRIS_CENTER];
+  const trackedEyeCenters = finitePoint(leftIrisLandmark) && finitePoint(rightIrisLandmark)
+    ? [
+      mirroredPoint(leftIrisLandmark, videoWidth, videoHeight),
+      mirroredPoint(rightIrisLandmark, videoWidth, videoHeight),
+    ]
+    : [leftEye, rightEye];
   const eyeCenter = {
-    x: (leftEye.x + rightEye.x) / 2,
-    y: (leftEye.y + rightEye.y) / 2,
+    x: (trackedEyeCenters[0].x + trackedEyeCenters[1].x) / 2,
+    y: (trackedEyeCenters[0].y + trackedEyeCenters[1].y) / 2,
   };
-  const faceCenter = {
-    x: (leftFace.x + rightFace.x) / 2,
-    y: (forehead.y + chin.y) / 2,
-  };
-
   const noseDeviation = (noseTip.x - eyeCenter.x) / eyeDistance;
-  const yawAngle = Math.asin(clamp(noseDeviation * 2.4, -0.72, 0.72));
-  const rollAngle = Math.atan2(
+  const fallbackYawAngle = Math.asin(clamp(noseDeviation * 2.4, -0.72, 0.72));
+  const fallbackRollAngle = Math.atan2(
     leftEye.y - rightEye.y,
     leftEye.x - rightEye.x,
   );
@@ -142,7 +213,11 @@ export function landmarksToGlassesPose(
   const noseRatio = faceHeight > 0
     ? (noseBridgeY - forehead.y) / faceHeight
     : 0.38;
-  const pitchAngle = clamp((noseRatio - 0.38) * 1.15, -0.42, 0.42);
+  const fallbackPitchAngle = clamp((noseRatio - 0.38) * 1.15, -0.42, 0.42);
+  const [pitchAngle, yawAngle, rollAngle] = rotationFromFaceTransform(
+    faceTransform,
+    [fallbackPitchAngle, fallbackYawAngle, fallbackRollAngle],
+  );
 
   const yawCosine = Math.max(0.68, Math.cos(yawAngle));
   const frontalFaceWidth = projectedFaceWidth / yawCosine;
@@ -181,25 +256,24 @@ export function landmarksToGlassesPose(
   }
 
   const faceRadiusX = (projectedTempleWidth / yawCosine) * 0.5;
-  const faceRadiusY = projectedFaceHeight * 0.53;
   const faceRadiusZ = faceRadiusX * 0.7;
-  const rotatedFrontRadius = Math.hypot(
-    faceRadiusX * Math.sin(yawAngle),
-    faceRadiusZ * Math.cos(yawAngle),
-  );
   const occluderFrontGap = modelMetadata.occlusion.maskFrontDepthMm
     * pixelsPerMillimeter;
+  const noseBridgeDepth = Number.isFinite(noseBridgeLandmark.z)
+    ? noseBridgeLandmark.z
+    : 0;
 
   return {
     headRotation,
-    occluder: {
-      position: [
-        faceCenter.x - videoWidth / 2,
-        videoHeight / 2 - faceCenter.y,
-        -occluderFrontGap - rotatedFrontRadius,
-      ],
-      rotation: headRotation,
-      scale: [faceRadiusX, faceRadiusY, faceRadiusZ],
+    faceMesh: {
+      positions: faceMeshPositions(
+        landmarks,
+        videoWidth,
+        videoHeight,
+        noseBridgeDepth,
+        -occluderFrontGap,
+        faceRadiusZ,
+      ),
     },
     position: [worldX, worldY, 0],
     rotation: [
@@ -221,20 +295,10 @@ export function smoothGlassesPose3D(previous, next, factor = 0.32) {
       next.headRotation,
       normalizedFactor,
     ),
-    occluder: {
-      position: smoothValues(
-        previous.occluder.position,
-        next.occluder.position,
-        normalizedFactor,
-      ),
-      rotation: smoothAngles(
-        previous.occluder.rotation,
-        next.occluder.rotation,
-        normalizedFactor,
-      ),
-      scale: smoothValues(
-        previous.occluder.scale,
-        next.occluder.scale,
+    faceMesh: {
+      positions: smoothValues(
+        previous.faceMesh.positions,
+        next.faceMesh.positions,
         normalizedFactor,
       ),
     },
