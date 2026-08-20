@@ -11,6 +11,7 @@
     "test": "node --test",
     "test:watch": "node --test --watch",
     "frames:import-3d": "node scripts/import-3d-frames.mjs",
+    "frames:publish-3d": "node scripts/publish-3d-model.mjs",
     "db:check": "node scripts/db-check.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:migrate:status": "node scripts/db-migration-status.mjs",

@@ -481,6 +481,41 @@
   font-size: 0.72rem;
 }
 
+.modelPicker {
+  display: grid;
+  gap: 8px;
+}
+
+.modelPicker > div {
+  display: grid;
+  gap: 6px;
+  max-height: 150px;
+  overflow: auto;
+}
+
+.modelPicker button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid rgba(22, 60, 53, 0.1);
+  border-radius: 10px;
+  color: #294a43;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.modelPicker button[aria-pressed="true"] {
+  border-color: #3db79f;
+  background: #e9f8f4;
+}
+
+.modelPicker span { font-size: 0.73rem; font-weight: 750; }
+.modelPicker small { color: #71807b; font-size: 0.62rem; }
+.licenseNote { margin: -8px 0 0; color: #71807b; font-size: 0.61rem; line-height: 1.45; }
+
 .autoFitCard,
 .tipsCard {
   border: 1px solid rgba(22, 60, 53, 0.1);
