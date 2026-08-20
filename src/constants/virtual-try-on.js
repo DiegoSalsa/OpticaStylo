@@ -48,17 +48,7 @@ export const DEMO_3D_GLASSES = Object.freeze({
   name: "Harley-Davidson HD0896",
   sku: "HD0896-001",
   modelUrl: "/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.glb",
-});
-
-/** Default calibration for aligning the 3D model to face landmarks. */
-export const DEFAULT_3D_CALIBRATION = Object.freeze({
-  // The inner edge of this GLB's temples sits at 44.4% of its total width.
-  // A 1.16 face ratio keeps both hinges and temples outside the detected head.
-  faceWidthRatio: 1.16,
-  maximumEyeWidthScale: 2.12,
-  minimumEyeWidthScale: 1.92,
-  modelYawOffsetDegrees: 180,
-  verticalOffset: 0.025,
+  metadataUrl: "/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json",
 });
 
 /**
@@ -76,4 +66,6 @@ export const FACE_LANDMARK_INDICES = Object.freeze({
   CHIN: 152,
   LEFT_EAR: 234,
   RIGHT_EAR: 454,
+  LEFT_TEMPLE: 127,
+  RIGHT_TEMPLE: 356,
 });

@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  DEFAULT_3D_CALIBRATION,
   DEMO_3D_GLASSES,
   FACE_LANDMARKER_MODEL_URL,
   MEDIAPIPE_WASM_URL,
@@ -14,6 +13,7 @@ import {
   landmarksToGlassesPose,
   smoothGlassesPose3D,
 } from "@/utils/virtual-try-on-3d-geometry";
+import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 
 import styles from "./virtual-try-on-3d.module.css";
 
@@ -73,6 +73,7 @@ export default function Glasses3DOverlay() {
   const smoothedPoseRef = useRef(null);
   const cameraRequestRef = useRef(0);
   const poseRef = useRef(null);
+  const modelMetadataRef = useRef(null);
 
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [statusMessage, setStatusMessage] = useState(
@@ -81,6 +82,8 @@ export default function Glasses3DOverlay() {
   const [cameraAspectRatio, setCameraAspectRatio] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
   const [modelReady, setModelReady] = useState(false);
+  const [modelMetadata, setModelMetadata] = useState(null);
+  const [modelError, setModelError] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 1280, height: 720 });
 
   const releaseResources = useCallback(() => {
@@ -102,6 +105,28 @@ export default function Glasses3DOverlay() {
   }, []);
 
   useEffect(() => releaseResources, [releaseResources]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadModelMetadata() {
+      try {
+        const response = await fetch(DEMO_3D_GLASSES.metadataUrl, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const metadata = validateTryOnModelMetadata(await response.json());
+        if (metadata.analysis.status !== "valid") {
+          throw new Error("El modelo 3D requiere revisión.");
+        }
+        modelMetadataRef.current = metadata;
+        setModelMetadata(metadata);
+      } catch (error) {
+        if (error?.name !== "AbortError") setModelError(true);
+      }
+    }
+    void loadModelMetadata();
+    return () => controller.abort();
+  }, []);
 
   const stopCamera = useCallback(() => {
     releaseResources();
@@ -193,7 +218,7 @@ export default function Glasses3DOverlay() {
               landmarks,
               video.videoWidth,
               video.videoHeight,
-              DEFAULT_3D_CALIBRATION,
+              modelMetadataRef.current,
             );
             if (nextPose) {
               smoothedPoseRef.current = smoothGlassesPose3D(
@@ -293,11 +318,14 @@ export default function Glasses3DOverlay() {
               <directionalLight position={[250, 320, 480]} intensity={2.1} />
               <directionalLight position={[-280, 40, 260]} intensity={0.8} />
               <Suspense fallback={null}>
-                <GlassesModel
-                  modelUrl={DEMO_3D_GLASSES.modelUrl}
-                  onReady={handleModelReady}
-                  poseRef={poseRef}
-                />
+                {modelMetadata && (
+                  <GlassesModel
+                    modelMetadata={modelMetadata}
+                    modelUrl={DEMO_3D_GLASSES.modelUrl}
+                    onReady={handleModelReady}
+                    poseRef={poseRef}
+                  />
+                )}
               </Suspense>
             </Canvas>
           )}
@@ -332,8 +360,10 @@ export default function Glasses3DOverlay() {
             </div>
           )}
 
-          {cameraStatus === "ready" && !modelReady && (
-            <div className={styles.modelLoading}>Preparando el marco 3D…</div>
+          {cameraStatus === "ready" && (!modelReady || modelError) && (
+            <div className={styles.modelLoading}>
+              {modelError ? "El marco 3D necesita revisión." : "Preparando el marco 3D…"}
+            </div>
           )}
 
           <div className={styles.liveBadge} data-active={cameraStatus === "ready"}>

@@ -1,7 +1,4 @@
-import {
-  DEFAULT_3D_CALIBRATION,
-  FACE_LANDMARK_INDICES,
-} from "../constants/virtual-try-on.js";
+import { FACE_LANDMARK_INDICES } from "../constants/virtual-try-on.js";
 
 const {
   LEFT_EYE_OUTER,
@@ -12,7 +9,16 @@ const {
   CHIN,
   LEFT_EAR,
   RIGHT_EAR,
+  LEFT_TEMPLE,
+  RIGHT_TEMPLE,
 } = FACE_LANDMARK_INDICES;
+
+const IRIS_DIAMETER_PAIRS = Object.freeze([
+  [470, 472],
+  [475, 477],
+]);
+const AVERAGE_IRIS_DIAMETER_MM = 11.7;
+const REFERENCE_FACE_WIDTH_MM = 135;
 
 function finitePoint(point) {
   return point
@@ -31,6 +37,10 @@ function mirroredPoint(point, videoWidth, videoHeight) {
   };
 }
 
+function pointDistance(first, second) {
+  return Math.hypot(second.x - first.x, second.y - first.y);
+}
+
 function smoothValues(previous, next, factor) {
   return previous.map(
     (value, index) => value + (next[index] - value) * factor,
@@ -45,18 +55,35 @@ function smoothAngles(previous, next, factor) {
   });
 }
 
+function irisPixelsPerMillimeter(landmarks, videoWidth, videoHeight, irisDiameterMm) {
+  const diameters = IRIS_DIAMETER_PAIRS.flatMap(([firstIndex, secondIndex]) => {
+    const first = landmarks[firstIndex];
+    const second = landmarks[secondIndex];
+    if (!finitePoint(first) || !finitePoint(second)) return [];
+    const diameter = pointDistance(
+      mirroredPoint(first, videoWidth, videoHeight),
+      mirroredPoint(second, videoWidth, videoHeight),
+    );
+    return diameter >= 1.5 ? [diameter] : [];
+  });
+  if (diameters.length === 0) return null;
+  return diameters.reduce((sum, value) => sum + value, 0)
+    / diameters.length
+    / irisDiameterMm;
+}
+
 /**
- * Converts MediaPipe landmarks into a self-fitting glasses pose. The frame
- * width comes from the detected face sides and is constrained by eye distance,
- * so it remains stable without visitor-facing calibration controls.
+ * Converts MediaPipe landmarks into a physical-scale glasses pose. The face
+ * estimates camera pixels per millimeter; product metadata preserves each
+ * frame's real dimensions, so different sizes remain visibly different.
  */
 export function landmarksToGlassesPose(
   landmarks,
   videoWidth,
   videoHeight,
-  calibration = DEFAULT_3D_CALIBRATION,
+  modelMetadata,
 ) {
-  if (!landmarks || videoWidth <= 0 || videoHeight <= 0) return null;
+  if (!landmarks || videoWidth <= 0 || videoHeight <= 0 || !modelMetadata) return null;
 
   const leftEyeLandmark = landmarks[LEFT_EYE_OUTER];
   const rightEyeLandmark = landmarks[RIGHT_EYE_OUTER];
@@ -87,18 +114,9 @@ export function landmarksToGlassesPose(
   const leftFace = mirroredPoint(leftFaceLandmark, videoWidth, videoHeight);
   const rightFace = mirroredPoint(rightFaceLandmark, videoWidth, videoHeight);
 
-  const eyeDistance = Math.hypot(
-    rightEye.x - leftEye.x,
-    rightEye.y - leftEye.y,
-  );
-  const projectedFaceWidth = Math.hypot(
-    rightFace.x - leftFace.x,
-    rightFace.y - leftFace.y,
-  );
-  const projectedFaceHeight = Math.hypot(
-    chin.x - forehead.x,
-    chin.y - forehead.y,
-  );
+  const eyeDistance = pointDistance(leftEye, rightEye);
+  const projectedFaceWidth = pointDistance(leftFace, rightFace);
+  const projectedFaceHeight = pointDistance(forehead, chin);
   if (eyeDistance < 8 || projectedFaceWidth < eyeDistance || projectedFaceHeight < 8) {
     return null;
   }
@@ -126,34 +144,51 @@ export function landmarksToGlassesPose(
     : 0.38;
   const pitchAngle = clamp((noseRatio - 0.38) * 1.15, -0.42, 0.42);
 
-  // Both face width and eye distance are corrected back to their approximate
-  // frontal measurements. Rotating the GLB then creates the projected shrink
-  // exactly once instead of making the frame collapse as the head turns.
   const yawCosine = Math.max(0.68, Math.cos(yawAngle));
-  const frontalEyeDistance = eyeDistance / yawCosine;
   const frontalFaceWidth = projectedFaceWidth / yawCosine;
-  const faceBasedFrameWidth = frontalFaceWidth * calibration.faceWidthRatio;
-  const frameWidth = clamp(
-    faceBasedFrameWidth,
-    frontalEyeDistance * calibration.minimumEyeWidthScale,
-    frontalEyeDistance * calibration.maximumEyeWidthScale,
+  const fallbackPixelsPerMillimeter = frontalFaceWidth
+    / REFERENCE_FACE_WIDTH_MM;
+  const measuredPixelsPerMillimeter = irisPixelsPerMillimeter(
+    landmarks,
+    videoWidth,
+    videoHeight,
+    AVERAGE_IRIS_DIAMETER_MM,
   );
+  const pixelsPerMillimeter = measuredPixelsPerMillimeter === null
+    ? fallbackPixelsPerMillimeter
+    : clamp(
+      measuredPixelsPerMillimeter,
+      fallbackPixelsPerMillimeter * 0.72,
+      fallbackPixelsPerMillimeter * 1.38,
+    );
 
   const worldX = eyeCenter.x - videoWidth / 2;
   const worldY = videoHeight / 2 - eyeCenter.y
-    - calibration.verticalOffset * frontalEyeDistance;
+    - modelMetadata.fitting.verticalOffsetMm * pixelsPerMillimeter;
   const headRotation = [pitchAngle, yawAngle, rollAngle];
 
-  const faceRadiusX = frontalFaceWidth * 0.5;
+  const leftTempleLandmark = landmarks[LEFT_TEMPLE];
+  const rightTempleLandmark = landmarks[RIGHT_TEMPLE];
+  let projectedTempleWidth = projectedFaceWidth * 0.88;
+  if (finitePoint(leftTempleLandmark) && finitePoint(rightTempleLandmark)) {
+    const detectedTempleWidth = pointDistance(
+      mirroredPoint(leftTempleLandmark, videoWidth, videoHeight),
+      mirroredPoint(rightTempleLandmark, videoWidth, videoHeight),
+    );
+    if (detectedTempleWidth > eyeDistance * 0.65) {
+      projectedTempleWidth = detectedTempleWidth;
+    }
+  }
+
+  const faceRadiusX = (projectedTempleWidth / yawCosine) * 0.5;
   const faceRadiusY = projectedFaceHeight * 0.53;
-  const faceRadiusZ = frontalFaceWidth * 0.34;
+  const faceRadiusZ = faceRadiusX * 0.7;
   const rotatedFrontRadius = Math.hypot(
     faceRadiusX * Math.sin(yawAngle),
     faceRadiusZ * Math.cos(yawAngle),
   );
-  // The nearest point of the invisible head sits between the front rims and
-  // the temples in this GLB. It writes depth without covering the camera feed.
-  const occluderFrontGap = frameWidth * 0.063;
+  const occluderFrontGap = modelMetadata.occlusion.maskFrontDepthMm
+    * pixelsPerMillimeter;
 
   return {
     headRotation,
@@ -169,10 +204,10 @@ export function landmarksToGlassesPose(
     position: [worldX, worldY, 0],
     rotation: [
       pitchAngle,
-      yawAngle + (calibration.modelYawOffsetDegrees * Math.PI) / 180,
+      yawAngle + (modelMetadata.normalization.modelYawOffsetDegrees * Math.PI) / 180,
       rollAngle,
     ],
-    scale: frameWidth,
+    scale: pixelsPerMillimeter,
   };
 }
 

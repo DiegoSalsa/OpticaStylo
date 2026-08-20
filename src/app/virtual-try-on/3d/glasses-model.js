@@ -3,24 +3,19 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Box3, Vector3 } from "three";
 
 /**
  * Three.js component that loads and renders the glasses GLB model.
  * Position, rotation, and scale are updated every frame from the
  * `poseRef` shared by the parent overlay component.
  */
-export default function GlassesModel({ modelUrl, onReady, poseRef }) {
+export default function GlassesModel({ modelMetadata, modelUrl, onReady, poseRef }) {
   const groupRef = useRef();
   const occluderRef = useRef();
   const { scene } = useGLTF(modelUrl);
 
   const model = useMemo(() => {
     const clonedScene = scene.clone(true);
-    const bounds = new Box3().setFromObject(clonedScene);
-    const size = bounds.getSize(new Vector3());
-    const center = bounds.getCenter(new Vector3());
-    const normalisingScale = size.x > 0 ? 1 / size.x : 1;
 
     clonedScene.traverse((child) => {
       if (!child.isMesh) return;
@@ -38,11 +33,11 @@ export default function GlassesModel({ modelUrl, onReady, poseRef }) {
       child.material = Array.isArray(child.material) ? adjustedMaterials : adjustedMaterials[0];
     });
     return {
-      normalisingScale,
-      offset: [-center.x, -center.y, -bounds.min.z],
+      millimetersPerUnit: modelMetadata.normalization.millimetersPerUnit,
+      offset: modelMetadata.normalization.offsetRaw,
       scene: clonedScene,
     };
-  }, [scene]);
+  }, [modelMetadata, scene]);
 
   useEffect(() => {
     onReady?.();
@@ -83,7 +78,7 @@ export default function GlassesModel({ modelUrl, onReady, poseRef }) {
         />
       </mesh>
       <group ref={groupRef} visible={false}>
-        <group scale={model.normalisingScale}>
+        <group scale={model.millimetersPerUnit}>
           <primitive object={model.scene} position={model.offset} />
         </group>
       </group>

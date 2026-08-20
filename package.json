@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "test": "node --test",
     "test:watch": "node --test --watch",
+    "frames:import-3d": "node scripts/import-3d-frames.mjs",
     "db:check": "node scripts/db-check.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:migrate:status": "node scripts/db-migration-status.mjs",

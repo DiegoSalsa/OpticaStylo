@@ -51,14 +51,18 @@ Incluye:
 - mensajes para permisos rechazados, cámara ausente u ocupada;
 - tres marcos ilustrativos mientras no existan recursos reales activos.
 
-La ruta 3D es un piloto independiente que usa un archivo GLB real. El modelo se
-normaliza por su ancho y calcula el calce desde los laterales del rostro y la
-distancia entre los ojos, de modo que no dependa de las unidades usadas al
-exportarlo ni de ajustes manuales del visitante. Incluye seguimiento de
-inclinación y giro, compensación de perspectiva, suavizado entre detecciones,
-una breve tolerancia ante pérdidas de rostro y una máscara de profundidad para
-ocultar las patillas detrás de la cabeza. Por ahora sirve para validar la
-experiencia con un solo marco; no representa todavía el catálogo completo.
+La ruta 3D usa un contrato versionado común a todo el catálogo. Un importador
+offline analiza cada GLB una sola vez, detecta sus piezas, conserva las medidas
+físicas y genera anclajes y datos de oclusión. El navegador no inspecciona la
+geometría: carga la metadata validada y calcula una escala aproximada en
+milímetros mediante el iris, con el ancho facial como respaldo. Así los marcos
+de tamaños distintos no terminan visualizándose con el mismo ancho.
+
+El piloto incluye seguimiento de inclinación y giro, compensación de
+perspectiva, suavizado entre detecciones, tolerancia breve ante pérdidas de
+rostro y una máscara de profundidad común a todos los modelos. El HD0896 es el
+primer artefacto validado por este pipeline; la especificación completa está en
+[`virtual-try-on-3d-model-contract.md`](./virtual-try-on-3d-model-contract.md).
 
 La cámara requiere `HTTPS` en producción. Los navegadores también permiten usarla
 desde `localhost` durante el desarrollo, pero una dirección HTTP de la red local,
