@@ -119,7 +119,7 @@ export default function ReportsPage() {
       <header className="app-heading">
         <div>
           <p className="eyebrow">Administración</p>
-          <h1>Reportes de ventas</h1>
+          <h1>Reportes y analítica</h1>
           <p>Datos agregados directamente desde las operaciones registradas.</p>
         </div>
         {data && (

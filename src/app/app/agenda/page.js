@@ -292,6 +292,7 @@ export default function AgendaPage() {
           <Icon name="arrow" size={16} /> Abrir reserva pública
         </Link>
       </header>
+      <nav className="agenda-tabs" aria-label="Vistas de agenda"><a href="#agenda-operativa"><Icon name="calendar" size={16} /> Agenda</a><a href="#configuracion-profesionales"><Icon name="settings" size={16} /> Configuración de profesionales</a></nav>
       {notice && (
         <p
           className={
@@ -354,7 +355,7 @@ export default function AgendaPage() {
       {actor?.permissions.includes("appointments.create") && (
         <InternalBooking onCreated={refresh} professionals={professionals} />
       )}
-      <div className="agenda-layout">
+      <div className="agenda-layout" id="agenda-operativa">
         <section className="app-card agenda-list">
           {status === "loading" ? (
             <p className="directory-state">Cargando agenda…</p>
@@ -436,7 +437,7 @@ export default function AgendaPage() {
             })
           )}
         </section>
-        <aside className="schedule-panel">
+        <aside className="schedule-panel" id="configuracion-profesionales">
           <form className="app-card schedule-card" onSubmit={saveWeek}>
             <h2>Horario semanal</h2>
             <p>Configura únicamente horarios confirmados por la óptica.</p>
@@ -562,12 +563,7 @@ export default function AgendaPage() {
           </form>
         </aside>
       </div>
-      {canManageAll && (
-        <ProfessionalManager
-          onChanged={setProfessionals}
-          professionals={professionals}
-        />
-      )}
+      {canManageAll && <div className="professional-config-panel"><ProfessionalManager onChanged={setProfessionals} professionals={professionals} /></div>}
     </>
   );
 }

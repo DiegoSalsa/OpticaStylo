@@ -298,7 +298,7 @@ export default function PosExperience() {
       <header className="app-heading">
         <div>
           <p className="eyebrow">Mostrador</p>
-          <h1>Ventas POS</h1>
+          <h1>Ventas y cotizaciones</h1>
           <p>Venta comercial, clara y sin tareas clínicas o de agenda.</p>
         </div>
         <button

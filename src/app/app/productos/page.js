@@ -151,7 +151,7 @@ export default function ProductsPage() {
       <header className="app-heading">
         <div>
           <p className="eyebrow">Catálogo comercial</p>
-          <h1>Productos</h1>
+          <h1>Catálogo e inventario</h1>
           <p>
             Productos reales registrados. El stock exacto sigue simulado hasta
             la etapa 6.

@@ -8,15 +8,14 @@ import BrandLogo from "@/components/brand/brand-logo";
 import Icon from "@/components/ui/icon";
 
 const NAVIGATION = [
-  { href: "/app", icon: "home", label: "Inicio", permissions: [] },
-  { href: "/app/ventas", icon: "receipt", label: "Ventas POS", permissions: ["sales.read"] },
-  { href: "/app/clientes", icon: "users", label: "Clientes", permissions: ["customers.read"] },
-  { href: "/app/productos", icon: "package", label: "Productos", permissions: ["products.read"] },
+  { href: "/app", icon: "home", label: "Dashboard", permissions: [] },
   { href: "/app/agenda", icon: "calendar", label: "Agenda", permissions: ["schedules.read"] },
-  { href: "/app/pacientes", icon: "account", label: "Pacientes", permissions: ["patients.read_basic"] },
-  { href: "/app/ficha-clinica", icon: "file", label: "Ficha clínica", permissions: ["medical_records.read_assigned"] },
-  { href: "/app/usuarios", icon: "shield", label: "Usuarios", permissions: ["users.read"] },
-  { href: "/app/reportes", icon: "chart", label: "Reportes", permissions: ["reports.read"] },
+  { href: "/app/ficha-clinica", icon: "file", label: "Gestión clínica", permissions: ["medical_records.read_assigned"] },
+  { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", permissions: ["sales.read"] },
+  { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
+  { href: "/app/productos", icon: "eye", label: "Catálogo e inventario", permissions: ["products.read"] },
+  { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", permissions: ["users.read"] },
+  { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", permissions: ["reports.read"] },
 ];
 
 const ActorContext = createContext(null);
@@ -58,6 +57,8 @@ export default function InternalShell({ children }) {
     <div className="internal-shell">
       <aside className="internal-sidebar">
         <Link className="internal-brand" href="/app"><BrandLogo /></Link>
+        {actor?.permissions.includes("sales.create") && <Link className="internal-quick-sale" href="/app/ventas"><Icon name="plus" size={17} /> Nueva venta</Link>}
+        <p className="internal-nav-label">Operación</p>
         <nav aria-label="Navegación interna">
           {navigation.map((item) => {
             const active = item.href === "/app" ? pathname === item.href : pathname.startsWith(item.href);
@@ -70,7 +71,7 @@ export default function InternalShell({ children }) {
           <button aria-label="Cerrar sesión" onClick={logout} type="button"><Icon name="logout" size={18} /></button>
         </div>
       </aside>
-      <main className="internal-main"><ActorContext.Provider value={actor}>{children}</ActorContext.Provider></main>
+      <div className="internal-content"><header className="internal-topbar"><div><strong>Óptica Stylo</strong><span>Gestión interna</span></div><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>{children}</ActorContext.Provider></main></div>
     </div>
   );
 }
