@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es-CL">
+    <html data-scroll-behavior="smooth" lang="es-CL">
       <body>{children}</body>
     </html>
   );

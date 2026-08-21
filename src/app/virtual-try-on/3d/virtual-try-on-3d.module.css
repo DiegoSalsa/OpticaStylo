@@ -1,9 +1,17 @@
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 24px clamp(18px, 4vw, 64px) 56px;
   background:
-    radial-gradient(circle at 8% 0%, rgba(221, 235, 228, 0.95), transparent 28rem),
-    radial-gradient(circle at 96% 20%, rgba(61, 183, 159, 0.2), transparent 30rem),
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(221, 235, 228, 0.95),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 96% 20%,
+      rgba(61, 183, 159, 0.2),
+      transparent 30rem
+    ),
     #f7faf9;
 }
 
@@ -73,7 +81,10 @@
 
 .experience {
   display: grid;
-  grid-template-columns: minmax(210px, 0.48fr) minmax(0, 1.5fr) minmax(300px, 0.68fr);
+  grid-template-columns: minmax(210px, 0.48fr) minmax(0, 1.5fr) minmax(
+      300px,
+      0.68fr
+    );
   gap: clamp(16px, 2.1vw, 30px);
   width: min(1360px, 100%);
   margin: 0 auto;
@@ -136,13 +147,42 @@
   font-weight: 850;
 }
 
-.guidePanel li div { display: grid; gap: 2px; }
-.guidePanel li strong { color: #294a43; font-size: 0.7rem; }
-.guidePanel li small { color: #71807b; font-size: 0.61rem; line-height: 1.4; }
-.guidePrivacy { display: grid; grid-template-columns: 13px 1fr; gap: 7px; margin-top: auto; padding: 11px; border-radius: 12px; background: #edf8f5; }
-.guidePrivacy > span { color: #3db79f; font-size: 0.5rem; line-height: 1.9; }
-.guidePrivacy p { display: grid; margin: 0 !important; color: #68736e; font-size: 0.62rem !important; }
-.guidePrivacy strong { color: #073a32; }
+.guidePanel li div {
+  display: grid;
+  gap: 2px;
+}
+.guidePanel li strong {
+  color: #294a43;
+  font-size: 0.7rem;
+}
+.guidePanel li small {
+  color: #71807b;
+  font-size: 0.61rem;
+  line-height: 1.4;
+}
+.guidePrivacy {
+  display: grid;
+  grid-template-columns: 13px 1fr;
+  gap: 7px;
+  margin-top: auto;
+  padding: 11px;
+  border-radius: 12px;
+  background: #edf8f5;
+}
+.guidePrivacy > span {
+  color: #3db79f;
+  font-size: 0.5rem;
+  line-height: 1.9;
+}
+.guidePrivacy p {
+  display: grid;
+  margin: 0 !important;
+  color: #68736e;
+  font-size: 0.62rem !important;
+}
+.guidePrivacy strong {
+  color: #073a32;
+}
 
 .viewerPanel {
   min-width: 0;
@@ -157,7 +197,11 @@
   place-items: center;
   border-radius: 22px;
   background:
-    radial-gradient(circle at 50% 36%, rgba(235, 241, 234, 0.95), transparent 31%),
+    radial-gradient(
+      circle at 50% 36%,
+      rgba(235, 241, 234, 0.95),
+      transparent 31%
+    ),
     linear-gradient(145deg, #dce7e1, #bccdc5);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
   isolation: isolate;
@@ -310,7 +354,9 @@
 
 .trackingBadge {
   right: 16px;
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .trackingBadge > span {
@@ -453,7 +499,10 @@
   min-height: 42px;
   padding: 0 17px;
   border-radius: 999px;
-  transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
 }
 
 .primaryButton {
@@ -540,6 +589,13 @@
   font-size: 0.72rem;
 }
 
+.modelHeader > div,
+.viewerFooter,
+.status,
+.autoFitCard > div {
+  min-width: 0;
+}
+
 .modelPicker {
   display: grid;
   gap: 8px;
@@ -571,9 +627,20 @@
   background: #e9f8f4;
 }
 
-.modelPicker span { font-size: 0.73rem; font-weight: 750; }
-.modelPicker small { color: #71807b; font-size: 0.62rem; }
-.licenseNote { margin: -8px 0 0; color: #71807b; font-size: 0.61rem; line-height: 1.45; }
+.modelPicker span {
+  font-size: 0.73rem;
+  font-weight: 750;
+}
+.modelPicker small {
+  color: #71807b;
+  font-size: 0.62rem;
+}
+.licenseNote {
+  margin: -8px 0 0;
+  color: #71807b;
+  font-size: 0.61rem;
+  line-height: 1.45;
+}
 
 .autoFitCard,
 .tipsCard {
@@ -588,7 +655,9 @@
   gap: 12px;
   align-items: start;
   padding: 16px 17px;
-  transition: border-color 180ms ease, background 180ms ease;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
 .autoFitCard[data-active="true"] {
@@ -747,8 +816,13 @@
     padding: 12px 8px;
   }
 
-  .guidePanel ol { grid-column: 2; grid-row: 1 / span 2; }
-  .guidePrivacy { margin-top: 0; }
+  .guidePanel ol {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .guidePrivacy {
+    margin-top: 0;
+  }
 
   .modelHeader,
   .panelFooter {
@@ -799,7 +873,10 @@
     backdrop-filter: none;
   }
 
-  .guidePanel { display: flex; padding: 12px 16px 22px; }
+  .guidePanel {
+    display: flex;
+    padding: 12px 16px 22px;
+  }
 
   .viewerPanel {
     padding: 0 10px;
@@ -861,7 +938,53 @@
   .modelHeader h2 {
     font-size: 1.45rem;
   }
+}
 
+@media (max-width: 430px) {
+  .hero {
+    padding-inline: 12px;
+  }
+
+  .guidePanel,
+  .controlsPanel {
+    padding-inline: 12px;
+  }
+
+  .viewerPanel {
+    padding-inline: 6px;
+  }
+
+  .viewerFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .cameraButton {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .liveBadge,
+  .trackingBadge {
+    max-width: calc(50% - 18px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .modelHeader {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .modelIcon {
+    height: 52px;
+    width: 52px;
+  }
+
+  .modelHeader h2 {
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
