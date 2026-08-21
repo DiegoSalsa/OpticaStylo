@@ -46,9 +46,10 @@ La hoja de ruta requiere Reserva pública, Clientes y Pacientes, pero el proyect
 ## Verificación
 
 - Lint sin errores.
-- 249 pruebas automatizadas aprobadas.
+- 252 pruebas automatizadas aprobadas.
 - Build de producción Next.js 16.3.0 completado.
 - QA visual de escritorio y móvil sin desbordamiento horizontal en Inicio, Catálogo, Checkout, Mi cuenta y Probador 3D.
 - Catálogo y carrito se validaron conectados a la base configurada sin copiar credenciales al repositorio.
 - Migraciones 001–018 aplicadas en la base de pruebas; la migración 017 retiró el esquema 2D legado según la decisión aprobada.
+- Migraciones clínicas 019–020 validadas transaccionalmente y pendientes de publicación.
 - El catálogo 3D real queda vacío hasta disponer de productos reales y vincularles GLB libres; el modelo incluido continúa identificado como demostración.
