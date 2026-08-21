@@ -84,6 +84,20 @@ test("rechaza ejes fuera del rango óptico", () => {
   );
 });
 
+test("rechaza una distancia pupilar nula o negativa", () => {
+  for (const pupillaryDistance of [0, -1]) {
+    assert.throws(
+      () =>
+        validateCreatePrescriptionInput({
+          leftEye: { cylinder: 0, sphere: 1 },
+          pupillaryDistance,
+          rightEye: { cylinder: 0, sphere: 1 },
+        }),
+      (error) => error.code === "INVALID_CLINICAL_DATA",
+    );
+  }
+});
+
 test("exige motivo y contenido para una adenda", () => {
   assert.throws(
     () => validateAddendumInput({ reason: "Corrección" }),

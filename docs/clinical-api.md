@@ -32,8 +32,10 @@ PATCH /api/patients/{patientId}/medical-record
 
 La primera actualización crea automáticamente una ficha única para el
 paciente. Las siguientes actualizaciones conservan el mismo identificador y
-registran qué campos se modificaron, quién lo hizo y cuándo. El evento no
-duplica los contenidos sensibles anteriores.
+registran qué campos se modificaron, quién lo hizo y cuándo. Además, cada
+guardado genera una revisión inmutable con el contenido completo que estaba
+vigente en ese momento. `GET` entrega estas revisiones en orden descendente en
+la propiedad `revisions`; una ficha inexistente devuelve `revisions: []`.
 
 Todos los campos son opcionales y se pueden limpiar enviando `null`:
 
@@ -83,7 +85,10 @@ atención a `FINALIZED`, registra el evento clínico, cambia la reserva a
 Por esta razón, `PATCH /api/appointments/{id}/status` no permite enviar
 `COMPLETED`; responde
 `APPOINTMENT_COMPLETION_REQUIRES_FINALIZED_ENCOUNTER`. Después de finalizar, el
-contenido original no se sobrescribe. Una aclaración exige motivo y contenido:
+contenido original no se sobrescribe. Solo el profesional autor de esa
+atención puede agregarle una adenda; otros profesionales asignados conservan la
+lectura histórica y deben registrar una atención propia. Una aclaración exige
+motivo y contenido:
 
 ```json
 {
@@ -104,7 +109,9 @@ GET   /api/prescriptions?patientId={patientId}
 La primera receta se emite mientras la atención está en borrador y se puede
 editar hasta finalizarla. Ambos ojos exigen `sphere` y `cylinder`; `axis` es un
 entero entre 0 y 180 y se vuelve obligatorio cuando el cilindro no es cero.
-`addition`, `pupillaryDistance` y `fulfillmentNotes` son opcionales.
+`addition`, `pupillaryDistance` y `fulfillmentNotes` son opcionales. Cuando se
+informa, `pupillaryDistance` debe ser mayor que cero; no se impone todavía un
+rango clínico máximo sin validarlo con la clienta.
 
 ```json
 {

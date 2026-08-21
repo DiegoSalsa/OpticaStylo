@@ -33,6 +33,25 @@ function mapMedicalRecord(row) {
   };
 }
 
+function mapMedicalRecordRevision(row) {
+  return {
+    allergies: row.allergies,
+    changedFields: row.changed_fields,
+    currentMedications: row.current_medications,
+    familyOcularHistory: row.family_ocular_history,
+    generalMedicalHistory: row.general_medical_history,
+    id: row.id,
+    ocularHistory: row.ocular_history,
+    recordedAt: row.recorded_at,
+    recordedBy: {
+      firstName: row.recorder_first_name,
+      id: row.recorded_by,
+      lastName: row.recorder_last_name,
+    },
+    revision: row.revision,
+  };
+}
+
 function mapAddendum(row) {
   return {
     authoredBy: {
@@ -42,6 +61,7 @@ function mapAddendum(row) {
     },
     content: row.content,
     createdAt: row.created_at,
+    encounterId: row.encounter_id,
     id: row.id,
     reason: row.reason,
   };
@@ -137,13 +157,33 @@ export async function findMedicalRecordByPatientId(patientId) {
   return mapMedicalRecord(result.rows[0]);
 }
 
+export async function listMedicalRecordRevisions(patientId) {
+  const result = await executeQuery(
+    `
+      SELECT
+        medical_record_revisions.*,
+        users.first_name AS recorder_first_name,
+        users.last_name AS recorder_last_name
+      FROM medical_record_revisions
+      JOIN medical_records
+        ON medical_records.id = medical_record_revisions.medical_record_id
+      JOIN users ON users.id = medical_record_revisions.recorded_by
+      WHERE medical_records.patient_id = $1
+      ORDER BY medical_record_revisions.revision DESC
+    `,
+    [patientId],
+  );
+
+  return result.rows.map(mapMedicalRecordRevision);
+}
+
 export async function upsertMedicalRecord(patientId, changes, actorUserId) {
   return executeTransaction(async (client) => {
     await client.query("SELECT id FROM patients WHERE id = $1 FOR UPDATE", [
       patientId,
     ]);
     const currentResult = await client.query(
-      "SELECT id FROM medical_records WHERE patient_id = $1 FOR UPDATE",
+      "SELECT * FROM medical_records WHERE patient_id = $1 FOR UPDATE",
       [patientId],
     );
     const current = currentResult.rows[0];
@@ -184,7 +224,13 @@ export async function upsertMedicalRecord(patientId, changes, actorUserId) {
       medicalRecordId = result.rows[0].id;
     } else {
       medicalRecordId = current.id;
-      const entries = Object.entries(changes);
+      const entries = Object.entries(changes).filter(
+        ([field, value]) => current[MEDICAL_RECORD_COLUMNS[field]] !== value,
+      );
+
+      if (entries.length === 0) {
+        return mapMedicalRecord(current);
+      }
       const assignments = entries.map(
         ([field], index) => `${MEDICAL_RECORD_COLUMNS[field]} = $${index + 2}`,
       );
@@ -515,7 +561,7 @@ export async function addClinicalEncounterAddendum(
   return executeTransaction(async (client) => {
     const currentResult = await client.query(
       `
-        SELECT id, patient_id, status
+        SELECT id, patient_id, professional_id, status
         FROM clinical_encounters
         WHERE id = $1
         FOR UPDATE
@@ -526,6 +572,14 @@ export async function addClinicalEncounterAddendum(
 
     if (!current) {
       return { addendum: null, patientId: null, reason: "NOT_FOUND" };
+    }
+
+    if (current.professional_id !== actorUserId) {
+      return {
+        addendum: null,
+        patientId: current.patient_id,
+        reason: "NOT_ASSIGNED",
+      };
     }
 
     if (current.status !== "FINALIZED") {
@@ -588,6 +642,34 @@ export async function listPatientClinicalHistory(patientId) {
     `,
     [patientId],
   );
+  const encounterIds = encounterResult.rows.map((row) => row.id);
 
-  return encounterResult.rows.map((row) => mapEncounter(row));
+  if (encounterIds.length === 0) {
+    return [];
+  }
+
+  const addendaResult = await executeQuery(
+    `
+      SELECT
+        clinical_encounter_addenda.*,
+        users.first_name AS author_first_name,
+        users.last_name AS author_last_name
+      FROM clinical_encounter_addenda
+      JOIN users ON users.id = clinical_encounter_addenda.authored_by
+      WHERE encounter_id = ANY($1::uuid[])
+      ORDER BY created_at, id
+    `,
+    [encounterIds],
+  );
+  const addendaByEncounter = new Map();
+  for (const row of addendaResult.rows) {
+    const addendum = mapAddendum(row);
+    const current = addendaByEncounter.get(addendum.encounterId) ?? [];
+    current.push(addendum);
+    addendaByEncounter.set(addendum.encounterId, current);
+  }
+
+  return encounterResult.rows.map((row) =>
+    mapEncounter(row, { addenda: addendaByEncounter.get(row.id) ?? [] }),
+  );
 }

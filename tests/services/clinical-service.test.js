@@ -43,7 +43,23 @@ test("entrega una ficha vacía cuando aún no fue creada", async () => {
     hasClinicalAssignment: async () => true,
   });
 
-  assert.deepEqual(result, { patientId, record: null });
+  assert.deepEqual(result, { patientId, record: null, revisions: [] });
+});
+
+test("entrega las versiones inmutables de los antecedentes", async () => {
+  const record = { id: encounterId, patientId };
+  const revisions = [{ id: "1", revision: 2 }];
+  const result = await getMedicalRecord(patientId, professional, {
+    findMedicalRecordByPatientId: async () => record,
+    findPatientById: async () => ({ id: patientId }),
+    hasClinicalAssignment: async () => true,
+    listMedicalRecordRevisions: async (id) => {
+      assert.equal(id, patientId);
+      return revisions;
+    },
+  });
+
+  assert.deepEqual(result, { patientId, record, revisions });
 });
 
 test("recupera la atención de una reserva solo para el profesional asignado", async () => {
@@ -199,6 +215,26 @@ test("agrega una adenda permanente a una atención finalizada", async () => {
   );
 
   assert.equal(result, addendum);
+});
+
+test("impide agregar adendas a la atención de otro profesional", async () => {
+  await assert.rejects(
+    () =>
+      addEncounterAddendum(
+        encounterId,
+        { content: "Contenido", reason: "Aclaración" },
+        professional,
+        {
+          findClinicalEncounterById: async () =>
+            buildEncounter({
+              professional: { id: otherProfessionalId },
+              status: "FINALIZED",
+            }),
+          hasClinicalAssignment: async () => true,
+        },
+      ),
+    (error) => error.code === "CLINICAL_ACCESS_NOT_ASSIGNED",
+  );
 });
 
 test("lista únicamente el historial clínico autorizado", async () => {

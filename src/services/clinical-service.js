@@ -8,6 +8,7 @@ import {
   findClinicalEncounterById,
   findMedicalRecordByPatientId,
   hasClinicalAssignment,
+  listMedicalRecordRevisions,
   listPatientClinicalHistory,
   updateClinicalEncounter,
   upsertMedicalRecord,
@@ -130,15 +131,23 @@ export async function getMedicalRecord(patientId, actor, dependencies = {}) {
     dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
   const findRecordRepository =
     dependencies.findMedicalRecordByPatientId ?? findMedicalRecordByPatientId;
+  const revisionsRepository =
+    dependencies.listMedicalRecordRevisions ?? listMedicalRecordRevisions;
 
   requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED]);
   const normalizedPatientId = validateClinicalPatientId(patientId);
   await requirePatient(normalizedPatientId, findPatientRepository);
   await requireAssignment(normalizedPatientId, actor, assignmentRepository);
 
+  const record = await findRecordRepository(normalizedPatientId);
+  const revisions = record
+    ? await revisionsRepository(normalizedPatientId)
+    : [];
+
   return {
     patientId: normalizedPatientId,
-    record: await findRecordRepository(normalizedPatientId),
+    record,
+    revisions,
   };
 }
 
@@ -288,6 +297,10 @@ export async function addEncounterAddendum(
 
   if (!encounter) {
     throwEncounterNotFound();
+  }
+
+  if (encounter.professional.id !== actor.userId) {
+    throwClinicalAccessNotAssigned();
   }
 
   await requireAssignment(
