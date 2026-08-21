@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import PublicFooter from "@/components/navigation/public-footer";
 import PublicHeader from "@/components/navigation/public-header";
 import FeaturedProducts from "@/components/store/featured-products";
@@ -23,7 +24,7 @@ export default function HomePage() {
     <PublicHeader />
     <main className={styles.home}>
       <section className={styles.hero}>
-        <img alt="Persona usando anteojos en una óptica" className={styles.heroImage} src={stitchImages.hero} />
+        <Image alt="Persona usando anteojos en una óptica" className={styles.heroImage} fill preload sizes="100vw" src={stitchImages.hero} />
         <div className={styles.heroShade} />
         <div className={styles.heroCopy}>
           <span className={styles.chip}>Stylo Vivo · Nueva experiencia</span>
@@ -43,12 +44,12 @@ export default function HomePage() {
         </div>
         <div className={styles.bento}>
           <Link className={`${styles.bentoCard} ${styles.frames}`} href="/tienda?category=FRAME">
-            <img alt="Selección de marcos ópticos" src={stitchImages.frames} />
+            <Image alt="Selección de marcos ópticos" fill sizes="(max-width: 960px) 100vw, 50vw" src={stitchImages.frames} />
             <div className={styles.photoShade} />
             <div className={styles.cardCopy}><span>Popular</span><h3>Marcos de Receta</h3><p>Explorar colección <Icon name="arrow" size={15} /></p></div>
           </Link>
           <Link className={`${styles.bentoCard} ${styles.lenses}`} href="/tienda?category=PRESCRIPTION_LENS">
-            <img alt="Cristales ópticos" src={stitchImages.lenses} />
+            <Image alt="Cristales ópticos" fill sizes="(max-width: 960px) 100vw, 50vw" src={stitchImages.lenses} />
             <div className={styles.lensShade} />
             <div className={styles.cardCopy}><h3>Cristales</h3><p>Tecnología antirreflejo, filtro azul y alternativas de precisión.</p><strong>Ver opciones <Icon name="chevron" size={13} /></strong></div>
           </Link>
@@ -83,7 +84,7 @@ export default function HomePage() {
             <Link className={styles.primaryButton} href="/virtual-try-on/3d"><Icon name="eye" size={18} /> Iniciar Prueba Virtual</Link>
           </div>
           <div className={styles.tryOnMedia}>
-            <img alt="Demostración del probador virtual Stylo Vivo" src={stitchImages.tryOn} />
+            <Image alt="Demostración del probador virtual Stylo Vivo" fill sizes="(max-width: 960px) 100vw, 50vw" src={stitchImages.tryOn} />
             <span><i /> Live 3D</span>
           </div>
         </div>

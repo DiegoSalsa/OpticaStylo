@@ -21,6 +21,15 @@ import styles from "./virtual-try-on-3d.module.css";
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
 const FACE_LOST_GRACE_MS = 280;
 const TRACKING_INTERVAL_MS = 50;
+const MEDIAPIPE_XNNPACK_INFO = "INFO: Created TensorFlow Lite XNNPACK delegate for CPU.";
+
+function mediapipeConsoleErrorFilter(originalConsoleError) {
+  return (...args) => {
+    const message = args.map((value) => String(value)).join(" ");
+    if (message.includes(MEDIAPIPE_XNNPACK_INFO)) return;
+    originalConsoleError(...args);
+  };
+}
 
 function cameraErrorMessage(error) {
   if (error?.name === "NotAllowedError") {
@@ -39,46 +48,53 @@ function cameraErrorMessage(error) {
 }
 
 async function createFaceTracking() {
-  const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
-  const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
-  const commonOptions = {
-    minFaceDetectionConfidence: 0.5,
-    minFacePresenceConfidence: 0.5,
-    minTrackingConfidence: 0.5,
-    numFaces: 1,
-    runningMode: "VIDEO",
-  };
+  const originalConsoleError = console.error;
+  const filteredConsoleError = mediapipeConsoleErrorFilter(originalConsoleError);
+  console.error = filteredConsoleError;
+  try {
+    const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+    const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
+    const commonOptions = {
+      minFaceDetectionConfidence: 0.5,
+      minFacePresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+      numFaces: 1,
+      runningMode: "VIDEO",
+    };
 
-  let tracking = null;
-  let lastError = null;
-  const attempts = [
-    { delegate: "GPU" },
-    { delegate: null },
-  ];
-  for (const attempt of attempts) {
-    try {
-      const baseOptions = { modelAssetPath: FACE_LANDMARKER_MODEL_URL };
-      if (attempt.delegate) baseOptions.delegate = attempt.delegate;
-      const landmarker = await FaceLandmarker.createFromOptions(vision, {
-        ...commonOptions,
-        baseOptions,
-        outputFacialTransformationMatrixes: false,
-      });
-      tracking = { landmarker };
-      break;
-    } catch (error) {
-      lastError = error;
+    let tracking = null;
+    let lastError = null;
+    const attempts = [
+      { delegate: "GPU" },
+      { delegate: null },
+    ];
+    for (const attempt of attempts) {
+      try {
+        const baseOptions = { modelAssetPath: FACE_LANDMARKER_MODEL_URL };
+        if (attempt.delegate) baseOptions.delegate = attempt.delegate;
+        const landmarker = await FaceLandmarker.createFromOptions(vision, {
+          ...commonOptions,
+          baseOptions,
+          outputFacialTransformationMatrixes: false,
+        });
+        tracking = { landmarker };
+        break;
+      } catch (error) {
+        lastError = error;
+      }
     }
-  }
-  if (!tracking) throw lastError ?? new Error("No se pudo iniciar el seguimiento facial.");
+    if (!tracking) throw lastError ?? new Error("No se pudo iniciar el seguimiento facial.");
 
-  const faceMeshTriangleIndices = FaceLandmarker.FACE_LANDMARKS_TESSELATION
-    .filter((_, index) => index % 3 === 0)
-    .flatMap((edge, triangleIndex) => {
-      const nextEdge = FaceLandmarker.FACE_LANDMARKS_TESSELATION[triangleIndex * 3 + 1];
-      return [edge.start, edge.end, nextEdge.end];
-    });
-  return { faceMeshTriangleIndices, ...tracking };
+    const faceMeshTriangleIndices = FaceLandmarker.FACE_LANDMARKS_TESSELATION
+      .filter((_, index) => index % 3 === 0)
+      .flatMap((edge, triangleIndex) => {
+        const nextEdge = FaceLandmarker.FACE_LANDMARKS_TESSELATION[triangleIndex * 3 + 1];
+        return [edge.start, edge.end, nextEdge.end];
+      });
+    return { faceMeshTriangleIndices, ...tracking };
+  } finally {
+    if (console.error === filteredConsoleError) console.error = originalConsoleError;
+  }
 }
 
 export default function Glasses3DOverlay() {
@@ -123,6 +139,7 @@ export default function Glasses3DOverlay() {
     faceLandmarkerRef.current = null;
     smoothedPoseRef.current = null;
     poseRef.current = null;
+    lastDetectionAtRef.current = 0;
     lastFaceSeenAtRef.current = 0;
   }, []);
 
