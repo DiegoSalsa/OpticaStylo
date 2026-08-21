@@ -3,56 +3,108 @@ import PublicFooter from "@/components/navigation/public-footer";
 import PublicHeader from "@/components/navigation/public-header";
 import FeaturedProducts from "@/components/store/featured-products";
 import Icon from "@/components/ui/icon";
-import mobileStyles from "./home-mobile.module.css";
 import styles from "./page.module.css";
 
-const categories = [
-  { className: "frames", eyebrow: "Marcos", href: "/tienda?category=FRAME", title: "Encuentra tu forma" },
-  { className: "lenses", eyebrow: "Cristales", href: "/tienda?category=PRESCRIPTION_LENS", title: "Visión a tu medida" },
-  { className: "accessories", eyebrow: "Accesorios", href: "/tienda?category=ACCESSORY", title: "Los detalles cuentan" },
-];
+const stitchImages = {
+  hero: "/images/stitch-home/hero-stylo-vivo.webp",
+  frames: "/images/stitch-home/category-frames.webp",
+  lenses: "/images/stitch-home/category-lenses.webp",
+  tryOn: "/images/stitch-home/virtual-try-on.webp",
+};
 
-const services = [
-  { description: "Elige una hora disponible desde la web y recibe la confirmación de tu reserva.", icon: "calendar", title: "Reserva en línea" },
-  { description: "Puedes comprar con una receta emitida aquí o en cualquier otro centro.", icon: "file", title: "Recetas externas" },
-  { description: "La compra puede hacerse con cuenta o como invitado, según prefieras.", icon: "cart", title: "Compra a tu manera" },
+const experienceCards = [
+  { icon: "calendar", title: "Reserva en línea", text: "Elige una hora disponible y recibe la confirmación de tu reserva." },
+  { icon: "file", title: "Recetas externas", text: "Puedes comprar con una receta emitida aquí o en cualquier otro centro." },
+  { icon: "cart", title: "Compra flexible", text: "Compra con cuenta o como invitado y conserva tu carrito durante el proceso." },
 ];
 
 export default function HomePage() {
   return <>
     <PublicHeader />
-    <main>
+    <main className={styles.home}>
       <section className={styles.hero}>
+        <img alt="Persona usando anteojos en una óptica" className={styles.heroImage} src={stitchImages.hero} />
+        <div className={styles.heroShade} />
         <div className={styles.heroCopy}>
-          <p className="eyebrow">Óptica Stylo · Stylo Vivo</p>
-          <h1>Tu mirada.<br /><span>Tu manera.</span></h1>
-          <p className={styles.lead}>Descubre marcos que hablan de ti, pruébalos en 3D y completa tu compra con una experiencia clara y acompañada.</p>
-          <div className={styles.heroActions}><Link className="button button--primary" href="/tienda">Ver marcos <Icon name="arrow" /></Link><Link className="button button--secondary" href="/virtual-try-on/3d"><Icon name="eye" /> Probarme lentes</Link></div>
-          <div className={`${styles.heroFacts} ${mobileStyles.heroFacts}`}><span><Icon name="check" /> Compra segura</span><span><Icon name="check" /> Retiro en tienda</span><span><Icon name="check" /> Receta externa</span></div>
-        </div>
-        <div className={styles.heroVisual} aria-label="Experiencia visual de Óptica Stylo">
-          <div className={styles.portrait} aria-hidden="true"><span className={styles.face}><i /><b /><i /></span></div>
-          <div className={styles.floatingCard}><span><Icon name="eye" /></span><div><strong>Probador virtual 3D</strong><small>Visualiza marcos compatibles</small></div><Icon name="chevron" /></div>
-          <div className={styles.liveBadge}><i /> Seguimiento en tu dispositivo</div>
+          <span className={styles.chip}>Stylo Vivo · Nueva experiencia</span>
+          <h1>Mira el mundo<br />con tu mejor<br /><em>estilo.</em></h1>
+          <p>Encuentra el marco perfecto que hable de ti. Tecnología, diseño y salud visual en un solo lugar.</p>
+          <div className={styles.heroActions}>
+            <Link className={styles.primaryButton} href="/tienda">Ver marcos <Icon name="arrow" size={17} /></Link>
+            <Link className={styles.secondaryButton} href="/virtual-try-on/3d"><Icon name="eye" size={18} /> Probarme lentes</Link>
+          </div>
         </div>
       </section>
 
-      <section className={styles.categorySection} aria-labelledby="category-title">
-        <div className={styles.splitHeading}><div><p className="eyebrow">Explora a tu manera</p><h2 id="category-title">Una colección para cada mirada</h2></div><Link href="/tienda">Ver todo el catálogo <Icon name="arrow" /></Link></div>
-        <div className={styles.categoryGrid}>{categories.map((category) => <Link className={`${styles.categoryCard} ${styles[category.className]}`} href={category.href} key={category.title}><div className={styles.categoryArt} aria-hidden="true"><span /><i /><span /></div><div><p>{category.eyebrow}</p><h3>{category.title}</h3><span>Explorar <Icon name="arrow" size={17} /></span></div></Link>)}</div>
+      <section className={styles.categories} aria-labelledby="categories-title">
+        <div className={styles.sectionLead}>
+          <div><h2 id="categories-title">Explora nuestras categorías</h2><p>Todo lo que necesitas para tu visión, con el mejor diseño.</p></div>
+          <Link href="/tienda">Ver todo el catálogo <Icon name="arrow" size={15} /></Link>
+        </div>
+        <div className={styles.bento}>
+          <Link className={`${styles.bentoCard} ${styles.frames}`} href="/tienda?category=FRAME">
+            <img alt="Selección de marcos ópticos" src={stitchImages.frames} />
+            <div className={styles.photoShade} />
+            <div className={styles.cardCopy}><span>Popular</span><h3>Marcos de Receta</h3><p>Explorar colección <Icon name="arrow" size={15} /></p></div>
+          </Link>
+          <Link className={`${styles.bentoCard} ${styles.lenses}`} href="/tienda?category=PRESCRIPTION_LENS">
+            <img alt="Cristales ópticos" src={stitchImages.lenses} />
+            <div className={styles.lensShade} />
+            <div className={styles.cardCopy}><h3>Cristales</h3><p>Tecnología antirreflejo, filtro azul y alternativas de precisión.</p><strong>Ver opciones <Icon name="chevron" size={13} /></strong></div>
+          </Link>
+          <Link className={`${styles.bentoCard} ${styles.treatments}`} href="/tienda?category=TREATMENT">
+            <div className={styles.categoryIcon}><Icon name="sparkle" size={27} /><small>Nuevo</small></div>
+            <div className={styles.cardCopy}><h3>Tratamientos</h3><p>Alternativas ópticas disponibles</p></div>
+          </Link>
+          <Link className={`${styles.bentoCard} ${styles.accessories}`} href="/tienda?category=ACCESSORY">
+            <div className={styles.categoryIcon}><Icon name="package" size={27} /></div>
+            <div className={styles.cardCopy}><h3>Accesorios</h3><p>Estuches y limpieza</p></div>
+          </Link>
+        </div>
       </section>
 
-      <section className={styles.products} aria-labelledby="favorites-title"><div className={styles.splitHeading}><div><p className="eyebrow">Selección publicada</p><h2 id="favorites-title">Favoritos para empezar</h2></div><Link href="/tienda">Ver todos <Icon name="arrow" /></Link></div><FeaturedProducts /></section>
+      <section className={styles.products} aria-labelledby="favorites-title">
+        <div className={styles.centerHeading}><h2 id="favorites-title">Los favoritos de la semana</h2><p>Productos publicados en el catálogo real de Óptica Stylo.</p></div>
+        <FeaturedProducts />
+        <div className={styles.centerAction}><Link className={styles.outlineButton} href="/tienda">Ver todos los modelos</Link></div>
+      </section>
 
       <section className={styles.tryOn}>
-        <div className={styles.tryOnCopy}><p className="eyebrow eyebrow--light">Prueba virtual 3D</p><h2>Pruébatelos antes de elegir.</h2><p>Activa tu cámara y compara los modelos 3D que estén vinculados al catálogo. El procesamiento facial ocurre en tu dispositivo.</p><Link className="button button--light" href="/virtual-try-on/3d">Abrir probador <Icon name="arrow" /></Link></div>
-        <div className={styles.tryOnVisual} aria-hidden="true"><div className={styles.scanLine} /><div className={styles.tryFace}><span /><i /><span /></div><p><i /> Cámara lista</p></div>
+        <div className={styles.tryOnInner}>
+          <div className={styles.tryOnCopy}>
+            <span><Icon name="sparkle" size={14} /> Stylo Vivo</span>
+            <h2>Pruébate los lentes<br />sin salir de casa.</h2>
+            <p>Nuestra tecnología de prueba virtual te permite comparar los marcos 3D disponibles usando la cámara de tu dispositivo.</p>
+            <ol>
+              <li><b>1</b><div><strong>Elige tu marco favorito</strong><small>Navega por el catálogo y selecciona un modelo compatible.</small></div></li>
+              <li><b>2</b><div><strong>Activa tu cámara</strong><small>Permite el acceso para iniciar la experiencia virtual.</small></div></li>
+              <li><b>3</b><div><strong>Mira cómo te queda</strong><small>Compara el marco en tiempo real desde diferentes ángulos.</small></div></li>
+            </ol>
+            <Link className={styles.primaryButton} href="/virtual-try-on/3d"><Icon name="eye" size={18} /> Iniciar Prueba Virtual</Link>
+          </div>
+          <div className={styles.tryOnMedia}>
+            <img alt="Demostración del probador virtual Stylo Vivo" src={stitchImages.tryOn} />
+            <span><i /> Live 3D</span>
+          </div>
+        </div>
       </section>
 
-      <section className={styles.serviceSection} id="stylo" aria-labelledby="service-title">
-        <div className="section-heading"><p className="eyebrow">Te acompañamos</p><h2 id="service-title">Más simple, más cercano</h2><p>Una experiencia conectada entre la tienda, la reserva y la atención óptica.</p></div>
-        <div className={styles.serviceGrid}>{services.map((service) => <article key={service.title}><span><Icon name={service.icon} /></span><h3>{service.title}</h3><p>{service.description}</p></article>)}</div>
-        <div className={styles.bookingBanner}><div><p className="eyebrow eyebrow--light">Atención visual</p><h2>¿Necesitas una evaluación?</h2><p>Revisa las horas disponibles y reserva directamente desde la web.</p></div><Link className="button button--light" href="/reservar">Reservar una hora <Icon name="arrow" /></Link></div>
+      <section className={styles.services} id="stylo" aria-label="Servicios de Óptica Stylo">
+        <article className={styles.evaluationCard}>
+          <span className={styles.serviceIcon}><Icon name="calendar" size={25} /></span>
+          <h3>Evaluación Oftalmológica</h3>
+          <p>Agenda una hora disponible para tu evaluación visual directamente desde la web.</p>
+          <Link href="/reservar">Reserva de hora <Icon name="calendar" size={15} /></Link>
+        </article>
+        <div className={styles.serviceStack}>
+          <article><span className={styles.serviceIcon}><Icon name="file" size={21} /></span><div><h3>Recetas de cualquier centro</h3><p>No necesitas atenderte aquí para comprar. Puedes adjuntar o ingresar una receta externa.</p></div></article>
+          <article><span className={styles.serviceIcon}><Icon name="cart" size={21} /></span><div><h3>Compra con cuenta o invitado</h3><p>Elige la modalidad que prefieras y continúa tu compra desde el carrito.</p></div></article>
+        </div>
+      </section>
+
+      <section className={styles.experience}>
+        <div className={styles.centerHeading}><h2>Todo pensado para una compra más simple</h2><p>Una experiencia conectada entre la reserva, la atención óptica y la tienda.</p></div>
+        <div className={styles.experienceGrid}>{experienceCards.map((item) => <article key={item.title}><span><Icon name={item.icon} size={21} /></span><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
       </section>
     </main>
     <PublicFooter />

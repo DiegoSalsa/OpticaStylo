@@ -3,9 +3,10 @@ import BrandLogo from "@/components/brand/brand-logo";
 import Icon from "@/components/ui/icon";
 
 const navigation = [
+  { href: "/", label: "Inicio" },
   { href: "/tienda", label: "Tienda" },
-  { href: "/virtual-try-on/3d", label: "Prueba virtual 3D" },
-  { href: "/reservar", label: "Reserva" },
+  { href: "/virtual-try-on/3d", label: "Prueba Virtual" },
+  { href: "/reservar", label: "Reserva Evaluación" },
   { href: "/#stylo", label: "Nosotros" },
 ];
 
@@ -18,9 +19,9 @@ export default function PublicHeader() {
           {navigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </nav>
         <div className="public-header__actions">
-          <Link aria-label="Buscar productos" className="icon-button" href="/tienda"><Icon name="search" /></Link>
-          <Link aria-label="Mi cuenta" className="icon-button" href="/cuenta"><Icon name="account" /></Link>
+          <form action="/tienda" className="public-header__search"><Icon name="search" size={15} /><input aria-label="Buscar productos" name="search" placeholder="Buscar marcos, lentes..." type="search" /></form>
           <Link aria-label="Carrito" className="icon-button" href="/carrito"><Icon name="cart" /></Link>
+          <Link aria-label="Mi cuenta" className="icon-button" href="/cuenta"><Icon name="account" /></Link>
           <details className="mobile-menu">
             <summary aria-label="Abrir menú"><Icon name="menu" /></summary>
             <nav aria-label="Navegación móvil">
