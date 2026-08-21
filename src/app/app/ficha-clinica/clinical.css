@@ -50,6 +50,11 @@
   gap: 0.7rem;
   grid-template-columns: 90px repeat(4, 1fr);
 }
+.prescription-grid-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
 .prescription-grid strong {
   align-self: end;
   font-size: 0.72rem;
@@ -114,6 +119,16 @@
     grid-template-columns: 1fr;
   }
   .prescription-grid {
-    grid-template-columns: 70px repeat(2, 1fr);
+    grid-template-columns: 62px repeat(4, minmax(76px, 1fr));
+    min-width: 430px;
+  }
+  .clinical-section {
+    padding: 1rem;
+  }
+  .clinical-actions {
+    justify-content: stretch;
+  }
+  .clinical-actions .app-button {
+    flex: 1 1 150px;
   }
 }

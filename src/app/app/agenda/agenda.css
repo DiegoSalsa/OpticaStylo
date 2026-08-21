@@ -6,7 +6,45 @@
   margin-bottom: 1rem;
   padding: 1rem;
 }
-.agenda-tabs{background:#fff;border:1px solid #dfe9e6;border-radius:12px;display:flex;gap:.25rem;margin-bottom:1rem;padding:.3rem;width:max-content}.agenda-tabs a{align-items:center;border-radius:9px;color:#536763;display:flex;font-size:.68rem;font-weight:800;gap:.4rem;min-height:38px;padding:.55rem .75rem;text-decoration:none}.agenda-tabs a:first-child,.agenda-tabs a:hover{background:#ddf7f1;color:#073a32}.professional-config-panel{scroll-margin-top:84px}.schedule-panel{scroll-margin-top:84px}
+.agenda-tabs {
+  background: #fff;
+  border: 1px solid #dfe9e6;
+  border-radius: 12px;
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.3rem;
+  max-width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  width: max-content;
+}
+.agenda-tabs a {
+  align-items: center;
+  border-radius: 9px;
+  color: #536763;
+  display: flex;
+  font-size: 0.68rem;
+  font-weight: 800;
+  gap: 0.4rem;
+  min-height: 38px;
+  padding: 0.55rem 0.75rem;
+  text-decoration: none;
+  scroll-snap-align: start;
+  white-space: nowrap;
+}
+.agenda-tabs a:first-child,
+.agenda-tabs a:hover {
+  background: #ddf7f1;
+  color: #073a32;
+}
+.professional-config-panel {
+  scroll-margin-top: 84px;
+}
+.schedule-panel {
+  scroll-margin-top: 84px;
+}
 .agenda-toolbar .app-button {
   height: 42px;
 }
@@ -168,11 +206,32 @@
   border-radius: 10px;
   display: grid;
   gap: 0.4rem;
-  grid-template-columns: 74px 20px repeat(4, minmax(48px, 1fr));
+  grid-template-columns: 74px minmax(0, 1fr);
   padding: 0.55rem;
+}
+.week-day-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+}
+.week-day-heading input {
+  accent-color: var(--color-primary);
 }
 .week-day strong {
   font-size: 0.66rem;
+}
+.week-time-grid {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+}
+.week-time-grid label {
+  display: grid;
+  gap: 0.2rem;
+}
+.week-time-grid label > span {
+  color: var(--color-text-soft);
+  font-size: 0.54rem;
 }
 .week-day input[type="time"] {
   border: 1px solid #d3e1dd;
@@ -247,11 +306,32 @@
   }
   .appointment-actions {
     grid-column: 1/-1;
+    justify-content: stretch;
+  }
+  .appointment-actions .app-button {
+    flex: 1 1 130px;
   }
   .week-day {
-    grid-template-columns: 64px 20px repeat(2, 1fr);
+    align-items: stretch;
+    grid-template-columns: 1fr;
   }
-  .week-day input:nth-of-type(n + 4) {
-    grid-row: 2;
+  .week-time-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .schedule-actions .app-button {
+    width: 100%;
+  }
+  .block-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .block-item button {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 380px) {
+  .week-time-grid {
+    grid-template-columns: 1fr;
   }
 }
