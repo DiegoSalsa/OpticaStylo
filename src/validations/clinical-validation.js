@@ -92,6 +92,16 @@ function validateDecimal(value, fieldName, { nullable = false } = {}) {
   return Object.is(value, -0) ? 0 : value;
 }
 
+function validatePositiveDecimal(value, fieldName, options) {
+  const normalized = validateDecimal(value, fieldName, options);
+
+  if (normalized !== null && normalized <= 0) {
+    throwValidationError(`${fieldName} debe ser mayor que 0.`);
+  }
+
+  return normalized;
+}
+
 function validateEye(input, eyeName) {
   validateObject(input);
 
@@ -221,7 +231,7 @@ export function validateCreatePrescriptionInput(input) {
       ? validateOptionalText(input.fulfillmentNotes, "Las notas de fabricación", 1000)
       : null,
     leftEye: validateEye(input.leftEye, "ojo izquierdo"),
-    pupillaryDistance: validateDecimal(
+    pupillaryDistance: validatePositiveDecimal(
       input.pupillaryDistance,
       "La distancia pupilar",
       { nullable: true },
@@ -246,7 +256,7 @@ export function validateUpdatePrescriptionInput(input) {
   }
 
   if (Object.hasOwn(input, "pupillaryDistance")) {
-    changes.pupillaryDistance = validateDecimal(
+    changes.pupillaryDistance = validatePositiveDecimal(
       input.pupillaryDistance,
       "La distancia pupilar",
       { nullable: true },
