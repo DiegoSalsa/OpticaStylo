@@ -1,1 +1,85 @@
-.directory-card{padding:1.2rem}.directory-search{align-items:center;background:#f6faf9;border:1px solid #d4e2df;border-radius:11px;display:flex;gap:.6rem;margin-bottom:1rem;padding-left:.8rem}.directory-search input{background:transparent;border:0;min-width:0;outline:0;padding:.78rem 0;width:100%}.directory-search .app-button{border-radius:9px;margin:.25rem}.directory-state{color:var(--color-text-soft);font-size:.8rem;padding:2rem;text-align:center}.directory-table{overflow-x:auto}.directory-row{align-items:center;border-top:1px solid #e6eeec;display:grid;gap:1rem;grid-template-columns:repeat(5,minmax(130px,1fr));min-width:650px;padding:.85rem .5rem}.directory-row span{font-size:.75rem;overflow:hidden;text-overflow:ellipsis}.directory-row span:first-child{font-weight:750}.directory-head{border-top:0;color:var(--color-text-soft)}.directory-head span{font-size:.65rem;font-weight:800;text-transform:uppercase}
+.directory-card {
+  padding: 1.2rem;
+}
+.directory-search {
+  align-items: center;
+  background: #f6faf9;
+  border: 1px solid #d4e2df;
+  border-radius: 11px;
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding-left: 0.8rem;
+}
+.directory-search input {
+  background: transparent;
+  border: 0;
+  min-width: 0;
+  outline: 0;
+  padding: 0.78rem 0;
+  width: 100%;
+}
+.directory-search .app-button {
+  border-radius: 9px;
+  margin: 0.25rem;
+}
+.directory-state {
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+  padding: 2rem;
+  text-align: center;
+}
+.directory-table {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+.directory-row {
+  align-items: center;
+  border-top: 1px solid #e6eeec;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  min-width: 650px;
+  padding: 0.85rem 0.5rem;
+}
+.directory-row span {
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.directory-row span:first-child {
+  font-weight: 750;
+}
+.directory-head {
+  border-top: 0;
+  color: var(--color-text-soft);
+}
+.directory-head span {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media (max-width: 560px) {
+  .directory-card {
+    padding: 0.85rem;
+  }
+
+  .directory-search {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.35rem;
+  }
+
+  .directory-search input {
+    padding-inline: 0.45rem;
+  }
+
+  .directory-search .app-button {
+    margin: 0;
+    width: 100%;
+  }
+}

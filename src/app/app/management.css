@@ -156,4 +156,20 @@
   .role-picker {
     grid-template-columns: 1fr;
   }
+
+  .management-editor {
+    padding: 1rem;
+  }
+
+  .editor-heading {
+    flex-direction: column;
+  }
+
+  .editor-heading .status-chip {
+    align-self: flex-start;
+  }
+
+  .editor-actions .app-button {
+    width: 100%;
+  }
 }

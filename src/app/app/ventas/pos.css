@@ -392,17 +392,35 @@
   gap: 0.55rem;
 }
 @media print {
-  @page { margin: 10mm; size: 80mm auto; }
+  @page {
+    margin: 10mm;
+    size: 80mm auto;
+  }
   .internal-sidebar,
   .app-heading,
   .pos-workspace,
   .completed-actions,
   .payment-form,
-  .text-button { display: none !important; }
+  .text-button {
+    display: none !important;
+  }
   .internal-main,
-  .pos-layout { display: block; padding: 0; }
-  .pos-ticket { border: 0; box-shadow: none; color: #000; padding: 0; position: static; width: 100%; }
-  .ticket-lines { max-height: none; overflow: visible; }
+  .pos-layout {
+    display: block;
+    padding: 0;
+  }
+  .pos-ticket {
+    border: 0;
+    box-shadow: none;
+    color: #000;
+    padding: 0;
+    position: static;
+    width: 100%;
+  }
+  .ticket-lines {
+    max-height: none;
+    overflow: visible;
+  }
 }
 @media (max-width: 1180px) {
   .pos-layout {
@@ -425,5 +443,72 @@
   }
   .product-results button {
     grid-template-columns: 38px minmax(0, 1fr) auto 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .pos-section,
+  .pos-ticket {
+    padding: 1rem;
+  }
+
+  .pos-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .pos-title .text-button {
+    flex-basis: 100%;
+    margin-left: 42px;
+    text-align: left;
+  }
+
+  .selected-customer {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .selected-customer button {
+    margin-left: 38px;
+  }
+
+  .product-results button {
+    grid-template-columns: 34px minmax(0, 1fr) 24px;
+  }
+
+  .product-results b {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .product-results em {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  .pos-eye-grid {
+    grid-template-columns: 30px repeat(4, minmax(64px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    scrollbar-width: thin;
+  }
+
+  .pos-prescription-extra {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .ticket-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ticket-line > b {
+    grid-column: 1;
+  }
+
+  .quantity {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 }

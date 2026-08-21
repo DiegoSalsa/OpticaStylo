@@ -292,7 +292,14 @@ export default function AgendaPage() {
           <Icon name="arrow" size={16} /> Abrir reserva pública
         </Link>
       </header>
-      <nav className="agenda-tabs" aria-label="Vistas de agenda"><a href="#agenda-operativa"><Icon name="calendar" size={16} /> Agenda</a><a href="#configuracion-profesionales"><Icon name="settings" size={16} /> Configuración de profesionales</a></nav>
+      <nav className="agenda-tabs" aria-label="Vistas de agenda">
+        <a href="#agenda-operativa">
+          <Icon name="calendar" size={16} /> Agenda
+        </a>
+        <a href="#configuracion-profesionales">
+          <Icon name="settings" size={16} /> Configuración de profesionales
+        </a>
+      </nav>
       {notice && (
         <p
           className={
@@ -444,52 +451,39 @@ export default function AgendaPage() {
             <div className="week-grid">
               {week.map((day, index) => (
                 <div className="week-day" key={day.dayOfWeek}>
-                  <strong>{DAYS[day.dayOfWeek]}</strong>
-                  <input
-                    aria-label={`${DAYS[day.dayOfWeek]} trabaja`}
-                    checked={day.isWorking}
-                    disabled={!canManageSelected}
-                    onChange={(event) =>
-                      updateDay(index, "isWorking", event.target.checked)
-                    }
-                    type="checkbox"
-                  />
-                  <input
-                    aria-label={`${DAYS[day.dayOfWeek]} inicio`}
-                    disabled={!canManageSelected || !day.isWorking}
-                    onChange={(event) =>
-                      updateDay(index, "startTime", event.target.value)
-                    }
-                    type="time"
-                    value={day.startTime ?? "09:00"}
-                  />
-                  <input
-                    aria-label={`${DAYS[day.dayOfWeek]} término`}
-                    disabled={!canManageSelected || !day.isWorking}
-                    onChange={(event) =>
-                      updateDay(index, "endTime", event.target.value)
-                    }
-                    type="time"
-                    value={day.endTime ?? "18:00"}
-                  />
-                  <input
-                    aria-label={`${DAYS[day.dayOfWeek]} inicio pausa`}
-                    disabled={!canManageSelected || !day.isWorking}
-                    onChange={(event) =>
-                      updateDay(index, "breakStart", event.target.value)
-                    }
-                    type="time"
-                    value={day.breakStart ?? ""}
-                  />
-                  <input
-                    aria-label={`${DAYS[day.dayOfWeek]} fin pausa`}
-                    disabled={!canManageSelected || !day.isWorking}
-                    onChange={(event) =>
-                      updateDay(index, "breakEnd", event.target.value)
-                    }
-                    type="time"
-                    value={day.breakEnd ?? ""}
-                  />
+                  <label className="week-day-heading">
+                    <input
+                      aria-label={`${DAYS[day.dayOfWeek]} trabaja`}
+                      checked={day.isWorking}
+                      disabled={!canManageSelected}
+                      onChange={(event) =>
+                        updateDay(index, "isWorking", event.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                    <strong>{DAYS[day.dayOfWeek]}</strong>
+                  </label>
+                  <div className="week-time-grid">
+                    {[
+                      ["startTime", "Inicio", "09:00"],
+                      ["endTime", "Término", "18:00"],
+                      ["breakStart", "Inicio pausa", ""],
+                      ["breakEnd", "Fin pausa", ""],
+                    ].map(([field, label, fallback]) => (
+                      <label key={field}>
+                        <span>{label}</span>
+                        <input
+                          aria-label={`${DAYS[day.dayOfWeek]} ${label.toLowerCase()}`}
+                          disabled={!canManageSelected || !day.isWorking}
+                          onChange={(event) =>
+                            updateDay(index, field, event.target.value)
+                          }
+                          type="time"
+                          value={day[field] ?? fallback}
+                        />
+                      </label>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -563,7 +557,14 @@ export default function AgendaPage() {
           </form>
         </aside>
       </div>
-      {canManageAll && <div className="professional-config-panel"><ProfessionalManager onChanged={setProfessionals} professionals={professionals} /></div>}
+      {canManageAll && (
+        <div className="professional-config-panel">
+          <ProfessionalManager
+            onChanged={setProfessionals}
+            professionals={professionals}
+          />
+        </div>
+      )}
     </>
   );
 }

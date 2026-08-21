@@ -650,45 +650,48 @@ export default function ClinicalRecordPage() {
                       ? `Versión activa ${activePrescription.version}.`
                       : "La receta es opcional y se emite solo si corresponde."}
                   </p>
-                  <div className="prescription-grid">
-                    <span />
-                    {["Esfera", "Cilindro", "Eje", "Adición"].map((label) => (
-                      <span className="field" key={label}>
-                        <span>{label}</span>
-                      </span>
-                    ))}
-                    {[
-                      ["rightEye", "OD"],
-                      ["leftEye", "OI"],
-                    ].map(([side, label]) => (
-                      <div key={side} style={{ display: "contents" }}>
-                        <strong>{label}</strong>
-                        {[
-                          ["sphere", false],
-                          ["cylinder", false],
-                          ["axis", true],
-                          ["addition", true],
-                        ].map(([field, nullable]) => (
-                          <label className="field" key={field}>
-                            <input
-                              disabled={
-                                encounter.status !== "DRAFT" &&
-                                !activePrescription
-                              }
-                              max={field === "axis" ? 180 : undefined}
-                              min={field === "axis" ? 0 : undefined}
-                              onChange={(event) =>
-                                eye(side, field, event.target.value)
-                              }
-                              required={!nullable}
-                              step={field === "axis" ? 1 : 0.25}
-                              type="number"
-                              value={prescription[side][field]}
-                            />
-                          </label>
-                        ))}
-                      </div>
-                    ))}
+                  <div className="prescription-grid-scroll">
+                    <div className="prescription-grid">
+                      <span />
+                      {["Esfera", "Cilindro", "Eje", "Adición"].map((label) => (
+                        <span className="field" key={label}>
+                          <span>{label}</span>
+                        </span>
+                      ))}
+                      {[
+                        ["rightEye", "OD"],
+                        ["leftEye", "OI"],
+                      ].map(([side, label]) => (
+                        <div key={side} style={{ display: "contents" }}>
+                          <strong>{label}</strong>
+                          {[
+                            ["sphere", false],
+                            ["cylinder", false],
+                            ["axis", true],
+                            ["addition", true],
+                          ].map(([field, nullable]) => (
+                            <label className="field" key={field}>
+                              <input
+                                aria-label={`${label} ${field}`}
+                                disabled={
+                                  encounter.status !== "DRAFT" &&
+                                  !activePrescription
+                                }
+                                max={field === "axis" ? 180 : undefined}
+                                min={field === "axis" ? 0 : undefined}
+                                onChange={(event) =>
+                                  eye(side, field, event.target.value)
+                                }
+                                required={!nullable}
+                                step={field === "axis" ? 1 : 0.25}
+                                type="number"
+                                value={prescription[side][field]}
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="management-fields">
                     <label className="field">

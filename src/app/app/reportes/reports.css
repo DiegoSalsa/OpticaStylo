@@ -36,7 +36,10 @@
   grid-template-columns: 1fr 1fr;
 }
 .report-card {
+  min-width: 0;
+  overflow-x: auto;
   padding: 1.2rem;
+  scrollbar-width: thin;
 }
 .report-card h2 {
   font-size: 1rem;
@@ -102,5 +105,17 @@
   .report-metrics,
   .report-filters {
     grid-template-columns: 1fr;
+  }
+
+  .report-card {
+    padding: 1rem;
+  }
+
+  .report-table {
+    min-width: 430px;
+  }
+
+  .report-bar-label {
+    gap: 0.7rem;
   }
 }
