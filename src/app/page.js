@@ -48,10 +48,8 @@ export default function HomePage() {
           <div className={styles.heroShade} />
           <div className={styles.heroCopy}>
             <h1>
-              Mira el mundo
-              <br />
-              con tu mejor
-              <br />
+              <span>Mira el mundo</span>
+              <span>con tu mejor</span>
               <em>estilo.</em>
             </h1>
             <p>
