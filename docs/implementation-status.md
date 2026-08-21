@@ -1,6 +1,6 @@
 # Estado de implementación de Óptica Stylo
 
-Actualizado el 20 de agosto de 2026. Este documento describe el código local; no implica que las migraciones nuevas estén aplicadas ni que los flujos estén habilitados en producción.
+Actualizado el 21 de agosto de 2026. Este documento describe el código local; no implica que las migraciones nuevas estén aplicadas ni que los flujos estén habilitados en producción.
 
 ## Decisiones confirmadas
 
@@ -24,7 +24,11 @@ Implementado: Next.js 16, PostgreSQL, pool seguro, migraciones versionadas, erro
 
 Implementado además en local: cabeceras defensivas globales y validación de la firma binaria de las imágenes de recetas, no solo del MIME declarado.
 
-Pendiente: aplicar migraciones 012–018 en un entorno controlado, prueba de restauración de respaldo, observabilidad, rate limiting distribuido para accesos públicos, alertas, presupuesto de disponibilidad y procedimientos de incidente.
+Las migraciones 001–018 están aplicadas en la base de pruebas configurada. Las
+migraciones clínicas 019–020 permanecen locales hasta validar y publicar este
+bloque. Continúan pendientes la prueba de restauración de respaldo,
+observabilidad, rate limiting distribuido para accesos públicos, alertas,
+presupuesto de disponibilidad y procedimientos de incidente.
 
 ### Etapa 2 — Usuarios, autenticación y permisos: avanzada
 
@@ -36,7 +40,7 @@ Pendiente: recuperación de contraseña, MFA para cuentas privilegiadas y prueba
 
 Implementado: pacientes, responsables, profesionales, agenda, disponibilidad, bloqueos, excepciones, reservas, historial, ficha clínica, atenciones, recetas, adendas permanentes y reserva pública. La reserva pública valida identidad sin revelar si un paciente ya existe.
 
-Frontend implementado: reserva pública, alta y edición de pacientes/responsables, agenda filtrable, reserva interna, estados de asistencia, perfiles profesionales, horarios, bloqueos y editor de ficha clínica con examen, diagnóstico, receta, reemplazo, adendas e historial.
+Frontend implementado: reserva pública, alta y edición de pacientes/responsables, agenda filtrable, reserva interna, estados de asistencia, perfiles profesionales, horarios, bloqueos y editor de ficha clínica con examen, diagnóstico, receta, reemplazo, adendas e historial desplegable. El editor advierte cambios sin guardar, evita cargas cruzadas entre pacientes y muestra las revisiones inmutables de antecedentes y recetas.
 
 Pendiente: vista de calendario visual, cancelación pública mediante token, proveedor que procese la cola de confirmaciones y recordatorios, consentimiento y textos legales validados por la clienta.
 
@@ -77,10 +81,12 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
 - Aplicación actual: `https://optica-stylo.vercel.app`.
 - Base confirmada: Neon `opticastylo`, proyecto `spring-forest-98534789`, São Paulo.
 - Vercel usa una `DATABASE_URL` manual hacia esa base.
-- Migraciones 001–011 están aplicadas; 012–018 aún no deben presumirse aplicadas.
+- Migraciones 001–018 están aplicadas en la base de pruebas configurada.
 - La migración 016 crea la cola de correos transaccionales; no envía mensajes por sí sola.
 - La migración 017 elimina la tabla del prototipo 2D; debe respaldarse y revisarse antes de aplicarla.
-- La migración 018 habilita recetas externas privadas para ventas POS y debe probarse junto con 012–017 en staging.
+- La migración 018 habilita recetas externas privadas para ventas POS y está aplicada en la base de pruebas.
+- La migración 019 conserva revisiones completas e inmutables de los antecedentes longitudinales.
+- La migración 020 rechaza distancias pupilares no positivas cuando se informan.
 - Debe configurarse el secreto de webhook de Mercado Pago antes de habilitar cobros reales.
 - No hay proveedor de correo confirmado.
 - No hay monitoreo, SLO ni prueba documentada de restauración.
@@ -88,7 +94,7 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
 
 ## Orden recomendado restante
 
-1. Respaldar y revisar 012–018 en staging; ejecutar pruebas de migración y rollback lógico, prestando especial atención a la eliminación 2D de 017.
+1. Validar 019–020 en staging y ejecutar una prueba de restauración antes de publicarlas.
 2. Probar por rol los flujos internos, especialmente que SALES solo vea comercio.
 3. Validar edición clínica, reserva interna y agenda con datos de prueba anonimizados.
 4. Confirmar reglas de precio óptico y probar recetas externas en POS.
