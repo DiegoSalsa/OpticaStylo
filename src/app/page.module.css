@@ -5,7 +5,8 @@
 .hero {
   align-items: center;
   border-radius: 0 0 40px 40px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 720px) minmax(0, 1fr);
   height: min(700px, calc(100vh - 62px));
   margin: 0 auto 1.5rem;
   max-width: 1440px;
@@ -33,20 +34,26 @@
   position: absolute;
 }
 .heroCopy {
-  max-width: 650px;
+  max-width: 720px;
   padding: 3rem clamp(1.5rem, 5vw, 5rem);
   position: relative;
+  width: 100%;
   z-index: 2;
 }
 .heroCopy h1 {
   color: #151919;
   font-family: Sora, Inter, sans-serif;
-  font-size: clamp(3.8rem, 6.2vw, 6rem);
+  font-size: clamp(3.8rem, 5.5vw, 5rem);
   font-style: normal;
   font-weight: 800;
   letter-spacing: -0.075em;
   line-height: 0.9;
   margin: 1rem 0 1.3rem;
+}
+.heroCopy h1 span,
+.heroCopy h1 em {
+  display: block;
+  white-space: nowrap;
 }
 .heroCopy h1 em {
   color: #073a32;
@@ -524,6 +531,7 @@
 }
 @media (max-width: 960px) {
   .hero {
+    grid-template-columns: minmax(0, 650px);
     height: 640px;
   }
   .heroShade {
@@ -642,7 +650,7 @@
 
 @media (max-width: 1180px) {
   .heroCopy h1 {
-    font-size: clamp(3.4rem, 7vw, 5.2rem);
+    font-size: clamp(3.4rem, 6vw, 5rem);
   }
 }
 
@@ -688,7 +696,7 @@
   }
 
   .heroCopy h1 {
-    font-size: clamp(2.55rem, 14vw, 3.25rem);
+    font-size: clamp(2.4rem, 13vw, 3.1rem);
   }
 
   .heroActions {
