@@ -22,3 +22,17 @@ test("convierte un AppError en una respuesta HTTP controlada", async () => {
     success: false,
   });
 });
+
+test("conserva las cabeceras de una respuesta limitada", async () => {
+  const response = await executeApiHandler(async () => {
+    throw new AppError({
+      code: "PUBLIC_REQUEST_RATE_LIMITED",
+      headers: { "Retry-After": "900" },
+      message: "Demasiadas solicitudes.",
+      status: 429,
+    });
+  });
+
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get("Retry-After"), "900");
+});

@@ -13,6 +13,7 @@ const IMAGE_TYPES = new Set([
   "image/webp",
 ]);
 export const MAX_PRESCRIPTION_IMAGE_BYTES = 8 * 1024 * 1024;
+export const MAX_PRESCRIPTION_UPLOAD_BYTES = MAX_PRESCRIPTION_IMAGE_BYTES + 128 * 1024;
 
 const HEIF_BRANDS = new Set([
   "heic",
