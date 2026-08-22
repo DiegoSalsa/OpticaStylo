@@ -32,3 +32,12 @@ test("oculta productos inactivos por identificador", async () => {
     findProductById: async () => ({ ...product, isActive: false }),
   }), (error) => error.code === "STORE_PRODUCT_NOT_FOUND" && error.status === 404);
 });
+
+test("incluye la galería y ficha del modelo HD0896-001", async () => {
+  const result = await getStoreProduct(product.id, {
+    findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
+  });
+  assert.equal(result.images.length, 3);
+  assert.equal(result.specifications.find((item) => item.label === "Medidas")?.value, "56-15-145 mm");
+  assert.match(result.description, /Harley-Davidson/);
+});

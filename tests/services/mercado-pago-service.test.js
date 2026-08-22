@@ -22,6 +22,13 @@ const attempt = {
   idempotencyKey: "00000000-0000-4000-8000-000000000004",
   status: "CREATED",
 };
+const readyConfig = {
+  accessToken: "token",
+  expectedLiveMode: false,
+  mode: "sandbox",
+  publicUrl: "https://tienda.example.com",
+  webhookSecret: "secret",
+};
 
 test("crea una preferencia idempotente para el saldo reservado", async () => {
   const now = new Date("2026-08-14T13:00:00.000Z");
@@ -41,7 +48,7 @@ test("crea una preferencia idempotente para el saldo reservado", async () => {
     },
     currentDate: now,
     findSaleById: async () => ({ id: saleId, items: [] }),
-    getMercadoPagoConfig: () => ({ accessToken: "token", publicUrl: null }),
+    getMercadoPagoConfig: () => readyConfig,
     reserveMercadoPagoAttempt: async (id, actorId, expiresAt) => {
       assert.equal(id, saleId);
       assert.equal(actorId, userId);
@@ -58,9 +65,11 @@ test("reutiliza un checkout pendiente sin crear otra preferencia", async () => {
   const existing = { ...attempt, checkoutUrl: "https://checkout.example", status: "PENDING" };
   const result = await createMercadoPagoCheckout(saleId, actor, {
     createMercadoPagoPreference: async () => assert.fail("No debe duplicar la preferencia"),
+    getMercadoPagoConfig: () => readyConfig,
     reserveMercadoPagoAttempt: async () => ({ attempt: existing, reason: null }),
   });
-  assert.equal(result, existing);
+  assert.equal(result.checkoutUrl, existing.checkoutUrl);
+  assert.equal("idempotencyKey" in result, false);
 });
 
 test("marca el intento fallido cuando el proveedor no responde", async () => {
@@ -68,11 +77,23 @@ test("marca el intento fallido cuando el proveedor no responde", async () => {
   await assert.rejects(() => createMercadoPagoCheckout(saleId, actor, {
     createMercadoPagoPreference: async () => { throw new Error("timeout"); },
     findSaleById: async () => ({ id: saleId, items: [] }),
-    getMercadoPagoConfig: () => ({ accessToken: "token", publicUrl: null }),
+    getMercadoPagoConfig: () => readyConfig,
     markPaymentAttemptFailed: async (id) => { markedAttemptId = id; },
     reserveMercadoPagoAttempt: async () => ({ attempt, reason: null }),
   }), (error) => error.code === "PAYMENT_PROVIDER_UNAVAILABLE" && error.status === 502);
   assert.equal(markedAttemptId, attempt.id);
+});
+
+test("no reserva un intento si el webhook seguro no está listo", async () => {
+  await assert.rejects(() => createMercadoPagoCheckout(saleId, actor, {
+    getMercadoPagoConfig: () => ({
+      accessToken: "token",
+      mode: "sandbox",
+      publicUrl: "https://tienda.example.com",
+      webhookSecret: null,
+    }),
+    reserveMercadoPagoAttempt: async () => assert.fail("No debe reservar un cobro"),
+  }), (error) => error.code === "PAYMENT_PROVIDER_NOT_CONFIGURED" && error.status === 503);
 });
 
 test("lista intentos solo con permiso de lectura de ventas", async () => {
@@ -80,7 +101,8 @@ test("lista intentos solo con permiso de lectura de ventas", async () => {
     findSaleById: async () => ({ id: saleId }),
     listPaymentAttemptsBySaleId: async () => [attempt],
   });
-  assert.deepEqual(result, [attempt]);
+  assert.equal(result[0].id, attempt.id);
+  assert.equal("idempotencyKey" in result[0], false);
 });
 
 test("verifica firma, consulta al proveedor y reconcilia el pago", async () => {
@@ -90,6 +112,8 @@ test("verifica firma, consulta al proveedor y reconcilia el pago", async () => {
     requestId: "request-1",
     signature: "ts=1,v1=firma",
   }, {
+    auditWebhook: () => {},
+    findPaymentConfirmationKey: async () => null,
     getMercadoPagoConfig: () => ({ accessToken: "token", webhookSecret: "secret" }),
     getMercadoPagoPayment: async (id) => ({ externalPaymentId: id, status: "approved" }),
     reconcileMercadoPagoPayment: async (notification, payment) => {
@@ -113,9 +137,40 @@ test("rechaza una firma inválida antes de consultar el pago", async () => {
     requestId: "request-1",
     signature: "firma-invalida",
   }, {
+    auditWebhook: () => {},
     getMercadoPagoConfig: () => ({ webhookSecret: "secret" }),
     getMercadoPagoPayment: async () => assert.fail("No debe consultar el pago"),
     requireWebhookSecret: () => "secret",
     validateSignature: () => { throw new Error("invalid"); },
   }), (error) => error.code === "INVALID_PAYMENT_NOTIFICATION_SIGNATURE" && error.status === 401);
+});
+
+test("un webhook repetido recupera el correo pendiente sin duplicar el pago", async () => {
+  let deliveredKey = null;
+  const result = await processMercadoPagoNotification({
+    body: { action: "payment.updated", data: { id: "123" }, type: "payment" },
+    requestId: "request-repeated",
+    signature: "ts=1,v1=firma",
+  }, {
+    auditWebhook: () => {},
+    deliverTransactionalEmail: async (key) => {
+      deliveredKey = key;
+      return { status: "SENT" };
+    },
+    findPaymentConfirmationKey: async () => "payment-attempt:attempt-1:approved",
+    getMercadoPagoConfig: () => ({
+      accessToken: "token",
+      expectedLiveMode: false,
+      webhookSecret: "secret",
+    }),
+    getMercadoPagoPayment: async () => ({ externalPaymentId: "123", status: "approved" }),
+    reconcileMercadoPagoPayment: async () => ({
+      duplicate: true,
+      result: "ALREADY_PROCESSED",
+    }),
+    requireWebhookSecret: () => "secret",
+    validateSignature: () => {},
+  });
+  assert.equal(deliveredKey, "payment-attempt:attempt-1:approved");
+  assert.equal(result.emailDelivery.status, "SENT");
 });

@@ -1,6 +1,6 @@
 # Estado de implementación de Óptica Stylo
 
-Actualizado el 21 de agosto de 2026. Este documento describe el código local; no implica que las migraciones nuevas estén aplicadas ni que los flujos estén habilitados en producción.
+Actualizado el 22 de agosto de 2026. Este documento describe el código local; no implica que las migraciones nuevas estén aplicadas ni que los flujos estén habilitados en producción.
 
 ## Decisiones confirmadas
 
@@ -65,11 +65,15 @@ por decisión expresa.
 
 Implementado: catálogo real, filtros, detalle, carrito invitado/cuenta, cuenta de cliente, pedidos, receta externa por imagen o carga manual, confirmación humana y checkout real desacoplado con Mercado Pago. No se inventan productos ni stock.
 
-Implementado además en local: cola transaccional idempotente para cuenta creada, reserva confirmada, recordatorio de hora, compra confirmada y pago confirmado.
+Implementado además en local: cola transaccional idempotente y despacho real por Resend para pago confirmado, con reintentos recuperables. Las otras plantillas permanecen encoladas hasta habilitar sus respectivos despachadores.
 
 Implementado además: páginas de retorno éxito/pendiente/fallo que no confían en la URL de regreso, consultan el estado conciliado por webhook y permiten reintentar de forma autorizada un pedido pendiente.
 
-Pendiente: productos e imágenes reales, sucursales de retiro, despacho, precios ópticos, política de devoluciones, proveedor y trabajador que entregue los correos encolados y pruebas E2E con Mercado Pago sandbox. Falta `MERCADO_PAGO_WEBHOOK_SECRET` en Vercel.
+Implementado y desplegado: primer producto real de prueba con galería, URL pública estable, checkout de Mercado Pago con cuentas y tarjetas ficticias, conciliación exacta mediante pago + orden comercial y prueba idempotente que dejó una venta pagada con un solo abono.
+
+Configurado y validado el webhook productivo del checkout principal: la URL estable quedó registrada en Mercado Pago, el secreto se rotó y sincronizó en Vercel, y el simulador oficial respondió `200`. La notificación firmada quedó `PROCESSED`; la venta N.º 1 continúa `PAID` por CLP 223.360 y conserva exactamente un abono. Una firma falsificada fue rechazada con `401` antes de consultar el pago.
+
+Pendiente externo antes de habilitar dinero real: configurar Resend para enviar el correo ya encolado y comprobar una entrega `SENT`. El intento actual permanece auditable como correo `FAILED`, sin afectar ni duplicar el pago conciliado.
 
 ### Etapa 6 — Inventario: aplazada
 
@@ -103,7 +107,7 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
 - La migración 022 conserva un comprobante inmutable por abono, distingue el
   comprobante final y limita con auditoría los intentos de autorización de
   descuentos. Debe aplicarse junto con el código que la consume.
-- Debe configurarse el secreto de webhook de Mercado Pago antes de habilitar cobros reales.
+- El secreto productivo del webhook de Mercado Pago está configurado en Vercel y fue validado con una simulación firmada; los cobros reales continúan bloqueados explícitamente.
 - El POS admite Resend. En producción se exige `POS_EMAIL_MODE=required`; una
   configuración incompleta conserva el comprobante con correo `FAILED` para
   reintento y nunca lo presenta como enviado o simulado.
@@ -116,7 +120,7 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
 2. Probar por rol los flujos internos, especialmente que SALES solo vea comercio.
 3. Validar edición clínica, reserva interna y agenda con datos de prueba anonimizados.
 4. Confirmar reglas de precio óptico y probar recetas externas en POS.
-5. Configurar Mercado Pago sandbox y secreto de webhook; probar conciliación y retornos.
+5. Configurar Resend, reintentar el correo de pago confirmado y comprobar estado `SENT`.
 6. Confirmar sucursales y retiro; mantener despacho fuera hasta recibir reglas.
 7. Elegir proveedor de correo y crear plantillas/cola/idempotencia.
 8. Producir y validar GLB reales usando únicamente herramientas y activos libres o propios.

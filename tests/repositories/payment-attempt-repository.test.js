@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   isValidPaymentExternalReference,
+  mapProviderStatus,
   paymentMatchesAttempt,
 } from "../../src/repositories/payment-attempt-repository.js";
 
@@ -38,4 +39,20 @@ test("concilia solamente monto, moneda y preferencia exactos", () => {
 
 test("falla de forma cerrada si Mercado Pago no informa la preferencia", () => {
   assert.equal(paymentMatchesAttempt(attempt, { ...payment, externalPreferenceId: null }), false);
+});
+
+test("rechaza montos fraccionarios y pagos del ambiente equivocado", () => {
+  assert.equal(paymentMatchesAttempt(attempt, {
+    ...payment,
+    liveMode: false,
+    transactionAmount: 52000.5,
+  }, false), false);
+  assert.equal(paymentMatchesAttempt(attempt, {
+    ...payment,
+    liveMode: true,
+  }, false), false);
+});
+
+test("trata pagos vencidos como intentos cancelados", () => {
+  assert.equal(mapProviderStatus("expired"), "CANCELLED");
 });
