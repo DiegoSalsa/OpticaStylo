@@ -29,18 +29,32 @@ function checkoutUrls(publicUrl) {
 export async function createMercadoPagoPreference({ attempt, config, sale }) {
   const preference = new Preference(createClient(config.accessToken));
   const response = await preference.create({
-    body: {
+    body: createMercadoPagoPreferenceBody({ attempt, config, sale }),
+    requestOptions: { idempotencyKey: attempt.idempotencyKey },
+  });
+
+  return {
+    checkoutUrl: config.mode === "sandbox"
+      ? response.sandbox_init_point ?? response.init_point
+      : response.init_point,
+    externalPreferenceId: response.id,
+    sandboxCheckoutUrl: response.sandbox_init_point ?? null,
+  };
+}
+
+export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
+  return {
       ...checkoutUrls(config.publicUrl),
       external_reference: attempt.id,
       expires: true,
       expiration_date_to: attempt.expiresAt.toISOString(),
-      items: sale.items.map((item) => ({
+      items: [{
         currency_id: "CLP",
-        id: item.productId,
-        quantity: item.quantity,
-        title: `${item.sku} - ${item.name}`.slice(0, 256),
-        unit_price: item.unitPriceCents,
-      })),
+        id: sale.id,
+        quantity: 1,
+        title: `Compra Optica Stylo - Venta ${sale.saleNumber}`.slice(0, 256),
+        unit_price: attempt.amountCents,
+      }],
       metadata: {
         payment_attempt_id: attempt.id,
         sale_id: sale.id,
@@ -52,14 +66,6 @@ export async function createMercadoPagoPreference({ attempt, config, sale }) {
         surname: sale.customer.lastNames,
       },
       statement_descriptor: "OPTICA STYLO",
-    },
-    requestOptions: { idempotencyKey: attempt.idempotencyKey },
-  });
-
-  return {
-    checkoutUrl: response.init_point,
-    externalPreferenceId: response.id,
-    sandboxCheckoutUrl: response.sandbox_init_point ?? null,
   };
 }
 
@@ -69,6 +75,8 @@ export async function getMercadoPagoPayment(paymentId, config) {
 
   return {
     currency: response.currency_id,
+    lastUpdatedAt: response.date_last_updated ?? null,
+    liveMode: response.live_mode,
     externalPaymentId: String(response.id),
     externalPreferenceId: response.preference_id ?? null,
     externalReference: response.external_reference ?? null,
