@@ -58,7 +58,9 @@ export function getMercadoPagoConfig(environment = process.env) {
 
   return {
     accessToken: requiredSecret(environment.MERCADO_PAGO_ACCESS_TOKEN, "MERCADO_PAGO_ACCESS_TOKEN"),
-    expectedLiveMode: mode === "production",
+    // Checkout Pro ejecuta compras con cuentas y tarjetas de prueba en el
+    // checkout principal, que informa live_mode=true aun en esa simulación.
+    expectedLiveMode: true,
     mode,
     productionEnabled,
     publicKey: requiredSecret(environment.MERCADO_PAGO_PUBLIC_KEY, "MERCADO_PAGO_PUBLIC_KEY"),

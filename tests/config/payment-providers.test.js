@@ -17,6 +17,7 @@ test("carga credenciales de Mercado Pago sin exponer valores predeterminados", (
 
   assert.equal(config.publicUrl, "https://tienda.example.com");
   assert.equal(config.accessToken, "token-prueba");
+  assert.equal(config.expectedLiveMode, true);
 });
 
 test("mantiene bloqueado el checkout sin dominio público ni secreto", () => {
