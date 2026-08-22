@@ -100,9 +100,13 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
 - La migración 020 rechaza distancias pupilares no positivas cuando se informan.
 - La migración 021 completa el flujo POS con paciente por venta, adicionales,
   autorización de descuentos, vigencia de cotizaciones, comprobantes y permisos.
+- La migración 022 conserva un comprobante inmutable por abono, distingue el
+  comprobante final y limita con auditoría los intentos de autorización de
+  descuentos. Debe aplicarse junto con el código que la consume.
 - Debe configurarse el secreto de webhook de Mercado Pago antes de habilitar cobros reales.
-- El POS admite Resend; si no se configura, conserva el comprobante con envío
-  `SIMULATED`.
+- El POS admite Resend. En producción se exige `POS_EMAIL_MODE=required`; una
+  configuración incompleta conserva el comprobante con correo `FAILED` para
+  reintento y nunca lo presenta como enviado o simulado.
 - No hay monitoreo, SLO ni prueba documentada de restauración.
 - “Caída nula” no es una garantía realista: debe traducirse a un SLO medible, redundancia, alertas y un plan de recuperación.
 
