@@ -36,6 +36,9 @@ function rows(receipt) {
 }
 
 export function renderReceiptHtml(receipt, { document = true } = {}) {
+  const receiptTitle = receipt.type === "PAYMENT"
+    ? "Comprobante de abono"
+    : "Comprobante final de venta";
   const customer = `${receipt.payload.customer.firstNames} ${receipt.payload.customer.lastNames}`;
   const patient = receipt.payload.patient
     ? `${receipt.payload.patient.firstNames} ${receipt.payload.patient.lastNames}`
@@ -46,7 +49,7 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
   const body = `
     <main class="receipt">
       <header>
-        <div><p class="eyebrow">Óptica Stylo</p><h1>Comprobante de venta</h1></div>
+        <div><p class="eyebrow">Óptica Stylo</p><h1>${receiptTitle}</h1></div>
         <div class="receipt-number"><span>N.º</span><strong>${receipt.receiptNumber}</strong></div>
       </header>
       <section class="meta">
@@ -67,7 +70,7 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
         <div class="total-row"><span>Pagado / abonado</span><strong>${money(receipt.payload.paidCents)}</strong></div>
         <div class="total-row"><span>Saldo</span><strong>${money(receipt.payload.balanceCents)}</strong></div>
       </section>
-      <footer>Gracias por preferir Óptica Stylo. Este comprobante conserva el historial de la operación.</footer>
+      <footer>Gracias por preferir Óptica Stylo. Este comprobante inmutable conserva el estado de la operación al momento de emitirse.</footer>
     </main>`;
 
   if (!document) return body;

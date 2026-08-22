@@ -221,16 +221,23 @@ Para cancelar una cotización o venta pendiente sin abonos:
 - `GET /api/sales/{saleId}`
 - `GET /api/sales/{saleId}/history`
 
-### Comprobante y correo
+### Comprobantes inmutables y correo
 
-- `POST /api/sales/{saleId}/receipt` crea una sola vez el comprobante y acepta
-  opcionalmente `{ "email": "cliente@example.com" }`.
-- `GET /api/sales/{saleId}/receipt` consulta el comprobante persistente.
-- `GET /api/sales/{saleId}/receipt/print` entrega la versión imprimible.
+- `POST /api/sales/{saleId}/receipt` emite un comprobante inmutable. Para un
+  abono recibe `{ "email": "cliente@example.com", "paymentId": "..." }`.
+- Cada abono conserva su propio comprobante. El abono que completa el total se
+  identifica como comprobante final de la venta.
+- `GET /api/sales/{saleId}/receipt` consulta el comprobante más reciente.
+- `GET /api/sales/{saleId}/receipt?receiptId={receiptId}` consulta una versión
+  específica sin confundirla con abonos posteriores.
+- `GET /api/sales/{saleId}/receipt/print?receiptId={receiptId}` entrega esa
+  versión imprimible.
 
-Con `RESEND_API_KEY` y `POS_EMAIL_FROM`, el `POST` envía el correo de compra
-confirmada. Sin configuración, el comprobante igualmente se emite y el estado de
-correo queda en `SIMULATED` para permitir pruebas locales seguras.
+Con `RESEND_API_KEY`, `POS_EMAIL_FROM` y `POS_EMAIL_MODE=required`, el `POST`
+envía mediante Resend un correo de abono o compra confirmada. En producción, la
+falta de configuración queda registrada como `FAILED` y puede reintentarse; no
+se informa un envío ficticio. `POS_EMAIL_MODE=simulate` se reserva para pruebas
+locales controladas.
 
 ### Reporte operativo del POS
 
@@ -254,6 +261,9 @@ metadatos internos: solo identificador, versión, estado y paciente.
 - `409 SALE_HAS_PAYMENTS`: no se cancela por este flujo una venta con abonos.
 - `403 DISCOUNT_AUTHORIZATION_FAILED`: las credenciales no pueden autorizar el
   descuento.
+- `429 DISCOUNT_AUTHORIZATION_RATE_LIMITED`: se superó el límite temporal de
+  intentos de autorización de descuentos.
+- `409 RECEIPT_PAYMENT_REQUIRED`: un comprobante de abono no identificó el pago.
 - `409 QUOTATION_EXPIRED`: la cotización superó su vigencia.
 
 Estas reglas son provisionales y están concentradas en validaciones, servicios y

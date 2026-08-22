@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  validateReceiptInput,
   validateSaleDraftInput,
   validateSalePaymentInput,
   validateSaleStatusInput,
@@ -132,6 +133,21 @@ test("valida abonos enteros y medios definidos", () => {
   assert.throws(
     () => validateSalePaymentInput({ amountCents: 100, paymentMethod: "CARD" }),
     /medio de pago/,
+  );
+});
+
+test("vincula el comprobante con el abono normalizado", () => {
+  const paymentId = "00000000-0000-4000-8000-000000000006";
+  assert.deepEqual(validateReceiptInput({
+    email: " Cliente@Example.com ",
+    paymentId,
+  }), {
+    email: "cliente@example.com",
+    paymentId,
+  });
+  assert.throws(
+    () => validateReceiptInput({ paymentId: "abono-inválido" }),
+    /abono no es válido/,
   );
 });
 

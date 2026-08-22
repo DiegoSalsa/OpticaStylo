@@ -20,6 +20,13 @@ const actor = {
     PERMISSIONS.SALES_PAYMENTS_REGISTER],
   userId,
 };
+const allowedDiscountAttempt = {
+  beginDiscountAuthorizationAttempt: async () => ({
+    allowed: true,
+    attemptId: "00000000-0000-4000-8000-000000000007",
+  }),
+  completeDiscountAuthorizationAttempt: async () => {},
+};
 
 test("crea la venta como cotización", async () => {
   const sale = { id: saleId, status: "QUOTATION" };
@@ -49,6 +56,7 @@ test("traduce un descuento invÃ¡lido a conflicto comercial", async () => {
       reason: "Convenio",
     },
   }, actor, {
+    ...allowedDiscountAttempt,
     createSale: async () => ({ reason: "DISCOUNT_EXCEEDS_SUBTOTAL", sale: null }),
     findDiscountAuthorizer: async () => ({
       id: "00000000-0000-4000-8000-000000000005",
@@ -70,9 +78,30 @@ test("rechaza credenciales sin permiso para autorizar descuentos", async () => {
       reason: "Convenio",
     },
   }, actor, {
+    ...allowedDiscountAttempt,
     findDiscountAuthorizer: async () => null,
     verifyPassword: async () => assert.fail("No debe validar una cuenta inexistente"),
   }), (error) => error.code === "DISCOUNT_AUTHORIZATION_FAILED" && error.status === 403);
+});
+
+test("limita los intentos repetidos de autorización de descuentos", async () => {
+  await assert.rejects(() => createSale({
+    ...draft,
+    discount: {
+      amountCents: 1000,
+      authorizerEmail: "admin@opticastylo.cl",
+      authorizerPassword: "clave",
+      reason: "Convenio",
+    },
+  }, actor, {
+    beginDiscountAuthorizationAttempt: async ({ attemptedBy, authorizerEmail }) => {
+      assert.equal(attemptedBy, userId);
+      assert.equal(authorizerEmail, "admin@opticastylo.cl");
+      return { allowed: false, attemptId: "00000000-0000-4000-8000-000000000008" };
+    },
+    completeDiscountAuthorizationAttempt: async () => assert.fail("No debe completar un intento bloqueado"),
+    findDiscountAuthorizer: async () => assert.fail("No debe consultar credenciales al estar bloqueado"),
+  }), (error) => error.code === "DISCOUNT_AUTHORIZATION_RATE_LIMITED" && error.status === 429);
 });
 
 test("confirma una cotización sin aceptar un cuerpo manipulable", async () => {
@@ -123,9 +152,12 @@ test("emite el comprobante y conserva el resultado del correo", async () => {
     { email: " Cliente@Example.com " },
     { permissions: [PERMISSIONS.SALES_READ], userId },
     {
-      issueSaleReceipt: async (id, email, actorId) => {
+      issueSaleReceipt: async (id, receiptInput, actorId) => {
         assert.equal(id, saleId);
-        assert.equal(email, "cliente@example.com");
+        assert.deepEqual(receiptInput, {
+          email: "cliente@example.com",
+          paymentId: null,
+        });
         assert.equal(actorId, userId);
         return { reason: null, receipt: pendingReceipt };
       },

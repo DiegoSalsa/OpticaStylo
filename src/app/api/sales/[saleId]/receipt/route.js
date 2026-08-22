@@ -8,7 +8,8 @@ export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
     const { saleId } = await params;
-    return createSuccessResponse(await getSaleReceipt(saleId, actor));
+    const receiptId = new URL(request.url).searchParams.get("receiptId");
+    return createSuccessResponse(await getSaleReceipt(saleId, receiptId, actor));
   });
 }
 

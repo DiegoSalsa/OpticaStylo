@@ -8,6 +8,7 @@ import {
   useInternalActor,
 } from "@/components/internal/internal-shell";
 import Icon from "@/components/ui/icon";
+import { buildPosPaymentInput } from "@/utils/pos-payment";
 
 const money = new Intl.NumberFormat("es-CL", {
   currency: "CLP",
@@ -408,37 +409,47 @@ export default function PosExperience() {
 
   async function registerPayment(event) {
     event.preventDefault();
+    const paymentForm = event.currentTarget;
     setPending(true);
     setError("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(paymentForm);
     try {
       const updated = await readResponse(
         await fetch(`/api/sales/${sale.id}/payments`, {
-          body: JSON.stringify({
-            amountCents: Number(form.get("amountCents")),
-            paymentMethod: form.get("paymentMethod"),
-            reference: form.get("reference") || null,
-          }),
+          body: JSON.stringify(buildPosPaymentInput(form, sale.paymentMethod)),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
       );
       setSale(updated);
+      const registeredPayment = updated.payments.at(-1);
       const emailedTo = form.get("email") || customer.email;
       const issuedReceipt = await readResponse(
         await fetch(`/api/sales/${sale.id}/receipt`, {
-          body: JSON.stringify({ email: emailedTo }),
+          body: JSON.stringify({
+            email: emailedTo,
+            paymentId: registeredPayment.id,
+          }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
       );
       setReceipt(issuedReceipt);
+      setSale((current) => current ? {
+        ...current,
+        receipt: issuedReceipt,
+        payments: current.payments.map((payment) => (
+          payment.id === registeredPayment.id
+            ? { ...payment, receipt: issuedReceipt }
+            : payment
+        )),
+      } : current);
       setNotice(
         updated.status === "PAID"
           ? "Venta pagada y comprobante emitido."
           : `Abono registrado y comprobante emitido. Saldo: ${money.format(updated.balanceCents)}.`,
       );
-      event.currentTarget.reset();
+      paymentForm.reset();
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -1136,6 +1147,32 @@ export default function PosExperience() {
               Confirmar venta
             </button>
           )}
+          {sale?.payments?.length > 0 && (
+            <section className="payment-history" aria-labelledby="payment-history-title">
+              <h3 id="payment-history-title">Historial de abonos</h3>
+              <ul>
+                {sale.payments.map((payment, index) => (
+                  <li key={payment.id}>
+                    <span>
+                      <strong>Abono {index + 1}</strong>
+                      <small>{money.format(payment.amountCents)}</small>
+                    </span>
+                    {payment.receipt ? (
+                      <a
+                        href={`/api/sales/${sale.id}/receipt/print?receiptId=${payment.receipt.id}`}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Comprobante N.º {payment.receipt.receiptNumber}
+                      </a>
+                    ) : (
+                      <small>Comprobante pendiente</small>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {sale?.status === "PENDING" && (
             <form className="payment-form" onSubmit={registerPayment}>
               <h3>Registrar abono</h3>
@@ -1151,21 +1188,27 @@ export default function PosExperience() {
               </label>
               <label className="field">
                 <span>Medio único para esta venta</span>
-                <select
-                  defaultValue={sale.paymentMethod ?? ""}
-                  disabled={Boolean(sale.paymentMethod)}
-                  name="paymentMethod"
-                  required
-                >
-                  <option disabled value="">
-                    Seleccionar
-                  </option>
-                  {PAYMENT_METHODS.map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
+                {sale.paymentMethod ? (
+                  <>
+                    <input
+                      readOnly
+                      value={PAYMENT_METHODS.find(([value]) => value === sale.paymentMethod)?.[1]
+                        ?? sale.paymentMethod}
+                    />
+                    <input name="paymentMethod" type="hidden" value={sale.paymentMethod} />
+                  </>
+                ) : (
+                  <select defaultValue="" name="paymentMethod" required>
+                    <option disabled value="">
+                      Seleccionar
                     </option>
-                  ))}
-                </select>
+                    {PAYMENT_METHODS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </label>
               <label className="field">
                 <span>Referencia opcional</span>
@@ -1188,13 +1231,14 @@ export default function PosExperience() {
             <div className="receipt-result">
               <span className="status-chip">Comprobante N.º {receipt.receiptNumber}</span>
               <small>
+                {receipt.type === "PAYMENT" ? "Abono registrado. " : "Pago final registrado. "}
                 {receipt.emailStatus === "SENT"
                   ? `Enviado a ${receipt.emailedTo}`
                   : receipt.emailStatus === "SIMULATED"
                     ? "Envío simulado; configura Resend para correo real."
                     : "Comprobante emitido; revisa el estado del correo."}
               </small>
-              <a className="app-button app-button--soft" href={`/api/sales/${sale.id}/receipt/print`} rel="noreferrer" target="_blank">
+              <a className="app-button app-button--soft" href={`/api/sales/${sale.id}/receipt/print?receiptId=${receipt.id}`} rel="noreferrer" target="_blank">
                 <Icon name="receipt" size={16} /> Abrir comprobante
               </a>
             </div>
