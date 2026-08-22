@@ -82,7 +82,10 @@ function createClient(overrides = {}) {
       }
       if (text.includes("INSERT INTO sale_payments")) {
         state.paymentWrites += 1;
-        return { rowCount: 1, rows: [] };
+        return {
+          rowCount: 1,
+          rows: [{ id: "00000000-0000-4000-8000-000000000003" }],
+        };
       }
       if (text.includes("INSERT INTO transactional_email_outbox")) {
         state.outboxWrites += 1;

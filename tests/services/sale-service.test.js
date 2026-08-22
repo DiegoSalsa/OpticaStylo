@@ -141,7 +141,7 @@ test("envía la fecha controlada al cancelar", async () => {
   });
 });
 
-test("emite el comprobante y conserva el resultado del correo", async () => {
+test("emite el comprobante encolado sin contactar al proveedor", async () => {
   const pendingReceipt = {
     emailStatus: "PENDING",
     emailedTo: "cliente@example.com",
@@ -161,19 +161,8 @@ test("emite el comprobante y conserva el resultado del correo", async () => {
         assert.equal(actorId, userId);
         return { reason: null, receipt: pendingReceipt };
       },
-      sendPurchaseConfirmation: async (receipt) => {
-        assert.equal(receipt, pendingReceipt);
-        return { providerId: "email-provider-1", status: "SENT" };
-      },
-      updateReceiptEmailDelivery: async (id, delivery, actorId) => ({
-        ...pendingReceipt,
-        emailStatus: delivery.status,
-        emailProviderId: delivery.providerId,
-        generatedBy: actorId,
-        id,
-      }),
     },
   );
-  assert.equal(result.emailStatus, "SENT");
-  assert.equal(result.emailProviderId, "email-provider-1");
+  assert.equal(result.emailStatus, "PENDING");
+  assert.equal(result, pendingReceipt);
 });

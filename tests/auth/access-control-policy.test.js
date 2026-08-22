@@ -31,6 +31,7 @@ test("el administrador no recibe acceso clínico", () => {
   assert.ok(!permissions.includes(PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED));
   assert.ok(!permissions.includes(PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED));
   assert.ok(!permissions.includes(PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED));
+  assert.ok(permissions.includes(PERMISSIONS.TRANSACTIONAL_EMAILS_MANAGE));
 });
 
 test("ventas administra datos básicos de pacientes sin acceso clínico", () => {
@@ -45,6 +46,7 @@ test("ventas administra datos básicos de pacientes sin acceso clínico", () => 
   assert.ok(permissions.includes(PERMISSIONS.PATIENTS_MANAGE_BASIC));
   assert.ok(!permissions.includes(PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED));
   assert.ok(!permissions.includes(PERMISSIONS.PRESCRIPTIONS_CREATE));
+  assert.ok(!permissions.includes(PERMISSIONS.TRANSACTIONAL_EMAILS_MANAGE));
 });
 
 test("el profesional solo administra su contexto clínico", () => {

@@ -23,13 +23,13 @@ test("conserva el saldo histórico del comprobante de cada abono", () => {
   });
 });
 
-test("identifica el último abono como comprobante final", () => {
+test("conserva el último abono como comprobante de pago separado", () => {
   assert.deepEqual(buildPaymentReceiptSnapshot(sale, secondPaymentId), {
     balanceCents: 0,
     paidCents: 50000,
     payment: sale.payments[1],
     payments: sale.payments,
-    type: "FINAL",
+    type: "PAYMENT",
   });
 });
 
