@@ -37,16 +37,33 @@ URL publica o el secreto. Produccion requiere cambiar simultaneamente
 segundo interruptor no se habilita hasta completar y registrar la compra de
 sandbox.
 
-## Configurar Webhooks de prueba
+## Configurar Webhooks para Checkout Pro de prueba
 
 1. Abrir la aplicacion correcta en Mercado Pago Developers.
-2. Ir a **Webhooks > Configurar notificaciones > Modo de prueba**.
+2. Ir a **Webhooks > Configurar notificaciones > Modo productivo**. El flujo de
+   prueba actual usa el `init_point` principal con vendedor, comprador y tarjeta
+   de prueba, por lo que Mercado Pago firma sus notificaciones con la clave de
+   esta pestaña aunque no exista dinero real.
 3. Configurar `https://DOMINIO/api/webhooks/mercado-pago`.
 4. Seleccionar **Pagos (legacy)**, que es el topico `payment` usado por
    Checkout Pro.
 5. Guardar, revelar la clave secreta y copiarla directamente al gestor de
    secretos como `MERCADO_PAGO_WEBHOOK_SECRET`.
 6. Reiniciar o volver a desplegar la aplicacion y ejecutar el preflight.
+
+Validacion registrada el 22 de agosto de 2026:
+
+- URL: `https://optica-stylo.vercel.app/api/webhooks/mercado-pago`;
+- evento: **Pagos (legacy)**;
+- pago de prueba: `174136652675`;
+- simulador oficial: `200 - OK`;
+- resultado local: evento `PROCESSED`, intento `APPROVED`, venta N.º 1 `PAID`,
+  CLP 223.360 conciliados y una sola fila en `sale_payments`;
+- prueba negativa: una firma falsificada obtuvo `401` y no creó un abono.
+
+El secreto se rotó durante la configuracion y solo quedó almacenado en el
+entorno local ignorado por Git y como variable sensible de Vercel. Nunca debe
+copiarse a la documentacion ni al repositorio.
 
 La firma se valida mediante el SDK oficial con `x-signature`, `x-request-id` y
 el `data.id` de la URL. Si falta el secreto se responde `503`; una firma falsa
