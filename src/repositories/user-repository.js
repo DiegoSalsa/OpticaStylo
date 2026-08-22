@@ -266,6 +266,38 @@ export async function findUserForAuthentication(email) {
   };
 }
 
+export async function findUserForPermissionAuthorization(email, permissionCode) {
+  const result = await executeQuery(
+    `
+      SELECT DISTINCT
+        users.id,
+        users.email,
+        users.password_hash,
+        users.first_name,
+        users.last_name,
+        users.is_active,
+        users.locked_until
+      FROM users
+      JOIN user_roles ON user_roles.user_id = users.id
+      JOIN role_permissions ON role_permissions.role_id = user_roles.role_id
+      JOIN permissions ON permissions.id = role_permissions.permission_id
+      WHERE users.email = $1 AND permissions.code = $2
+    `,
+    [email, permissionCode],
+  );
+  const user = result.rows[0];
+  if (!user) return null;
+  return {
+    email: user.email,
+    firstName: user.first_name,
+    id: user.id,
+    isActive: user.is_active,
+    lastName: user.last_name,
+    lockedUntil: user.locked_until,
+    passwordHash: user.password_hash,
+  };
+}
+
 export async function recordFailedLogin(userId, maximumAttempts, lockMinutes) {
   await executeTransaction(async (client) => {
     await client.query(
