@@ -27,6 +27,7 @@ export const PERMISSIONS = Object.freeze({
   SCHEDULES_MANAGE_ALL: "schedules.manage_all",
   SCHEDULES_MANAGE_OWN: "schedules.manage_own",
   SCHEDULES_READ: "schedules.read",
+  TRANSACTIONAL_EMAILS_MANAGE: "transactional_emails.manage",
   USERS_ASSIGN_ROLES: "users.assign_roles",
   USERS_CREATE: "users.create",
   USERS_DEACTIVATE: "users.deactivate",
