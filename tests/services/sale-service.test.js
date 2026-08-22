@@ -6,6 +6,7 @@ import {
   changeSaleStatus,
   confirmSale,
   createSale,
+  issueSaleReceipt,
   registerSalePayment,
 } from "../../src/services/sale-service.js";
 
@@ -40,10 +41,38 @@ test("traduce la receta obligatoria a conflicto comercial", async () => {
 
 test("traduce un descuento invÃ¡lido a conflicto comercial", async () => {
   await assert.rejects(() => createSale({
-    ...draft, discountCents: 1000, discountReason: "Convenio",
+    ...draft,
+    discount: {
+      amountCents: 1000,
+      authorizerEmail: "admin@opticastylo.cl",
+      authorizerPassword: "Una-clave-segura-2026",
+      reason: "Convenio",
+    },
   }, actor, {
     createSale: async () => ({ reason: "DISCOUNT_EXCEEDS_SUBTOTAL", sale: null }),
+    findDiscountAuthorizer: async () => ({
+      id: "00000000-0000-4000-8000-000000000005",
+      isActive: true,
+      lockedUntil: null,
+      passwordHash: "hash",
+    }),
+    verifyPassword: async () => true,
   }), (error) => error.code === "DISCOUNT_EXCEEDS_SUBTOTAL" && error.status === 409);
+});
+
+test("rechaza credenciales sin permiso para autorizar descuentos", async () => {
+  await assert.rejects(() => createSale({
+    ...draft,
+    discount: {
+      amountCents: 1000,
+      authorizerEmail: "ventas@opticastylo.cl",
+      authorizerPassword: "clave",
+      reason: "Convenio",
+    },
+  }, actor, {
+    findDiscountAuthorizer: async () => null,
+    verifyPassword: async () => assert.fail("No debe validar una cuenta inexistente"),
+  }), (error) => error.code === "DISCOUNT_AUTHORIZATION_FAILED" && error.status === 403);
 });
 
 test("confirma una cotización sin aceptar un cuerpo manipulable", async () => {
@@ -81,4 +110,38 @@ test("envía la fecha controlada al cancelar", async () => {
     },
     currentDate: now,
   });
+});
+
+test("emite el comprobante y conserva el resultado del correo", async () => {
+  const pendingReceipt = {
+    emailStatus: "PENDING",
+    emailedTo: "cliente@example.com",
+    id: "00000000-0000-4000-8000-000000000006",
+  };
+  const result = await issueSaleReceipt(
+    saleId,
+    { email: " Cliente@Example.com " },
+    { permissions: [PERMISSIONS.SALES_READ], userId },
+    {
+      issueSaleReceipt: async (id, email, actorId) => {
+        assert.equal(id, saleId);
+        assert.equal(email, "cliente@example.com");
+        assert.equal(actorId, userId);
+        return { reason: null, receipt: pendingReceipt };
+      },
+      sendPurchaseConfirmation: async (receipt) => {
+        assert.equal(receipt, pendingReceipt);
+        return { providerId: "email-provider-1", status: "SENT" };
+      },
+      updateReceiptEmailDelivery: async (id, delivery, actorId) => ({
+        ...pendingReceipt,
+        emailStatus: delivery.status,
+        emailProviderId: delivery.providerId,
+        generatedBy: actorId,
+        id,
+      }),
+    },
+  );
+  assert.equal(result.emailStatus, "SENT");
+  assert.equal(result.emailProviderId, "email-provider-1");
 });

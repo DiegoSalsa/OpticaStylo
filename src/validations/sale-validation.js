@@ -68,51 +68,150 @@ function items(value) {
   return normalized;
 }
 
+function opticalAdditions(value) {
+  if (value == null) return [];
+  if (!Array.isArray(value) || value.length > 50) {
+    fail("Los adicionales ópticos deben ser una lista de hasta 50 elementos.");
+  }
+
+  return value.map((addition, index) => {
+    if (!addition || typeof addition !== "object" || Array.isArray(addition)) {
+      fail(`El adicional óptico en la posición ${index + 1} no es válido.`);
+    }
+    const name = typeof addition.name === "string"
+      ? addition.name.trim().replace(/\s+/g, " ")
+      : "";
+    const description = addition.description == null
+      ? null
+      : typeof addition.description === "string"
+        ? addition.description.trim().replace(/\s+/g, " ")
+        : "";
+    if (!name || name.length > 160) {
+      fail(`El nombre del adicional óptico en la posición ${index + 1} no es válido.`);
+    }
+    if (addition.description != null && (!description || description.length > 500)) {
+      fail(`La descripción del adicional óptico en la posición ${index + 1} no es válida.`);
+    }
+    if (!Number.isInteger(addition.quantity) || addition.quantity < 1 || addition.quantity > 100) {
+      fail(`La cantidad del adicional óptico en la posición ${index + 1} no es válida.`);
+    }
+    if (!Number.isSafeInteger(addition.unitPriceCents) || addition.unitPriceCents <= 0) {
+      fail(`El precio del adicional óptico en la posición ${index + 1} no es válido.`);
+    }
+    return {
+      description,
+      name,
+      quantity: addition.quantity,
+      unitPriceCents: addition.unitPriceCents,
+    };
+  });
+}
+
+function discount(value) {
+  if (value == null) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    fail("El descuento no es válido.");
+  }
+  if (value.amountCents === 0) {
+    if (value.reason || value.authorizerEmail || value.authorizerPassword) {
+      fail("El motivo y la autorización solo corresponden cuando existe un descuento.");
+    }
+    return null;
+  }
+  if (!Number.isSafeInteger(value.amountCents) || value.amountCents <= 0) {
+    fail("El descuento debe ser un entero positivo expresado en pesos chilenos.");
+  }
+  const reason = typeof value.reason === "string"
+    ? value.reason.trim().replace(/\s+/g, " ")
+    : "";
+  const authorizerEmail = typeof value.authorizerEmail === "string"
+    ? value.authorizerEmail.trim().toLowerCase()
+    : "";
+  const authorizerPassword = typeof value.authorizerPassword === "string"
+    ? value.authorizerPassword
+    : "";
+  if (!reason || reason.length > MAX_DISCOUNT_REASON_LENGTH) {
+    fail(`El descuento requiere un motivo de hasta ${MAX_DISCOUNT_REASON_LENGTH} caracteres.`);
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authorizerEmail)) {
+    fail("El correo de quien autoriza el descuento no es válido.");
+  }
+  if (!authorizerPassword || Buffer.byteLength(authorizerPassword, "utf8") > 1_024) {
+    fail("La contraseña de autorización no es válida.");
+  }
+  return { amountCents: value.amountCents, authorizerEmail, authorizerPassword, reason };
+}
+
 export function validateSaleDraftInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
   }
-  const discountCents = input.discountCents ?? 0;
-  if (!Number.isSafeInteger(discountCents) || discountCents < 0) {
-    fail(
-      "El descuento debe ser un entero mayor o igual a cero expresado en pesos chilenos.",
-    );
-  }
-
-  let discountReason = null;
-  if (discountCents > 0) {
-    discountReason =
-      typeof input.discountReason === "string"
-        ? input.discountReason.trim().replace(/\s+/g, " ")
-        : "";
-    if (!discountReason || discountReason.length > MAX_DISCOUNT_REASON_LENGTH) {
-      fail(
-        `El descuento requiere un motivo de hasta ${MAX_DISCOUNT_REASON_LENGTH} caracteres.`,
-      );
-    }
-  } else if (
-    input.discountReason != null &&
-    String(input.discountReason).trim()
-  ) {
-    fail("El motivo de descuento solo corresponde cuando existe un descuento.");
-  }
-
   const prescriptionId = optionalId(input.prescriptionId, "receta");
-  const externalPrescriptionId = optionalId(
-    input.externalPrescriptionId,
-    "receta externa",
-  );
+  const externalPrescriptionId = optionalId(input.externalPrescriptionId, "receta externa");
   if (prescriptionId && externalPrescriptionId) {
-    fail("La venta debe usar una receta interna o una externa, no ambas.");
+    fail("Debe seleccionar una receta interna o externa, no ambas.");
   }
+
+  const patientId = optionalId(input.patientId, "paciente");
+  if ((prescriptionId || externalPrescriptionId) && !patientId) {
+    fail("Debe seleccionar al paciente de la receta.");
+  }
+
+  if (input.discount == null && (input.discountCents ?? 0) === 0 && input.discountReason) {
+    fail("El motivo solo corresponde cuando existe un descuento.");
+  }
+  const normalizedDiscount = input.discount == null && (input.discountCents ?? 0) === 0
+    ? null
+    : discount(input.discount ?? {
+        amountCents: input.discountCents,
+        authorizerEmail: input.discountAuthorizerEmail,
+        authorizerPassword: input.discountAuthorizerPassword,
+        reason: input.discountReason,
+      });
+
   return {
     customerId: validateSaleId(input.customerId, "cliente"),
-    discountCents,
-    discountReason,
+    discount: normalizedDiscount,
+    discountCents: normalizedDiscount?.amountCents ?? 0,
+    discountReason: normalizedDiscount?.reason ?? null,
     externalPrescriptionId,
     items: items(input.items),
+    opticalAdditions: opticalAdditions(input.opticalAdditions),
+    patientId,
     prescriptionId,
   };
+}
+
+export function validateReceiptInput(input) {
+  if (input == null) return { email: null };
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    fail("El cuerpo de la solicitud no es válido.");
+  }
+  if (input.email == null || input.email === "") return { email: null };
+  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fail("El correo del comprobante no es válido.");
+  }
+  return { email };
+}
+
+export function validateSalesReportQuery(searchParams) {
+  const today = new Date();
+  const defaultTo = today.toISOString().slice(0, 10);
+  const defaultFromDate = new Date(today);
+  defaultFromDate.setDate(defaultFromDate.getDate() - 29);
+  const from = searchParams.get("from") ?? defaultFromDate.toISOString().slice(0, 10);
+  const to = searchParams.get("to") ?? defaultTo;
+  const pattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!pattern.test(from) || !pattern.test(to) || from > to) {
+    fail("El rango de fechas del reporte no es válido.");
+  }
+  const maximumTo = new Date(`${from}T00:00:00.000Z`);
+  maximumTo.setUTCDate(maximumTo.getUTCDate() + 366);
+  if (new Date(`${to}T00:00:00.000Z`) > maximumTo) {
+    fail("El reporte no puede abarcar más de 366 días.");
+  }
+  return { from, to };
 }
 
 export function validateSaleStatusInput(input) {

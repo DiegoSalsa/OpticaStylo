@@ -4,7 +4,9 @@ import { getSalesReportData } from "../repositories/report-repository.js";
 import { validateSalesReportQuery } from "../validations/report-validation.js";
 
 export async function getSalesReport(searchParams, actor, dependencies = {}) {
-  requirePermissions(actor, [PERMISSIONS.REPORTS_READ]);
+  const canReadSalesReport = (actor?.permissions ?? []).some((permission) =>
+    [PERMISSIONS.REPORTS_READ, PERMISSIONS.SALES_REPORTS_READ].includes(permission));
+  if (!canReadSalesReport) requirePermissions(actor, [PERMISSIONS.REPORTS_READ]);
   const query = validateSalesReportQuery(
     searchParams,
     dependencies.currentDate,
