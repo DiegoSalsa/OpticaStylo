@@ -232,30 +232,47 @@
   color: var(--color-primary-dark);
   padding: 0.65rem;
 }
-.lens-intent {
+.lens-options {
+  border: 0;
+  margin: 0.9rem 0 0;
+  padding: 0;
+}
+.lens-options legend {
+  color: var(--color-primary-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.45rem;
+}
+.lens-option {
   align-items: flex-start;
   background: #f1f8f6;
+  border: 1px solid transparent;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
   gap: 0.65rem;
-  margin-top: 0.9rem;
+  margin-top: 0.45rem;
   padding: 0.75rem;
 }
-.lens-intent input {
+.lens-option:has(input:checked) {
+  background: #e4f8f2;
+  border-color: var(--color-primary-container);
+}
+.lens-option input {
   accent-color: var(--color-primary-dark);
   margin: 0.22rem 0 0;
 }
-.lens-intent span,
-.lens-intent strong,
-.lens-intent small {
+.lens-option span,
+.lens-option strong,
+.lens-option small {
   display: block;
 }
-.lens-intent strong {
+.lens-option strong {
   color: var(--color-primary-dark);
   font-size: 0.72rem;
 }
-.lens-intent small {
+.lens-option small,
+.lens-unavailable {
   color: var(--color-text-soft);
   font-size: 0.65rem;
   line-height: 1.45;

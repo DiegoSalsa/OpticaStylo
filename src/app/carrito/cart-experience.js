@@ -31,22 +31,14 @@ export default function CartExperience() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [prescriptionMode, setPrescriptionMode] = useState("IMAGE");
-  const [wantsPrescriptionLenses, setWantsPrescriptionLenses] = useState(false);
   const requiresPrescription = useMemo(
     () => cart?.items.some((item) => item.requiresPrescription),
-    [cart],
-  );
-  const canAddPrescriptionLenses = useMemo(
-    () => cart?.items.some((item) => ["FRAME", "PRESCRIPTION_LENS"].includes(item.category)),
     [cart],
   );
   const prescriptionReady = Boolean(
     !requiresPrescription
       || cart?.externalPrescription?.status === "READY"
       || cart?.clinicalPrescriptionId,
-  );
-  const showPrescriptionForm = Boolean(
-    requiresPrescription || wantsPrescriptionLenses || cart?.externalPrescription,
   );
 
   useEffect(() => {
@@ -168,7 +160,7 @@ export default function CartExperience() {
   return <main className="cart-page">
     <nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav>
     <header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header>
-    <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className={prescriptionReady ? "complete" : "active"}><span>2</span><div><strong>Receta</strong><small>{requiresPrescription ? "Datos ópticos" : wantsPrescriptionLenses ? "Cristales" : "Opcional"}</small></div></li><li className={prescriptionReady ? "active" : ""}><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
+    <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className={prescriptionReady ? "complete" : "active"}><span>2</span><div><strong>Receta</strong><small>{requiresPrescription ? "Datos ópticos" : "No requerida"}</small></div></li><li className={prescriptionReady ? "active" : ""}><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
     <div className="cart-layout">
       <section className="cart-content">
         <article className="cart-card">
@@ -176,16 +168,16 @@ export default function CartExperience() {
           {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{item.requiresPrescription ? " · Requiere receta" : ""}</small></div><div className="cart-quantity"><button onClick={() => update(item.productId, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item.productId, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item.productId, 0)} type="button">×</button></div>)}
         </article>
 
-        {(requiresPrescription || canAddPrescriptionLenses) && <article className="cart-card prescription-card">
+        {requiresPrescription && <article className="cart-card prescription-card">
           <div className="cart-card-heading">
             <div>
-              <h2>{requiresPrescription ? "Receta óptica externa" : "¿Necesitas cristales con receta?"}</h2>
-              <p>{requiresPrescription ? "No necesitas atenderte en Óptica Stylo para comprar. No aprobamos datos automáticamente." : "Puedes comprar el marco sin receta. Si quieres cristales ópticos, adjunta aquí tu receta para preparar el lente."}</p>
+              <h2>Receta óptica externa</h2>
+              <p>No necesitas atenderte en Óptica Stylo para comprar. No aprobamos datos automáticamente.</p>
             </div>
             {cart.externalPrescription?.status === "READY" && <span className="status-chip">Receta guardada</span>}
           </div>
 
-          {!showPrescriptionForm ? <button className="button button--secondary" onClick={() => setWantsPrescriptionLenses(true)} type="button">Agregar cristales con receta</button> : <>
+          <>
             <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} onClick={() => setPrescriptionMode("MANUAL")} type="button">Ingresar manualmente</button></div>
             <form className="prescription-form" onSubmit={savePrescription}>
               {prescriptionMode === "IMAGE" && <label className="field field-full"><span>Imagen de la receta (máx. 8 MiB)</span><input accept="image/jpeg,image/png,image/webp,image/heic,image/heif" name="image" required type="file" /><small>Después de cargarla, debes transcribir y confirmar los valores. El OCR futuro solo ayudará a completar estos campos.</small></label>}
@@ -203,7 +195,7 @@ export default function CartExperience() {
               <label className="field field-wide"><span>Indicaciones</span><input name="fulfillmentNotes" /></label>
               <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">Guardar receta para revisión</button>
             </form>
-          </>}
+          </>
         </article>}
 
         <article className="cart-card">

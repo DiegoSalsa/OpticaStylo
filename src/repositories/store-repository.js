@@ -1,6 +1,8 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
+const TEST_DATA_AVAILABLE = process.env.NODE_ENV !== "production";
+
 function mapCartBase(row) {
   if (!row) return null;
   return {
@@ -79,7 +81,7 @@ async function loadCart(client, tokenHash, accountId = null) {
     `SELECT store_cart_items.product_id, store_cart_items.quantity,
             products.sku, products.name, products.category,
             products.requires_prescription, products.unit_price_cents,
-            products.is_active
+            products.is_active, products.is_test_data
      FROM store_cart_items
      JOIN products ON products.id = store_cart_items.product_id
      WHERE store_cart_items.cart_id = $1
@@ -88,7 +90,7 @@ async function loadCart(client, tokenHash, accountId = null) {
   );
   const items = itemsResult.rows.map((row) => ({
     availability: {
-      available: row.is_active,
+      available: row.is_active && (TEST_DATA_AVAILABLE || !row.is_test_data),
       exactQuantityKnown: false,
       source: "MOCK",
     },
@@ -162,21 +164,32 @@ async function lockActiveCart(client, tokenHash, accountId) {
 }
 
 export async function upsertStoreCartItem(tokenHash, accountId, productId, quantity) {
+  return upsertStoreCartItems(tokenHash, accountId, [{ productId, quantity }]);
+}
+
+export async function upsertStoreCartItems(tokenHash, accountId, items) {
   return executeTransaction(async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
-    const product = await client.query(
-      "SELECT id, is_active FROM products WHERE id = $1 FOR SHARE",
-      [productId],
+    const productResult = await client.query(
+      `SELECT id, is_active, is_test_data
+       FROM products WHERE id = ANY($1::UUID[]) FOR SHARE`,
+      [items.map((item) => item.productId)],
     );
-    if (!product.rows[0]?.is_active) return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
-    await client.query(
-      `INSERT INTO store_cart_items (cart_id, product_id, quantity)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (cart_id, product_id)
-       DO UPDATE SET quantity = EXCLUDED.quantity`,
-      [locked.cart.id, productId, quantity],
-    );
+    const products = new Map(productResult.rows.map((product) => [product.id, product]));
+    if (items.some((item) => {
+      const product = products.get(item.productId);
+      return !product?.is_active || (!TEST_DATA_AVAILABLE && product.is_test_data);
+    })) return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
+    for (const item of items) {
+      await client.query(
+        `INSERT INTO store_cart_items (cart_id, product_id, quantity)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (cart_id, product_id)
+         DO UPDATE SET quantity = EXCLUDED.quantity`,
+        [locked.cart.id, item.productId, item.quantity],
+      );
+    }
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
   });
 }
@@ -367,13 +380,15 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       `SELECT store_cart_items.product_id, store_cart_items.quantity,
               products.sku, products.name, products.category,
               products.requires_prescription, products.unit_price_cents,
-              products.is_active
+              products.is_active, products.is_test_data
        FROM store_cart_items JOIN products ON products.id = store_cart_items.product_id
        WHERE store_cart_items.cart_id = $1 FOR SHARE OF products`,
       [cart.id],
     );
     if (itemsResult.rowCount === 0) return { reason: "CART_EMPTY", saleId: null };
-    if (itemsResult.rows.some((item) => !item.is_active)) {
+    if (itemsResult.rows.some((item) => (
+      !item.is_active || (!TEST_DATA_AVAILABLE && item.is_test_data)
+    ))) {
       return { reason: "PRODUCT_NOT_AVAILABLE", saleId: null };
     }
     if (itemsResult.rows.some((item) => item.requires_prescription)) {

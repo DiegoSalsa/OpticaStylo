@@ -16,11 +16,13 @@ import {
   saveExternalPrescriptionImage,
   saveManualExternalPrescription,
   upsertStoreCartItem,
+  upsertStoreCartItems,
 } from "../repositories/store-repository.js";
 import { AppError } from "../utils/app-error.js";
 import {
   validateCartConfiguration,
   validateCartItemInput,
+  validateCartItemsInput,
   validateExternalPrescriptionData,
   validatePrescriptionImage,
   validatePrescriptionImageBytes,
@@ -119,6 +121,16 @@ export async function putStoreCartItem(token, account, productId, input, depende
     credentials.accountId,
     validateStoreProductId(productId),
     item.quantity,
+  ));
+}
+
+export async function putStoreCartItems(token, account, input, dependencies = {}) {
+  const credentials = access(token, account);
+  const items = validateCartItemsInput(input);
+  return unwrap(await (dependencies.upsertItems ?? upsertStoreCartItems)(
+    credentials.tokenHash,
+    credentials.accountId,
+    items.items,
   ));
 }
 
