@@ -177,9 +177,9 @@ function faceMeshPositions(
 }
 
 /**
- * Converts MediaPipe landmarks into a physical-scale glasses pose. The face
- * estimates camera pixels per millimeter; product metadata preserves each
- * frame's real dimensions, so different sizes remain visibly different.
+ * Convierte los puntos de MediaPipe en una pose de lentes con escala física.
+ * El rostro estima los píxeles de cámara por milímetro; los metadatos del producto
+ * conservan las dimensiones reales de cada marco para mantener las diferencias visibles.
  */
 export function landmarksToGlassesPose(
   landmarks,

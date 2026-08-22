@@ -1,6 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Archivos generados que no deben versionarse.
 
-# dependencies
+# Dependencias
 /node_modules
 /.pnp
 .pnp.*
@@ -10,35 +10,35 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# Pruebas
 /coverage
 /tmp/
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Compilaciones de producción
 /build
 /output/
 
-# misc
+# Archivos del sistema
 .DS_Store
 *.pem
 
-# debug
+# Registros de depuración
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .next-dev.*.log
 
-# variables de entorno locales
+# Variables de entorno locales
 .env*
 !.env.example
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts

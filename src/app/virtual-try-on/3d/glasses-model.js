@@ -68,10 +68,14 @@ function prepareLensMaterial(material) {
   material.needsUpdate = true;
 }
 
+function actualizarCurvaturaPatillas(uniforms, bendRadians) {
+  uniforms.bendRadians.value = bendRadians;
+}
+
 /**
- * Three.js component that loads and renders the glasses GLB model.
- * Position, rotation, and scale are updated every frame from the
- * `poseRef` shared by the parent overlay component.
+ * Componente Three.js que carga y renderiza el modelo GLB de lentes.
+ * La posición, rotación y escala se actualizan en cada fotograma desde
+ * la referencia de pose compartida por el componente contenedor.
  */
 export default function GlassesModel({
   faceMeshTriangleIndices,
@@ -190,9 +194,7 @@ export default function GlassesModel({
     group.scale.set(s, s, s);
 
     for (const uniforms of templeUniformsRef.current) {
-      // Three.js uniforms are mutable by design and must follow the render loop.
-      // eslint-disable-next-line react-hooks/immutability
-      uniforms.bendRadians.value = pose.templeBendRadians ?? 0;
+      actualizarCurvaturaPatillas(uniforms, pose.templeBendRadians ?? 0);
     }
 
     const facePositions = pose.faceMesh?.positions;

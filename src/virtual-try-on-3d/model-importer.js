@@ -124,9 +124,9 @@ function roundedVector(values) {
 }
 
 /**
- * Analyses a GLB once, during ingestion, and returns the browser-safe sidecar
- * consumed by the try-on runtime. Ambiguous models are marked for review
- * instead of being silently accepted.
+ * Analiza un GLB una vez durante su incorporación y devuelve el archivo auxiliar
+ * seguro para el navegador que consume el probador. Los modelos ambiguos se marcan para revisión
+ * en lugar de aceptarse de forma silenciosa.
  */
 export async function analyzeTryOnGlb({ data, dimensionsMm = {}, identity }) {
   if (!data || !identity) throw new TypeError("data e identity son obligatorios.");
