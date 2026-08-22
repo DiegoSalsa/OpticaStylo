@@ -225,19 +225,19 @@ Para cancelar una cotización o venta pendiente sin abonos:
 
 - `POST /api/sales/{saleId}/receipt` emite un comprobante inmutable. Para un
   abono recibe `{ "email": "cliente@example.com", "paymentId": "..." }`.
-- Cada abono conserva su propio comprobante. El abono que completa el total se
-  identifica como comprobante final de la venta.
+- Cada abono conserva un comprobante `PAYMENT`, incluido el que completa el
+  saldo. Al completar el total se crea además un comprobante `FINAL` separado.
 - `GET /api/sales/{saleId}/receipt` consulta el comprobante más reciente.
 - `GET /api/sales/{saleId}/receipt?receiptId={receiptId}` consulta una versión
   específica sin confundirla con abonos posteriores.
 - `GET /api/sales/{saleId}/receipt/print?receiptId={receiptId}` entrega esa
   versión imprimible.
 
-Con `RESEND_API_KEY`, `POS_EMAIL_FROM` y `POS_EMAIL_MODE=required`, el `POST`
-envía mediante Resend un correo de abono o compra confirmada. En producción, la
-falta de configuración queda registrada como `FAILED` y puede reintentarse; no
-se informa un envío ficticio. `POS_EMAIL_MODE=simulate` se reserva para pruebas
-locales controladas.
+El `POST` crea el comprobante y encola su correo en la misma transacción. No
+espera a Resend ni marca el mensaje como enviado. El trabajador central actualiza
+`sale_receipts.email_status` al simular, aceptar, fallar o recibir un evento de
+entrega. Los modos y variables se documentan en
+`docs/correos-transaccionales.md`.
 
 ### Reporte operativo del POS
 

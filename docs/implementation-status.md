@@ -108,9 +108,10 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
   comprobante final y limita con auditoría los intentos de autorización de
   descuentos. Debe aplicarse junto con el código que la consume.
 - El secreto productivo del webhook de Mercado Pago está configurado en Vercel y fue validado con una simulación firmada; los cobros reales continúan bloqueados explícitamente.
-- El POS admite Resend. En producción se exige `POS_EMAIL_MODE=required`; una
-  configuración incompleta conserva el comprobante con correo `FAILED` para
-  reintento y nunca lo presenta como enviado o simulado.
+- La migración 023 prepara la outbox transaccional, el trabajador concurrente,
+  los webhooks idempotentes y los cuatro modos de correo. La entrega real y el
+  cron permanecen desactivados hasta verificar el dominio y autorizar su
+  configuración productiva.
 - No hay monitoreo, SLO ni prueba documentada de restauración.
 - “Caída nula” no es una garantía realista: debe traducirse a un SLO medible, redundancia, alertas y un plan de recuperación.
 
