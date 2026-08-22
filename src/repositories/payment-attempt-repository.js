@@ -118,11 +118,11 @@ export async function listPaymentAttemptsBySaleId(saleId) {
   return result.rows.map(mapAttempt);
 }
 
-function mapProviderStatus(status) {
+export function mapProviderStatus(status) {
   if (status === "approved") return "APPROVED";
   if (["pending", "in_process", "authorized"].includes(status)) return "PENDING";
   if (status === "rejected") return "REJECTED";
-  if (status === "cancelled") return "CANCELLED";
+  if (["cancelled", "expired"].includes(status)) return "CANCELLED";
   return "REQUIRES_REVIEW";
 }
 
@@ -131,9 +131,17 @@ export function isValidPaymentExternalReference(value) {
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-export function paymentMatchesAttempt(attempt, payment) {
-  return Number(payment.transactionAmount) === Number(attempt.amount_cents)
+export function paymentMatchesAttempt(attempt, payment, expectedLiveMode) {
+  const amount = Number(payment.transactionAmount);
+  const expectedAmount = Number(attempt.amount_cents);
+  const modeMatches = expectedLiveMode === undefined
+    || payment.liveMode === expectedLiveMode;
+  return Number.isSafeInteger(amount)
+    && Number.isSafeInteger(expectedAmount)
+    && amount > 0
+    && amount === expectedAmount
     && payment.currency === attempt.currency
+    && modeMatches
     && Boolean(
       attempt.external_preference_id
       && payment.externalPreferenceId
@@ -150,8 +158,25 @@ async function finishProviderEvent(client, eventId, status, error = null) {
   );
 }
 
-export async function reconcileMercadoPagoPayment(notification, payment) {
-  return executeTransaction(async (client) => {
+export async function reconcileMercadoPagoPayment(
+  notification,
+  payment,
+  options = {},
+) {
+  return executeTransaction((client) => reconcileMercadoPagoPaymentWithClient(
+    client,
+    notification,
+    payment,
+    options,
+  ));
+}
+
+export async function reconcileMercadoPagoPaymentWithClient(
+  client,
+  notification,
+  payment,
+  options = {},
+) {
     const eventResult = await client.query(
       `INSERT INTO payment_provider_events (
          provider, request_id, event_type, external_object_id, payload
@@ -180,7 +205,7 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
       return { duplicate: false, result: "UNKNOWN_PAYMENT" };
     }
 
-    if (!paymentMatchesAttempt(attempt, payment)) {
+    if (!paymentMatchesAttempt(attempt, payment, options.expectedLiveMode)) {
       const reason = "Los datos confirmados por Mercado Pago no coinciden con el cobro reservado.";
       await client.query(
         `UPDATE payment_attempts SET status = 'REQUIRES_REVIEW',
@@ -194,6 +219,16 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
     }
 
     const mappedStatus = mapProviderStatus(payment.status);
+    if (attempt.status === "REQUIRES_REVIEW") {
+      const reason = "El intento permanece bloqueado hasta completar su revision manual.";
+      await finishProviderEvent(client, eventId, "FAILED", reason);
+      return {
+        duplicate: false,
+        paymentAttemptId: attempt.id,
+        result: "REQUIRES_REVIEW",
+        saleId: attempt.sale_id,
+      };
+    }
     if (attempt.status === "APPROVED" && mappedStatus !== "APPROVED") {
       const reason = "Un pago previamente aprobado cambió de estado y requiere revisión.";
       await client.query(
@@ -213,7 +248,23 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
         })],
       );
       await finishProviderEvent(client, eventId, "PROCESSED");
-      return { duplicate: false, result: "REQUIRES_REVIEW" };
+      return {
+        duplicate: false,
+        paymentAttemptId: attempt.id,
+        result: "REQUIRES_REVIEW",
+        saleId: attempt.sale_id,
+      };
+    }
+
+    if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
+      await client.query(
+        `UPDATE payment_attempts
+         SET status = 'REQUIRES_REVIEW',
+             failure_reason = 'Otro intento de la venta fue aprobado primero.'
+         WHERE sale_id = $1 AND provider = 'MERCADO_PAGO' AND id <> $2
+           AND status IN ('CREATED', 'PENDING')`,
+        [attempt.sale_id, attempt.id],
+      );
     }
 
     await client.query(
@@ -226,7 +277,8 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
 
     if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
       const saleResult = await client.query(
-        `SELECT sales.status, sales.total_cents, customers.email AS customer_email
+        `SELECT sales.status, sales.total_cents, sales.sale_number,
+                customers.email AS customer_email
          FROM sales JOIN customers ON customers.id = sales.customer_id
          WHERE sales.id = $1 FOR UPDATE OF sales`,
         [attempt.sale_id],
@@ -280,13 +332,34 @@ export async function reconcileMercadoPagoPayment(notification, payment) {
          ON CONFLICT (deduplication_key) DO NOTHING`,
         [sale.customer_email, JSON.stringify({
           amountCents: Number(attempt.amount_cents),
+          externalPaymentId: payment.externalPaymentId,
           saleId: attempt.sale_id,
+          saleNumber: Number(sale.sale_number),
           status: newStatus,
         }), `payment-attempt:${attempt.id}:approved`],
       );
     }
 
     await finishProviderEvent(client, eventId, "PROCESSED");
-    return { duplicate: false, result: mappedStatus };
-  });
+    return {
+      duplicate: false,
+      paymentAttemptId: attempt.id,
+      result: mappedStatus,
+      saleId: attempt.sale_id,
+    };
+}
+
+export async function findPaymentConfirmationDeduplicationKey(externalPaymentId) {
+  const result = await executeQuery(
+    `SELECT transactional_email_outbox.deduplication_key
+     FROM payment_attempts
+     JOIN transactional_email_outbox
+       ON transactional_email_outbox.deduplication_key =
+          'payment-attempt:' || payment_attempts.id::TEXT || ':approved'
+     WHERE payment_attempts.provider = 'MERCADO_PAGO'
+       AND payment_attempts.external_payment_id = $1
+       AND payment_attempts.status = 'APPROVED'`,
+    [externalPaymentId],
+  );
+  return result.rows[0]?.deduplication_key ?? null;
 }

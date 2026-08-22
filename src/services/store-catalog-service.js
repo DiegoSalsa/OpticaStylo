@@ -1,5 +1,6 @@
 import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
 import { findProductById, listProducts } from "../repositories/product-repository.js";
+import { getProductPresentation } from "../config/product-presentations.js";
 import { AppError } from "../utils/app-error.js";
 import {
   validateProductListQuery,
@@ -7,13 +8,17 @@ import {
 import { validateStoreProductId } from "../validations/store-validation.js";
 
 function publicProduct(product, availabilityProvider) {
+  const presentation = getProductPresentation(product.sku);
   return {
     availability: availabilityProvider(product),
     category: product.category,
+    description: presentation.description,
     id: product.id,
+    images: presentation.images,
     name: product.name,
     requiresPrescription: product.requiresPrescription,
     sku: product.sku,
+    specifications: presentation.specifications,
     unitPriceCents: product.unitPriceCents,
   };
 }
