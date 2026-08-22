@@ -40,6 +40,18 @@
   width: 100%;
   z-index: 2;
 }
+.heroKicker {
+  background: #3db79f;
+  border-radius: 999px;
+  color: #073a32;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 0.42rem 0.7rem;
+  text-transform: uppercase;
+  width: fit-content;
+}
 .heroCopy h1 {
   color: #151919;
   font-family: Sora, Inter, sans-serif;
@@ -484,50 +496,90 @@
   height: 44px;
   width: 44px;
 }
-.experience {
+.reviews {
   background: #073a32;
   border-radius: 40px 40px 0 0;
   color: #fff;
   padding: clamp(4.5rem, 8vw, 7rem) max(1.5rem, calc((100vw - 1392px) / 2));
 }
-.experience .centerHeading h2 {
+.reviewsLead {
+  align-items: end;
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+}
+.reviewsLead p {
+  color: #72d7c3;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.8rem;
+  text-transform: uppercase;
+}
+.reviewsLead h2 {
   color: #fff;
+  font-family: Sora, Inter, sans-serif;
+  font-size: clamp(1.8rem, 3.4vw, 3.25rem);
+  letter-spacing: -0.06em;
+  margin: 0;
 }
-.experience .centerHeading p {
+.reviewsLead div > span {
   color: #bce0d8;
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.85rem;
 }
-.experienceGrid {
+.reviewsLead a {
+  align-items: center;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 800;
+  gap: 0.55rem;
+  text-decoration: none;
+}
+.reviewGrid {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 3rem;
 }
-.experienceGrid article {
+.reviewCard {
   background: #fff;
   border-radius: 32px;
   color: #2f3334;
-  min-height: 220px;
-  padding: 2rem;
-}
-.experienceGrid article > span {
-  align-items: center;
-  background: #d8f5ef;
-  border-radius: 50%;
-  color: #073a32;
   display: flex;
-  height: 42px;
-  justify-content: center;
-  width: 42px;
+  flex-direction: column;
+  min-height: 256px;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
 }
-.experienceGrid h3 {
+.reviewStars {
+  color: #d49a25;
   font-size: 1rem;
-  margin: 1.15rem 0 0.55rem;
+  letter-spacing: 0.14em;
 }
-.experienceGrid p {
-  color: #5c6060;
-  font-size: 0.78rem;
-  line-height: 1.65;
-  margin: 0;
+.reviewCard blockquote {
+  font-family: Sora, Inter, sans-serif;
+  font-size: clamp(1rem, 1.55vw, 1.25rem);
+  letter-spacing: -0.035em;
+  line-height: 1.55;
+  margin: 1.35rem 0 2rem;
+}
+.reviewCard footer {
+  margin-top: auto;
+}
+.reviewCard footer strong,
+.reviewCard footer span {
+  display: block;
+}
+.reviewCard footer strong {
+  font-size: 0.88rem;
+}
+.reviewCard footer span {
+  color: #6a7070;
+  font-size: 0.74rem;
+  margin-top: 0.28rem;
 }
 @media (max-width: 960px) {
   .hero {
@@ -559,11 +611,12 @@
   .services {
     grid-template-columns: 1fr;
   }
-  .experienceGrid {
-    grid-template-columns: 1fr;
+  .reviewsLead {
+    align-items: flex-start;
+    flex-direction: column;
   }
-  .experienceGrid article {
-    min-height: auto;
+  .reviewGrid {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 620px) {
@@ -633,10 +686,14 @@
   .serviceStack article {
     align-items: flex-start;
   }
-  .experience {
+  .reviews {
     border-radius: 28px 28px 0 0;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+  .reviewCard {
+    border-radius: 24px;
+    min-height: auto;
   }
 }
 

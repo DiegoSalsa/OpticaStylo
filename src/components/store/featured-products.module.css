@@ -25,6 +25,12 @@
   justify-content: center;
   position: relative;
 }
+.productImage {
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  padding: 0.7rem;
+  transform: scale(1.1);
+}
 .productArt {
   align-items: center;
   color: var(--color-primary-dark);

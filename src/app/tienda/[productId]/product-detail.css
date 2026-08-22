@@ -23,13 +23,16 @@
   grid-template-columns: minmax(0, 1.12fr) minmax(390px, 0.88fr);
 }
 .detail-gallery {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  grid-template-columns: 82px minmax(0, 1fr);
 }
 .detail-thumbnails {
-  display: grid;
+  display: flex;
   gap: 0.7rem;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
 }
 .detail-thumbnails button {
   align-items: center;
@@ -38,6 +41,7 @@
   border-radius: 13px;
   cursor: pointer;
   display: flex;
+  flex: 0 0 82px;
   height: 82px;
   justify-content: center;
   overflow: hidden;
@@ -52,14 +56,20 @@
   border-radius: 22px;
   display: flex;
   justify-content: center;
-  min-height: 600px;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
   overflow: hidden;
   position: relative;
 }
 .detail-photo {
   box-sizing: border-box;
+  mix-blend-mode: multiply;
   object-fit: contain;
-  padding: 1rem;
+  padding: 0.75rem;
+}
+.detail-thumbnail-photo {
+  padding: 0.25rem;
+  transform: scale(1.18);
 }
 .detail-published {
   background: #fff;
@@ -222,6 +232,35 @@
   color: var(--color-primary-dark);
   padding: 0.65rem;
 }
+.lens-intent {
+  align-items: flex-start;
+  background: #f1f8f6;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+  padding: 0.75rem;
+}
+.lens-intent input {
+  accent-color: var(--color-primary-dark);
+  margin: 0.22rem 0 0;
+}
+.lens-intent span,
+.lens-intent strong,
+.lens-intent small {
+  display: block;
+}
+.lens-intent strong {
+  color: var(--color-primary-dark);
+  font-size: 0.72rem;
+}
+.lens-intent small {
+  color: var(--color-text-soft);
+  font-size: 0.65rem;
+  line-height: 1.45;
+  margin-top: 0.2rem;
+}
 .quantity {
   align-items: center !important;
   background: #fff;
@@ -364,18 +403,8 @@
   .detail-copy {
     max-width: 720px;
   }
-  .detail-visual {
-    min-height: 500px;
-  }
 }
 @media (max-width: 620px) {
-  .detail-gallery {
-    grid-template-columns: 1fr;
-  }
-  .detail-thumbnails {
-    display: flex;
-    grid-row: 2;
-  }
   .detail-thumbnails button {
     width: 82px;
   }
