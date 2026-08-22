@@ -65,11 +65,11 @@ por decisión expresa.
 
 Implementado: catálogo real, filtros, detalle, carrito invitado/cuenta, cuenta de cliente, pedidos, receta externa por imagen o carga manual, confirmación humana y checkout real desacoplado con Mercado Pago. No se inventan productos ni stock.
 
-Implementado además en local: cola transaccional idempotente para cuenta creada, reserva confirmada, recordatorio de hora, compra confirmada y pago confirmado.
+Implementado además en local: cola transaccional idempotente y despacho real por Resend para pago confirmado, con reintentos recuperables. Las otras plantillas permanecen encoladas hasta habilitar sus respectivos despachadores.
 
 Implementado además: páginas de retorno éxito/pendiente/fallo que no confían en la URL de regreso, consultan el estado conciliado por webhook y permiten reintentar de forma autorizada un pedido pendiente.
 
-Pendiente: productos e imágenes reales, sucursales de retiro, despacho, precios ópticos, política de devoluciones, proveedor y trabajador que entregue los correos encolados y pruebas E2E con Mercado Pago sandbox. Falta `MERCADO_PAGO_WEBHOOK_SECRET` en Vercel.
+Pendiente externo: productos e imágenes reales, sucursales de retiro, despacho, precios ópticos, política de devoluciones, credenciales de Resend y prueba E2E con Mercado Pago sandbox. Falta configurar `MERCADO_PAGO_WEBHOOK_SECRET` y `APP_PUBLIC_URL` en el despliegue.
 
 ### Etapa 6 — Inventario: aplazada
 

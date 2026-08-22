@@ -2,6 +2,7 @@ import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
   getMercadoPagoConfig,
+  requireMercadoPagoCheckoutReady,
   requireMercadoPagoWebhookSecret,
 } from "../config/payment-providers.js";
 import {
@@ -11,6 +12,7 @@ import {
 } from "../integrations/payments/mercado-pago-gateway.js";
 import {
   attachMercadoPagoPreference,
+  findPaymentConfirmationDeduplicationKey,
   listPaymentAttemptsBySaleId,
   markPaymentAttemptFailed,
   reconcileMercadoPagoPayment,
@@ -18,6 +20,8 @@ import {
 } from "../repositories/payment-attempt-repository.js";
 import { findSaleById } from "../repositories/sale-repository.js";
 import { AppError } from "../utils/app-error.js";
+import { auditMercadoPagoWebhook } from "../utils/payment-monitor.js";
+import { deliverTransactionalEmail } from "./transactional-email-service.js";
 import { validateMercadoPagoNotification } from "../validations/payment-validation.js";
 import { validateSaleId } from "../validations/sale-validation.js";
 
@@ -53,6 +57,10 @@ function providerUnavailable(cause) {
 
 async function createCheckout(saleId, initiatedBy, dependencies) {
   const id = validateSaleId(saleId);
+  const config = (dependencies.getMercadoPagoConfig ?? getMercadoPagoConfig)(
+    dependencies.environment,
+  );
+  (dependencies.requireCheckoutReady ?? requireMercadoPagoCheckoutReady)(config);
   const currentDate = dependencies.currentDate ?? new Date();
   const expiresAt = new Date(currentDate.getTime() + 30 * 60 * 1000);
   const reservation = await (
@@ -61,13 +69,10 @@ async function createCheckout(saleId, initiatedBy, dependencies) {
   if (reservation.reason) throwAttemptReason(reservation.reason);
 
   const attempt = reservation.attempt;
-  if (attempt.checkoutUrl) return attempt;
+  if (attempt.checkoutUrl) return publicCheckoutAttempt(attempt);
 
   const sale = await (dependencies.findSaleById ?? findSaleById)(id);
   if (!sale) throwAttemptReason("SALE_NOT_FOUND");
-  const config = (dependencies.getMercadoPagoConfig ?? getMercadoPagoConfig)(
-    dependencies.environment,
-  );
 
   try {
     const preference = await (
@@ -76,9 +81,9 @@ async function createCheckout(saleId, initiatedBy, dependencies) {
     if (!preference.externalPreferenceId || !preference.checkoutUrl) {
       throw new Error("Mercado Pago devolvió una preferencia incompleta.");
     }
-    return await (
+    return publicCheckoutAttempt(await (
       dependencies.attachMercadoPagoPreference ?? attachMercadoPagoPreference
-    )(attempt.id, preference);
+    )(attempt.id, preference));
   } catch (error) {
     await (dependencies.markPaymentAttemptFailed ?? markPaymentAttemptFailed)(
       attempt.id,
@@ -86,6 +91,12 @@ async function createCheckout(saleId, initiatedBy, dependencies) {
     );
     throw providerUnavailable(error);
   }
+}
+
+function publicCheckoutAttempt(attempt) {
+  if (!attempt) return null;
+  const { idempotencyKey: _idempotencyKey, ...safeAttempt } = attempt;
+  return safeAttempt;
 }
 
 export async function createMercadoPagoCheckout(
@@ -106,15 +117,25 @@ export async function getMercadoPagoCheckouts(saleId, actor, dependencies = {}) 
   const id = validateSaleId(saleId);
   const sale = await (dependencies.findSaleById ?? findSaleById)(id);
   if (!sale) throwAttemptReason("SALE_NOT_FOUND");
-  return (dependencies.listPaymentAttemptsBySaleId ?? listPaymentAttemptsBySaleId)(id);
+  const attempts = await (
+    dependencies.listPaymentAttemptsBySaleId ?? listPaymentAttemptsBySaleId
+  )(id);
+  return attempts.map(publicCheckoutAttempt);
 }
 
 export async function processMercadoPagoNotification(input, dependencies = {}) {
   const notification = validateMercadoPagoNotification(input);
+  const audit = dependencies.auditWebhook ?? auditMercadoPagoWebhook;
   const config = (dependencies.getMercadoPagoConfig ?? getMercadoPagoConfig)(
     dependencies.environment,
   );
-  const secret = (dependencies.requireWebhookSecret ?? requireMercadoPagoWebhookSecret)(config);
+  let secret;
+  try {
+    secret = (dependencies.requireWebhookSecret ?? requireMercadoPagoWebhookSecret)(config);
+  } catch (error) {
+    audit({ ...notification, outcome: "NOT_CONFIGURED" });
+    throw error;
+  }
 
   try {
     (dependencies.validateSignature ?? validateMercadoPagoSignature)({
@@ -124,6 +145,7 @@ export async function processMercadoPagoNotification(input, dependencies = {}) {
       xSignature: notification.signature,
     });
   } catch (error) {
+    audit({ ...notification, outcome: "INVALID_SIGNATURE" });
     throw new AppError({
       code: "INVALID_PAYMENT_NOTIFICATION_SIGNATURE",
       message: "La firma de la notificación no es válida.",
@@ -139,11 +161,34 @@ export async function processMercadoPagoNotification(input, dependencies = {}) {
       config,
     );
   } catch (error) {
+    audit({ ...notification, outcome: "PROVIDER_ERROR" });
     throw providerUnavailable(error);
   }
 
-  return (dependencies.reconcileMercadoPagoPayment ?? reconcileMercadoPagoPayment)(
+  const result = await (
+    dependencies.reconcileMercadoPagoPayment ?? reconcileMercadoPagoPayment
+  )(
     notification,
     payment,
+    { expectedLiveMode: config.expectedLiveMode },
   );
+  let emailDelivery = null;
+  try {
+    const deduplicationKey = await (
+      dependencies.findPaymentConfirmationKey
+      ?? findPaymentConfirmationDeduplicationKey
+    )(payment.externalPaymentId);
+    if (deduplicationKey) {
+      emailDelivery = await (
+        dependencies.deliverTransactionalEmail ?? deliverTransactionalEmail
+      )(deduplicationKey, dependencies.emailDependencies ?? {});
+    }
+  } catch {
+    emailDelivery = { status: "FAILED" };
+  }
+  audit({
+    ...notification,
+    outcome: result.result === "REQUIRES_REVIEW" ? "REQUIRES_REVIEW" : result.result,
+  });
+  return { ...result, emailDelivery };
 }
