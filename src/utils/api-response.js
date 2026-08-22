@@ -14,7 +14,7 @@ export function createSuccessResponse(data, init) {
 /**
  * Construye una respuesta de error sin exponer detalles internos.
  */
-export function createErrorResponse({ code, message }, status = 500) {
+export function createErrorResponse({ code, message, headers = null }, status = 500) {
   return Response.json(
     {
       success: false,
@@ -23,6 +23,6 @@ export function createErrorResponse({ code, message }, status = 500) {
         message,
       },
     },
-    { status },
+    headers ? { headers, status } : { status },
   );
 }

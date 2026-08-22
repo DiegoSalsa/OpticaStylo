@@ -7,8 +7,8 @@ import {
 import { createSuccessResponse } from "@/utils/api-response";
 import { AppError } from "@/utils/app-error";
 import { executeApiHandler } from "@/utils/error-handler";
-import { readJsonBody } from "@/utils/http-request";
-import { MAX_PRESCRIPTION_IMAGE_BYTES } from "@/validations/store-validation";
+import { readJsonBody, readMultipartFormData } from "@/utils/http-request";
+import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 
 function parseConfirmedData(value) {
   try {
@@ -28,18 +28,7 @@ export async function POST(request) {
     const contentType = request.headers.get("content-type") ?? "";
     let input;
     if (contentType.toLowerCase().startsWith("multipart/form-data")) {
-      const declaredLength = Number(request.headers.get("content-length"));
-      if (
-        Number.isFinite(declaredLength) &&
-        declaredLength > MAX_PRESCRIPTION_IMAGE_BYTES + 1024 * 1024
-      ) {
-        throw new AppError({
-          code: "REQUEST_BODY_TOO_LARGE",
-          message: "La carga supera el tamaño permitido.",
-          status: 413,
-        });
-      }
-      const form = await request.formData();
+      const form = await readMultipartFormData(request, MAX_PRESCRIPTION_UPLOAD_BYTES);
       if (form.has("file")) {
         input = {
           customerId: form.get("customerId"),

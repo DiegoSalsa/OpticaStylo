@@ -6,6 +6,7 @@ export function handleApiError(error) {
     return createErrorResponse(
       {
         code: error.code,
+        headers: error.headers,
         message: error.message,
       },
       error.status,

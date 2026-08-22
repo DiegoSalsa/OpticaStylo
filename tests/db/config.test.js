@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { getDatabaseConfig } from "../../src/db/config.js";
 
-test("crea la configuración de PostgreSQL con valores predeterminados", () => {
+test("permite PostgreSQL local sin SSL fuera de producción", () => {
   const config = getDatabaseConfig({
     DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
   });
@@ -40,4 +40,23 @@ test("activa SSL con verificación de certificados", () => {
   });
 
   assert.deepEqual(config.ssl, { rejectUnauthorized: true });
+  assert.equal(new URL(config.connectionString).searchParams.get("sslmode"), "verify-full");
+});
+
+test("exige SSL para Neon y producción", () => {
+  assert.throws(
+    () => getDatabaseConfig({
+      DATABASE_SSL: "false",
+      DATABASE_URL: "postgresql://postgres@example.neon.tech:5432/opticastylo",
+    }),
+    /DATABASE_SSL debe ser true/,
+  );
+  assert.throws(
+    () => getDatabaseConfig({
+      DATABASE_SSL: "false",
+      DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
+      NODE_ENV: "production",
+    }),
+    /DATABASE_SSL debe ser true/,
+  );
 });

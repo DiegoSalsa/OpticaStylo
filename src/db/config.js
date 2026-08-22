@@ -54,15 +54,30 @@ function validateConnectionString(connectionString) {
   }
 }
 
+function requiresSecureConnection(connectionString, environment) {
+  const hostname = new URL(connectionString).hostname.toLowerCase();
+  return environment.NODE_ENV === "production" || hostname.endsWith(".neon.tech");
+}
+
+function normalizeSecureConnectionString(connectionString, useSsl) {
+  if (!useSsl) return connectionString;
+  const databaseUrl = new URL(connectionString);
+  databaseUrl.searchParams.set("sslmode", "verify-full");
+  return databaseUrl.toString();
+}
+
 export function getDatabaseConfig(environment = process.env) {
   const connectionString = environment.DATABASE_URL?.trim();
   validateConnectionString(connectionString);
 
   const useSsl = parseBoolean(environment.DATABASE_SSL, "DATABASE_SSL", false);
+  if (requiresSecureConnection(connectionString, environment) && !useSsl) {
+    throw new Error("DATABASE_SSL debe ser true en producción y al conectar con Neon.");
+  }
 
   return {
     application_name: "optica-stylo",
-    connectionString,
+    connectionString: normalizeSecureConnectionString(connectionString, useSsl),
     connectionTimeoutMillis: parsePositiveInteger(
       environment.DATABASE_CONNECTION_TIMEOUT_MS,
       "DATABASE_CONNECTION_TIMEOUT_MS",

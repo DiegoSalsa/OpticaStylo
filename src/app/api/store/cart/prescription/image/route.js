@@ -1,22 +1,14 @@
 import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
 import { getPrescriptionImage, putPrescriptionImage } from "@/services/store-service";
 import { createSuccessResponse } from "@/utils/api-response";
-import { AppError } from "@/utils/app-error";
 import { executeApiHandler } from "@/utils/error-handler";
-import { MAX_PRESCRIPTION_IMAGE_BYTES } from "@/validations/store-validation";
+import { readMultipartFormData } from "@/utils/http-request";
+import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 
 export async function PUT(request) {
   return executeApiHandler(async () => {
-    const declaredLength = Number(request.headers.get("content-length"));
-    if (Number.isFinite(declaredLength) && declaredLength > MAX_PRESCRIPTION_IMAGE_BYTES + 1024 * 1024) {
-      throw new AppError({
-        code: "REQUEST_BODY_TOO_LARGE",
-        message: "La carga supera el tamaño permitido.",
-        status: 413,
-      });
-    }
     const account = await authenticateCustomerRequest(request, { optional: true });
-    const formData = await request.formData();
+    const formData = await readMultipartFormData(request, MAX_PRESCRIPTION_UPLOAD_BYTES);
     return createSuccessResponse(await putPrescriptionImage(
       getStoreCartToken(request), account, formData.get("image"),
     ));
