@@ -69,7 +69,9 @@ Implementado además en local: cola transaccional idempotente y despacho real po
 
 Implementado además: páginas de retorno éxito/pendiente/fallo que no confían en la URL de regreso, consultan el estado conciliado por webhook y permiten reintentar de forma autorizada un pedido pendiente.
 
-Pendiente externo: productos e imágenes reales, sucursales de retiro, despacho, precios ópticos, política de devoluciones, credenciales de Resend y prueba E2E con Mercado Pago sandbox. Falta configurar `MERCADO_PAGO_WEBHOOK_SECRET` y `APP_PUBLIC_URL` en el despliegue.
+Implementado y desplegado: primer producto real de prueba con galería, URL pública estable, checkout de Mercado Pago con cuentas y tarjetas ficticias, conciliación exacta mediante pago + orden comercial y prueba idempotente que dejó una venta pagada con un solo abono.
+
+Pendiente externo antes de habilitar dinero real: configurar Resend para enviar el correo ya encolado y alinear en el panel el secreto del webhook del checkout principal. Mercado Pago entregó automáticamente el pago aprobado, pero esas entregas recibieron `401` porque el secreto desplegado todavía corresponde al modo de pruebas; la conciliación se validó reinyectando la misma notificación con firma válida.
 
 ### Etapa 6 — Inventario: aplazada
 
