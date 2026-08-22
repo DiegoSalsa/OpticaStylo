@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createMercadoPagoPreferenceBody } from "../../src/integrations/payments/mercado-pago-gateway.js";
+import {
+  createMercadoPagoPreferenceBody,
+  resolveExternalPreferenceId,
+  selectMercadoPagoCheckoutUrl,
+} from "../../src/integrations/payments/mercado-pago-gateway.js";
 
 const input = {
   attempt: {
@@ -32,4 +36,22 @@ test("configura retornos y webhook sin usar la URL como confirmación", () => {
   assert.equal(body.auto_return, "approved");
   assert.equal(body.back_urls.success, "https://tienda.example.com/checkout/mercado-pago/success");
   assert.equal(body.notification_url, "https://tienda.example.com/api/webhooks/mercado-pago?source_news=webhooks");
+});
+
+test("usa el checkout principal también para compras con usuarios de prueba", () => {
+  assert.equal(selectMercadoPagoCheckoutUrl({
+    init_point: "https://www.mercadopago.cl/checkout",
+    sandbox_init_point: "https://sandbox.mercadopago.cl/checkout",
+  }), "https://www.mercadopago.cl/checkout");
+});
+
+test("recupera la preferencia exacta desde la orden comercial cuando el pago la omite", () => {
+  assert.equal(resolveExternalPreferenceId(
+    { preference_id: null },
+    { preference_id: "pref-exacta" },
+  ), "pref-exacta");
+  assert.equal(resolveExternalPreferenceId(
+    { preference_id: "pref-del-pago" },
+    { preference_id: "pref-de-la-orden" },
+  ), "pref-del-pago");
 });

@@ -58,10 +58,16 @@ se rechaza con `401` antes de consultar Payments API.
 2. Se reserva un `payment_attempt` por el saldo exacto durante 30 minutos.
 3. La preferencia usa el UUID del intento como `external_reference`, el ID de
    venta en metadata y un unico item por el monto reservado exacto.
-4. En sandbox se entrega `sandbox_init_point`; la URL productiva no se usa.
+4. Las pruebas actuales de Checkout Pro usan `init_point` con vendedor,
+   comprador y tarjeta de prueba. Mercado Pago las procesa en el checkout
+   principal y devuelve `live_mode=true`, aunque no exista dinero real.
 5. Cada webhook firmado vuelve a consultar el pago por ID en Payments API.
+   Si Payments API omite `preference_id`, se consulta tambien la orden
+   comercial indicada por `payment.order.id` para recuperar la preferencia.
 6. Se comparan exactamente referencia, preferencia, moneda, monto entero CLP y
-   `live_mode` del ambiente.
+   el `live_mode=true` que informa Checkout Pro tanto en pruebas como en
+   produccion. La separacion segura entre ambos ambientes depende de las
+   credenciales del vendedor y del bloqueo explicito de produccion.
 7. Solo `approved` inserta `sale_payments`, y la restriccion unica por intento
    impide registrar el pago dos veces.
 8. La venta cambia a `PAID` unicamente si el total conciliado coincide.

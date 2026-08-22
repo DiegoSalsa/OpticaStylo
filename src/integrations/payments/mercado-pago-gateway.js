@@ -1,5 +1,6 @@
 import {
   InvalidWebhookSignatureError,
+  MerchantOrder,
   MercadoPagoConfig,
   Payment,
   Preference,
@@ -34,12 +35,14 @@ export async function createMercadoPagoPreference({ attempt, config, sale }) {
   });
 
   return {
-    checkoutUrl: config.mode === "sandbox"
-      ? response.sandbox_init_point ?? response.init_point
-      : response.init_point,
+    checkoutUrl: selectMercadoPagoCheckoutUrl(response),
     externalPreferenceId: response.id,
     sandboxCheckoutUrl: response.sandbox_init_point ?? null,
   };
+}
+
+export function selectMercadoPagoCheckoutUrl(preference) {
+  return preference.init_point ?? preference.sandbox_init_point ?? null;
 }
 
 export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
@@ -70,20 +73,32 @@ export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
 }
 
 export async function getMercadoPagoPayment(paymentId, config) {
-  const payment = new Payment(createClient(config.accessToken));
+  const client = createClient(config.accessToken);
+  const payment = new Payment(client);
   const response = await payment.get({ id: paymentId });
+  let merchantOrder = null;
+
+  if (!response.preference_id && response.order?.id) {
+    merchantOrder = await new MerchantOrder(client).get({
+      merchantOrderId: response.order.id,
+    });
+  }
 
   return {
     currency: response.currency_id,
     lastUpdatedAt: response.date_last_updated ?? null,
     liveMode: response.live_mode,
     externalPaymentId: String(response.id),
-    externalPreferenceId: response.preference_id ?? null,
+    externalPreferenceId: resolveExternalPreferenceId(response, merchantOrder),
     externalReference: response.external_reference ?? null,
     status: response.status,
     statusDetail: response.status_detail ?? null,
     transactionAmount: response.transaction_amount,
   };
+}
+
+export function resolveExternalPreferenceId(payment, merchantOrder) {
+  return payment.preference_id ?? merchantOrder?.preference_id ?? null;
 }
 
 export function validateMercadoPagoSignature({
