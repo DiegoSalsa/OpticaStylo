@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/icon";
@@ -13,7 +14,11 @@ const categories = [
 const categoryNames = Object.fromEntries(categories.map(({ label, value }) => [value, label]));
 
 function formatPrice(value) { return new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" }).format(value); }
-function ProductVisual({ category }) { return category === "FRAME" ? <div className={styles.frameVisual} aria-hidden="true"><span /><i /><span /></div> : <div className={styles.categoryVisual} aria-hidden="true"><Icon name={category === "ACCESSORY" ? "sparkle" : "eye"} size={38} /></div>; }
+function ProductVisual({ product }) {
+  const image = product.images?.[0];
+  if (image) return <Image alt={image.alt} className={styles.productPhoto} fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" src={image.url} />;
+  return product.category === "FRAME" ? <div className={styles.frameVisual} aria-hidden="true"><span /><i /><span /></div> : <div className={styles.categoryVisual} aria-hidden="true"><Icon name={product.category === "ACCESSORY" ? "sparkle" : "eye"} size={38} /></div>;
+}
 
 async function requestProducts(category, query, signal) {
   const search = new URLSearchParams({ page: "1", pageSize: "24", search: query });
@@ -79,7 +84,7 @@ export default function CatalogBrowser({ initialCategory = "" }) {
       {status === "loading" && <div className={styles.productGrid}>{Array.from({ length: 6 }, (_, index) => <div className={styles.skeleton} key={index} />)}</div>}
       {status === "error" && <div className={styles.state}><span><Icon name="shield" size={28} /></span><h2>No pudimos cargar el catálogo</h2><p>{error}</p><button className="button button--primary" onClick={retry} type="button">Intentar nuevamente</button></div>}
       {status === "ready" && visibleItems.length === 0 && <div className={styles.state}><span><Icon name="search" size={28} /></span><h2>No encontramos productos</h2><p>Prueba con otra búsqueda o cambia los filtros disponibles.</p><button className="button button--secondary" onClick={clearFilters} type="button">Limpiar filtros</button></div>}
-      {status === "ready" && visibleItems.length > 0 && <div className={`${styles.productGrid} ${view === "list" ? styles.productList : ""}`}>{visibleItems.map((product) => <article className={styles.productCard} key={product.id}><Link aria-label={`Ver ${product.name}`} className={styles.productImage} href={`/tienda/${product.id}`}><ProductVisual category={product.category} />{product.category === "FRAME" && <span className={styles.tryOnBadge}><Icon name="eye" size={15} /> Prueba virtual</span>}</Link><div className={styles.productBody}><p className={styles.productCategory}>{categoryNames[product.category] || "Producto"}</p><h2><Link href={`/tienda/${product.id}`}>{product.name}</Link></h2><p className={styles.sku}>Código {product.sku}</p><div className={styles.productBottom}><strong>{formatPrice(product.unitPriceCents)}</strong><span className={product.availability?.available ? styles.available : styles.unavailable}>{product.availability?.available ? "Disponible" : "Consultar"}</span></div>{product.requiresPrescription && <p className={styles.prescription}><Icon name="file" size={15} /> Requiere receta</p>}<Link className={styles.productAction} href={`/tienda/${product.id}`}>Ver producto <Icon name="arrow" size={17} /></Link></div></article>)}</div>}
+      {status === "ready" && visibleItems.length > 0 && <div className={`${styles.productGrid} ${view === "list" ? styles.productList : ""}`}>{visibleItems.map((product) => <article className={styles.productCard} key={product.id}><Link aria-label={`Ver ${product.name}`} className={styles.productImage} href={`/tienda/${product.id}`}><ProductVisual product={product} />{product.category === "FRAME" && <span className={styles.tryOnBadge}><Icon name="eye" size={15} /> Prueba virtual</span>}</Link><div className={styles.productBody}><p className={styles.productCategory}>{categoryNames[product.category] || "Producto"}</p><h2><Link href={`/tienda/${product.id}`}>{product.name}</Link></h2><p className={styles.sku}>Código {product.sku}</p><div className={styles.productBottom}><strong>{formatPrice(product.unitPriceCents)}</strong><span className={product.availability?.available ? styles.available : styles.unavailable}>{product.availability?.available ? "Disponible" : "Consultar"}</span></div>{product.requiresPrescription && <p className={styles.prescription}><Icon name="file" size={15} /> Requiere receta</p>}<Link className={styles.productAction} href={`/tienda/${product.id}`}>Ver producto <Icon name="arrow" size={17} /></Link></div></article>)}</div>}
       {status === "ready" && result.total > result.items.length && <p className={styles.pageNote}>Mostrando los primeros {result.items.length} de {result.total} productos publicados.</p>}
     </section>
   </div>;

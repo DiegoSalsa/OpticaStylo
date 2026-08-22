@@ -41,6 +41,7 @@
   height: 82px;
   justify-content: center;
   overflow: hidden;
+  position: relative;
 }
 .detail-thumbnails button[aria-pressed="true"] {
   border: 2px solid var(--color-primary);
@@ -54,6 +55,11 @@
   min-height: 600px;
   overflow: hidden;
   position: relative;
+}
+.detail-photo {
+  box-sizing: border-box;
+  object-fit: contain;
+  padding: 1rem;
 }
 .detail-published {
   background: #fff;
@@ -147,6 +153,38 @@
   display: block;
   font-size: 1.8rem;
   margin: 1.3rem 0;
+}
+.detail-description {
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  margin: -0.55rem 0 1.2rem;
+  max-width: 560px;
+}
+.detail-specifications {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 1.4rem;
+}
+.detail-specifications > div {
+  background: #f7fbfa;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+.detail-specifications dt {
+  color: var(--color-text-soft);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.detail-specifications dd {
+  color: var(--color-charcoal);
+  font-size: 0.72rem;
+  font-weight: 750;
+  margin: 0.2rem 0 0;
 }
 .detail-divider {
   border-top: 1px solid var(--color-border);
@@ -270,6 +308,7 @@
   height: 190px;
   justify-content: center;
   overflow: hidden;
+  position: relative;
 }
 .related-grid p,
 .related-grid h3,
