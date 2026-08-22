@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -27,6 +28,11 @@ const EMPTY_EXTERNAL_PRESCRIPTION = {
   pupillaryDistance: "",
   rightEye: { ...EMPTY_EYE },
 };
+const ADULT_BIRTH_DATE_CUTOFF = (() => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 18);
+  return date.toISOString().slice(0, 10);
+})();
 
 function externalPrescriptionData(value) {
   const eye = (side) => ({
@@ -73,13 +79,20 @@ function useSearch(endpoint, search) {
 export default function PosExperience() {
   const actor = useInternalActor();
   const [customerSearch, setCustomerSearch] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const customers = useSearch("/api/customers", customerSearch);
+  const patients = useSearch("/api/patients", patientSearch);
   const products = useSearch("/api/products", productSearch);
   const [customer, setCustomer] = useState(null);
+  const [patient, setPatient] = useState(null);
   const [lines, setLines] = useState([]);
+  const [opticalAdditions, setOpticalAdditions] = useState([]);
+  const [additionDraft, setAdditionDraft] = useState({ name: "", unitPriceCents: "" });
   const [discountCents, setDiscountCents] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
+  const [discountAuthorizerEmail, setDiscountAuthorizerEmail] = useState("");
+  const [discountAuthorizerPassword, setDiscountAuthorizerPassword] = useState("");
   const [prescriptionId, setPrescriptionId] = useState("");
   const [internalPrescriptions, setInternalPrescriptions] = useState([]);
   const [prescriptionLookup, setPrescriptionLookup] = useState({ error: "", loading: false });
@@ -93,31 +106,50 @@ export default function PosExperience() {
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
   const [newCustomer, setNewCustomer] = useState(false);
+  const [newPatient, setNewPatient] = useState(false);
+  const [patientBirthDate, setPatientBirthDate] = useState("");
+  const [quotations, setQuotations] = useState([]);
+  const [showQuotations, setShowQuotations] = useState(false);
+  const [receipt, setReceipt] = useState(null);
 
   const subtotal = useMemo(
     () =>
-      lines.reduce((sum, line) => sum + line.unitPriceCents * line.quantity, 0),
-    [lines],
+      [...lines, ...opticalAdditions].reduce(
+        (sum, line) => sum + line.unitPriceCents * line.quantity,
+        0,
+      ),
+    [lines, opticalAdditions],
   );
   const total = Math.max(0, subtotal - Number(discountCents || 0));
   const requiresPrescription = lines.some((line) => line.requiresPrescription);
   const canSell = actor?.permissions.includes("sales.create");
 
   useEffect(() => {
-    if (!customer?.patientId) return;
+    if (!patient?.id) return;
     const controller = new AbortController();
-    fetch(`/api/prescriptions?patientId=${customer.patientId}`, { cache: "no-store", signal: controller.signal })
+    fetch(`/api/prescriptions?patientId=${patient.id}`, { cache: "no-store", signal: controller.signal })
       .then(readResponse)
       .then((items) => { setInternalPrescriptions(items); setPrescriptionLookup({ error: "", loading: false }); })
       .catch((requestError) => { if (requestError.name !== "AbortError") setPrescriptionLookup({ error: requestError.message, loading: false }); });
     return () => controller.abort();
-  }, [customer]);
+  }, [patient]);
 
   function chooseCustomer(value) {
     setCustomer(value);
+    choosePatient(null);
+    if (value?.patientId) {
+      fetch(`/api/patients/${value.patientId}`, { cache: "no-store" })
+        .then(readResponse)
+        .then(choosePatient)
+        .catch(() => {});
+    }
+  }
+
+  function choosePatient(value) {
+    setPatient(value);
     setPrescriptionId("");
     setInternalPrescriptions([]);
-    setPrescriptionLookup({ error: "", loading: Boolean(value?.patientId) });
+    setPrescriptionLookup({ error: "", loading: Boolean(value?.id) });
   }
 
   function addProduct(product) {
@@ -175,6 +207,118 @@ export default function PosExperience() {
     }
   }
 
+  async function createPatient(event) {
+    event.preventDefault();
+    setPending(true);
+    setError("");
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const minor = values.birthDate > ADULT_BIRTH_DATE_CUTOFF;
+    const input = {
+      address: values.address,
+      birthDate: values.birthDate,
+      email: values.email,
+      firstNames: values.firstNames,
+      guardian: minor
+        ? {
+            email: values.guardianEmail,
+            firstNames: values.guardianFirstNames,
+            lastNames: values.guardianLastNames,
+            phone: values.guardianPhone,
+            relationship: values.guardianRelationship,
+            rut: values.guardianRut,
+          }
+        : null,
+      lastNames: values.lastNames,
+      phone: values.phone,
+      rut: values.rut,
+    };
+    try {
+      const created = await readResponse(
+        await fetch("/api/patients", {
+          body: JSON.stringify(input),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        }),
+      );
+      choosePatient(created);
+      setNewPatient(false);
+      setNotice("Paciente registrado y seleccionado sin crear acceso clínico.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function addOpticalAddition() {
+    const amount = Number(additionDraft.unitPriceCents);
+    if (!additionDraft.name.trim() || !Number.isSafeInteger(amount) || amount <= 0) {
+      setError("Indica un nombre y un valor entero positivo para el adicional.");
+      return;
+    }
+    setOpticalAdditions((current) => [
+      ...current,
+      {
+        description: null,
+        name: additionDraft.name.trim(),
+        quantity: 1,
+        unitPriceCents: amount,
+      },
+    ]);
+    setAdditionDraft({ name: "", unitPriceCents: "" });
+    setError("");
+  }
+
+  async function loadQuotations() {
+    setShowQuotations(true);
+    setPending(true);
+    setError("");
+    try {
+      const data = await readResponse(
+        await fetch("/api/sales?status=QUOTATION&pageSize=100", {
+          cache: "no-store",
+        }),
+      );
+      setQuotations(data.items);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function loadQuotation(id) {
+    setPending(true);
+    setError("");
+    try {
+      const quote = await readResponse(
+        await fetch(`/api/sales/${id}`, { cache: "no-store" }),
+      );
+      setCustomer(quote.customer);
+      choosePatient(quote.patient);
+      setLines(
+        quote.items.map((item) => ({
+          ...item,
+          id: item.productId,
+        })),
+      );
+      setOpticalAdditions(quote.opticalAdditions ?? []);
+      setDiscountCents(quote.discount?.amountCents ?? 0);
+      setDiscountReason(quote.discount?.reason ?? "");
+      setPrescriptionId(quote.prescription?.id ?? "");
+      setPrescriptionMode(quote.externalPrescription ? "external" : "internal");
+      setSale(quote);
+      setShowQuotations(false);
+      setNotice(
+        `Cotización N.º ${quote.saleNumber} cargada. Revisa y confirma la venta.`,
+      );
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function createQuotation() {
     setPending(true);
     setError("");
@@ -189,13 +333,18 @@ export default function PosExperience() {
           body.set("confirmedData", JSON.stringify(confirmedData));
           body.set("customerId", customer.id);
           body.set("image", prescriptionFile);
+          body.set("patientId", patient.id);
           response = await fetch("/api/external-prescriptions", {
             body,
             method: "POST",
           });
         } else {
           response = await fetch("/api/external-prescriptions", {
-            body: JSON.stringify({ confirmedData, customerId: customer.id }),
+            body: JSON.stringify({
+              confirmedData,
+              customerId: customer.id,
+              patientId: patient.id,
+            }),
             headers: { "Content-Type": "application/json" },
             method: "POST",
           });
@@ -206,14 +355,22 @@ export default function PosExperience() {
         await fetch("/api/sales", {
           body: JSON.stringify({
             customerId: customer.id,
-            discountCents: Number(discountCents || 0),
-            discountReason:
-              Number(discountCents || 0) > 0 ? discountReason : undefined,
+            discount:
+              Number(discountCents || 0) > 0
+                ? {
+                    amountCents: Number(discountCents),
+                    authorizerEmail: discountAuthorizerEmail,
+                    authorizerPassword: discountAuthorizerPassword,
+                    reason: discountReason,
+                  }
+                : null,
             externalPrescriptionId,
             items: lines.map((line) => ({
               productId: line.id,
               quantity: line.quantity,
             })),
+            opticalAdditions,
+            patientId: patient?.id ?? null,
             prescriptionId:
               prescriptionMode === "internal" ? prescriptionId || null : null,
           }),
@@ -222,6 +379,7 @@ export default function PosExperience() {
         }),
       );
       setSale(created);
+      setDiscountAuthorizerPassword("");
       setNotice(
         `Cotización N.º ${created.saleNumber} creada con trazabilidad.`,
       );
@@ -266,10 +424,19 @@ export default function PosExperience() {
         }),
       );
       setSale(updated);
+      const emailedTo = form.get("email") || customer.email;
+      const issuedReceipt = await readResponse(
+        await fetch(`/api/sales/${sale.id}/receipt`, {
+          body: JSON.stringify({ email: emailedTo }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        }),
+      );
+      setReceipt(issuedReceipt);
       setNotice(
         updated.status === "PAID"
-          ? "Venta pagada completamente."
-          : `Abono registrado. Saldo: ${money.format(updated.balanceCents)}.`,
+          ? "Venta pagada y comprobante emitido."
+          : `Abono registrado y comprobante emitido. Saldo: ${money.format(updated.balanceCents)}.`,
       );
       event.currentTarget.reset();
     } catch (requestError) {
@@ -279,16 +446,47 @@ export default function PosExperience() {
     }
   }
 
+  async function issueCurrentReceipt() {
+    if (!sale) return;
+    setPending(true);
+    setError("");
+    try {
+      const issuedReceipt = await readResponse(
+        await fetch(`/api/sales/${sale.id}/receipt`, {
+          body: JSON.stringify({ email: customer?.email ?? null }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        }),
+      );
+      setReceipt(issuedReceipt);
+      setNotice("Comprobante emitido para la venta.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
   function reset() {
     setCustomer(null);
+    setPatient(null);
+    setPatientBirthDate("");
     setLines([]);
+    setOpticalAdditions([]);
+    setAdditionDraft({ name: "", unitPriceCents: "" });
     setDiscountCents(0);
     setDiscountReason("");
+    setDiscountAuthorizerEmail("");
+    setDiscountAuthorizerPassword("");
     setPrescriptionId("");
     setPrescriptionMode("internal");
     setExternalPrescription(EMPTY_EXTERNAL_PRESCRIPTION);
     setPrescriptionFile(null);
     setSale(null);
+    setReceipt(null);
+    setNewCustomer(false);
+    setNewPatient(false);
+    setShowQuotations(false);
     setError("");
     setNotice("");
   }
@@ -301,18 +499,77 @@ export default function PosExperience() {
           <h1>Ventas y cotizaciones</h1>
           <p>Venta comercial, clara y sin tareas clínicas o de agenda.</p>
         </div>
-        <button
-          className="app-button app-button--soft"
-          onClick={reset}
-          type="button"
-        >
-          Nueva venta
-        </button>
+        <div className="pos-heading-actions">
+          <Link className="app-button app-button--soft" href="/app/reportes">
+            <Icon name="chart" size={16} /> Reportes
+          </Link>
+          <button
+            className="app-button app-button--soft"
+            disabled={pending}
+            onClick={loadQuotations}
+            type="button"
+          >
+            <Icon name="file" size={16} /> Cotizaciones
+          </button>
+          <button
+            className="app-button app-button--primary"
+            onClick={reset}
+            type="button"
+          >
+            <Icon name="plus" size={16} /> Nueva venta
+          </button>
+        </div>
       </header>
       {!canSell && (
         <p className="inline-error">
           Tu cuenta no tiene permiso para registrar ventas.
         </p>
+      )}
+      {showQuotations && (
+        <section className="app-card quotation-panel">
+          <div className="quotation-heading">
+            <div>
+              <p className="eyebrow">Seguimiento comercial</p>
+              <h2>Cotizaciones abiertas</h2>
+            </div>
+            <button
+              className="text-button"
+              onClick={() => setShowQuotations(false)}
+              type="button"
+            >
+              Cerrar
+            </button>
+          </div>
+          {pending ? (
+            <p className="quotation-empty">Cargando cotizaciones…</p>
+          ) : quotations.length ? (
+            <div className="quotation-list">
+              {quotations.map((quotation) => (
+                <article key={quotation.id}>
+                  <div>
+                    <strong>Cotización N.º {quotation.saleNumber}</strong>
+                    <small>
+                      {quotation.customer.firstNames} {quotation.customer.lastNames}
+                      {quotation.quotationValidUntil
+                        ? ` · válida hasta ${new Date(quotation.quotationValidUntil).toLocaleDateString("es-CL")}`
+                        : ""}
+                    </small>
+                  </div>
+                  <b>{money.format(quotation.totalCents)}</b>
+                  <button
+                    className="app-button app-button--primary"
+                    onClick={() => loadQuotation(quotation.id)}
+                    type="button"
+                  >
+                    Cargar para vender
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="quotation-empty">No hay cotizaciones abiertas.</p>
+          )}
+        </section>
       )}
       <div className="pos-layout">
         <section className="pos-workspace">
@@ -325,6 +582,7 @@ export default function PosExperience() {
               </div>
               <button
                 className="text-button"
+                disabled={Boolean(sale)}
                 onClick={() => setNewCustomer((value) => !value)}
                 type="button"
               >
@@ -389,7 +647,7 @@ export default function PosExperience() {
                         {customer.rut} · {customer.email}
                       </small>
                     </div>
-                    <button onClick={() => chooseCustomer(null)} type="button">
+                    <button disabled={Boolean(sale)} onClick={() => chooseCustomer(null)} type="button">
                       Cambiar
                     </button>
                   </div>
@@ -425,9 +683,82 @@ export default function PosExperience() {
             <div className="pos-title">
               <span>2</span>
               <div>
+                <h2>Paciente</h2>
+                <p>Se mantiene separado del cliente y solo se usa para la receta.</p>
+              </div>
+              <button
+                className="text-button"
+                disabled={Boolean(sale)}
+                onClick={() => setNewPatient((value) => !value)}
+                type="button"
+              >
+                {newPatient ? "Cerrar" : "+ Registrar paciente"}
+              </button>
+            </div>
+            {newPatient ? (
+              <form className="quick-patient" onSubmit={createPatient}>
+                <label className="field"><span>RUT</span><input name="rut" required /></label>
+                <label className="field"><span>Fecha de nacimiento</span><input name="birthDate" onChange={(event) => setPatientBirthDate(event.target.value)} required type="date" value={patientBirthDate} /></label>
+                <label className="field"><span>Nombres</span><input name="firstNames" required /></label>
+                <label className="field"><span>Apellidos</span><input name="lastNames" required /></label>
+                <label className="field"><span>Teléfono</span><input name="phone" required /></label>
+                <label className="field"><span>Correo</span><input name="email" required type="email" /></label>
+                <label className="field field-wide"><span>Dirección</span><input name="address" required /></label>
+                {patientBirthDate && patientBirthDate > ADULT_BIRTH_DATE_CUTOFF && (
+                  <fieldset className="pos-guardian-fields">
+                    <legend>Responsable del paciente menor de edad</legend>
+                    <label className="field"><span>RUT responsable</span><input name="guardianRut" required /></label>
+                    <label className="field"><span>Parentesco</span><input name="guardianRelationship" required /></label>
+                    <label className="field"><span>Nombres</span><input name="guardianFirstNames" required /></label>
+                    <label className="field"><span>Apellidos</span><input name="guardianLastNames" required /></label>
+                    <label className="field"><span>Teléfono</span><input name="guardianPhone" required /></label>
+                    <label className="field"><span>Correo</span><input name="guardianEmail" required type="email" /></label>
+                  </fieldset>
+                )}
+                <button className="app-button app-button--primary" disabled={pending} type="submit">
+                  Registrar y seleccionar
+                </button>
+              </form>
+            ) : (
+              <>
+                <div className="search-field">
+                  <Icon name="search" size={18} />
+                  <input
+                    aria-label="Buscar paciente"
+                    onChange={(event) => setPatientSearch(event.target.value)}
+                    placeholder="Buscar paciente por nombre o RUT"
+                    value={patientSearch}
+                  />
+                </div>
+                {patient ? (
+                  <div className="selected-customer">
+                    <span><Icon name="check" size={17} /></span>
+                    <div>
+                      <strong>{patient.firstNames} {patient.lastNames}</strong>
+                      <small>{patient.rut} · paciente de la receta</small>
+                    </div>
+                    <button disabled={Boolean(sale)} onClick={() => choosePatient(null)} type="button">Cambiar</button>
+                  </div>
+                ) : (
+                  <div className="result-list">
+                    {patients.loading ? <p>Cargando pacientes…</p> : patients.error ? <p className="inline-error">{patients.error}</p> : patients.items.map((item) => (
+                      <button key={item.id} onClick={() => choosePatient(item)} type="button">
+                        <span>{item.firstNames} {item.lastNames}</span>
+                        <small>{item.rut} · {item.email}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </article>
+          <article className="app-card pos-section">
+            <div className="pos-title">
+              <span>3</span>
+              <div>
                 <h2>Productos</h2>
                 <p>
-                  Precios vigentes del catálogo, sin inventar disponibilidad.
+                  Precios vigentes con disponibilidad simulada hasta integrar inventario.
                 </p>
               </div>
             </div>
@@ -450,6 +781,7 @@ export default function PosExperience() {
                   .filter((item) => item.isActive)
                   .map((item) => (
                     <button
+                      disabled={Boolean(sale)}
                       key={item.id}
                       onClick={() => addProduct(item)}
                       type="button"
@@ -466,6 +798,9 @@ export default function PosExperience() {
                           {item.requiresPrescription
                             ? " · Requiere receta"
                             : ""}
+                          {item.availability?.source === "MOCK"
+                            ? " · Disponibilidad simulada"
+                            : ""}
                         </small>
                       </span>
                       <b>{money.format(item.unitPriceCents)}</b>
@@ -474,6 +809,52 @@ export default function PosExperience() {
                   ))
               )}
             </div>
+          </article>
+          <article className="app-card pos-section">
+            <div className="pos-title">
+              <span>4</span>
+              <div>
+                <h2>Adicionales ópticos</h2>
+                <p>Cargos separados mientras se definen los precios definitivos.</p>
+              </div>
+            </div>
+            <div className="addition-entry">
+              <label className="field">
+                <span>Nombre</span>
+                <input
+                  disabled={Boolean(sale)}
+                  onChange={(event) => setAdditionDraft({ ...additionDraft, name: event.target.value })}
+                  placeholder="Ej.: Antirreflejo premium"
+                  value={additionDraft.name}
+                />
+              </label>
+              <label className="field">
+                <span>Valor CLP</span>
+                <input
+                  disabled={Boolean(sale)}
+                  min="1"
+                  onChange={(event) => setAdditionDraft({ ...additionDraft, unitPriceCents: event.target.value })}
+                  type="number"
+                  value={additionDraft.unitPriceCents}
+                />
+              </label>
+              <button className="app-button app-button--soft" disabled={Boolean(sale)} onClick={addOpticalAddition} type="button">
+                <Icon name="plus" size={16} /> Agregar
+              </button>
+            </div>
+            {opticalAdditions.length ? (
+              <div className="addition-list">
+                {opticalAdditions.map((addition, index) => (
+                  <div key={`${addition.name}-${index}`}>
+                    <span><strong>{addition.name}</strong><small>Adicional óptico</small></span>
+                    <b>{money.format(addition.unitPriceCents * addition.quantity)}</b>
+                    {!sale && <button aria-label={`Quitar ${addition.name}`} onClick={() => setOpticalAdditions((current) => current.filter((_, position) => position !== index))} type="button">×</button>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="addition-empty">Sin adicionales en esta operación.</p>
+            )}
           </article>
         </section>
         <aside className="app-card pos-ticket">
@@ -500,6 +881,7 @@ export default function PosExperience() {
                   <div className="quantity">
                     <button
                       aria-label={`Quitar ${line.name}`}
+                      disabled={Boolean(sale)}
                       onClick={() => quantity(line.id, line.quantity - 1)}
                       type="button"
                     >
@@ -508,6 +890,7 @@ export default function PosExperience() {
                     <span>{line.quantity}</span>
                     <button
                       aria-label={`Agregar ${line.name}`}
+                      disabled={Boolean(sale)}
                       onClick={() => quantity(line.id, line.quantity + 1)}
                       type="button"
                     >
@@ -518,6 +901,16 @@ export default function PosExperience() {
                 </div>
               ))
             )}
+            {opticalAdditions.map((addition, index) => (
+              <div className="ticket-line ticket-line--addition" key={`${addition.name}-${index}`}>
+                <div>
+                  <strong>{addition.name}</strong>
+                  <small>Adicional óptico</small>
+                </div>
+                <span className="addition-quantity">{addition.quantity}</span>
+                <b>{money.format(addition.unitPriceCents * addition.quantity)}</b>
+              </div>
+            ))}
           </div>
           {requiresPrescription && (
             <div className="prescription-field pos-prescription">
@@ -543,8 +936,8 @@ export default function PosExperience() {
                     <option value="">{prescriptionLookup.loading ? "Consultando recetas…" : "Seleccionar receta"}</option>
                     {internalPrescriptions.map((item) => <option key={item.id} value={item.id}>Emitida {new Date(item.issuedAt).toLocaleDateString("es-CL")} · versión {item.version}</option>)}
                   </select>
-                  {!customer?.patientId && <small>Este cliente no está vinculado a un paciente. Usa una receta externa o vincúlalo desde Clientes.</small>}
-                  {customer?.patientId && !prescriptionLookup.loading && !internalPrescriptions.length && <small>No hay recetas internas activas y finalizadas para este paciente.</small>}
+                  {!patient && <small>Selecciona primero al paciente de la receta.</small>}
+                  {patient && !prescriptionLookup.loading && !internalPrescriptions.length && <small>No hay recetas internas activas y finalizadas para este paciente.</small>}
                   {prescriptionLookup.error && <small className="inline-error">{prescriptionLookup.error}</small>}
                 </label>
               ) : (
@@ -650,17 +1043,37 @@ export default function PosExperience() {
                 value={discountCents}
               />
             </label>
-            {Number(discountCents) > 0 && (
-              <label className="field">
-                <span>Motivo obligatorio</span>
-                <input
-                  disabled={Boolean(sale)}
-                  maxLength="300"
-                  onChange={(event) => setDiscountReason(event.target.value)}
-                  placeholder="Ej.: convenio autorizado"
-                  value={discountReason}
-                />
-              </label>
+            {Number(discountCents) > 0 && !sale && (
+              <div className="discount-authorization">
+                <label className="field">
+                  <span>Motivo obligatorio</span>
+                  <input
+                    maxLength="300"
+                    onChange={(event) => setDiscountReason(event.target.value)}
+                    placeholder="Ej.: convenio autorizado"
+                    value={discountReason}
+                  />
+                </label>
+                <label className="field">
+                  <span>Correo del autorizador</span>
+                  <input
+                    autoComplete="username"
+                    onChange={(event) => setDiscountAuthorizerEmail(event.target.value)}
+                    type="email"
+                    value={discountAuthorizerEmail}
+                  />
+                </label>
+                <label className="field">
+                  <span>Contraseña del autorizador</span>
+                  <input
+                    autoComplete="current-password"
+                    onChange={(event) => setDiscountAuthorizerPassword(event.target.value)}
+                    type="password"
+                    value={discountAuthorizerPassword}
+                  />
+                  <small>Debe ser una cuenta con permiso para autorizar descuentos.</small>
+                </label>
+              </div>
             )}
           </div>
           <dl className="ticket-totals">
@@ -698,10 +1111,14 @@ export default function PosExperience() {
                 !customer ||
                 !lines.length ||
                 total <= 0 ||
+                (requiresPrescription && !patient) ||
                 (requiresPrescription &&
                   prescriptionMode === "internal" &&
                   !prescriptionId) ||
-                (Number(discountCents) > 0 && !discountReason.trim())
+                (Number(discountCents) > 0 &&
+                  (!discountReason.trim() ||
+                    !discountAuthorizerEmail.trim() ||
+                    !discountAuthorizerPassword))
               }
               onClick={createQuotation}
               type="button"
@@ -754,6 +1171,10 @@ export default function PosExperience() {
                 <span>Referencia opcional</span>
                 <input maxLength="200" name="reference" />
               </label>
+              <label className="field">
+                <span>Enviar comprobante a</span>
+                <input defaultValue={customer?.email ?? ""} name="email" required type="email" />
+              </label>
               <button
                 className="app-button app-button--primary"
                 disabled={pending}
@@ -763,8 +1184,23 @@ export default function PosExperience() {
               </button>
             </form>
           )}
+          {receipt && (
+            <div className="receipt-result">
+              <span className="status-chip">Comprobante N.º {receipt.receiptNumber}</span>
+              <small>
+                {receipt.emailStatus === "SENT"
+                  ? `Enviado a ${receipt.emailedTo}`
+                  : receipt.emailStatus === "SIMULATED"
+                    ? "Envío simulado; configura Resend para correo real."
+                    : "Comprobante emitido; revisa el estado del correo."}
+              </small>
+              <a className="app-button app-button--soft" href={`/api/sales/${sale.id}/receipt/print`} rel="noreferrer" target="_blank">
+                <Icon name="receipt" size={16} /> Abrir comprobante
+              </a>
+            </div>
+          )}
           {sale?.status === "PAID" && (
-            <div className="completed-actions"><button className="app-button app-button--soft ticket-action" onClick={() => window.print()} type="button"><Icon name="receipt" size={16} /> Imprimir comprobante</button><button className="app-button app-button--primary ticket-action" onClick={reset} type="button">Finalizar y crear otra venta</button></div>
+            <div className="completed-actions">{!receipt && <button className="app-button app-button--soft ticket-action" disabled={pending} onClick={issueCurrentReceipt} type="button"><Icon name="receipt" size={16} /> Emitir comprobante</button>}<button className="app-button app-button--primary ticket-action" onClick={reset} type="button">Finalizar y crear otra venta</button></div>
           )}
         </aside>
       </div>
