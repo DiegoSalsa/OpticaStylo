@@ -6,6 +6,9 @@ const {
   getMercadoPagoConfig,
   requireMercadoPagoCheckoutReady,
 } = await import("../src/config/payment-providers.js");
+const { getTransactionalEmailDiagnostic } = await import(
+  "../src/config/transactional-email.js"
+);
 
 const checks = [];
 function check(name, passed, detail) {
@@ -47,10 +50,13 @@ if (config) {
   }
 }
 
+const emailDiagnostic = getTransactionalEmailDiagnostic();
 check(
   "Correo transaccional",
-  Boolean(process.env.RESEND_API_KEY && process.env.POS_EMAIL_FROM),
-  process.env.RESEND_API_KEY && process.env.POS_EMAIL_FROM ? "configurado" : "faltan RESEND_API_KEY o POS_EMAIL_FROM",
+  emailDiagnostic.ready,
+  emailDiagnostic.ready
+    ? `modo ${emailDiagnostic.mode}; cron ${emailDiagnostic.workerConfigured ? "configurado" : "inactivo"}`
+    : emailDiagnostic.code,
 );
 
 for (const result of checks) {
