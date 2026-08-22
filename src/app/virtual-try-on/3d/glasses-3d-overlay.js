@@ -1,5 +1,6 @@
 "use client";
 
+import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -14,22 +15,18 @@ import {
   landmarksToGlassesPose,
   smoothGlassesPose3D,
 } from "@/utils/virtual-try-on-3d-geometry";
+import { withMediaPipeConsoleFilter } from "@/utils/mediapipe-console";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 
 import styles from "./virtual-try-on-3d.module.css";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
 const FACE_LOST_GRACE_MS = 280;
-const TRACKING_INTERVAL_MS = 50;
-const MEDIAPIPE_XNNPACK_INFO = "INFO: Created TensorFlow Lite XNNPACK delegate for CPU.";
-
-function mediapipeConsoleErrorFilter(originalConsoleError) {
-  return (...args) => {
-    const message = args.map((value) => String(value)).join(" ");
-    if (message.includes(MEDIAPIPE_XNNPACK_INFO)) return;
-    originalConsoleError(...args);
-  };
-}
+const TRACKING_INTERVAL_MS = 40;
+const DEFAULT_FIT_ADJUSTMENT = Object.freeze({
+  scaleFactor: 0.97,
+  verticalOffsetMm: 2,
+});
 
 function cameraErrorMessage(error) {
   if (error?.name === "NotAllowedError") {
@@ -47,54 +44,51 @@ function cameraErrorMessage(error) {
   return "No pudimos iniciar la cámara. Inténtalo otra vez o prueba en otro dispositivo.";
 }
 
-async function createFaceTracking() {
-  const originalConsoleError = console.error;
-  const filteredConsoleError = mediapipeConsoleErrorFilter(originalConsoleError);
-  console.error = filteredConsoleError;
-  try {
-    const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
-    const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
-    const commonOptions = {
-      minFaceDetectionConfidence: 0.5,
-      minFacePresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-      numFaces: 1,
-      runningMode: "VIDEO",
-    };
+async function createFaceTrackingInternal() {
+  const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+  const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
+  const commonOptions = {
+    minFaceDetectionConfidence: 0.5,
+    minFacePresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+    numFaces: 1,
+    runningMode: "VIDEO",
+  };
 
-    let tracking = null;
-    let lastError = null;
-    const attempts = [
-      { delegate: "GPU" },
-      { delegate: null },
-    ];
-    for (const attempt of attempts) {
-      try {
-        const baseOptions = { modelAssetPath: FACE_LANDMARKER_MODEL_URL };
-        if (attempt.delegate) baseOptions.delegate = attempt.delegate;
-        const landmarker = await FaceLandmarker.createFromOptions(vision, {
-          ...commonOptions,
-          baseOptions,
-          outputFacialTransformationMatrixes: false,
-        });
-        tracking = { landmarker };
-        break;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    if (!tracking) throw lastError ?? new Error("No se pudo iniciar el seguimiento facial.");
-
-    const faceMeshTriangleIndices = FaceLandmarker.FACE_LANDMARKS_TESSELATION
-      .filter((_, index) => index % 3 === 0)
-      .flatMap((edge, triangleIndex) => {
-        const nextEdge = FaceLandmarker.FACE_LANDMARKS_TESSELATION[triangleIndex * 3 + 1];
-        return [edge.start, edge.end, nextEdge.end];
+  let tracking = null;
+  let lastError = null;
+  const attempts = [
+    { delegate: "GPU" },
+    { delegate: null },
+  ];
+  for (const attempt of attempts) {
+    try {
+      const baseOptions = { modelAssetPath: FACE_LANDMARKER_MODEL_URL };
+      if (attempt.delegate) baseOptions.delegate = attempt.delegate;
+      const landmarker = await FaceLandmarker.createFromOptions(vision, {
+        ...commonOptions,
+        baseOptions,
+        outputFacialTransformationMatrixes: true,
       });
-    return { faceMeshTriangleIndices, ...tracking };
-  } finally {
-    if (console.error === filteredConsoleError) console.error = originalConsoleError;
+      tracking = { landmarker };
+      break;
+    } catch (error) {
+      lastError = error;
+    }
   }
+  if (!tracking) throw lastError ?? new Error("No se pudo iniciar el seguimiento facial.");
+
+  const faceMeshTriangleIndices = FaceLandmarker.FACE_LANDMARKS_TESSELATION
+    .filter((_, index) => index % 3 === 0)
+    .flatMap((edge, triangleIndex) => {
+      const nextEdge = FaceLandmarker.FACE_LANDMARKS_TESSELATION[triangleIndex * 3 + 1];
+      return [edge.start, edge.end, nextEdge.end];
+    });
+  return { faceMeshTriangleIndices, ...tracking };
+}
+
+async function createFaceTracking() {
+  return withMediaPipeConsoleFilter(createFaceTrackingInternal);
 }
 
 export default function Glasses3DOverlay() {
@@ -109,6 +103,8 @@ export default function Glasses3DOverlay() {
   const cameraRequestRef = useRef(0);
   const poseRef = useRef(null);
   const modelMetadataRef = useRef(null);
+  const rendererCanvasRef = useRef(null);
+  const fitAdjustmentRef = useRef(DEFAULT_FIT_ADJUSTMENT);
 
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [statusMessage, setStatusMessage] = useState(
@@ -116,6 +112,7 @@ export default function Glasses3DOverlay() {
   );
   const [cameraAspectRatio, setCameraAspectRatio] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
+  const [trackingReady, setTrackingReady] = useState(false);
   const [modelReady, setModelReady] = useState(false);
   const [modelMetadata, setModelMetadata] = useState(null);
   const [modelError, setModelError] = useState(false);
@@ -123,6 +120,8 @@ export default function Glasses3DOverlay() {
   const [videoDimensions, setVideoDimensions] = useState({ width: 1280, height: 720 });
   const [models, setModels] = useState([{ ...DEMO_3D_GLASSES, assetId: "demo", isDemo: true }]);
   const [selectedModel, setSelectedModel] = useState({ ...DEMO_3D_GLASSES, assetId: "demo", isDemo: true });
+  const [fitAdjustment, setFitAdjustment] = useState(DEFAULT_FIT_ADJUSTMENT);
+  const [captureMessage, setCaptureMessage] = useState("");
 
   const releaseResources = useCallback(() => {
     cameraRequestRef.current += 1;
@@ -137,6 +136,7 @@ export default function Glasses3DOverlay() {
     }
     faceLandmarkerRef.current?.close?.();
     faceLandmarkerRef.current = null;
+    rendererCanvasRef.current = null;
     smoothedPoseRef.current = null;
     poseRef.current = null;
     lastDetectionAtRef.current = 0;
@@ -196,6 +196,8 @@ export default function Glasses3DOverlay() {
     setCameraAspectRatio(null);
     setCameraStatus("idle");
     setFaceDetected(false);
+    setTrackingReady(false);
+    setCaptureMessage("");
     setStatusMessage("Cámara apagada. No guardamos ningún fotograma.");
   }, [releaseResources]);
 
@@ -216,6 +218,9 @@ export default function Glasses3DOverlay() {
     setCameraAspectRatio(null);
     setCameraStatus("loading");
     setFaceDetected(false);
+    setTrackingReady(false);
+    setModelReady(false);
+    setCaptureMessage("");
     setStatusMessage("Esperando que autorices el uso de la cámara…");
 
     const isMobilePortrait = window.matchMedia(
@@ -286,6 +291,7 @@ export default function Glasses3DOverlay() {
                 video.videoHeight,
                 modelMetadataRef.current,
                 faceTransform,
+                fitAdjustmentRef.current,
               );
             } catch {
               nextPose = null;
@@ -295,6 +301,7 @@ export default function Glasses3DOverlay() {
               smoothedPoseRef.current = smoothGlassesPose3D(
                 smoothedPoseRef.current,
                 nextPose,
+                { timestamp },
               );
               poseRef.current = smoothedPoseRef.current;
             } else if (timestamp - lastFaceSeenAtRef.current > FACE_LOST_GRACE_MS) {
@@ -325,6 +332,7 @@ export default function Glasses3DOverlay() {
       if (tracking) {
         faceLandmarkerRef.current = tracking.landmarker;
         setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
+        setTrackingReady(true);
         setStatusMessage("Cámara activa. Centra tu rostro para probarte el marco.");
       } else {
         setStatusMessage("La cámara funciona, pero el seguimiento facial no pudo cargarse. Recarga la página.");
@@ -334,18 +342,65 @@ export default function Glasses3DOverlay() {
       releaseResources();
       setCameraStatus("error");
       setFaceDetected(false);
+      setTrackingReady(false);
       setStatusMessage(cameraErrorMessage(error));
     }
   }, [releaseResources]);
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void startCamera();
-    }, 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [startCamera]);
+  const updateFitAdjustment = useCallback((property, delta) => {
+    setFitAdjustment((current) => {
+      const next = {
+        ...current,
+        [property]: property === "scaleFactor"
+          ? Math.min(1.12, Math.max(0.88, current[property] + delta))
+          : Math.min(6, Math.max(-6, current[property] + delta)),
+      };
+      fitAdjustmentRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const resetFitAdjustment = useCallback(() => {
+    fitAdjustmentRef.current = DEFAULT_FIT_ADJUSTMENT;
+    setFitAdjustment(DEFAULT_FIT_ADJUSTMENT);
+  }, []);
+
+  const captureTryOn = useCallback(() => {
+    const video = videoRef.current;
+    const overlay = rendererCanvasRef.current;
+    if (!video || !overlay || !faceDetected || !modelReady) return;
+
+    const output = document.createElement("canvas");
+    output.width = video.videoWidth;
+    output.height = video.videoHeight;
+    const context = output.getContext("2d");
+    context.save();
+    context.translate(output.width, 0);
+    context.scale(-1, 1);
+    context.drawImage(video, 0, 0, output.width, output.height);
+    context.restore();
+    context.drawImage(overlay, 0, 0, output.width, output.height);
+    output.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `optica-stylo-${DEMO_3D_GLASSES.sku}.png`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setCaptureMessage("Captura guardada en tu dispositivo.");
+      window.setTimeout(() => setCaptureMessage(""), 3200);
+    }, "image/png");
+  }, [faceDetected, modelReady]);
 
   const handleModelReady = useCallback(() => setModelReady(true), []);
+  const displayedStatusMessage = captureMessage || (
+    cameraStatus === "ready" && trackingReady
+      ? (faceDetected
+          ? "Calce activo. Gira suavemente para revisar el marco y sus patillas."
+          : "Cámara activa. Centra tu rostro y mira de frente.")
+      : statusMessage
+  );
   const halfWidth = videoDimensions.width / 2;
   const halfHeight = videoDimensions.height / 2;
   const viewerState = cameraStatus === "ready"
@@ -381,7 +436,16 @@ export default function Glasses3DOverlay() {
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
               dpr={[1, 1.5]}
-              gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+              gl={{
+                alpha: true,
+                antialias: true,
+                powerPreference: "high-performance",
+                preserveDrawingBuffer: true,
+              }}
+              onCreated={({ gl }) => {
+                rendererCanvasRef.current = gl.domElement;
+                gl.toneMappingExposure = 1.1;
+              }}
               orthographic
               camera={{
                 left: -halfWidth,
@@ -394,9 +458,34 @@ export default function Glasses3DOverlay() {
               }}
               style={{ pointerEvents: "none" }}
             >
-              <hemisphereLight args={["#ffffff", "#52635e", 1.35]} />
-              <directionalLight position={[250, 320, 480]} intensity={2.1} />
-              <directionalLight position={[-280, 40, 260]} intensity={0.8} />
+              <hemisphereLight args={["#ffffff", "#52635e", 1.05]} />
+              <directionalLight position={[250, 320, 480]} intensity={1.7} />
+              <directionalLight position={[-280, 40, 260]} intensity={0.65} />
+              <Environment resolution={128}>
+                <Lightformer
+                  color="#ffffff"
+                  form="rect"
+                  intensity={3.4}
+                  position={[0, 4, 6]}
+                  scale={[8, 3, 1]}
+                />
+                <Lightformer
+                  color="#d9eee7"
+                  form="rect"
+                  intensity={2.1}
+                  position={[-5, 1, 2]}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={[4, 5, 1]}
+                />
+                <Lightformer
+                  color="#f1d8b8"
+                  form="rect"
+                  intensity={1.5}
+                  position={[5, -1, 1]}
+                  rotation={[0, -Math.PI / 2, 0]}
+                  scale={[3, 4, 1]}
+                />
+              </Environment>
               <Suspense fallback={null}>
                 {modelMetadata && (
                   <GlassesModel
@@ -432,6 +521,15 @@ export default function Glasses3DOverlay() {
                   ? "Acepta el permiso que muestra tu navegador."
                   : "Tu imagen se procesa solo en este dispositivo."}
               </span>
+              {cameraStatus !== "loading" && (
+                <button
+                  className={styles.viewerCta}
+                  type="button"
+                  onClick={startCamera}
+                >
+                  Probarme este marco
+                </button>
+              )}
             </div>
           )}
 
@@ -459,20 +557,25 @@ export default function Glasses3DOverlay() {
         </div>
 
         <div className={styles.viewerFooter}>
-          <p className={styles.status} aria-live="polite">{statusMessage}</p>
+          <p className={styles.status} aria-live="polite">
+            {displayedStatusMessage}
+          </p>
           {cameraStatus === "ready" ? (
-            <button className={styles.cameraButton} type="button" onClick={stopCamera}>
-              Apagar cámara
-            </button>
+            <div className={styles.viewerActions}>
+              <button
+                className={styles.captureButton}
+                type="button"
+                onClick={captureTryOn}
+                disabled={!faceDetected || !modelReady}
+              >
+                Guardar captura
+              </button>
+              <button className={styles.cameraButton} type="button" onClick={stopCamera}>
+                Apagar cámara
+              </button>
+            </div>
           ) : (
-            <button
-              className={styles.primaryButton}
-              type="button"
-              onClick={startCamera}
-              disabled={cameraStatus === "loading"}
-            >
-              {cameraStatus === "loading" ? "Esperando permiso…" : "Activar cámara"}
-            </button>
+            <span className={styles.footerPrivacy}>Procesamiento local</span>
           )}
         </div>
       </div>
@@ -507,6 +610,60 @@ export default function Glasses3DOverlay() {
             <p>
               El ancho, la posición y la perspectiva se calculan en tiempo real.
             </p>
+          </div>
+        </div>
+
+        <div className={styles.fitCard}>
+          <div className={styles.fitCardHeader}>
+            <div>
+              <p className={styles.stepLabel}>Ajuste fino</p>
+              <p>Personaliza el calce si lo necesitas.</p>
+            </div>
+            <button type="button" onClick={resetFitAdjustment}>Restablecer</button>
+          </div>
+          <div className={styles.fitControls}>
+            <div className={styles.fitControl}>
+              <span>Tamaño</span>
+              <div>
+                <button
+                  type="button"
+                  aria-label="Reducir tamaño del marco"
+                  onClick={() => updateFitAdjustment("scaleFactor", -0.02)}
+                  disabled={fitAdjustment.scaleFactor <= 0.88}
+                >−</button>
+                <output aria-label="Tamaño del marco">
+                  {Math.round(fitAdjustment.scaleFactor * 100)}%
+                </output>
+                <button
+                  type="button"
+                  aria-label="Aumentar tamaño del marco"
+                  onClick={() => updateFitAdjustment("scaleFactor", 0.02)}
+                  disabled={fitAdjustment.scaleFactor >= 1.12}
+                >+</button>
+              </div>
+            </div>
+            <div className={styles.fitControl}>
+              <span>Altura</span>
+              <div>
+                <button
+                  type="button"
+                  aria-label="Subir el marco"
+                  onClick={() => updateFitAdjustment("verticalOffsetMm", -1)}
+                  disabled={fitAdjustment.verticalOffsetMm <= -6}
+                >−</button>
+                <output aria-label="Altura del marco">
+                  {fitAdjustment.verticalOffsetMm === 0
+                    ? "Centro"
+                    : `${fitAdjustment.verticalOffsetMm > 0 ? "+" : ""}${fitAdjustment.verticalOffsetMm} mm`}
+                </output>
+                <button
+                  type="button"
+                  aria-label="Bajar el marco"
+                  onClick={() => updateFitAdjustment("verticalOffsetMm", 1)}
+                  disabled={fitAdjustment.verticalOffsetMm >= 6}
+                >+</button>
+              </div>
+            </div>
           </div>
         </div>
 
