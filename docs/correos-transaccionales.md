@@ -79,3 +79,61 @@ Resend, configurar un remitente de ese dominio y autorizar el cron de
 producción. El endpoint y las pruebas del webhook pueden quedar completos sin
 dominio, pero la recepción de un evento real del proveedor requiere registrar
 un endpoint HTTPS y su secreto de firma en Resend.
+
+## Configuración
+
+| Variable | Uso |
+| --- | --- |
+| `EMAIL_MODE` | `disabled`, `simulate`, `test` o `live`; por defecto `disabled`. |
+| `EMAIL_FROM` | Remitente aceptado por Resend; obligatorio en `test` y `live`. |
+| `EMAIL_DOMAIN_VERIFIED` | Debe ser `true` para permitir `live`. |
+| `EMAIL_TEST_RECIPIENT` | Único destino efectivo obligatorio en `test`. |
+| `RESEND_API_KEY` | Secreto del adaptador; nunca se registra. |
+| `RESEND_WEBHOOK_SECRET` | Secreto de firma Svix del endpoint de Resend. |
+| `CRON_SECRET` | Secreto independiente para el trabajador y Vercel Cron. |
+| `EMAIL_PROVIDER_TIMEOUT_MS` | Timeout HTTP; valor provisional `8000`. |
+| `EMAIL_BATCH_SIZE` | Máximo reclamado por ejecución; valor provisional `20`. |
+| `EMAIL_LOCK_SECONDS` | Vencimiento del reclamo; valor provisional `60`. |
+| `EMAIL_MAX_ATTEMPTS` | Intentos antes de dead letter; valor provisional `6`. |
+| `EMAIL_RETRY_BASE_SECONDS` | Base exponencial; valor provisional `30`. |
+| `EMAIL_RETRY_MAX_SECONDS` | Tope de espera; valor provisional `3600`. |
+| `EMAIL_APPOINTMENT_REMINDER_HOURS` | Anticipación provisional; valor `24`. |
+| `APP_TIME_ZONE` | Debe ser `America/Santiago`. |
+
+En producción `simulate` se rechaza, y `live` falla de forma cerrada si falta
+la clave, el remitente o la confirmación explícita del dominio. `test` conserva
+`recipient_email` como destino original y guarda el destino efectivo separado.
+
+## Ejecución y administración
+
+- `GET` o `POST /api/internal/transactional-emails/process` exige
+  `Authorization: Bearer {CRON_SECRET}`, usa un lote acotado y nunca devuelve
+  destinatarios. La comparación se realiza sobre hashes con tiempo constante.
+- `GET /api/admin/transactional-emails` exige sesión y el permiso
+  `transactional_emails.manage`; entrega conteos, antigüedad, última ejecución y
+  diagnóstico sin secretos.
+- `POST /api/admin/transactional-emails/{emailId}/retry` exige el mismo permiso
+  y limita a diez reintentos por administrador y hora.
+- `POST /api/webhooks/resend` verifica `svix-id`, `svix-timestamp` y
+  `svix-signature` contra el cuerpo crudo antes de interpretar el evento.
+
+`vercel.cron.example.json` es una configuración preparada, no activa. Para
+autorizarla se debe copiar su sección `crons` a `vercel.json`, configurar
+`CRON_SECRET` y desplegar. Vercel ejecuta cron en UTC; la elegibilidad y el
+contenido de las reservas continúan usando `America/Santiago`.
+
+## Prueba externa pendiente
+
+Sin dominio verificado se pueden ejecutar las pruebas automatizadas de firma,
+idempotencia y estados, además del modo `test` con el destinatario permitido
+por la cuenta de Resend. Queda pendiente registrar el endpoint HTTPS real,
+configurar su secreto y observar eventos reales `email.delivered`,
+`email.bounced`, `email.complained` y `email.suppressed`. La configuración
+`live` no debe habilitarse para clientes antes de completar esa prueba.
+
+Referencias vigentes consultadas:
+
+- [Envío e idempotencia de Resend](https://resend.com/docs/api-reference/emails/send-email)
+- [Verificación de webhooks de Resend](https://resend.com/docs/webhooks/verify-webhooks-requests)
+- [Tipos de eventos de Resend](https://resend.com/docs/webhooks/event-types)
+- [Cron protegido de Vercel](https://vercel.com/docs/cron-jobs/manage-cron-jobs)

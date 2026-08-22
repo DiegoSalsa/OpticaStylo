@@ -18,8 +18,9 @@ MERCADO_PAGO_ACCESS_TOKEN=APP_USR-token-de-prueba
 MERCADO_PAGO_WEBHOOK_SECRET=secreto-generado-por-webhooks
 APP_PUBLIC_URL=https://preview-publico.example.com
 
-RESEND_API_KEY=re_clave
-POS_EMAIL_FROM=Optica Stylo <ventas@example.com>
+EMAIL_MODE=disabled
+EMAIL_FROM=Stylo Vivo <correos@example.com>
+RESEND_API_KEY=
 ```
 
 Ejecutar `npm run payments:preflight`. El comando comprueba sin imprimir
@@ -88,8 +89,8 @@ se rechaza con `401` antes de consultar Payments API.
 7. Solo `approved` inserta `sale_payments`, y la restriccion unica por intento
    impide registrar el pago dos veces.
 8. La venta cambia a `PAID` unicamente si el total conciliado coincide.
-9. En la misma transaccion se encola `PAYMENT_CONFIRMED`; despues del commit se
-   intenta enviar por Resend con una clave idempotente propia.
+9. En la misma transacción se encola `PAYMENT_CONFIRMED`; el webhook no espera
+   al proveedor y el trabajador usa una clave idempotente propia.
 
 Estados del proveedor:
 
@@ -120,17 +121,18 @@ de retorno como prueba de pago y consultan el pedido autorizado.
 
 ## Correo y recuperacion
 
-El webhook no se revierte si Resend esta temporalmente caido. El mensaje queda
-`FAILED` en `transactional_email_outbox`, con reintento exponencial y la misma
-clave idempotente. Un webhook repetido vuelve a intentar el correo pendiente.
-Tambien se puede ejecutar periodicamente:
+El webhook no se revierte si Resend está temporalmente caído. El mensaje queda
+en `transactional_email_outbox`; el trabajador lo reclama con bloqueo, registra
+`FAILED` y programa un reintento exponencial con la misma clave idempotente.
+También se puede ejecutar manualmente:
 
 ```bash
-npm run emails:dispatch-payments
+npm run emails:dispatch
 ```
 
-No se envia `ORDER_CONFIRMED` al crear el pedido pendiente. El primer correo de
-confirmacion de compra se genera despues del pago conciliado.
+La creación idempotente del pedido encola `ORDER_CONFIRMED`. La conciliación del
+pago encola por separado `PAYMENT_CONFIRMED`, sin repetir ninguno aunque Mercado
+Pago entregue el webhook más de una vez.
 
 ## Auditoria y monitoreo
 
