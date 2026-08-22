@@ -1,5 +1,6 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
+import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
 import {
   createProduct as createProductRepository,
   findProductById,
@@ -47,12 +48,23 @@ export async function getProduct(productId, actor, dependencies = {}) {
   const id = validateProductId(productId);
   const product = await (dependencies.findProductById ?? findProductById)(id);
   if (!product) notFound();
-  return product;
+  return {
+    ...product,
+    availability: (dependencies.getAvailability ?? getMockAvailability)(product),
+  };
 }
 
 export async function getProductList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
-  return (dependencies.listProducts ?? listProducts)(validateProductListQuery(searchParams));
+  const result = await (dependencies.listProducts ?? listProducts)(validateProductListQuery(searchParams));
+  const availability = dependencies.getAvailability ?? getMockAvailability;
+  return {
+    ...result,
+    items: result.items.map((product) => ({
+      ...product,
+      availability: availability(product),
+    })),
+  };
 }
 
 export async function getProductHistory(productId, actor, dependencies = {}) {
