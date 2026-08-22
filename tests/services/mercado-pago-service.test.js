@@ -145,19 +145,13 @@ test("rechaza una firma inválida antes de consultar el pago", async () => {
   }), (error) => error.code === "INVALID_PAYMENT_NOTIFICATION_SIGNATURE" && error.status === 401);
 });
 
-test("un webhook repetido recupera el correo pendiente sin duplicar el pago", async () => {
-  let deliveredKey = null;
+test("un webhook repetido no entrega correo dentro de la solicitud de pago", async () => {
   const result = await processMercadoPagoNotification({
     body: { action: "payment.updated", data: { id: "123" }, type: "payment" },
     requestId: "request-repeated",
     signature: "ts=1,v1=firma",
   }, {
     auditWebhook: () => {},
-    deliverTransactionalEmail: async (key) => {
-      deliveredKey = key;
-      return { status: "SENT" };
-    },
-    findPaymentConfirmationKey: async () => "payment-attempt:attempt-1:approved",
     getMercadoPagoConfig: () => ({
       accessToken: "token",
       expectedLiveMode: false,
@@ -171,6 +165,6 @@ test("un webhook repetido recupera el correo pendiente sin duplicar el pago", as
     requireWebhookSecret: () => "secret",
     validateSignature: () => {},
   });
-  assert.equal(deliveredKey, "payment-attempt:attempt-1:approved");
-  assert.equal(result.emailDelivery.status, "SENT");
+  assert.equal(result.emailQueued, false);
+  assert.equal(Object.hasOwn(result, "emailDelivery"), false);
 });
