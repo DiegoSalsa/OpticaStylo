@@ -1,7 +1,6 @@
 import { verifyPassword } from "../auth/password.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
-import { sendPurchaseConfirmation } from "../integrations/email/purchase-confirmation-sender.js";
 import {
   beginDiscountAuthorizationAttempt,
   completeDiscountAuthorizationAttempt,
@@ -16,7 +15,6 @@ import {
   listSaleEvents,
   listSales,
   registerSalePayment as registerSalePaymentRepository,
-  updateReceiptEmailDelivery,
   updateSaleDraft as updateSaleDraftRepository,
 } from "../repositories/sale-repository.js";
 import { findUserForPermissionAuthorization } from "../repositories/user-repository.js";
@@ -191,21 +189,7 @@ export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) 
     id, receiptInput, actor.userId,
   );
   if (result.reason) throwRepositoryReason(result.reason);
-  let receipt = result.receipt;
-  if (["SENT", "SIMULATED"].includes(receipt.emailStatus)) return receipt;
-  try {
-    const delivery = await (dependencies.sendPurchaseConfirmation ?? sendPurchaseConfirmation)(receipt);
-    receipt = await (dependencies.updateReceiptEmailDelivery ?? updateReceiptEmailDelivery)(
-      receipt.id, delivery, actor.userId,
-    );
-  } catch (error) {
-    receipt = await (dependencies.updateReceiptEmailDelivery ?? updateReceiptEmailDelivery)(
-      receipt.id,
-      { error: error instanceof Error ? error.message.slice(0, 500) : "Error de envío.", status: "FAILED" },
-      actor.userId,
-    );
-  }
-  return receipt;
+  return result.receipt;
 }
 
 export async function getSaleReceipt(saleId, receiptId, actor, dependencies = {}) {

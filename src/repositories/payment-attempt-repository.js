@@ -1,4 +1,5 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapAttempt(row) {
   if (!row) return null;
@@ -23,7 +24,6 @@ function mapAttempt(row) {
     updatedAt: row.updated_at,
   };
 }
-
 export async function reserveMercadoPagoAttempt(saleId, actorUserId, expiresAt) {
   return executeTransaction(async (client) => {
     const saleResult = await client.query(
@@ -300,11 +300,12 @@ export async function reconcileMercadoPagoPaymentWithClient(
         return { duplicate: false, result: "REQUIRES_REVIEW" };
       }
 
-      await client.query(
+      const paymentResult = await client.query(
         `INSERT INTO sale_payments (
            sale_id, amount_cents, payment_method, reference, received_by,
            source, provider_attempt_id
-         ) VALUES ($1, $2, 'MERCADO_PAGO', $3, $4, 'PROVIDER', $5)`,
+         ) VALUES ($1, $2, 'MERCADO_PAGO', $3, $4, 'PROVIDER', $5)
+         RETURNING id`,
         [attempt.sale_id, attempt.amount_cents,
           `MP:${payment.externalPaymentId}`, attempt.initiated_by, attempt.id],
       );
@@ -327,16 +328,18 @@ export async function reconcileMercadoPagoPaymentWithClient(
       );
       await client.query(
         `INSERT INTO transactional_email_outbox (
-           template_code, recipient_email, payload, deduplication_key
-         ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3)
+           template_code, recipient_email, payload, deduplication_key,
+           sale_id, payment_id
+         ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
          ON CONFLICT (deduplication_key) DO NOTHING`,
         [sale.customer_email, JSON.stringify({
           amountCents: Number(attempt.amount_cents),
-          externalPaymentId: payment.externalPaymentId,
-          saleId: attempt.sale_id,
           saleNumber: Number(sale.sale_number),
-          status: newStatus,
-        }), `payment-attempt:${attempt.id}:approved`],
+        }), transactionalEmailDeduplicationKey(
+          "PAYMENT_CONFIRMED",
+          paymentResult.rows[0].id,
+        ), attempt.sale_id,
+        paymentResult.rows[0].id],
       );
     }
 
@@ -347,19 +350,4 @@ export async function reconcileMercadoPagoPaymentWithClient(
       result: mappedStatus,
       saleId: attempt.sale_id,
     };
-}
-
-export async function findPaymentConfirmationDeduplicationKey(externalPaymentId) {
-  const result = await executeQuery(
-    `SELECT transactional_email_outbox.deduplication_key
-     FROM payment_attempts
-     JOIN transactional_email_outbox
-       ON transactional_email_outbox.deduplication_key =
-          'payment-attempt:' || payment_attempts.id::TEXT || ':approved'
-     WHERE payment_attempts.provider = 'MERCADO_PAGO'
-       AND payment_attempts.external_payment_id = $1
-       AND payment_attempts.status = 'APPROVED'`,
-    [externalPaymentId],
-  );
-  return result.rows[0]?.deduplication_key ?? null;
 }

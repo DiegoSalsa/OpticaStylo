@@ -1,4 +1,5 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapCartBase(row) {
   if (!row) return null;
@@ -414,7 +415,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
        ) VALUES (
          $1, $2, $3, 'PENDING', $4, $5, $6, 'ONLINE',
          $7, $8, $9, $10, $11, $12, NULL, NULL
-       ) RETURNING id`,
+       ) RETURNING id, sale_number`,
       [customerId, cart.clinical_prescription_id, cart.external_prescription_id,
         subtotalCents, cart.shipping_fee_cents, totalCents, cart.fulfillment_method,
         cart.delivery_address, cart.delivery_city, cart.delivery_region,
@@ -436,6 +437,16 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
          sale_id, event_type, new_status, details, performed_by
        ) VALUES ($1, 'CREATED', 'PENDING', $2, NULL)`,
       [saleId, JSON.stringify({ origin: "ONLINE", totalCents })],
+    );
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key, sale_id
+       ) VALUES ('ORDER_CONFIRMED', $1, $2::JSONB, $3, $4)
+       ON CONFLICT (deduplication_key) DO NOTHING`,
+      [cart.buyer_email, JSON.stringify({
+        saleNumber: Number(saleResult.rows[0].sale_number),
+        totalCents,
+      }), transactionalEmailDeduplicationKey("ORDER_CONFIRMED", saleId), saleId],
     );
     await client.query(
       `UPDATE store_carts

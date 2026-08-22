@@ -1,6 +1,7 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getSchedulingTimeZone } from "../config/scheduling.js";
+import { getAppointmentReminderHours } from "../config/transactional-email.js";
 import { formatInTimeZone } from "date-fns-tz";
 import {
   changeAppointmentStatus as changeAppointmentStatusRepository,
@@ -159,7 +160,14 @@ export async function createAppointment(input, actor, dependencies = {}) {
     startAt: data.startAt,
     timeZone: dependencies.timeZone ?? getSchedulingTimeZone(),
   });
-  const result = await createRepository({ ...data, endAt }, actor.userId);
+  const result = await createRepository(
+    { ...data, endAt },
+    actor.userId,
+    {
+      reminderHours: dependencies.reminderHours
+        ?? getAppointmentReminderHours(dependencies.environment),
+    },
+  );
 
   if (result.conflict) {
     throwAppointmentConflict(result.conflict);

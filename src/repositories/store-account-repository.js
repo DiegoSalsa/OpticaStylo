@@ -1,4 +1,5 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapAccount(row) {
   if (!row) return null;
@@ -36,10 +37,12 @@ export async function createCustomerAccount(account) {
     );
     await client.query(
       `INSERT INTO transactional_email_outbox (
-         template_code, recipient_email, payload, deduplication_key
-       ) VALUES ('ACCOUNT_CREATED', $1, $2::JSONB, $3)`,
+         template_code, recipient_email, payload, deduplication_key, account_id
+       ) VALUES ('ACCOUNT_CREATED', $1, $2::JSONB, $3, $4)
+       ON CONFLICT (deduplication_key) DO NOTHING`,
       [account.email, JSON.stringify({ firstNames: account.firstNames }),
-        `account:${result.rows[0].id}:created`],
+        transactionalEmailDeduplicationKey("ACCOUNT_CREATED", result.rows[0].id),
+        result.rows[0].id],
     );
     return mapAccount({
       ...result.rows[0],

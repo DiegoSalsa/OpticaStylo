@@ -1,4 +1,5 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapAppointment(row) {
   if (!row) {
@@ -82,6 +83,37 @@ async function findAppointmentByIdWithClient(client, appointmentId) {
   );
 
   return mapAppointment(result.rows[0]);
+}
+
+async function enqueueAppointmentEmails(
+  client,
+  { appointmentId, endAt, recipientEmail, reminderHours, startAt },
+) {
+  const payload = JSON.stringify({ appointmentId, endAt, startAt });
+  await client.query(
+    `INSERT INTO transactional_email_outbox (
+       template_code, recipient_email, payload, deduplication_key,
+       appointment_id
+     ) VALUES ('APPOINTMENT_CONFIRMED', $1, $2::JSONB, $3, $4)
+     ON CONFLICT (deduplication_key) DO NOTHING`,
+    [recipientEmail, payload,
+      transactionalEmailDeduplicationKey("APPOINTMENT_CONFIRMED", appointmentId),
+      appointmentId],
+  );
+  const reminderAt = new Date(startAt.getTime() - reminderHours * 60 * 60 * 1_000);
+  await client.query(
+    `INSERT INTO transactional_email_outbox (
+       template_code, recipient_email, payload, deduplication_key,
+       scheduled_at, next_attempt_at, appointment_id
+     ) VALUES (
+       'APPOINTMENT_REMINDER', $1, $2::JSONB, $3,
+       GREATEST($4, CURRENT_TIMESTAMP), GREATEST($4, CURRENT_TIMESTAMP), $5
+     )
+     ON CONFLICT (deduplication_key) DO NOTHING`,
+    [recipientEmail, payload,
+      transactionalEmailDeduplicationKey("APPOINTMENT_REMINDER", appointmentId),
+      reminderAt, appointmentId],
+  );
 }
 
 async function findCollision(
@@ -187,7 +219,7 @@ export async function getBusyAppointments(
   }));
 }
 
-export async function createAppointment(appointmentData, actorUserId) {
+export async function createAppointment(appointmentData, actorUserId, options = {}) {
   return executeTransaction(async (client) => {
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
       appointmentData.professionalId,
@@ -249,6 +281,18 @@ export async function createAppointment(appointmentData, actorUserId) {
       ],
     );
 
+    const patientResult = await client.query(
+      "SELECT email FROM patients WHERE id = $1",
+      [appointmentData.patientId],
+    );
+    await enqueueAppointmentEmails(client, {
+      appointmentId,
+      endAt: appointmentData.endAt,
+      recipientEmail: patientResult.rows[0].email,
+      reminderHours: options.reminderHours ?? 24,
+      startAt: appointmentData.startAt,
+    });
+
     return {
       appointment: await findAppointmentByIdWithClient(client, appointmentId),
       conflict: null,
@@ -256,7 +300,7 @@ export async function createAppointment(appointmentData, actorUserId) {
   });
 }
 
-export async function createPublicBooking(bookingData) {
+export async function createPublicBooking(bookingData, options = {}) {
   return executeTransaction(async (client) => {
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
       bookingData.patient.rut,
@@ -335,24 +379,13 @@ export async function createPublicBooking(bookingData) {
       [appointmentId, bookingData.startAt, bookingData.endAt],
     );
 
-    const emailPayload = JSON.stringify({
+    await enqueueAppointmentEmails(client, {
       appointmentId,
       endAt: bookingData.endAt,
+      recipientEmail: bookingData.patient.email,
+      reminderHours: options.reminderHours ?? 24,
       startAt: bookingData.startAt,
     });
-    await client.query(
-      `INSERT INTO transactional_email_outbox (
-         template_code, recipient_email, payload, deduplication_key
-       ) VALUES ('APPOINTMENT_CONFIRMED', $1, $2::JSONB, $3)`,
-      [bookingData.patient.email, emailPayload, `appointment:${appointmentId}:confirmed`],
-    );
-    const reminderAt = new Date(bookingData.startAt.getTime() - 24 * 60 * 60 * 1000);
-    await client.query(
-      `INSERT INTO transactional_email_outbox (
-         template_code, recipient_email, payload, deduplication_key, scheduled_at
-       ) VALUES ('APPOINTMENT_REMINDER', $1, $2::JSONB, $3, GREATEST($4, CURRENT_TIMESTAMP))`,
-      [bookingData.patient.email, emailPayload, `appointment:${appointmentId}:reminder-24h`, reminderAt],
-    );
 
     return {
       appointment: await findAppointmentByIdWithClient(client, appointmentId),

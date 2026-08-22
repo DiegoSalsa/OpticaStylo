@@ -12,7 +12,6 @@ import {
 } from "../integrations/payments/mercado-pago-gateway.js";
 import {
   attachMercadoPagoPreference,
-  findPaymentConfirmationDeduplicationKey,
   listPaymentAttemptsBySaleId,
   markPaymentAttemptFailed,
   reconcileMercadoPagoPayment,
@@ -21,7 +20,6 @@ import {
 import { findSaleById } from "../repositories/sale-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { auditMercadoPagoWebhook } from "../utils/payment-monitor.js";
-import { deliverTransactionalEmail } from "./transactional-email-service.js";
 import { validateMercadoPagoNotification } from "../validations/payment-validation.js";
 import { validateSaleId } from "../validations/sale-validation.js";
 
@@ -172,23 +170,9 @@ export async function processMercadoPagoNotification(input, dependencies = {}) {
     payment,
     { expectedLiveMode: config.expectedLiveMode },
   );
-  let emailDelivery = null;
-  try {
-    const deduplicationKey = await (
-      dependencies.findPaymentConfirmationKey
-      ?? findPaymentConfirmationDeduplicationKey
-    )(payment.externalPaymentId);
-    if (deduplicationKey) {
-      emailDelivery = await (
-        dependencies.deliverTransactionalEmail ?? deliverTransactionalEmail
-      )(deduplicationKey, dependencies.emailDependencies ?? {});
-    }
-  } catch {
-    emailDelivery = { status: "FAILED" };
-  }
   audit({
     ...notification,
     outcome: result.result === "REQUIRES_REVIEW" ? "REQUIRES_REVIEW" : result.result,
   });
-  return { ...result, emailDelivery };
+  return { ...result, emailQueued: result.result === "APPROVED" };
 }

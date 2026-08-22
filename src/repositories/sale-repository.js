@@ -1,4 +1,5 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapSaleBase(row) {
   if (!row) return null;
@@ -560,6 +561,22 @@ export async function confirmSale(saleId, actorUserId) {
       previousStatus: "QUOTATION",
       newStatus: "PENDING",
     });
+    const emailResult = await client.query(
+      `SELECT sales.sale_number, sales.total_cents, customers.email
+       FROM sales JOIN customers ON customers.id = sales.customer_id
+       WHERE sales.id = $1`,
+      [saleId],
+    );
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key, sale_id
+       ) VALUES ('ORDER_CONFIRMED', $1, $2::JSONB, $3, $4)
+       ON CONFLICT (deduplication_key) DO NOTHING`,
+      [emailResult.rows[0].email, JSON.stringify({
+        saleNumber: Number(emailResult.rows[0].sale_number),
+        totalCents: Number(emailResult.rows[0].total_cents),
+      }), transactionalEmailDeduplicationKey("ORDER_CONFIRMED", saleId), saleId],
+    );
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -567,7 +584,10 @@ export async function confirmSale(saleId, actorUserId) {
 export async function registerSalePayment(saleId, payment, actorUserId) {
   return executeTransaction(async (client) => {
     const result = await client.query(
-      `SELECT status, payment_method, total_cents FROM sales WHERE id = $1 FOR UPDATE`,
+      `SELECT sales.status, sales.payment_method, sales.total_cents,
+              sales.sale_number, customers.email AS customer_email
+       FROM sales JOIN customers ON customers.id = sales.customer_id
+       WHERE sales.id = $1 FOR UPDATE OF sales`,
       [saleId],
     );
     const sale = result.rows[0];
@@ -597,10 +617,10 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
       return { reason: "PAYMENT_EXCEEDS_BALANCE", sale: null };
     }
 
-    await client.query(
+    const paymentResult = await client.query(
       `INSERT INTO sale_payments (
          sale_id, amount_cents, payment_method, reference, received_by
-       ) VALUES ($1, $2, $3, $4, $5)`,
+       ) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
       [
         saleId,
         payment.amountCents,
@@ -623,6 +643,19 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
       previousStatus: "PENDING",
       newStatus,
     });
+    const paymentId = paymentResult.rows[0].id;
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key,
+         sale_id, payment_id
+       ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
+       ON CONFLICT (deduplication_key) DO NOTHING`,
+      [sale.customer_email, JSON.stringify({
+        amountCents: payment.amountCents,
+        saleNumber: Number(sale.sale_number),
+      }), transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", paymentId),
+      saleId, paymentId],
+    );
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -755,7 +788,7 @@ export function buildPaymentReceiptSnapshot(sale, paymentId) {
     paidCents,
     payment: payments.at(-1),
     payments,
-    type: paidCents === sale.totalCents ? "FINAL" : "PAYMENT",
+    type: "PAYMENT",
   };
 }
 
@@ -820,6 +853,18 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
        ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [saleId, request.paymentId, receiptType, payload, emailedTo, actorUserId],
     );
+    await client.query(
+      `INSERT INTO transactional_email_outbox (
+         template_code, recipient_email, payload, deduplication_key,
+         sale_id, payment_id, receipt_id
+       ) VALUES ($1, $2, '{}'::JSONB, $3, $4, $5, $6)
+       ON CONFLICT (deduplication_key) DO NOTHING`,
+      [receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
+        emailedTo, transactionalEmailDeduplicationKey(
+          receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
+          result.rows[0].id,
+        ), saleId, request.paymentId, result.rows[0].id],
+    );
     await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
       details: {
         paymentId: request.paymentId,
@@ -829,38 +874,39 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
       newStatus: sale.status,
       previousStatus: sale.status,
     });
+    if (request.paymentId && balanceCents === 0) {
+      const finalResult = await client.query(
+        `INSERT INTO sale_receipts (
+           sale_id, payment_id, receipt_type, payload, emailed_to, generated_by
+         ) VALUES ($1, NULL, 'FINAL', $2, $3, $4)
+         ON CONFLICT (sale_id) WHERE receipt_type = 'FINAL' DO NOTHING
+         RETURNING *`,
+        [saleId, payload, emailedTo, actorUserId],
+      );
+      if (finalResult.rows[0]) {
+        await client.query(
+          `INSERT INTO transactional_email_outbox (
+             template_code, recipient_email, payload, deduplication_key,
+             sale_id, receipt_id
+           ) VALUES ('POS_FINAL_RECEIPT', $1, '{}'::JSONB, $2, $3, $4)
+           ON CONFLICT (deduplication_key) DO NOTHING`,
+          [emailedTo, transactionalEmailDeduplicationKey(
+            "POS_FINAL_RECEIPT",
+            finalResult.rows[0].id,
+          ), saleId, finalResult.rows[0].id],
+        );
+        await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
+          details: {
+            paymentId: null,
+            receiptNumber: Number(finalResult.rows[0].receipt_number),
+            receiptType: "FINAL",
+          },
+          newStatus: sale.status,
+          previousStatus: sale.status,
+        });
+      }
+    }
     return { reason: null, receipt: mapReceipt(result.rows[0]) };
-  });
-}
-
-export async function updateReceiptEmailDelivery(
-  receiptId,
-  { error = null, providerId = null, status },
-  actorUserId,
-) {
-  return executeTransaction(async (client) => {
-    const result = await client.query(
-      `UPDATE sale_receipts SET email_status = $2, email_provider_id = $3,
-         email_error = $4, email_updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1 RETURNING *`,
-      [receiptId, status, providerId, error],
-    );
-    const receipt = result.rows[0];
-    if (!receipt) return null;
-    await insertSaleEvent(
-      client,
-      receipt.sale_id,
-      status === "FAILED"
-        ? "EMAIL_FAILED"
-        : status === "SIMULATED"
-          ? "EMAIL_SIMULATED"
-          : "EMAIL_SENT",
-      actorUserId,
-      {
-        details: { emailedTo: receipt.emailed_to, providerId, status },
-      },
-    );
-    return mapReceipt(receipt);
   });
 }
 
