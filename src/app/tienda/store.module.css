@@ -282,6 +282,11 @@
   position: relative;
   text-decoration: none;
 }
+.productPhoto {
+  box-sizing: border-box;
+  object-fit: contain;
+  padding: 1rem;
+}
 .frameVisual {
   align-items: center;
   display: flex;
