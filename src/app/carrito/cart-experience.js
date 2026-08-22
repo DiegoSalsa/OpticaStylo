@@ -11,8 +11,18 @@ function opticalData(form) {
     const raw = form.get(name);
     return nullable && raw === "" ? null : Number(raw);
   };
-  const eye = (prefix) => ({ addition: value(`${prefix}Addition`, true), axis: value(`${prefix}Axis`, true), cylinder: value(`${prefix}Cylinder`), sphere: value(`${prefix}Sphere`) });
-  return { fulfillmentNotes: form.get("fulfillmentNotes") || null, leftEye: eye("left"), pupillaryDistance: value("pupillaryDistance", true), rightEye: eye("right") };
+  const eye = (prefix) => ({
+    addition: value(`${prefix}Addition`, true),
+    axis: value(`${prefix}Axis`, true),
+    cylinder: value(`${prefix}Cylinder`),
+    sphere: value(`${prefix}Sphere`),
+  });
+  return {
+    fulfillmentNotes: form.get("fulfillmentNotes") || null,
+    leftEye: eye("left"),
+    pupillaryDistance: value("pupillaryDistance", true),
+    rightEye: eye("right"),
+  };
 }
 
 export default function CartExperience() {
@@ -21,61 +31,198 @@ export default function CartExperience() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [prescriptionMode, setPrescriptionMode] = useState("IMAGE");
-  const requiresPrescription = useMemo(() => cart?.items.some((item) => item.requiresPrescription), [cart]);
-  const prescriptionReady = Boolean(!requiresPrescription || cart?.externalPrescription?.status === "READY" || cart?.clinicalPrescriptionId);
+  const [wantsPrescriptionLenses, setWantsPrescriptionLenses] = useState(false);
+  const requiresPrescription = useMemo(
+    () => cart?.items.some((item) => item.requiresPrescription),
+    [cart],
+  );
+  const canAddPrescriptionLenses = useMemo(
+    () => cart?.items.some((item) => ["FRAME", "PRESCRIPTION_LENS"].includes(item.category)),
+    [cart],
+  );
+  const prescriptionReady = Boolean(
+    !requiresPrescription
+      || cart?.externalPrescription?.status === "READY"
+      || cart?.clinicalPrescriptionId,
+  );
+  const showPrescriptionForm = Boolean(
+    requiresPrescription || wantsPrescriptionLenses || cart?.externalPrescription,
+  );
 
-  useEffect(() => { ensureStoreCart().then((data) => { setCart(data); setStatus("ready"); }).catch((requestError) => { setError(requestError.message); setStatus("error"); }); }, []);
+  useEffect(() => {
+    ensureStoreCart()
+      .then((data) => {
+        setCart(data);
+        setStatus("ready");
+      })
+      .catch((requestError) => {
+        setError(requestError.message);
+        setStatus("error");
+      });
+  }, []);
 
   async function update(productId, quantity) {
-    setError(""); setStatus("saving");
+    setError("");
+    setStatus("saving");
     try {
       const response = quantity < 1
         ? await fetch(`/api/store/cart/items/${productId}`, { method: "DELETE" })
-        : await fetch(`/api/store/cart/items/${productId}`, { body: JSON.stringify({ quantity }), headers: { "Content-Type": "application/json" }, method: "PUT" });
+        : await fetch(`/api/store/cart/items/${productId}`, {
+          body: JSON.stringify({ quantity }),
+          headers: { "Content-Type": "application/json" },
+          method: "PUT",
+        });
       setCart(await readStoreResponse(response));
-    } catch (requestError) { setError(requestError.message); } finally { setStatus("ready"); }
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setStatus("ready");
+    }
   }
 
   async function savePrescription(event) {
-    event.preventDefault(); setError(""); setNotice(""); setStatus("saving");
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setStatus("saving");
     const form = new FormData(event.currentTarget);
     try {
       if (prescriptionMode === "IMAGE") {
-        const upload = new FormData(); upload.set("image", form.get("image"));
-        await readStoreResponse(await fetch("/api/store/cart/prescription/image", { body: upload, method: "PUT" }));
-        setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/confirm", { body: JSON.stringify(opticalData(form)), headers: { "Content-Type": "application/json" }, method: "PATCH" })));
+        const upload = new FormData();
+        upload.set("image", form.get("image"));
+        await readStoreResponse(await fetch("/api/store/cart/prescription/image", {
+          body: upload,
+          method: "PUT",
+        }));
+        setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/confirm", {
+          body: JSON.stringify(opticalData(form)),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        })));
       } else {
-        setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/manual", { body: JSON.stringify(opticalData(form)), headers: { "Content-Type": "application/json" }, method: "PUT" })));
+        setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/manual", {
+          body: JSON.stringify(opticalData(form)),
+          headers: { "Content-Type": "application/json" },
+          method: "PUT",
+        })));
       }
       setNotice("Receta guardada como datos pendientes de revisión al preparar el lente.");
-    } catch (requestError) { setError(requestError.message); } finally { setStatus("ready"); }
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setStatus("ready");
+    }
   }
 
   async function checkout(event) {
-    event.preventDefault(); setError(""); setNotice(""); setStatus("saving");
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setStatus("saving");
     const form = new FormData(event.currentTarget);
     try {
       const configured = await readStoreResponse(await fetch("/api/store/cart", {
-        body: JSON.stringify({ buyer: { address: form.get("address"), email: form.get("email"), firstNames: form.get("firstNames"), lastNames: form.get("lastNames"), phone: form.get("phone"), rut: form.get("rut") }, clinicalPrescriptionId: null, fulfillment: { method: "PICKUP", notes: form.get("notes") || null } }),
-        headers: { "Content-Type": "application/json" }, method: "PATCH",
+        body: JSON.stringify({
+          buyer: {
+            address: form.get("address"),
+            email: form.get("email"),
+            firstNames: form.get("firstNames"),
+            lastNames: form.get("lastNames"),
+            phone: form.get("phone"),
+            rut: form.get("rut"),
+          },
+          clinicalPrescriptionId: null,
+          fulfillment: { method: "PICKUP", notes: form.get("notes") || null },
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
       }));
       setCart(configured);
-      const result = await readStoreResponse(await fetch("/api/store/cart/checkout", { method: "POST" }));
+      const result = await readStoreResponse(await fetch("/api/store/cart/checkout", {
+        method: "POST",
+      }));
       if (result.payment?.checkoutUrl) window.location.assign(result.payment.checkoutUrl);
       else setNotice(`Pedido N.º ${result.order.saleNumber} creado. El pago requiere configuración de Mercado Pago.`);
-    } catch (requestError) { setError(requestError.message); setStatus("ready"); }
+    } catch (requestError) {
+      setError(requestError.message);
+      setStatus("ready");
+    }
   }
 
-  if (status === "loading") return <main className="cart-page"><p>Cargando tu carrito…</p></main>;
-  if (status === "error"&&!cart) return <main className="cart-page"><div className="cart-empty"><h1>No pudimos abrir el carrito</h1><p>{error}</p></div></main>;
-  if (cart?.status === "CHECKED_OUT") return <main className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href="/checkout/mercado-pago/pending">Ver estado del pago</Link><Link className="button button--secondary" href="/tienda">Volver al catálogo</Link></div></div></main>;
-  return <main className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header>
-    <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className={prescriptionReady ? "complete" : "active"}><span>2</span><div><strong>Receta</strong><small>{requiresPrescription ? "Datos ópticos" : "No requerida"}</small></div></li><li className={prescriptionReady ? "active" : ""}><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
-    {!cart?.items.length ? <div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div> : <div className="cart-layout">
-      <section className="cart-content"><article className="cart-card"><h2>Productos</h2>{cart.items.map((item)=><div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category==="FRAME"?"eye":"package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{item.requiresPrescription?" · Requiere receta":""}</small></div><div className="cart-quantity"><button onClick={()=>update(item.productId,item.quantity-1)} type="button">−</button><span>{item.quantity}</span><button onClick={()=>update(item.productId,item.quantity+1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={()=>update(item.productId,0)} type="button">×</button></div>)}</article>
-        {requiresPrescription&&<article className="cart-card prescription-card"><div className="cart-card-heading"><div><h2>Receta óptica externa</h2><p>No necesitas atenderte en Óptica Stylo para comprar. No aprobamos datos automáticamente.</p></div>{cart.externalPrescription?.status==="READY"&&<span className="status-chip">Receta guardada</span>}</div><div className="mode-toggle"><button className={prescriptionMode==="IMAGE"?"active":""} onClick={()=>setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode==="MANUAL"?"active":""} onClick={()=>setPrescriptionMode("MANUAL")} type="button">Ingresar manualmente</button></div><form className="prescription-form" onSubmit={savePrescription}>{prescriptionMode==="IMAGE"&&<label className="field field-full"><span>Imagen de la receta (máx. 8 MiB)</span><input accept="image/jpeg,image/png,image/webp,image/heic,image/heif" name="image" required type="file" /><small>Después de cargarla, debes transcribir y confirmar los valores. El OCR futuro solo ayudará a completar estos campos.</small></label>}<h3>Ojo derecho</h3><span /><label className="field"><span>Esfera</span><input name="rightSphere" required step="0.25" type="number" /></label><label className="field"><span>Cilindro</span><input name="rightCylinder" required step="0.25" type="number" /></label><label className="field"><span>Eje</span><input max="180" min="0" name="rightAxis" type="number" /></label><label className="field"><span>Adición</span><input name="rightAddition" step="0.25" type="number" /></label><h3>Ojo izquierdo</h3><span /><label className="field"><span>Esfera</span><input name="leftSphere" required step="0.25" type="number" /></label><label className="field"><span>Cilindro</span><input name="leftCylinder" required step="0.25" type="number" /></label><label className="field"><span>Eje</span><input max="180" min="0" name="leftAxis" type="number" /></label><label className="field"><span>Adición</span><input name="leftAddition" step="0.25" type="number" /></label><label className="field"><span>Distancia pupilar</span><input name="pupillaryDistance" step="0.5" type="number" /></label><label className="field field-wide"><span>Indicaciones</span><input name="fulfillmentNotes" /></label><button className="button button--secondary field-full" disabled={status==="saving"} type="submit">Guardar receta para revisión</button></form></article>}
-        <article className="cart-card"><h2>Datos para la compra</h2><p className="card-lead">Puedes continuar como invitado. Por ahora el flujo se mantiene en retiro en tienda mientras se define el despacho y las tres sucursales.</p><form className="buyer-form" onSubmit={checkout}><label className="field"><span>RUT</span><input defaultValue={cart.buyer?.rut} name="rut" required /></label><label className="field"><span>Nombres</span><input defaultValue={cart.buyer?.firstNames} name="firstNames" required /></label><label className="field"><span>Apellidos</span><input defaultValue={cart.buyer?.lastNames} name="lastNames" required /></label><label className="field"><span>Teléfono</span><input defaultValue={cart.buyer?.phone} name="phone" required /></label><label className="field"><span>Correo</span><input defaultValue={cart.buyer?.email} name="email" required type="email" /></label><label className="field"><span>Dirección de contacto</span><input defaultValue={cart.buyer?.address} name="address" required /></label><div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en tienda</strong><span>Sucursal por confirmar con el local después de la compra.</span></div></div><label className="field field-full"><span>Notas opcionales</span><textarea name="notes" rows="3" /></label><button className="button button--primary field-full" disabled={status==="saving"||Boolean(requiresPrescription&&cart.externalPrescription?.status!=="READY"&&!cart.clinicalPrescriptionId)} type="submit">Continuar a Mercado Pago</button></form></article>
-      </section><aside className="cart-card cart-summary"><h2>Resumen</h2><dl><div><dt>Subtotal</dt><dd>{formatClp(cart.subtotalCents)}</dd></div><div><dt>Retiro</dt><dd>Sin costo</dd></div><div><dt>Total</dt><dd>{formatClp(cart.totalCents)}</dd></div></dl><p><Icon name="shield" size={17} /> Pago real procesado por Mercado Pago.</p>{error&&<div className="inline-error">{error}</div>}{notice&&<div className="inline-success">{notice}</div>}</aside>
-    </div>}
+  if (status === "loading") {
+    return <main className="cart-page"><p>Cargando tu carrito…</p></main>;
+  }
+
+  if (status === "error" && !cart) {
+    return <main className="cart-page"><div className="cart-empty"><h1>No pudimos abrir el carrito</h1><p>{error}</p></div></main>;
+  }
+
+  if (cart?.status === "CHECKED_OUT") {
+    return <main className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href="/checkout/mercado-pago/pending">Ver estado del pago</Link><Link className="button button--secondary" href="/tienda">Volver al catálogo</Link></div></div></main>;
+  }
+
+  if (!cart?.items.length) {
+    return <main className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></main>;
+  }
+
+  return <main className="cart-page">
+    <nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav>
+    <header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header>
+    <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className={prescriptionReady ? "complete" : "active"}><span>2</span><div><strong>Receta</strong><small>{requiresPrescription ? "Datos ópticos" : wantsPrescriptionLenses ? "Cristales" : "Opcional"}</small></div></li><li className={prescriptionReady ? "active" : ""}><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
+    <div className="cart-layout">
+      <section className="cart-content">
+        <article className="cart-card">
+          <h2>Productos</h2>
+          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{item.requiresPrescription ? " · Requiere receta" : ""}</small></div><div className="cart-quantity"><button onClick={() => update(item.productId, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item.productId, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item.productId, 0)} type="button">×</button></div>)}
+        </article>
+
+        {(requiresPrescription || canAddPrescriptionLenses) && <article className="cart-card prescription-card">
+          <div className="cart-card-heading">
+            <div>
+              <h2>{requiresPrescription ? "Receta óptica externa" : "¿Necesitas cristales con receta?"}</h2>
+              <p>{requiresPrescription ? "No necesitas atenderte en Óptica Stylo para comprar. No aprobamos datos automáticamente." : "Puedes comprar el marco sin receta. Si quieres cristales ópticos, adjunta aquí tu receta para preparar el lente."}</p>
+            </div>
+            {cart.externalPrescription?.status === "READY" && <span className="status-chip">Receta guardada</span>}
+          </div>
+
+          {!showPrescriptionForm ? <button className="button button--secondary" onClick={() => setWantsPrescriptionLenses(true)} type="button">Agregar cristales con receta</button> : <>
+            <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} onClick={() => setPrescriptionMode("MANUAL")} type="button">Ingresar manualmente</button></div>
+            <form className="prescription-form" onSubmit={savePrescription}>
+              {prescriptionMode === "IMAGE" && <label className="field field-full"><span>Imagen de la receta (máx. 8 MiB)</span><input accept="image/jpeg,image/png,image/webp,image/heic,image/heif" name="image" required type="file" /><small>Después de cargarla, debes transcribir y confirmar los valores. El OCR futuro solo ayudará a completar estos campos.</small></label>}
+              <h3>Ojo derecho</h3><span />
+              <label className="field"><span>Esfera</span><input name="rightSphere" required step="0.25" type="number" /></label>
+              <label className="field"><span>Cilindro</span><input name="rightCylinder" required step="0.25" type="number" /></label>
+              <label className="field"><span>Eje</span><input max="180" min="0" name="rightAxis" type="number" /></label>
+              <label className="field"><span>Adición</span><input name="rightAddition" step="0.25" type="number" /></label>
+              <h3>Ojo izquierdo</h3><span />
+              <label className="field"><span>Esfera</span><input name="leftSphere" required step="0.25" type="number" /></label>
+              <label className="field"><span>Cilindro</span><input name="leftCylinder" required step="0.25" type="number" /></label>
+              <label className="field"><span>Eje</span><input max="180" min="0" name="leftAxis" type="number" /></label>
+              <label className="field"><span>Adición</span><input name="leftAddition" step="0.25" type="number" /></label>
+              <label className="field"><span>Distancia pupilar</span><input name="pupillaryDistance" step="0.5" type="number" /></label>
+              <label className="field field-wide"><span>Indicaciones</span><input name="fulfillmentNotes" /></label>
+              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">Guardar receta para revisión</button>
+            </form>
+          </>}
+        </article>}
+
+        <article className="cart-card">
+          <h2>Datos para la compra</h2>
+          <p className="card-lead">Puedes continuar como invitado. Por ahora el flujo se mantiene en retiro en tienda mientras se define el despacho y las tres sucursales.</p>
+          <form className="buyer-form" onSubmit={checkout}>
+            <label className="field"><span>RUT</span><input defaultValue={cart.buyer?.rut} name="rut" required /></label>
+            <label className="field"><span>Nombres</span><input defaultValue={cart.buyer?.firstNames} name="firstNames" required /></label>
+            <label className="field"><span>Apellidos</span><input defaultValue={cart.buyer?.lastNames} name="lastNames" required /></label>
+            <label className="field"><span>Teléfono</span><input defaultValue={cart.buyer?.phone} name="phone" required /></label>
+            <label className="field"><span>Correo</span><input defaultValue={cart.buyer?.email} name="email" required type="email" /></label>
+            <label className="field"><span>Dirección de contacto</span><input defaultValue={cart.buyer?.address} name="address" required /></label>
+            <div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en tienda</strong><span>Sucursal por confirmar con el local después de la compra.</span></div></div>
+            <label className="field field-full"><span>Notas opcionales</span><textarea name="notes" rows="3" /></label>
+            <button className="button button--primary field-full" disabled={status === "saving" || Boolean(requiresPrescription && cart.externalPrescription?.status !== "READY" && !cart.clinicalPrescriptionId)} type="submit">Continuar a Mercado Pago</button>
+          </form>
+        </article>
+      </section>
+      <aside className="cart-card cart-summary"><h2>Resumen</h2><dl><div><dt>Subtotal</dt><dd>{formatClp(cart.subtotalCents)}</dd></div><div><dt>Retiro</dt><dd>Sin costo</dd></div><div><dt>Total</dt><dd>{formatClp(cart.totalCents)}</dd></div></dl><p><Icon name="shield" size={17} /> Pago real procesado por Mercado Pago.</p>{error && <div className="inline-error">{error}</div>}{notice && <div className="inline-success">{notice}</div>}</aside>
+    </div>
   </main>;
 }
