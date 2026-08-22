@@ -20,25 +20,37 @@ function mapSaleBase(row) {
     id: row.id,
     discountCents: Number(row.discount_cents ?? 0),
     discountReason: row.discount_reason,
+    discount: Number(row.discount_cents) > 0 ? {
+      amountCents: Number(row.discount_cents),
+      authorizedAt: row.discount_authorized_at,
+      authorizedBy: row.discount_authorized_by ? {
+        firstName: row.discount_authorizer_first_name,
+        id: row.discount_authorized_by,
+        lastName: row.discount_authorizer_last_name,
+      } : null,
+      reason: row.discount_reason,
+    } : null,
     origin: row.origin,
     paidCents,
     paymentMethod: row.payment_method,
-    fulfillment: row.fulfillment_method
-      ? {
-          address: row.delivery_address,
-          city: row.delivery_city,
-          method: row.fulfillment_method,
-          notes: row.delivery_notes,
-          region: row.delivery_region,
-        }
-      : null,
-    externalPrescription: row.external_prescription_id
-      ? {
-          id: row.external_prescription_id,
-          source: row.external_prescription_source,
-          status: row.external_prescription_status,
-        }
-      : null,
+    fulfillment: row.fulfillment_method ? {
+      address: row.delivery_address,
+      city: row.delivery_city,
+      method: row.fulfillment_method,
+      notes: row.delivery_notes,
+      region: row.delivery_region,
+    } : null,
+    externalPrescription: row.external_prescription_id ? {
+      id: row.external_prescription_id,
+      source: row.external_prescription_source,
+      status: row.external_prescription_status,
+    } : null,
+    patient: row.sale_patient_id ? {
+      firstNames: row.sale_patient_first_names,
+      id: row.sale_patient_id,
+      lastNames: row.sale_patient_last_names,
+      rut: row.sale_patient_rut,
+    } : null,
     prescription: row.prescription_id
       ? {
           id: row.prescription_id,
@@ -53,6 +65,14 @@ function mapSaleBase(row) {
         }
       : null,
     saleNumber: Number(row.sale_number),
+    quotationValidUntil: row.quotation_valid_until,
+    receipt: row.receipt_id ? {
+      emailStatus: row.receipt_email_status,
+      emailedTo: row.receipt_emailed_to,
+      id: row.receipt_id,
+      issuedAt: row.receipt_issued_at,
+      receiptNumber: Number(row.receipt_number),
+    } : null,
     status: row.status,
     shippingFeeCents: Number(row.shipping_fee_cents),
     shippingQuoteSource: row.shipping_quote_source,
@@ -76,8 +96,19 @@ const SALE_SELECT = `
     patients.rut AS patient_rut,
     patients.first_names AS patient_first_names,
     patients.last_names AS patient_last_names,
+    sale_patients.id AS sale_patient_id,
+    sale_patients.rut AS sale_patient_rut,
+    sale_patients.first_names AS sale_patient_first_names,
+    sale_patients.last_names AS sale_patient_last_names,
+    discount_authorizer.first_name AS discount_authorizer_first_name,
+    discount_authorizer.last_name AS discount_authorizer_last_name,
     external_prescriptions.source AS external_prescription_source,
     external_prescriptions.status AS external_prescription_status,
+    sale_receipts.id AS receipt_id,
+    sale_receipts.receipt_number,
+    sale_receipts.emailed_to AS receipt_emailed_to,
+    sale_receipts.email_status AS receipt_email_status,
+    sale_receipts.issued_at AS receipt_issued_at,
     COALESCE((
       SELECT SUM(sale_payments.amount_cents)
       FROM sale_payments
@@ -91,6 +122,10 @@ const SALE_SELECT = `
     ON external_prescriptions.id = sales.external_prescription_id
   LEFT JOIN clinical_encounters ON clinical_encounters.id = optical_prescriptions.encounter_id
   LEFT JOIN patients ON patients.id = clinical_encounters.patient_id
+  LEFT JOIN patients AS sale_patients ON sale_patients.id = sales.patient_id
+  LEFT JOIN users AS discount_authorizer
+    ON discount_authorizer.id = sales.discount_authorized_by
+  LEFT JOIN sale_receipts ON sale_receipts.sale_id = sales.id
 `;
 
 async function findSaleWithClient(client, saleId) {
@@ -100,7 +135,7 @@ async function findSaleWithClient(client, saleId) {
   const sale = mapSaleBase(baseResult.rows[0]);
   if (!sale) return null;
 
-  const [itemsResult, paymentsResult] = await Promise.all([
+  const [itemsResult, paymentsResult, additionsResult] = await Promise.all([
     client.query(
       `SELECT * FROM sale_items WHERE sale_id = $1 ORDER BY position`,
       [saleId],
@@ -109,6 +144,12 @@ async function findSaleWithClient(client, saleId) {
       `SELECT id, amount_cents, payment_method, reference, received_by, paid_at,
               source, provider_attempt_id
        FROM sale_payments WHERE sale_id = $1 ORDER BY paid_at, id`,
+      [saleId],
+    ),
+    client.query(
+      `SELECT id, name, description, position, quantity, unit_price_cents,
+              line_total_cents
+       FROM sale_optical_additions WHERE sale_id = $1 ORDER BY position`,
       [saleId],
     ),
   ]);
@@ -125,6 +166,15 @@ async function findSaleWithClient(client, saleId) {
       quantity: row.quantity,
       requiresPrescription: row.requires_prescription,
       sku: row.product_sku,
+      unitPriceCents: Number(row.unit_price_cents),
+    })),
+    opticalAdditions: additionsResult.rows.map((row) => ({
+      description: row.description,
+      id: row.id,
+      lineTotalCents: Number(row.line_total_cents),
+      name: row.name,
+      position: row.position,
+      quantity: row.quantity,
       unitPriceCents: Number(row.unit_price_cents),
     })),
     payments: paymentsResult.rows.map((row) => ({
@@ -154,6 +204,14 @@ async function loadDraftReferences(client, draft) {
   );
   if (customerResult.rowCount === 0) return { reason: "CUSTOMER_NOT_FOUND" };
 
+  if (draft.patientId) {
+    const patientResult = await client.query(
+      "SELECT id FROM patients WHERE id = $1 FOR SHARE",
+      [draft.patientId],
+    );
+    if (patientResult.rowCount === 0) return { reason: "PATIENT_NOT_FOUND" };
+  }
+
   const productResult = await client.query(
     `SELECT id, sku, name, category, requires_prescription, unit_price_cents, is_active
      FROM products WHERE id = ANY($1::UUID[]) FOR SHARE`,
@@ -169,7 +227,8 @@ async function loadDraftReferences(client, draft) {
   if (draft.prescriptionId) {
     const prescriptionResult = await client.query(
       `SELECT optical_prescriptions.id, optical_prescriptions.status,
-              clinical_encounters.status AS encounter_status
+              clinical_encounters.status AS encounter_status,
+              clinical_encounters.patient_id
        FROM optical_prescriptions
        JOIN clinical_encounters ON clinical_encounters.id = optical_prescriptions.encounter_id
        WHERE optical_prescriptions.id = $1 FOR SHARE OF optical_prescriptions, clinical_encounters`,
@@ -183,11 +242,14 @@ async function loadDraftReferences(client, draft) {
     ) {
       return { reason: "PRESCRIPTION_NOT_USABLE" };
     }
+    if (prescription.patient_id !== draft.patientId) {
+      return { reason: "PRESCRIPTION_PATIENT_MISMATCH" };
+    }
   }
 
   if (draft.externalPrescriptionId) {
     const result = await client.query(
-      `SELECT id, status, customer_id
+      `SELECT id, status, customer_id, patient_id
        FROM external_prescriptions
        WHERE id = $1 FOR SHARE`,
       [draft.externalPrescriptionId],
@@ -197,16 +259,17 @@ async function loadDraftReferences(client, draft) {
       return { reason: "EXTERNAL_PRESCRIPTION_NOT_FOUND" };
     if (
       externalPrescription.status !== "READY" ||
-      externalPrescription.customer_id !== draft.customerId
+      externalPrescription.customer_id !== draft.customerId ||
+      externalPrescription.patient_id !== draft.patientId
     ) {
       return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE" };
     }
   }
 
   if (
-    productResult.rows.some((product) => product.requires_prescription) &&
-    !prescription &&
-    !externalPrescription
+    productResult.rows.some((product) => product.requires_prescription)
+    && !prescription
+    && !externalPrescription
   ) {
     return { reason: "PRESCRIPTION_REQUIRED" };
   }
@@ -219,18 +282,25 @@ async function loadDraftReferences(client, draft) {
     position: index + 1,
     quantity: item.quantity,
   }));
-  const subtotalCents = lines.reduce(
+  const productSubtotalCents = lines.reduce(
     (total, line) => total + Number(line.unit_price_cents) * line.quantity,
     0,
   );
-  if (draft.discountCents >= subtotalCents) {
-    return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL" };
-  }
+  const additionsSubtotalCents = draft.opticalAdditions.reduce(
+    (total, addition) => total + addition.unitPriceCents * addition.quantity,
+    0,
+  );
+  const subtotalCents = productSubtotalCents + additionsSubtotalCents;
+  const discountCents = draft.discount?.amountCents ?? 0;
+  if (discountCents >= subtotalCents) return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL" };
   return {
+    additionsSubtotalCents,
+    discountCents,
     lines,
+    productSubtotalCents,
     reason: null,
     subtotalCents,
-    totalCents: subtotalCents - draft.discountCents,
+    totalCents: subtotalCents - discountCents,
   };
 }
 
@@ -254,6 +324,31 @@ async function insertItems(client, saleId, lines) {
       ],
     );
   }
+}
+
+async function insertOpticalAdditions(client, saleId, additions) {
+  for (const [index, addition] of additions.entries()) {
+    await client.query(
+      `INSERT INTO sale_optical_additions (
+         sale_id, name, description, position, quantity, unit_price_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [saleId, addition.name, addition.description, index + 1,
+        addition.quantity, addition.unitPriceCents],
+    );
+  }
+}
+
+async function insertDiscountEvent(client, saleId, draft, actorUserId, status = "QUOTATION") {
+  if (!draft.discount) return;
+  await insertSaleEvent(client, saleId, "DISCOUNT_AUTHORIZED", actorUserId, {
+    details: {
+      amountCents: draft.discount.amountCents,
+      authorizedBy: draft.discount.authorizedBy,
+      reason: draft.discount.reason,
+    },
+    newStatus: status,
+    previousStatus: status,
+  });
 }
 
 async function insertSaleEvent(
@@ -285,33 +380,35 @@ export async function createSale(draft, actorUserId) {
 
     const saleResult = await client.query(
       `INSERT INTO sales (
-         customer_id, prescription_id, external_prescription_id,
-         subtotal_cents, discount_cents,
-         discount_reason, total_cents,
-         created_by, updated_by
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8) RETURNING id`,
-      [
-        draft.customerId,
-        draft.prescriptionId,
-        draft.externalPrescriptionId,
-        references.subtotalCents,
-        draft.discountCents,
-        draft.discountReason,
-        references.totalCents,
-        actorUserId,
-      ],
+         customer_id, patient_id, prescription_id, external_prescription_id,
+         subtotal_cents, discount_cents, discount_reason,
+         discount_authorized_by, discount_authorized_at, total_cents,
+         quotation_valid_until, created_by, updated_by
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+         CURRENT_TIMESTAMP + INTERVAL '30 days', $11, $11
+       ) RETURNING id`,
+      [draft.customerId, draft.patientId, draft.prescriptionId,
+        draft.externalPrescriptionId, references.subtotalCents,
+        references.discountCents, draft.discount?.reason ?? null,
+        draft.discount?.authorizedBy ?? null, draft.discount?.authorizedAt ?? null,
+        references.totalCents, actorUserId],
     );
     const saleId = saleResult.rows[0].id;
     await insertItems(client, saleId, references.lines);
+    await insertOpticalAdditions(client, saleId, draft.opticalAdditions);
     await insertSaleEvent(client, saleId, "CREATED", actorUserId, {
       details: {
-        discountCents: draft.discountCents,
-        discountReason: draft.discountReason,
+        additionsSubtotalCents: references.additionsSubtotalCents,
+        discountCents: references.discountCents,
+        discountReason: draft.discount?.reason ?? null,
+        productSubtotalCents: references.productSubtotalCents,
         subtotalCents: references.subtotalCents,
         totalCents: references.totalCents,
       },
       newStatus: "QUOTATION",
     });
+    await insertDiscountEvent(client, saleId, draft, actorUserId);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -330,34 +427,32 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
     if (references.reason) return { reason: references.reason, sale: null };
 
     await client.query("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
+    await client.query("DELETE FROM sale_optical_additions WHERE sale_id = $1", [saleId]);
     await client.query(
-      `UPDATE sales SET customer_id = $2, prescription_id = $3,
-         external_prescription_id = $4, subtotal_cents = $5,
-         discount_cents = $6, discount_reason = $7,
-         total_cents = $8, updated_by = $9 WHERE id = $1`,
-      [
-        saleId,
-        draft.customerId,
-        draft.prescriptionId,
-        draft.externalPrescriptionId,
-        references.subtotalCents,
-        draft.discountCents,
-        draft.discountReason,
-        references.totalCents,
-        actorUserId,
-      ],
+      `UPDATE sales SET customer_id = $2, patient_id = $3, prescription_id = $4,
+         external_prescription_id = $5, subtotal_cents = $6,
+         discount_cents = $7, discount_reason = $8,
+         discount_authorized_by = $9, discount_authorized_at = $10,
+         total_cents = $11, updated_by = $12 WHERE id = $1`,
+      [saleId, draft.customerId, draft.patientId, draft.prescriptionId,
+        draft.externalPrescriptionId, references.subtotalCents,
+        references.discountCents, draft.discount?.reason ?? null,
+        draft.discount?.authorizedBy ?? null, draft.discount?.authorizedAt ?? null,
+        references.totalCents, actorUserId],
     );
     await insertItems(client, saleId, references.lines);
+    await insertOpticalAdditions(client, saleId, draft.opticalAdditions);
     await insertSaleEvent(client, saleId, "UPDATED", actorUserId, {
       details: {
-        discountCents: draft.discountCents,
-        discountReason: draft.discountReason,
+        discountCents: references.discountCents,
+        discountReason: draft.discount?.reason ?? null,
         subtotalCents: references.subtotalCents,
         totalCents: references.totalCents,
       },
       previousStatus: "QUOTATION",
       newStatus: "QUOTATION",
     });
+    await insertDiscountEvent(client, saleId, draft, actorUserId);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -365,13 +460,17 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
 export async function confirmSale(saleId, actorUserId) {
   return executeTransaction(async (client) => {
     const saleResult = await client.query(
-      "SELECT status, prescription_id, external_prescription_id, customer_id FROM sales WHERE id = $1 FOR UPDATE",
+      `SELECT status, customer_id, patient_id, prescription_id, external_prescription_id,
+              quotation_valid_until
+       FROM sales WHERE id = $1 FOR UPDATE`,
       [saleId],
     );
     const sale = saleResult.rows[0];
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
-    if (sale.status !== "QUOTATION")
-      return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
+    if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
+    if (sale.quotation_valid_until && sale.quotation_valid_until < new Date()) {
+      return { reason: "QUOTATION_EXPIRED", sale: null };
+    }
     const productsResult = await client.query(
       `SELECT sale_items.requires_prescription, products.is_active
        FROM sale_items JOIN products ON products.id = sale_items.product_id
@@ -382,15 +481,16 @@ export async function confirmSale(saleId, actorUserId) {
       return { reason: "PRODUCT_INACTIVE", sale: null };
     }
     if (
-      productsResult.rows.some((product) => product.requires_prescription) &&
-      !sale.prescription_id &&
-      !sale.external_prescription_id
+      productsResult.rows.some((product) => product.requires_prescription)
+      && !sale.prescription_id
+      && !sale.external_prescription_id
     ) {
       return { reason: "PRESCRIPTION_REQUIRED", sale: null };
     }
     if (sale.prescription_id) {
       const prescriptionResult = await client.query(
-        `SELECT optical_prescriptions.status, clinical_encounters.status AS encounter_status
+        `SELECT optical_prescriptions.status, clinical_encounters.status AS encounter_status,
+                clinical_encounters.patient_id
          FROM optical_prescriptions JOIN clinical_encounters
            ON clinical_encounters.id = optical_prescriptions.encounter_id
          WHERE optical_prescriptions.id = $1 FOR SHARE OF optical_prescriptions, clinical_encounters`,
@@ -404,10 +504,13 @@ export async function confirmSale(saleId, actorUserId) {
       ) {
         return { reason: "PRESCRIPTION_NOT_USABLE", sale: null };
       }
+      if (prescription.patient_id !== sale.patient_id) {
+        return { reason: "PRESCRIPTION_PATIENT_MISMATCH", sale: null };
+      }
     }
     if (sale.external_prescription_id) {
       const result = await client.query(
-        `SELECT status, customer_id FROM external_prescriptions
+        `SELECT status, customer_id, patient_id FROM external_prescriptions
          WHERE id = $1 FOR SHARE`,
         [sale.external_prescription_id],
       );
@@ -415,7 +518,8 @@ export async function confirmSale(saleId, actorUserId) {
       if (
         !prescription ||
         prescription.status !== "READY" ||
-        prescription.customer_id !== sale.customer_id
+        prescription.customer_id !== sale.customer_id ||
+        prescription.patient_id !== sale.patient_id
       ) {
         return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE", sale: null };
       }
@@ -587,11 +691,199 @@ export async function listSaleEvents(saleId) {
   );
   return result.rows.map((row) => ({
     createdAt: row.created_at,
-    details: row.details ? JSON.parse(row.details) : null,
+    details: typeof row.details === "string" ? JSON.parse(row.details) : row.details,
     eventType: row.event_type,
     id: Number(row.id),
     newStatus: row.new_status,
     performedBy: row.performed_by,
     previousStatus: row.previous_status,
   }));
+}
+
+function mapReceipt(row) {
+  if (!row) return null;
+  return {
+    emailError: row.email_error,
+    emailProviderId: row.email_provider_id,
+    emailStatus: row.email_status,
+    emailedTo: row.emailed_to,
+    id: row.id,
+    issuedAt: row.issued_at,
+    payload: row.payload,
+    receiptNumber: Number(row.receipt_number),
+    saleId: row.sale_id,
+  };
+}
+
+export async function issueSaleReceipt(saleId, email, actorUserId) {
+  return executeTransaction(async (client) => {
+    const lockedResult = await client.query(
+      "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
+      [saleId],
+    );
+    const locked = lockedResult.rows[0];
+    if (!locked) return { reason: "SALE_NOT_FOUND", receipt: null };
+    if (["QUOTATION", "CANCELLED"].includes(locked.status)) {
+      return { reason: "RECEIPT_NOT_AVAILABLE", receipt: null };
+    }
+
+    const existingResult = await client.query(
+      "SELECT * FROM sale_receipts WHERE sale_id = $1",
+      [saleId],
+    );
+    if (existingResult.rows[0]) {
+      return { reason: null, receipt: mapReceipt(existingResult.rows[0]) };
+    }
+
+    const sale = await findSaleWithClient(client, saleId);
+    const emailedTo = email ?? sale.customer.email;
+    const payload = {
+      additions: sale.opticalAdditions,
+      balanceCents: sale.balanceCents,
+      customer: sale.customer,
+      discount: sale.discount,
+      items: sale.items,
+      paidCents: sale.paidCents,
+      patient: sale.patient,
+      paymentMethod: sale.paymentMethod,
+      payments: sale.payments,
+      saleNumber: sale.saleNumber,
+      status: sale.status,
+      subtotalCents: sale.subtotalCents,
+      totalCents: sale.totalCents,
+    };
+    const result = await client.query(
+      `INSERT INTO sale_receipts (
+         sale_id, payload, emailed_to, generated_by
+       ) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [saleId, payload, emailedTo, actorUserId],
+    );
+    await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
+      details: { receiptNumber: Number(result.rows[0].receipt_number) },
+      newStatus: sale.status,
+      previousStatus: sale.status,
+    });
+    return { reason: null, receipt: mapReceipt(result.rows[0]) };
+  });
+}
+
+export async function updateReceiptEmailDelivery(
+  receiptId,
+  { error = null, providerId = null, status },
+  actorUserId,
+) {
+  return executeTransaction(async (client) => {
+    const result = await client.query(
+      `UPDATE sale_receipts SET email_status = $2, email_provider_id = $3,
+         email_error = $4, email_updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 RETURNING *`,
+      [receiptId, status, providerId, error],
+    );
+    const receipt = result.rows[0];
+    if (!receipt) return null;
+    await insertSaleEvent(
+      client,
+      receipt.sale_id,
+      status === "FAILED" ? "EMAIL_FAILED" : "EMAIL_SENT",
+      actorUserId,
+      {
+        details: { emailedTo: receipt.emailed_to, providerId, status },
+      },
+    );
+    return mapReceipt(receipt);
+  });
+}
+
+export async function findReceiptBySaleId(saleId) {
+  const result = await executeQuery(
+    "SELECT * FROM sale_receipts WHERE sale_id = $1",
+    [saleId],
+  );
+  return mapReceipt(result.rows[0]);
+}
+
+export async function getSalesReport({ from, timeZone, to }) {
+  const dateFilter = `
+    sales.origin = 'IN_STORE'
+    AND (sales.created_at AT TIME ZONE $3)::date BETWEEN $1::date AND $2::date
+  `;
+  const [summaryResult, statusResult, paymentResult, dailyResult] = await Promise.all([
+    executeQuery(
+      `SELECT
+         COUNT(*) FILTER (WHERE status NOT IN ('QUOTATION', 'CANCELLED')) AS sale_count,
+         COUNT(*) FILTER (WHERE status = 'QUOTATION') AS quotation_count,
+         COALESCE(SUM(subtotal_cents) FILTER (
+           WHERE status NOT IN ('QUOTATION', 'CANCELLED')
+         ), 0) AS subtotal_cents,
+         COALESCE(SUM(discount_cents) FILTER (
+           WHERE status NOT IN ('QUOTATION', 'CANCELLED')
+         ), 0) AS discount_cents,
+         COALESCE(SUM(total_cents) FILTER (
+           WHERE status NOT IN ('QUOTATION', 'CANCELLED')
+         ), 0) AS total_cents,
+         COALESCE(SUM(CASE
+           WHEN status NOT IN ('QUOTATION', 'CANCELLED') THEN
+             GREATEST(total_cents - COALESCE((
+               SELECT SUM(amount_cents) FROM sale_payments
+               WHERE sale_payments.sale_id = sales.id
+             ), 0), 0)
+           ELSE 0 END), 0) AS balance_cents
+       FROM sales WHERE ${dateFilter}`,
+      [from, to, timeZone],
+    ),
+    executeQuery(
+      `SELECT status, COUNT(*) AS count, COALESCE(SUM(total_cents), 0) AS total_cents
+       FROM sales WHERE ${dateFilter}
+       GROUP BY status ORDER BY status`,
+      [from, to, timeZone],
+    ),
+    executeQuery(
+      `SELECT sale_payments.payment_method,
+              COUNT(*) AS payment_count,
+              COALESCE(SUM(sale_payments.amount_cents), 0) AS paid_cents
+       FROM sale_payments
+       JOIN sales ON sales.id = sale_payments.sale_id
+       WHERE ${dateFilter}
+       GROUP BY sale_payments.payment_method
+       ORDER BY sale_payments.payment_method`,
+      [from, to, timeZone],
+    ),
+    executeQuery(
+      `SELECT (sales.created_at AT TIME ZONE $3)::date AS date,
+              COUNT(*) AS sale_count,
+              COALESCE(SUM(total_cents), 0) AS total_cents
+       FROM sales
+       WHERE ${dateFilter} AND status NOT IN ('QUOTATION', 'CANCELLED')
+       GROUP BY date ORDER BY date`,
+      [from, to, timeZone],
+    ),
+  ]);
+  const summary = summaryResult.rows[0];
+  return {
+    daily: dailyResult.rows.map((row) => ({
+      date: row.date,
+      saleCount: Number(row.sale_count),
+      totalCents: Number(row.total_cents),
+    })),
+    from,
+    payments: paymentResult.rows.map((row) => ({
+      paidCents: Number(row.paid_cents),
+      paymentCount: Number(row.payment_count),
+      paymentMethod: row.payment_method,
+    })),
+    statuses: statusResult.rows.map((row) => ({
+      count: Number(row.count),
+      status: row.status,
+      totalCents: Number(row.total_cents),
+    })),
+    summary: {
+      balanceCents: Number(summary.balance_cents),
+      discountCents: Number(summary.discount_cents),
+      quotationCount: Number(summary.quotation_count),
+      saleCount: Number(summary.sale_count),
+      subtotalCents: Number(summary.subtotal_cents),
+      totalCents: Number(summary.total_cents),
+    },
+    to,
+  };
 }
