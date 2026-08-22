@@ -2,6 +2,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
 import { getSchedulingTimeZone } from "../config/scheduling.js";
+import { getAppointmentReminderHours } from "../config/transactional-email.js";
 import { createPublicBooking as createPublicBookingRepository } from "../repositories/appointment-repository.js";
 import { findProfessionalById, listProfessionalProfiles } from "../repositories/professional-repository.js";
 import { AppError } from "../utils/app-error.js";
@@ -76,13 +77,19 @@ export async function createPublicBooking(input, dependencies = {}) {
   if (!slot) throwUnavailableSlot();
 
   const manageToken = (dependencies.createManageToken ?? createSessionToken)();
-  const result = await (dependencies.createPublicBooking ?? createPublicBookingRepository)({
-    endAt: new Date(slot.endAt),
-    manageTokenHash: (dependencies.hashManageToken ?? hashSessionToken)(manageToken),
-    patient: data.patient,
-    professionalId: data.professionalId,
-    startAt: data.startAt,
-  });
+  const result = await (dependencies.createPublicBooking ?? createPublicBookingRepository)(
+    {
+      endAt: new Date(slot.endAt),
+      manageTokenHash: (dependencies.hashManageToken ?? hashSessionToken)(manageToken),
+      patient: data.patient,
+      professionalId: data.professionalId,
+      startAt: data.startAt,
+    },
+    {
+      reminderHours: dependencies.reminderHours
+        ?? getAppointmentReminderHours(dependencies.environment),
+    },
+  );
 
   if (result.conflict === "IDENTITY") {
     throw new AppError({
