@@ -284,8 +284,10 @@
 }
 .productPhoto {
   box-sizing: border-box;
+  mix-blend-mode: multiply;
   object-fit: contain;
-  padding: 1rem;
+  padding: 0.7rem;
+  transform: scale(1.1);
 }
 .frameVisual {
   align-items: center;

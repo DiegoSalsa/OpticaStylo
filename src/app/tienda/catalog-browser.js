@@ -60,7 +60,6 @@ export default function CatalogBrowser({ initialCategory = "" }) {
     });
     if (sort === "price-asc") return filtered.toSorted((a, b) => a.unitPriceCents - b.unitPriceCents);
     if (sort === "price-desc") return filtered.toSorted((a, b) => b.unitPriceCents - a.unitPriceCents);
-    if (sort === "name") return filtered.toSorted((a, b) => a.name.localeCompare(b.name, "es"));
     return filtered;
   }, [availability, prescription, result.items, sort]);
 
@@ -79,8 +78,8 @@ export default function CatalogBrowser({ initialCategory = "" }) {
     </aside>
 
     <section aria-busy={status === "loading"} className={styles.results}>
-      <form className={styles.search} onSubmit={submitSearch} role="search"><Icon name="search" /><label className="sr-only" htmlFor="catalog-search">Buscar productos</label><input id="catalog-search" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o código" type="search" value={query} /><button type="submit">Buscar</button></form>
-      <div className={styles.toolbar}><p><strong>{status === "ready" ? visibleItems.length : "—"}</strong> {status === "ready" ? "productos visibles" : "Cargando catálogo"}</p><div><label><span>Ordenar por</span><select onChange={(event) => setSort(event.target.value)} value={sort}><option value="featured">Publicados</option><option value="price-asc">Precio: menor a mayor</option><option value="price-desc">Precio: mayor a menor</option><option value="name">Nombre</option></select></label><div className={styles.viewSwitch}><button aria-label="Vista en cuadrícula" aria-pressed={view === "grid"} onClick={() => setView("grid")} type="button">▦</button><button aria-label="Vista en lista" aria-pressed={view === "list"} onClick={() => setView("list")} type="button">☰</button></div></div></div>
+      <form className={styles.search} onSubmit={submitSearch} role="search"><Icon name="search" /><label className="sr-only" htmlFor="catalog-search">Buscar productos</label><input id="catalog-search" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por modelo, marca o característica..." type="search" value={query} /><button type="submit">Buscar</button></form>
+      <div className={styles.toolbar}><p>{status === "ready" ? <>Mostrando <strong>{result.total}</strong> productos</> : "Cargando catálogo"}</p><div><label><span>Ordenar por</span><select onChange={(event) => setSort(event.target.value)} value={sort}><option value="featured">Recomendados</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option><option value="newest">Novedades</option></select></label><div className={styles.viewSwitch}><button aria-label="Vista en cuadrícula" aria-pressed={view === "grid"} onClick={() => setView("grid")} type="button">▦</button><button aria-label="Vista en lista" aria-pressed={view === "list"} onClick={() => setView("list")} type="button">☰</button></div></div></div>
       {status === "loading" && <div className={styles.productGrid}>{Array.from({ length: 6 }, (_, index) => <div className={styles.skeleton} key={index} />)}</div>}
       {status === "error" && <div className={styles.state}><span><Icon name="shield" size={28} /></span><h2>No pudimos cargar el catálogo</h2><p>{error}</p><button className="button button--primary" onClick={retry} type="button">Intentar nuevamente</button></div>}
       {status === "ready" && visibleItems.length === 0 && <div className={styles.state}><span><Icon name="search" size={28} /></span><h2>No encontramos productos</h2><p>Prueba con otra búsqueda o cambia los filtros disponibles.</p><button className="button button--secondary" onClick={clearFilters} type="button">Limpiar filtros</button></div>}

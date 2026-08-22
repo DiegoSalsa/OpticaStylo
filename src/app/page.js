@@ -13,21 +13,16 @@ const stitchImages = {
   tryOn: "/images/stitch-home/virtual-try-on.webp",
 };
 
-const experienceCards = [
+const googleReviewsUrl = "https://share.google/0NzlsLf7lxhfWjJes";
+
+const highlightedGoogleReviews = [
   {
-    icon: "calendar",
-    title: "Reserva en línea",
-    text: "Elige una hora disponible y recibe la confirmación de tu reserva.",
+    author: "Boris Astudillo",
+    text: "Excelente servicio, ayer enviamos hacer unos lentes opticos que necesitabamos con urgencia, y la respuesta fue en menos de 24Hrs. Ya somos clientes por precio y calidad, ya son varias años que seguimos confiando en ellos. 100% recomendados. Tienen lentes para toda la familia.",
   },
   {
-    icon: "file",
-    title: "Recetas externas",
-    text: "Puedes comprar con una receta emitida aquí o en cualquier otro centro.",
-  },
-  {
-    icon: "cart",
-    title: "Compra flexible",
-    text: "Compra con cuenta o como invitado y conserva tu carrito durante el proceso.",
+    author: "monica vasquez",
+    text: "Excelente experiencia de compra, buena atención, empaticos con su clientela",
   },
 ];
 
@@ -47,6 +42,7 @@ export default function HomePage() {
           />
           <div className={styles.heroShade} />
           <div className={styles.heroCopy}>
+            <span className={styles.heroKicker}>Nueva colección 2024</span>
             <h1>
               <span>Mira el mundo</span>
               <span>con tu mejor</span>
@@ -135,7 +131,7 @@ export default function HomePage() {
               </div>
               <div className={styles.cardCopy}>
                 <h3>Tratamientos</h3>
-                <p>Alternativas ópticas disponibles</p>
+                <p>Filtro UV y Azul</p>
               </div>
             </Link>
             <Link
@@ -156,7 +152,10 @@ export default function HomePage() {
         <section className={styles.products} aria-labelledby="favorites-title">
           <div className={styles.centerHeading}>
             <h2 id="favorites-title">Los favoritos de la semana</h2>
-            <p>Productos publicados en el catálogo real de Óptica Stylo.</p>
+            <p>
+              Seleccionados por nuestros especialistas para brindarte el mejor
+              confort y estilo.
+            </p>
           </div>
           <FeaturedProducts />
           <div className={styles.centerAction}>
@@ -239,8 +238,8 @@ export default function HomePage() {
             </span>
             <h3>Evaluación Oftalmológica</h3>
             <p>
-              Agenda una hora disponible para tu evaluación visual directamente
-              desde la web.
+              Agenda tu cita con nuestros especialistas en nuestra sucursal.
+              Evaluación completa para asegurar tu salud visual.
             </p>
             <Link href="/reservar">
               Reserva de hora <Icon name="calendar" size={15} />
@@ -252,10 +251,10 @@ export default function HomePage() {
                 <Icon name="file" size={21} />
               </span>
               <div>
-                <h3>Recetas de cualquier centro</h3>
+                <h3>Convenios y Reembolsos</h3>
                 <p>
-                  No necesitas atenderte aquí para comprar. Puedes adjuntar o
-                  ingresar una receta externa.
+                  Trabajamos con las principales Isapres y seguros
+                  complementarios. Te ayudamos a gestionar tu reembolso.
                 </p>
               </div>
             </article>
@@ -264,36 +263,46 @@ export default function HomePage() {
                 <Icon name="cart" size={21} />
               </span>
               <div>
-                <h3>Compra con cuenta o invitado</h3>
+                <h3>Retiro en tienda o Despacho</h3>
                 <p>
-                  Elige la modalidad que prefieras y continúa tu compra desde el
-                  carrito.
+                  Retira gratis en nuestra red local o recibe tus lentes
+                  directamente en tu domicilio.
                 </p>
               </div>
             </article>
           </div>
         </section>
 
-        <section className={styles.experience}>
-          <div className={styles.centerHeading}>
-            <h2>Todo pensado para una compra más simple</h2>
-            <p>
-              Una experiencia conectada entre la reserva, la atención óptica y
-              la tienda.
-            </p>
+        <section className={styles.reviews} aria-labelledby="reviews-title">
+          <div className={styles.reviewsLead}>
+            <div>
+              <p>Opiniones de Google</p>
+              <h2 id="reviews-title">Lo que dicen nuestros clientes</h2>
+              <span>
+                Reseñas destacadas de 5 estrellas publicadas en Google.
+              </span>
+            </div>
+            <a href={googleReviewsUrl} rel="noreferrer" target="_blank">
+              Ver todas las opiniones <Icon name="arrow" size={16} />
+            </a>
           </div>
-          <div className={styles.experienceGrid}>
-            {experienceCards.map((item) => (
-              <article key={item.title}>
-                <span>
-                  <Icon name={item.icon} size={21} />
+          <div className={styles.reviewGrid}>
+            {highlightedGoogleReviews.map((review) => (
+              <article className={styles.reviewCard} key={review.author}>
+                <span className={styles.reviewStars} aria-hidden="true">
+                  ★★★★★
                 </span>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
+                <span className="sr-only">Calificación: 5 de 5 estrellas</span>
+                <blockquote>“{review.text}”</blockquote>
+                <footer>
+                  <strong>{review.author}</strong>
+                  <span>Opinión publicada en Google</span>
+                </footer>
               </article>
             ))}
           </div>
         </section>
+
       </main>
       <PublicFooter />
     </>
