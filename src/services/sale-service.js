@@ -3,6 +3,10 @@ import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { sendPurchaseConfirmation } from "../integrations/email/purchase-confirmation-sender.js";
 import {
+  beginDiscountAuthorizationAttempt,
+  completeDiscountAuthorizationAttempt,
+} from "../repositories/discount-authorization-repository.js";
+import {
   changeSaleStatus as changeSaleStatusRepository,
   confirmSale as confirmSaleRepository,
   createSale as createSaleRepository,
@@ -30,12 +34,14 @@ const REPOSITORY_ERRORS = Object.freeze({
   CUSTOMER_NOT_FOUND: ["CUSTOMER_NOT_FOUND", "No se encontró el cliente de la venta.", 404],
   DISCOUNT_EXCEEDS_SUBTOTAL: ["DISCOUNT_EXCEEDS_SUBTOTAL", "El descuento debe ser menor que el subtotal de la venta.", 409],
   DISCOUNT_EXCEEDS_TOTAL: ["DISCOUNT_EXCEEDS_TOTAL", "El descuento debe ser menor que el total de la venta.", 409],
+  RECEIPT_PAYMENT_REQUIRED: ["RECEIPT_PAYMENT_REQUIRED", "El comprobante de un abono debe identificar el pago registrado.", 409],
   EXTERNAL_PRESCRIPTION_NOT_FOUND: ["EXTERNAL_PRESCRIPTION_NOT_FOUND", "No se encontró la receta externa indicada.", 404],
   EXTERNAL_PRESCRIPTION_NOT_USABLE: ["EXTERNAL_PRESCRIPTION_NOT_USABLE", "La receta externa debe pertenecer al cliente y paciente de la venta.", 409],
   INVALID_STATUS_TRANSITION: ["INVALID_SALE_STATUS_TRANSITION", "La venta no admite ese cambio de estado.", 409],
   PATIENT_NOT_FOUND: ["PATIENT_NOT_FOUND", "No se encontró el paciente de la venta.", 404],
   PAYMENT_ATTEMPT_ACTIVE: ["PAYMENT_ATTEMPT_ACTIVE", "Existe un cobro electrónico pendiente para esta venta.", 409],
   PAYMENT_EXCEEDS_BALANCE: ["PAYMENT_EXCEEDS_BALANCE", "El abono supera el saldo pendiente.", 409],
+  PAYMENT_NOT_FOUND: ["PAYMENT_NOT_FOUND", "No se encontró el abono indicado para el comprobante.", 404],
   PAYMENT_METHOD_MISMATCH: ["PAYMENT_METHOD_MISMATCH", "Todos los abonos deben usar el mismo medio de pago.", 409],
   PRESCRIPTION_NOT_FOUND: ["PRESCRIPTION_NOT_FOUND", "No se encontró la receta indicada.", 404],
   PRESCRIPTION_NOT_USABLE: ["PRESCRIPTION_NOT_USABLE", "La receta debe estar activa y utilizable.", 409],
@@ -65,19 +71,47 @@ function unwrap(result) {
   return result.sale;
 }
 
-async function authorizeDraftDiscount(draft, dependencies) {
+async function authorizeDraftDiscount(draft, actor, dependencies) {
   if (!draft.discount) return draft;
   const findAuthorizer = dependencies.findDiscountAuthorizer ?? findUserForPermissionAuthorization;
   const passwordVerifier = dependencies.verifyPassword ?? verifyPassword;
-  const authorizer = await findAuthorizer(
-    draft.discount.authorizerEmail,
-    PERMISSIONS.SALES_DISCOUNTS_AUTHORIZE,
-  );
-  const passwordIsValid = authorizer
-    ? await passwordVerifier(draft.discount.authorizerPassword, authorizer.passwordHash)
-    : false;
-  const isLocked = authorizer?.lockedUntil && authorizer.lockedUntil > new Date();
-  if (!authorizer || !authorizer.isActive || isLocked || !passwordIsValid) {
+  const beginAttempt = dependencies.beginDiscountAuthorizationAttempt
+    ?? beginDiscountAuthorizationAttempt;
+  const completeAttempt = dependencies.completeDiscountAuthorizationAttempt
+    ?? completeDiscountAuthorizationAttempt;
+  const attempt = await beginAttempt({
+    attemptedBy: actor.userId,
+    authorizerEmail: draft.discount.authorizerEmail,
+  });
+  if (!attempt.allowed) {
+    throw new AppError({
+      code: "DISCOUNT_AUTHORIZATION_RATE_LIMITED",
+      message: "Se alcanzó el límite temporal de intentos para autorizar descuentos.",
+      status: 429,
+    });
+  }
+
+  let authorizer = null;
+  let authorized = false;
+  try {
+    authorizer = await findAuthorizer(
+      draft.discount.authorizerEmail,
+      PERMISSIONS.SALES_DISCOUNTS_AUTHORIZE,
+    );
+    const passwordIsValid = authorizer
+      ? await passwordVerifier(draft.discount.authorizerPassword, authorizer.passwordHash)
+      : false;
+    const isLocked = authorizer?.lockedUntil && authorizer.lockedUntil > new Date();
+    authorized = Boolean(
+      authorizer && authorizer.isActive && !isLocked && passwordIsValid,
+    );
+  } finally {
+    await completeAttempt(attempt.attemptId, {
+      authorizerUserId: authorizer?.id ?? null,
+      succeeded: authorized,
+    });
+  }
+  if (!authorized) {
     throw new AppError({
       code: "DISCOUNT_AUTHORIZATION_FAILED",
       message: "Las credenciales no permiten autorizar descuentos.",
@@ -97,7 +131,7 @@ async function authorizeDraftDiscount(draft, dependencies) {
 
 export async function createSale(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
-  const draft = await authorizeDraftDiscount(validateSaleDraftInput(input), dependencies);
+  const draft = await authorizeDraftDiscount(validateSaleDraftInput(input), actor, dependencies);
   return unwrap(await (dependencies.createSale ?? createSaleRepository)(draft, actor.userId));
 }
 
@@ -116,7 +150,7 @@ export async function getSaleList(searchParams, actor, dependencies = {}) {
 
 export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
-  const draft = await authorizeDraftDiscount(validateSaleDraftInput(input), dependencies);
+  const draft = await authorizeDraftDiscount(validateSaleDraftInput(input), actor, dependencies);
   return unwrap(await (dependencies.updateSaleDraft ?? updateSaleDraftRepository)(
     validateSaleId(saleId), draft, actor.userId,
   ));
@@ -152,9 +186,9 @@ export async function getSaleHistory(saleId, actor, dependencies = {}) {
 export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const id = validateSaleId(saleId);
-  const { email } = validateReceiptInput(input);
+  const receiptInput = validateReceiptInput(input);
   const result = await (dependencies.issueSaleReceipt ?? issueSaleReceiptRepository)(
-    id, email, actor.userId,
+    id, receiptInput, actor.userId,
   );
   if (result.reason) throwRepositoryReason(result.reason);
   let receipt = result.receipt;
@@ -174,10 +208,11 @@ export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) 
   return receipt;
 }
 
-export async function getSaleReceipt(saleId, actor, dependencies = {}) {
+export async function getSaleReceipt(saleId, receiptId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const receipt = await (dependencies.findReceiptBySaleId ?? findReceiptBySaleId)(
     validateSaleId(saleId),
+    receiptId ? validateSaleId(receiptId, "comprobante") : null,
   );
   if (!receipt) throwRepositoryReason("RECEIPT_NOT_AVAILABLE");
   return receipt;

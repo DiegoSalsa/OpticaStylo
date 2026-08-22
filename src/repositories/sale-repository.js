@@ -71,7 +71,9 @@ function mapSaleBase(row) {
       emailedTo: row.receipt_emailed_to,
       id: row.receipt_id,
       issuedAt: row.receipt_issued_at,
+      paymentId: row.receipt_payment_id,
       receiptNumber: Number(row.receipt_number),
+      type: row.receipt_type,
     } : null,
     status: row.status,
     shippingFeeCents: Number(row.shipping_fee_cents),
@@ -109,6 +111,8 @@ const SALE_SELECT = `
     sale_receipts.emailed_to AS receipt_emailed_to,
     sale_receipts.email_status AS receipt_email_status,
     sale_receipts.issued_at AS receipt_issued_at,
+    sale_receipts.payment_id AS receipt_payment_id,
+    sale_receipts.receipt_type,
     COALESCE((
       SELECT SUM(sale_payments.amount_cents)
       FROM sale_payments
@@ -125,7 +129,13 @@ const SALE_SELECT = `
   LEFT JOIN patients AS sale_patients ON sale_patients.id = sales.patient_id
   LEFT JOIN users AS discount_authorizer
     ON discount_authorizer.id = sales.discount_authorized_by
-  LEFT JOIN sale_receipts ON sale_receipts.sale_id = sales.id
+  LEFT JOIN LATERAL (
+    SELECT *
+    FROM sale_receipts
+    WHERE sale_receipts.sale_id = sales.id
+    ORDER BY sale_receipts.issued_at DESC, sale_receipts.receipt_number DESC
+    LIMIT 1
+  ) AS sale_receipts ON TRUE
 `;
 
 async function findSaleWithClient(client, saleId) {
@@ -141,9 +151,19 @@ async function findSaleWithClient(client, saleId) {
       [saleId],
     ),
     client.query(
-      `SELECT id, amount_cents, payment_method, reference, received_by, paid_at,
-              source, provider_attempt_id
-       FROM sale_payments WHERE sale_id = $1 ORDER BY paid_at, id`,
+      `SELECT sale_payments.id, sale_payments.amount_cents,
+              sale_payments.payment_method, sale_payments.reference,
+              sale_payments.received_by, sale_payments.paid_at,
+              sale_payments.source, sale_payments.provider_attempt_id,
+              sale_receipts.id AS receipt_id,
+              sale_receipts.receipt_number,
+              sale_receipts.email_status AS receipt_email_status,
+              sale_receipts.issued_at AS receipt_issued_at,
+              sale_receipts.receipt_type
+       FROM sale_payments
+       LEFT JOIN sale_receipts ON sale_receipts.payment_id = sale_payments.id
+       WHERE sale_payments.sale_id = $1
+       ORDER BY sale_payments.paid_at, sale_payments.id`,
       [saleId],
     ),
     client.query(
@@ -184,6 +204,13 @@ async function findSaleWithClient(client, saleId) {
       paymentMethod: row.payment_method,
       providerAttemptId: row.provider_attempt_id,
       receivedBy: row.received_by,
+      receipt: row.receipt_id ? {
+        emailStatus: row.receipt_email_status,
+        id: row.receipt_id,
+        issuedAt: row.receipt_issued_at,
+        receiptNumber: Number(row.receipt_number),
+        type: row.receipt_type,
+      } : null,
       reference: row.reference,
       source: row.source,
     })),
@@ -709,13 +736,30 @@ function mapReceipt(row) {
     emailedTo: row.emailed_to,
     id: row.id,
     issuedAt: row.issued_at,
+    paymentId: row.payment_id,
     payload: row.payload,
     receiptNumber: Number(row.receipt_number),
     saleId: row.sale_id,
+    type: row.receipt_type,
   };
 }
 
-export async function issueSaleReceipt(saleId, email, actorUserId) {
+export function buildPaymentReceiptSnapshot(sale, paymentId) {
+  if (!paymentId) return null;
+  const paymentIndex = sale.payments.findIndex((payment) => payment.id === paymentId);
+  if (paymentIndex === -1) return null;
+  const payments = sale.payments.slice(0, paymentIndex + 1);
+  const paidCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
+  return {
+    balanceCents: sale.totalCents - paidCents,
+    paidCents,
+    payment: payments.at(-1),
+    payments,
+    type: paidCents === sale.totalCents ? "FINAL" : "PAYMENT",
+  };
+}
+
+export async function issueSaleReceipt(saleId, request, actorUserId) {
   return executeTransaction(async (client) => {
     const lockedResult = await client.query(
       "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
@@ -727,39 +771,61 @@ export async function issueSaleReceipt(saleId, email, actorUserId) {
       return { reason: "RECEIPT_NOT_AVAILABLE", receipt: null };
     }
 
+    const sale = await findSaleWithClient(client, saleId);
+    const snapshot = buildPaymentReceiptSnapshot(sale, request.paymentId);
+    if (request.paymentId && !snapshot) {
+      return { reason: "PAYMENT_NOT_FOUND", receipt: null };
+    }
+    if (!snapshot && sale.status === "PENDING") {
+      return { reason: "RECEIPT_PAYMENT_REQUIRED", receipt: null };
+    }
+    const receiptType = snapshot?.type ?? "FINAL";
     const existingResult = await client.query(
-      "SELECT * FROM sale_receipts WHERE sale_id = $1",
-      [saleId],
+      `SELECT * FROM sale_receipts
+       WHERE sale_id = $1
+         AND (
+           ($2::UUID IS NOT NULL AND payment_id = $2)
+           OR ($3 = 'FINAL' AND receipt_type = 'FINAL')
+         )
+       ORDER BY issued_at DESC, receipt_number DESC
+       LIMIT 1`,
+      [saleId, request.paymentId, receiptType],
     );
     if (existingResult.rows[0]) {
       return { reason: null, receipt: mapReceipt(existingResult.rows[0]) };
     }
 
-    const sale = await findSaleWithClient(client, saleId);
-    const emailedTo = email ?? sale.customer.email;
+    const emailedTo = request.email ?? sale.customer.email;
+    const paidCents = snapshot?.paidCents ?? sale.paidCents;
+    const balanceCents = snapshot?.balanceCents ?? sale.balanceCents;
     const payload = {
       additions: sale.opticalAdditions,
-      balanceCents: sale.balanceCents,
+      balanceCents,
       customer: sale.customer,
       discount: sale.discount,
       items: sale.items,
-      paidCents: sale.paidCents,
+      paidCents,
       patient: sale.patient,
-      paymentMethod: sale.paymentMethod,
-      payments: sale.payments,
+      payment: snapshot?.payment ?? sale.payments.at(-1) ?? null,
+      paymentMethod: snapshot?.payment.paymentMethod ?? sale.paymentMethod,
+      payments: snapshot?.payments ?? sale.payments,
       saleNumber: sale.saleNumber,
-      status: sale.status,
+      status: balanceCents === 0 ? "PAID" : "PENDING",
       subtotalCents: sale.subtotalCents,
       totalCents: sale.totalCents,
     };
     const result = await client.query(
       `INSERT INTO sale_receipts (
-         sale_id, payload, emailed_to, generated_by
-       ) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [saleId, payload, emailedTo, actorUserId],
+         sale_id, payment_id, receipt_type, payload, emailed_to, generated_by
+       ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [saleId, request.paymentId, receiptType, payload, emailedTo, actorUserId],
     );
     await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
-      details: { receiptNumber: Number(result.rows[0].receipt_number) },
+      details: {
+        paymentId: request.paymentId,
+        receiptNumber: Number(result.rows[0].receipt_number),
+        receiptType,
+      },
       newStatus: sale.status,
       previousStatus: sale.status,
     });
@@ -784,7 +850,11 @@ export async function updateReceiptEmailDelivery(
     await insertSaleEvent(
       client,
       receipt.sale_id,
-      status === "FAILED" ? "EMAIL_FAILED" : "EMAIL_SENT",
+      status === "FAILED"
+        ? "EMAIL_FAILED"
+        : status === "SIMULATED"
+          ? "EMAIL_SIMULATED"
+          : "EMAIL_SENT",
       actorUserId,
       {
         details: { emailedTo: receipt.emailed_to, providerId, status },
@@ -794,10 +864,13 @@ export async function updateReceiptEmailDelivery(
   });
 }
 
-export async function findReceiptBySaleId(saleId) {
+export async function findReceiptBySaleId(saleId, receiptId = null) {
   const result = await executeQuery(
-    "SELECT * FROM sale_receipts WHERE sale_id = $1",
-    [saleId],
+    `SELECT * FROM sale_receipts
+     WHERE sale_id = $1 AND ($2::UUID IS NULL OR id = $2)
+     ORDER BY issued_at DESC, receipt_number DESC
+     LIMIT 1`,
+    [saleId, receiptId],
   );
   return mapReceipt(result.rows[0]);
 }
