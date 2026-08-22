@@ -20,6 +20,7 @@ const receipt = {
     totalCents: 49990,
   },
   receiptNumber: 7,
+  type: "FINAL",
 };
 
 test("simula el envío cuando Resend no está configurado", async () => {
@@ -27,7 +28,19 @@ test("simula el envío cuando Resend no está configurado", async () => {
     apiKey: "",
     from: "",
     fetch: async () => assert.fail("No debe llamar al proveedor"),
+    mode: "simulate",
   }), { providerId: null, status: "SIMULATED" });
+});
+
+test("falla de forma cerrada si el correo real no está configurado", async () => {
+  await assert.rejects(
+    () => sendPurchaseConfirmation(receipt, {
+      apiKey: "",
+      from: "",
+      mode: "required",
+    }),
+    /no está configurado/,
+  );
 });
 
 test("envía un comprobante idempotente mediante Resend", async () => {
@@ -40,9 +53,23 @@ test("envía un comprobante idempotente mediante Resend", async () => {
       assert.equal(options.headers["Idempotency-Key"], `optica-stylo-receipt-${receipt.id}`);
       const body = JSON.parse(options.body);
       assert.deepEqual(body.to, [receipt.emailedTo]);
-      assert.match(body.html, /Comprobante de venta/);
+      assert.match(body.html, /Comprobante final de venta/);
+      assert.match(body.subject, /^Compra confirmada/);
       return { json: async () => ({ id: "email-1" }), ok: true, status: 200 };
     },
   });
   assert.deepEqual(result, { providerId: "email-1", status: "SENT" });
+});
+
+test("diferencia el correo de un abono del comprobante final", async () => {
+  await sendPurchaseConfirmation({ ...receipt, type: "PAYMENT" }, {
+    apiKey: "re_test",
+    from: "Optica Stylo <ventas@example.com>",
+    fetch: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.match(body.subject, /^Abono registrado/);
+      assert.match(body.html, /Comprobante de abono/);
+      return { json: async () => ({ id: "email-2" }), ok: true, status: 200 };
+    },
+  });
 });
