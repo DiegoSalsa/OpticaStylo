@@ -5,6 +5,69 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BufferAttribute, BufferGeometry, DoubleSide } from "three";
 
+const TEMPLE_DETAIL_PATTERN = /(?:temple|brand_(?:plaque|wordmark)|inner_model_marking)/i;
+
+function injectAfter(source, marker, addition) {
+  return source.includes(marker)
+    ? source.replace(marker, `${marker}\n${addition}`)
+    : source;
+}
+
+function prepareTempleMaterial(material, geometry) {
+  const uniforms = {
+    bendRadians: { value: 0 },
+    bendStart: { value: geometry.bendStart },
+  };
+  material.userData.tryOnTempleUniforms = uniforms;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTryOnTempleBend = uniforms.bendRadians;
+    shader.uniforms.uTryOnTempleBendStart = uniforms.bendStart;
+    shader.vertexShader = `
+      uniform float uTryOnTempleBend;
+      uniform float uTryOnTempleBendStart;
+    ${shader.vertexShader}`;
+    shader.vertexShader = injectAfter(
+      shader.vertexShader,
+      "#include <begin_vertex>",
+      `
+        float tryOnBendDistance = max(0.0, position.z - uTryOnTempleBendStart);
+        transformed.x += sign(position.x) * tan(uTryOnTempleBend) * tryOnBendDistance;
+      `,
+    );
+  };
+  material.customProgramCacheKey = () => "optica-stylo-temple-v2";
+  material.needsUpdate = true;
+  return uniforms;
+}
+
+function prepareLensMaterial(material) {
+  material.envMapIntensity = 1.9;
+  material.opacity = Math.max(0.1, material.opacity ?? 1);
+  material.roughness = Math.max(0.06, material.roughness ?? 0.1);
+  material.transparent = true;
+  material.depthWrite = false;
+  material.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <opaque_fragment>",
+      `
+        float tryOnLensFresnel = pow(
+          1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0),
+          2.4
+        );
+        diffuseColor.rgb = mix(
+          diffuseColor.rgb,
+          vec3(0.64, 0.82, 0.77),
+          tryOnLensFresnel * 0.2
+        );
+        diffuseColor.a = clamp(diffuseColor.a + tryOnLensFresnel * 0.15, 0.0, 0.24);
+        #include <opaque_fragment>
+      `,
+    );
+  };
+  material.customProgramCacheKey = () => "optica-stylo-lens-v1";
+  material.needsUpdate = true;
+}
+
 /**
  * Three.js component that loads and renders the glasses GLB model.
  * Position, rotation, and scale are updated every frame from the
@@ -19,6 +82,7 @@ export default function GlassesModel({
 }) {
   const groupRef = useRef();
   const occluderRef = useRef();
+  const templeUniformsRef = useRef([]);
   const { scene } = useGLTF(modelUrl);
   const faceMeshGeometry = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -29,6 +93,23 @@ export default function GlassesModel({
 
   const model = useMemo(() => {
     const clonedScene = scene.clone(true);
+    const lensNodes = new Set([
+      ...modelMetadata.nodes.lensLeft,
+      ...modelMetadata.nodes.lensRight,
+    ]);
+    const templeNodes = new Set([
+      ...modelMetadata.nodes.templeLeft,
+      ...modelMetadata.nodes.templeRight,
+    ]);
+    const templeUniforms = [];
+    const millimetersPerUnit = modelMetadata.normalization.millimetersPerUnit;
+    const hingeDepth = (
+      modelMetadata.anchorsRaw.hingeLeft[2]
+      + modelMetadata.anchorsRaw.hingeRight[2]
+    ) * 0.5;
+    const templeGeometry = {
+      bendStart: hingeDepth,
+    };
 
     clonedScene.traverse((child) => {
       if (!child.isMesh) return;
@@ -37,8 +118,19 @@ export default function GlassesModel({
       const adjustedMaterials = materials.map((material) => {
         const adjustedMaterial = material?.clone?.() ?? material;
         if (adjustedMaterial) {
-          adjustedMaterial.roughness = Math.max(0.22, adjustedMaterial.roughness ?? 0.45);
-          adjustedMaterial.metalness = Math.min(0.72, adjustedMaterial.metalness ?? 0.2);
+          if (lensNodes.has(child.name)) {
+            prepareLensMaterial(adjustedMaterial);
+            child.renderOrder = 4;
+          } else {
+            adjustedMaterial.envMapIntensity = 1.65;
+            adjustedMaterial.roughness = Math.max(
+              0.14,
+              adjustedMaterial.roughness ?? 0.4,
+            );
+          }
+          if (templeNodes.has(child.name) || TEMPLE_DETAIL_PATTERN.test(child.name)) {
+            templeUniforms.push(prepareTempleMaterial(adjustedMaterial, templeGeometry));
+          }
           adjustedMaterial.needsUpdate = true;
         }
         return adjustedMaterial;
@@ -46,9 +138,10 @@ export default function GlassesModel({
       child.material = Array.isArray(child.material) ? adjustedMaterials : adjustedMaterials[0];
     });
     return {
-      millimetersPerUnit: modelMetadata.normalization.millimetersPerUnit,
+      millimetersPerUnit,
       offset: modelMetadata.normalization.offsetRaw,
       scene: clonedScene,
+      templeUniforms,
     };
   }, [modelMetadata, scene]);
 
@@ -57,6 +150,22 @@ export default function GlassesModel({
   }, [onReady]);
 
   useEffect(() => () => faceMeshGeometry.dispose(), [faceMeshGeometry]);
+
+  useEffect(() => () => {
+    model.scene.traverse((child) => {
+      if (!child.isMesh) return;
+      for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+        material?.dispose?.();
+      }
+    });
+  }, [model]);
+
+  useEffect(() => {
+    templeUniformsRef.current = model.templeUniforms;
+    return () => {
+      templeUniformsRef.current = [];
+    };
+  }, [model.templeUniforms]);
 
   useFrame(() => {
     const group = groupRef.current;
@@ -72,9 +181,19 @@ export default function GlassesModel({
 
     group.visible = true;
     group.position.set(pose.position[0], pose.position[1], pose.position[2]);
-    group.rotation.set(pose.rotation[0], pose.rotation[1], pose.rotation[2]);
+    if (pose.quaternion) {
+      group.quaternion.fromArray(pose.quaternion);
+    } else {
+      group.rotation.set(pose.rotation[0], pose.rotation[1], pose.rotation[2]);
+    }
     const s = pose.scale;
     group.scale.set(s, s, s);
+
+    for (const uniforms of templeUniformsRef.current) {
+      // Three.js uniforms are mutable by design and must follow the render loop.
+      // eslint-disable-next-line react-hooks/immutability
+      uniforms.bendRadians.value = pose.templeBendRadians ?? 0;
+    }
 
     const facePositions = pose.faceMesh?.positions;
     const positionAttribute = faceMeshGeometry.getAttribute("position");

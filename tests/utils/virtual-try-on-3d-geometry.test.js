@@ -44,6 +44,11 @@ function yawTransform(angle) {
   };
 }
 
+function typedYawTransform(angle) {
+  const transform = yawTransform(angle);
+  return { ...transform, data: new Float32Array(transform.data) };
+}
+
 test("calcula una escala física sin ajustes específicos del marco", () => {
   const pose = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
   assert.ok(Math.abs(pose.scale - (500 / 135)) < 0.000001);
@@ -51,6 +56,9 @@ test("calcula una escala física sin ajustes específicos del marco", () => {
   assert.ok(Math.abs(pose.position[1] - (50 - (2 * 500 / 135))) < 0.000001);
   assert.equal(pose.rotation[1], Math.PI);
   assert.equal(pose.rotation[2], 0);
+  assert.equal(pose.quaternion.length, 4);
+  assert.ok(pose.templeBendRadians >= 0);
+  assert.ok(pose.templeBendRadians <= 0.14);
   assert.equal(pose.faceMesh.positions.length, 468 * 3);
   assert.ok(Math.abs(
     pose.faceMesh.positions[6 * 3 + 2]
@@ -95,6 +103,31 @@ test("usa la matriz facial 3D para mantener el giro del marco", () => {
   assert.ok(Math.abs(pose.rotation[1] - (Math.PI + 0.5)) < 0.000001);
 });
 
+test("acepta la matriz tipada que entrega MediaPipe", () => {
+  const pose = landmarksToGlassesPose(
+    faceLandmarks(),
+    1000,
+    500,
+    modelMetadata,
+    typedYawTransform(-0.35),
+  );
+  assert.ok(Math.abs(pose.headRotation[1] + 0.35) < 0.000001);
+});
+
+test("aplica un ajuste fino acotado sin alterar la medida base", () => {
+  const base = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
+  const adjusted = landmarksToGlassesPose(
+    faceLandmarks(),
+    1000,
+    500,
+    modelMetadata,
+    null,
+    { scaleFactor: 1.08, verticalOffsetMm: -3 },
+  );
+  assert.ok(Math.abs(adjusted.scale - base.scale * 1.08) < 0.000001);
+  assert.ok(adjusted.position[1] > base.position[1]);
+});
+
 test("refleja la posición horizontal para acompañar el video espejo", () => {
   const landmarks = faceLandmarks();
   for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356, 468, 473]) {
@@ -103,6 +136,17 @@ test("refleja la posición horizontal para acompañar el video espejo", () => {
   const pose = landmarksToGlassesPose(landmarks, 1000, 500, modelMetadata);
   assert.equal(pose.position[0], 100);
   assert.equal(pose.faceMesh.positions[234 * 3], 350);
+});
+
+test("mover la mirada no desplaza el marco cuando la cabeza sigue quieta", () => {
+  const centered = faceLandmarks();
+  const lookingAside = faceLandmarks();
+  lookingAside[468] = { x: 0.41, y: 0.38, z: 0 };
+  lookingAside[473] = { x: 0.65, y: 0.38, z: 0 };
+
+  const centeredPose = landmarksToGlassesPose(centered, 1000, 500, modelMetadata);
+  const lookingPose = landmarksToGlassesPose(lookingAside, 1000, 500, modelMetadata);
+  assert.deepEqual(lookingPose.position, centeredPose.position);
 });
 
 test("rechaza datos incompletos y suaviza también el oclusor", () => {
@@ -120,4 +164,40 @@ test("rechaza datos incompletos y suaviza también el oclusor", () => {
     (previous.faceMesh.positions[234 * 3] + next.faceMesh.positions[234 * 3]) / 2,
   );
   assert.ok(Math.abs(pose.scale - previous.scale) < 0.000001);
+});
+
+test("suaviza giros con cuaterniones y responde mÃ¡s rÃ¡pido al movimiento", () => {
+  const previous = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
+  const next = landmarksToGlassesPose(
+    faceLandmarks(),
+    1000,
+    500,
+    modelMetadata,
+    yawTransform(0.8),
+  );
+  const pose = smoothGlassesPose3D(
+    { ...previous, timestamp: 1000 },
+    next,
+    { timestamp: 1040 },
+  );
+  const quaternionLength = Math.hypot(...pose.quaternion);
+  assert.ok(Math.abs(quaternionLength - 1) < 0.000001);
+  assert.ok(pose.headRotation[1] > 0);
+  assert.ok(pose.headRotation[1] < next.headRotation[1]);
+  assert.equal(pose.timestamp, 1040);
+});
+
+test("ignora el ruido subpíxel cuando el rostro está quieto", () => {
+  const previous = {
+    ...landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata),
+    timestamp: 1000,
+  };
+  const next = structuredClone(previous);
+  next.position[0] += 0.3;
+  next.position[1] -= 0.25;
+  next.scale *= 1.001;
+
+  const pose = smoothGlassesPose3D(previous, next, { timestamp: 1040 });
+  assert.deepEqual(pose.position, previous.position);
+  assert.equal(pose.scale, previous.scale);
 });
