@@ -40,7 +40,7 @@ Estado observado en `main` (`2a706c5`) antes de modificar la infraestructura:
   identificador externo de Mercado Pago. La nueva arquitectura no lo necesita
   para renderizar y no debe ampliar los datos personales o clínicos guardados.
 
-## Arquitectura objetivo
+## Arquitectura implementada
 
 La outbox es la fuente auditable de cada intención de correo. Los servicios de
 dominio solo insertan un registro idempotente dentro de su transacción. Un
@@ -75,8 +75,8 @@ que la clienta confirme la política de retención.
 ## Activación pendiente
 
 La entrega real debe permanecer desactivada hasta verificar un dominio en
-Resend, configurar un remitente de ese dominio y autorizar el cron de
-producción. El endpoint y las pruebas del webhook pueden quedar completos sin
+Resend, configurar un remitente de ese dominio y autorizar el trabajador
+externo. El endpoint y las pruebas del webhook pueden quedar completos sin
 dominio, pero la recepción de un evento real del proveedor requiere registrar
 un endpoint HTTPS y su secreto de firma en Resend.
 
@@ -90,7 +90,7 @@ un endpoint HTTPS y su secreto de firma en Resend.
 | `EMAIL_TEST_RECIPIENT` | Único destino efectivo obligatorio en `test`. |
 | `RESEND_API_KEY` | Secreto del adaptador; nunca se registra. |
 | `RESEND_WEBHOOK_SECRET` | Secreto de firma Svix del endpoint de Resend. |
-| `CRON_SECRET` | Secreto independiente para el trabajador y Vercel Cron. |
+| `CRON_SECRET` | Secreto independiente y compartido únicamente entre Vercel y GitHub Actions. |
 | `EMAIL_PROVIDER_TIMEOUT_MS` | Timeout HTTP; valor provisional `8000`. |
 | `EMAIL_BATCH_SIZE` | Máximo reclamado por ejecución; valor provisional `20`. |
 | `EMAIL_LOCK_SECONDS` | Vencimiento del reclamo; valor provisional `60`. |
@@ -117,10 +117,31 @@ la clave, el remitente o la confirmación explícita del dominio. `test` conserv
 - `POST /api/webhooks/resend` verifica `svix-id`, `svix-timestamp` y
   `svix-signature` contra el cuerpo crudo antes de interpretar el evento.
 
-`vercel.cron.example.json` es una configuración preparada, no activa. Para
-autorizarla se debe copiar su sección `crons` a `vercel.json`, configurar
-`CRON_SECRET` y desplegar. Vercel ejecuta cron en UTC; la elegibilidad y el
-contenido de las reservas continúan usando `America/Santiago`.
+El plan Hobby de Vercel solo permite una ejecución diaria y no sirve para un
+trabajador cada cinco minutos. Por eso el repositorio no contiene una
+configuración de Vercel Cron. La función de Vercel solo hospeda el endpoint.
+
+`.github/workflows/procesarcorreos.yml` programa la invocación desde GitHub
+Actions cada cinco minutos, pero el trabajo programado queda desactivado de
+forma segura mientras la variable de repositorio `EMAIL_WORKER_ENABLED` no sea
+exactamente `true`. `workflow_dispatch` permite una ejecución manual.
+
+Para activar el trabajo externo se debe:
+
+1. Crear un secreto aleatorio de al menos 16 caracteres.
+2. Guardar el mismo valor como `CRON_SECRET` en Vercel Producción y como secreto
+   `CRON_SECRET` de GitHub Actions.
+3. Mantener `EMAIL_MODE=disabled` hasta completar la prueba controlada, cambiar
+   primero a `test` y comprobar el destinatario único.
+4. Definir `EMAIL_WORKER_ENABLED=true` como variable del repositorio solo cuando
+   se autorice el procesamiento periódico.
+5. Habilitar `live` únicamente después de verificar el dominio, remitente,
+   webhook y eventos reales del proveedor.
+
+El workflow usa exclusión mutua y la cola usa reclamos con propietario,
+vencimiento e idempotencia. Aun así, GitHub Actions puede retrasar una ejecución;
+la programación de cinco minutos es una frecuencia objetivo, no un tiempo real
+garantizado.
 
 ## Prueba externa pendiente
 
@@ -136,4 +157,5 @@ Referencias vigentes consultadas:
 - [Envío e idempotencia de Resend](https://resend.com/docs/api-reference/emails/send-email)
 - [Verificación de webhooks de Resend](https://resend.com/docs/webhooks/verify-webhooks-requests)
 - [Tipos de eventos de Resend](https://resend.com/docs/webhooks/event-types)
-- [Cron protegido de Vercel](https://vercel.com/docs/cron-jobs/manage-cron-jobs)
+- [Límites de Vercel Cron](https://vercel.com/docs/cron-jobs/usage-and-pricing)
+- [Programación de GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onschedule)
