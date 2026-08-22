@@ -1,5 +1,9 @@
 import { authenticateRequest } from "@/auth/authenticate-request";
-import { createPointOfSaleExternalPrescription } from "@/services/external-prescription-service";
+import {
+  createExternalPrescription,
+  createPointOfSaleExternalPrescription,
+  getExternalPrescriptionList,
+} from "@/services/external-prescription-service";
 import { createSuccessResponse } from "@/utils/api-response";
 import { AppError } from "@/utils/app-error";
 import { executeApiHandler } from "@/utils/error-handler";
@@ -36,17 +40,40 @@ export async function POST(request) {
         });
       }
       const form = await request.formData();
-      input = {
-        confirmedData: parseConfirmedData(form.get("confirmedData")),
-        customerId: form.get("customerId"),
-        image: form.get("image"),
-      };
+      if (form.has("file")) {
+        input = {
+          customerId: form.get("customerId"),
+          file: form.get("file"),
+          notes: form.get("notes"),
+          patientId: form.get("patientId"),
+          source: "IMAGE",
+        };
+      } else {
+        input = {
+          confirmedData: parseConfirmedData(form.get("confirmedData")),
+          customerId: form.get("customerId"),
+          image: form.get("image"),
+          patientId: form.get("patientId"),
+        };
+      }
     } else {
       input = await readJsonBody(request);
     }
     return createSuccessResponse(
-      await createPointOfSaleExternalPrescription(input, actor),
+      await (input.source
+        ? createExternalPrescription(input, actor)
+        : createPointOfSaleExternalPrescription(input, actor)),
       { status: 201 },
     );
+  });
+}
+
+export async function GET(request) {
+  return executeApiHandler(async () => {
+    const actor = await authenticateRequest(request);
+    return createSuccessResponse(await getExternalPrescriptionList(
+      new URL(request.url).searchParams,
+      actor,
+    ));
   });
 }
