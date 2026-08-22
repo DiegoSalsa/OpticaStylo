@@ -57,9 +57,9 @@ function nodeNames(value, path, required) {
 }
 
 /**
- * Validates and normalizes the sidecar generated once when a GLB enters the
- * platform. This module is intentionally browser-safe so the importer and the
- * try-on runtime share exactly the same contract.
+ * Valida y normaliza el archivo auxiliar generado cuando un GLB ingresa a la
+ * plataforma. Este módulo es seguro para el navegador y permite que el importador
+ * y el probador compartan exactamente el mismo contrato.
  */
 export function validateTryOnModelMetadata(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {

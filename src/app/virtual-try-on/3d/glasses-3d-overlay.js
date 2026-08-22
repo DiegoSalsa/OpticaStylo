@@ -4,7 +4,7 @@ import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   DEMO_3D_GLASSES,
@@ -16,6 +16,7 @@ import {
   smoothGlassesPose3D,
 } from "@/utils/virtual-try-on-3d-geometry";
 import { withMediaPipeConsoleFilter } from "@/utils/mediapipe-console";
+import { ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 
 import styles from "./virtual-try-on-3d.module.css";
@@ -122,6 +123,12 @@ export default function Glasses3DOverlay() {
   const [selectedModel, setSelectedModel] = useState({ ...DEMO_3D_GLASSES, assetId: "demo", isDemo: true });
   const [fitAdjustment, setFitAdjustment] = useState(DEFAULT_FIT_ADJUSTMENT);
   const [captureMessage, setCaptureMessage] = useState("");
+  const [cameraVisual, setCameraVisual] = useState({ brightness: 100, contrast: 100 });
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [facingMode, setFacingMode] = useState("user");
+  const [showOverlay, setShowOverlay] = useState(true);
+  const [cartMessage, setCartMessage] = useState("");
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const releaseResources = useCallback(() => {
     cameraRequestRef.current += 1;
@@ -201,7 +208,7 @@ export default function Glasses3DOverlay() {
     setStatusMessage("Cámara apagada. No guardamos ningún fotograma.");
   }, [releaseResources]);
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (requestedFacingMode = facingMode) => {
     if (!window.isSecureContext) {
       setCameraStatus("error");
       setStatusMessage("Abre el probador mediante HTTPS para poder usar la cámara.");
@@ -232,7 +239,7 @@ export default function Glasses3DOverlay() {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
-          facingMode: "user",
+          facingMode: { ideal: requestedFacingMode },
           aspectRatio: { ideal: isMobilePortrait ? 0.75 : 16 / 9 },
           height: { ideal: isMobilePortrait ? 960 : 720 },
           width: { ideal: isMobilePortrait ? 720 : 1280 },
@@ -345,7 +352,7 @@ export default function Glasses3DOverlay() {
       setTrackingReady(false);
       setStatusMessage(cameraErrorMessage(error));
     }
-  }, [releaseResources]);
+  }, [facingMode, releaseResources]);
 
   const updateFitAdjustment = useCallback((property, delta) => {
     setFitAdjustment((current) => {
@@ -385,13 +392,47 @@ export default function Glasses3DOverlay() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `optica-stylo-${DEMO_3D_GLASSES.sku}.png`;
+      link.download = `optica-stylo-${selectedModel.sku}.png`;
       link.click();
       URL.revokeObjectURL(url);
       setCaptureMessage("Captura guardada en tu dispositivo.");
       window.setTimeout(() => setCaptureMessage(""), 3200);
     }, "image/png");
-  }, [faceDetected, modelReady]);
+  }, [faceDetected, modelReady, selectedModel.sku]);
+
+  const changeCamera = useCallback(() => {
+    const nextFacingMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(nextFacingMode);
+    void startCamera(nextFacingMode);
+  }, [facingMode, startCamera]);
+
+  const addSelectedModelToCart = useCallback(async () => {
+    if (!selectedModel.productId) {
+      setCartMessage("Este modelo es una muestra técnica y todavía no se puede comprar.");
+      return;
+    }
+    setIsAddingToCart(true);
+    setCartMessage("");
+    try {
+      const cart = await ensureStoreCart();
+      const currentItem = cart.items.find((item) => item.productId === selectedModel.productId);
+      await readStoreResponse(await fetch("/api/store/cart/items", {
+        body: JSON.stringify({
+          items: [{
+            productId: selectedModel.productId,
+            quantity: (currentItem?.quantity ?? 0) + 1,
+          }],
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }));
+      setCartMessage("Marco agregado al carrito.");
+    } catch (error) {
+      setCartMessage(error.message);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  }, [selectedModel.productId]);
 
   const handleModelReady = useCallback(() => setModelReady(true), []);
   const displayedStatusMessage = captureMessage || (
@@ -406,13 +447,35 @@ export default function Glasses3DOverlay() {
   const viewerState = cameraStatus === "ready"
     ? (faceDetected ? "tracking" : "searching")
     : cameraStatus;
+  const filteredModels = useMemo(() => {
+    const normalizedSearch = catalogSearch.trim().toLocaleLowerCase("es-CL");
+    if (!normalizedSearch) return models;
+    return models.filter((model) => (
+      `${model.name} ${model.sku}`.toLocaleLowerCase("es-CL").includes(normalizedSearch)
+    ));
+  }, [catalogSearch, models]);
 
   return (
     <section className={styles.experience} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
-        <div><p className={styles.stepLabel}>Antes de comenzar</p><h2>Prepara tu cámara</h2><p>Busca luz frontal, quítate los lentes actuales y mantén el rostro dentro de la guía.</p></div>
-        <ol><li><span>1</span><div><strong>Permite la cámara</strong><small>Solo cuando el navegador la solicite.</small></div></li><li><span>2</span><div><strong>Mira de frente</strong><small>El marco seguirá la posición de tu rostro.</small></div></li><li><span>3</span><div><strong>Compara modelos</strong><small>Elige únicamente los activos del catálogo 3D.</small></div></li></ol>
-        <div className={styles.guidePrivacy}><span aria-hidden="true">●</span><p><strong>Procesamiento local</strong>El video no se envía ni se guarda.</p></div>
+        <div className={styles.cameraState} data-active={cameraStatus === "ready"}>
+          <span aria-hidden="true" />
+          <div><strong>{cameraStatus === "ready" ? "Cámara activa" : "Cámara inactiva"}</strong><small>Conexión segura y local</small></div>
+        </div>
+        <section className={styles.guideCard} aria-labelledby="quick-guide-title">
+          <p className={styles.panelTitle} id="quick-guide-title">Guía rápida</p>
+          <ol>
+            <li><span>1.</span><p>Mantén tu rostro centrado en la guía.</p></li>
+            <li><span>2.</span><p>Asegura buena iluminación frontal.</p></li>
+            <li><span>3.</span><p>Usa los controles para ajustar visualmente.</p></li>
+          </ol>
+        </section>
+        <section className={styles.adjustmentCard} aria-labelledby="visual-adjustments-title">
+          <p className={styles.panelTitle} id="visual-adjustments-title">Ajustes visuales</p>
+          <label><span>Brillo</span><output>{cameraVisual.brightness}%</output><input aria-label="Brillo de la cámara" max="125" min="75" onChange={(event) => setCameraVisual((current) => ({ ...current, brightness: Number(event.target.value) }))} type="range" value={cameraVisual.brightness} /></label>
+          <label><span>Contraste</span><output>{cameraVisual.contrast}%</output><input aria-label="Contraste de la cámara" max="125" min="75" onChange={(event) => setCameraVisual((current) => ({ ...current, contrast: Number(event.target.value) }))} type="range" value={cameraVisual.contrast} /></label>
+        </section>
+        <p className={styles.guidePrivacy}><span aria-hidden="true">●</span> El video no se guarda ni sale de tu dispositivo.</p>
       </aside>
       <div className={styles.viewerPanel}>
         <div
@@ -429,12 +492,15 @@ export default function Glasses3DOverlay() {
             muted
             playsInline
             data-hidden={cameraStatus !== "ready"}
+            style={{ filter: `brightness(${cameraVisual.brightness}%) contrast(${cameraVisual.contrast}%)` }}
           />
 
           {cameraStatus === "ready" && (
             <Canvas
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
+              data-cropped={Boolean(cameraAspectRatio)}
+              data-visible={showOverlay}
               dpr={[1, 1.5]}
               gl={{
                 alpha: true,
@@ -456,7 +522,10 @@ export default function Glasses3DOverlay() {
                 far: 2000,
                 position: [0, 0, 500],
               }}
-              style={{ pointerEvents: "none" }}
+              style={{
+                "--overlay-aspect-ratio": cameraAspectRatio ?? undefined,
+                pointerEvents: "none",
+              }}
             >
               <hemisphereLight args={["#ffffff", "#52635e", 1.05]} />
               <directionalLight position={[250, 320, 480]} intensity={1.7} />
@@ -507,6 +576,7 @@ export default function Glasses3DOverlay() {
             <span />
             <span />
           </div>
+          <div className={styles.faceOval} aria-hidden="true" />
 
           {cameraStatus !== "ready" && (
             <div className={styles.viewerPlaceholder}>
@@ -525,7 +595,7 @@ export default function Glasses3DOverlay() {
                 <button
                   className={styles.viewerCta}
                   type="button"
-                  onClick={startCamera}
+                  onClick={() => startCamera()}
                 >
                   Probarme este marco
                 </button>
@@ -548,144 +618,45 @@ export default function Glasses3DOverlay() {
 
           <div className={styles.liveBadge} data-active={cameraStatus === "ready"}>
             <span aria-hidden="true" />
-            {cameraStatus === "ready" ? "En vivo" : "Cámara apagada"}
+            {cameraStatus === "ready" ? "Cámara activa" : "Cámara apagada"}
           </div>
           <div className={styles.trackingBadge} data-active={faceDetected}>
             <span aria-hidden="true">{faceDetected ? "✓" : "⌁"}</span>
-            {faceDetected ? "Ajuste listo" : "Buscando rostro"}
+            {faceDetected ? "Rostro detectado" : "Buscando rostro"}
           </div>
         </div>
 
-        <div className={styles.viewerFooter}>
-          <p className={styles.status} aria-live="polite">
-            {displayedStatusMessage}
-          </p>
-          {cameraStatus === "ready" ? (
-            <div className={styles.viewerActions}>
-              <button
-                className={styles.captureButton}
-                type="button"
-                onClick={captureTryOn}
-                disabled={!faceDetected || !modelReady}
-              >
-                Guardar captura
-              </button>
-              <button className={styles.cameraButton} type="button" onClick={stopCamera}>
-                Apagar cámara
-              </button>
-            </div>
-          ) : (
-            <span className={styles.footerPrivacy}>Procesamiento local</span>
-          )}
+        <div className={styles.cameraControls}>
+          <p>Controles de cámara</p>
+          <div className={styles.viewerDock}>
+            <button className={styles.dockButton} disabled={cameraStatus === "loading"} onClick={() => (cameraStatus === "ready" ? changeCamera() : startCamera())} type="button"><span aria-hidden="true">↻</span>{cameraStatus === "ready" ? "Cambiar cámara" : "Activar cámara"}</button>
+            <button className={styles.captureButton} disabled={!faceDetected || !modelReady} onClick={captureTryOn} type="button"><span aria-hidden="true">▣</span>Guardar foto</button>
+            <button aria-pressed={!showOverlay} className={styles.dockButton} disabled={cameraStatus !== "ready"} onClick={() => setShowOverlay((current) => !current)} type="button"><span aria-hidden="true">◐</span>{showOverlay ? "Ver sin marco" : "Ver con marco"}</button>
+          </div>
         </div>
+        <p className={styles.status} aria-live="polite">{displayedStatusMessage}</p>
+        <article className={styles.selectedFrame}>
+          <div className={styles.frameThumb} aria-hidden="true"><span /><span /><i /></div>
+          <div className={styles.selectedFrameCopy}><h2>{selectedModel.name}</h2><p>Modelo {selectedModel.sku}</p><strong>{selectedModel.unitPriceCents ? formatClp(selectedModel.unitPriceCents) : "Muestra 3D"}</strong></div>
+          <button className={styles.addButton} disabled={isAddingToCart} onClick={addSelectedModelToCart} type="button">{isAddingToCart ? "Agregando…" : "Agregar al carrito"}</button>
+          {cartMessage && <p className={styles.cartMessage} role="status">{cartMessage}</p>}
+        </article>
       </div>
 
       <aside className={styles.controlsPanel}>
-        <div className={styles.modelHeader}>
-          <div className={styles.modelIcon} aria-hidden="true">
-            <span />
-            <span />
-          </div>
-          <div>
-            <p className={styles.stepLabel}>Marco de prueba</p>
-            <h2>{selectedModel.name}</h2>
-            <p className={styles.modelLabel}>{selectedModel.sku} · {selectedModel.isDemo ? "Prototipo GLB" : "Modelo del catálogo"}</p>
-          </div>
+        <div className={styles.catalogHeader}><p className={styles.panelTitle}>Catálogo virtual</p><p>Selecciona un modelo para probártelo en vivo.</p></div>
+        <label className={styles.catalogSearch}><span aria-hidden="true">⌕</span><input onChange={(event) => setCatalogSearch(event.target.value)} placeholder="Buscar marcos…" type="search" value={catalogSearch} /></label>
+        <div className={styles.modelPicker} aria-live="polite">
+          {filteredModels.map((model) => <article className={styles.catalogItem} data-selected={selectedModel.assetId === model.assetId} key={model.assetId}><div className={styles.catalogArt} aria-hidden="true"><span /><span /><i /></div><div><strong>{model.name}</strong><small>{model.sku}</small><b>{model.unitPriceCents ? formatClp(model.unitPriceCents) : "Muestra técnica"}</b></div><button aria-pressed={selectedModel.assetId === model.assetId} onClick={() => setSelectedModel(model)} type="button">{selectedModel.assetId === model.assetId ? "Probando" : "Probar"}</button></article>)}
+          {filteredModels.length === 0 && <p className={styles.emptyCatalog}>No encontramos marcos con esa búsqueda.</p>}
         </div>
-
-        {models.length > 1 && <div className={styles.modelPicker}>
-          <p className={styles.stepLabel}>Cambiar marco</p>
-          <div>{models.map((model) => <button aria-pressed={selectedModel.assetId === model.assetId} key={model.assetId} onClick={() => setSelectedModel(model)} type="button"><span>{model.name}</span><small>{model.sku}</small></button>)}</div>
-        </div>}
-
-        {!selectedModel.isDemo && <p className={styles.licenseNote}>Activo {selectedModel.licenseCode}{selectedModel.attribution ? ` · ${selectedModel.attribution}` : ""}</p>}
-
-        <div className={styles.autoFitCard} data-active={faceDetected}>
-          <span className={styles.autoFitIcon} aria-hidden="true">
-            {faceDetected ? "✓" : "⌁"}
-          </span>
-          <div>
-            <p className={styles.stepLabel}>Calce automático</p>
-            <strong>{faceDetected ? "Ajustado a tu rostro" : "Esperando tu rostro"}</strong>
-            <p>
-              El ancho, la posición y la perspectiva se calculan en tiempo real.
-            </p>
-          </div>
-        </div>
-
         <div className={styles.fitCard}>
-          <div className={styles.fitCardHeader}>
-            <div>
-              <p className={styles.stepLabel}>Ajuste fino</p>
-              <p>Personaliza el calce si lo necesitas.</p>
-            </div>
-            <button type="button" onClick={resetFitAdjustment}>Restablecer</button>
-          </div>
-          <div className={styles.fitControls}>
-            <div className={styles.fitControl}>
-              <span>Tamaño</span>
-              <div>
-                <button
-                  type="button"
-                  aria-label="Reducir tamaño del marco"
-                  onClick={() => updateFitAdjustment("scaleFactor", -0.02)}
-                  disabled={fitAdjustment.scaleFactor <= 0.88}
-                >−</button>
-                <output aria-label="Tamaño del marco">
-                  {Math.round(fitAdjustment.scaleFactor * 100)}%
-                </output>
-                <button
-                  type="button"
-                  aria-label="Aumentar tamaño del marco"
-                  onClick={() => updateFitAdjustment("scaleFactor", 0.02)}
-                  disabled={fitAdjustment.scaleFactor >= 1.12}
-                >+</button>
-              </div>
-            </div>
-            <div className={styles.fitControl}>
-              <span>Altura</span>
-              <div>
-                <button
-                  type="button"
-                  aria-label="Subir el marco"
-                  onClick={() => updateFitAdjustment("verticalOffsetMm", -1)}
-                  disabled={fitAdjustment.verticalOffsetMm <= -6}
-                >−</button>
-                <output aria-label="Altura del marco">
-                  {fitAdjustment.verticalOffsetMm === 0
-                    ? "Centro"
-                    : `${fitAdjustment.verticalOffsetMm > 0 ? "+" : ""}${fitAdjustment.verticalOffsetMm} mm`}
-                </output>
-                <button
-                  type="button"
-                  aria-label="Bajar el marco"
-                  onClick={() => updateFitAdjustment("verticalOffsetMm", 1)}
-                  disabled={fitAdjustment.verticalOffsetMm >= 6}
-                >+</button>
-              </div>
-            </div>
-          </div>
+          <div><p className={styles.panelTitle}>Ajuste fino</p><p>El calce automático se adapta al rostro; puedes corregirlo visualmente.</p></div>
+          <div className={styles.fitControls}><button aria-label="Reducir tamaño del marco" disabled={fitAdjustment.scaleFactor <= 0.88} onClick={() => updateFitAdjustment("scaleFactor", -0.02)} type="button">−</button><output aria-label="Tamaño del marco">{Math.round(fitAdjustment.scaleFactor * 100)}%</output><button aria-label="Aumentar tamaño del marco" disabled={fitAdjustment.scaleFactor >= 1.12} onClick={() => updateFitAdjustment("scaleFactor", 0.02)} type="button">+</button><button aria-label="Subir el marco" disabled={fitAdjustment.verticalOffsetMm <= -6} onClick={() => updateFitAdjustment("verticalOffsetMm", -1)} type="button">↑</button><output aria-label="Altura del marco">{fitAdjustment.verticalOffsetMm === 0 ? "Centro" : `${fitAdjustment.verticalOffsetMm > 0 ? "+" : ""}${fitAdjustment.verticalOffsetMm} mm`}</output><button aria-label="Bajar el marco" disabled={fitAdjustment.verticalOffsetMm >= 6} onClick={() => updateFitAdjustment("verticalOffsetMm", 1)} type="button">↓</button></div>
+          <button className={styles.resetButton} onClick={resetFitAdjustment} type="button">Restablecer ajuste</button>
         </div>
-
-        <div className={styles.tipsCard}>
-          <p className={styles.stepLabel}>Para verlo mejor</p>
-          <ul>
-            <li>Mantén el rostro completo dentro del cuadro.</li>
-            <li>Busca luz frontal y evita una ventana detrás.</li>
-            <li>Gira suavemente para apreciar las patillas.</li>
-          </ul>
-        </div>
-
-        <div className={styles.panelFooter}>
-          <Link href="/tienda" className={styles.linkCard}>
-            <span aria-hidden="true">←</span>
-            Volver al catálogo
-          </Link>
-          <div className={styles.privacyNote}>
-            <span aria-hidden="true">●</span>
-            <p><strong>Privado por diseño.</strong> El video no sale de tu dispositivo.</p>
-          </div>
-        </div>
+        {!selectedModel.isDemo && <p className={styles.licenseNote}>Activo con licencia {selectedModel.licenseCode}{selectedModel.attribution ? ` · ${selectedModel.attribution}` : ""}</p>}
+        <Link href="/tienda" className={styles.linkCard}><span aria-hidden="true">←</span> Ver catálogo completo</Link>
       </aside>
     </section>
   );
