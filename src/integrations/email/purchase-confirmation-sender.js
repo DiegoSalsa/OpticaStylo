@@ -4,16 +4,28 @@ export async function sendPurchaseConfirmation(receipt, dependencies = {}) {
   const apiKey = dependencies.apiKey ?? process.env.RESEND_API_KEY;
   const from = dependencies.from ?? process.env.POS_EMAIL_FROM;
   const fetcher = dependencies.fetch ?? fetch;
+  const mode = dependencies.mode
+    ?? process.env.POS_EMAIL_MODE
+    ?? (process.env.NODE_ENV === "production" ? "required" : "simulate");
 
   if (!apiKey || !from) {
-    return { providerId: null, status: "SIMULATED" };
+    if (mode === "simulate") {
+      return { providerId: null, status: "SIMULATED" };
+    }
+    throw new Error("El correo transaccional del POS no está configurado.");
+  }
+
+  if (!receipt.emailedTo) {
+    throw new Error("El comprobante no tiene un correo de destino.");
   }
 
   const response = await fetcher("https://api.resend.com/emails", {
     body: JSON.stringify({
       from,
       html: renderReceiptHtml(receipt),
-      subject: `Compra confirmada · Óptica Stylo · Venta #${receipt.payload.saleNumber}`,
+      subject: receipt.type === "PAYMENT"
+        ? `Abono registrado · Óptica Stylo · Venta #${receipt.payload.saleNumber}`
+        : `Compra confirmada · Óptica Stylo · Venta #${receipt.payload.saleNumber}`,
       to: [receipt.emailedTo],
     }),
     headers: {

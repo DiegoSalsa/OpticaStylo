@@ -183,16 +183,21 @@ export function validateSaleDraftInput(input) {
 }
 
 export function validateReceiptInput(input) {
-  if (input == null) return { email: null };
+  if (input == null) return { email: null, paymentId: null };
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
   }
-  if (input.email == null || input.email === "") return { email: null };
-  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    fail("El correo del comprobante no es válido.");
+  let email = null;
+  if (input.email != null && input.email !== "") {
+    email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fail("El correo del comprobante no es válido.");
+    }
   }
-  return { email };
+  return {
+    email,
+    paymentId: optionalId(input.paymentId, "abono"),
+  };
 }
 
 export function validateSalesReportQuery(searchParams) {
