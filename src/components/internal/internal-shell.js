@@ -15,7 +15,7 @@ const NAVIGATION = [
   { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
   { href: "/app/productos", icon: "eye", label: "Catálogo e inventario", permissions: ["products.read"] },
   { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", permissions: ["users.read"] },
-  { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", permissions: ["reports.read"] },
+  { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", permissions: ["sales.reports_read"] },
 ];
 
 const ActorContext = createContext(null);

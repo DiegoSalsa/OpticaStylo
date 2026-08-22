@@ -79,7 +79,9 @@ export default function ReportsPage() {
   const [data, setData] = useState(null);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
-  const allowed = actor?.permissions.includes("reports.read");
+  const allowed = actor?.permissions.some((permission) =>
+    ["reports.read", "sales.reports_read"].includes(permission),
+  );
   useEffect(() => {
     if (!allowed) return;
     const controller = new AbortController();
@@ -111,14 +113,14 @@ export default function ReportsPage() {
     return (
       <section className="app-card empty-module">
         <h2>Acceso no disponible</h2>
-        <p>Los reportes están reservados a Administración.</p>
+        <p>Tu cuenta no tiene permiso para consultar reportes comerciales.</p>
       </section>
     );
   return (
     <>
       <header className="app-heading">
         <div>
-          <p className="eyebrow">Administración</p>
+          <p className="eyebrow">Análisis comercial</p>
           <h1>Reportes y analítica</h1>
           <p>Datos agregados directamente desde las operaciones registradas.</p>
         </div>
