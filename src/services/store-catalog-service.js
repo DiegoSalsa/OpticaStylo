@@ -23,21 +23,29 @@ function publicProduct(product, availabilityProvider) {
   };
 }
 
+function canUseTestData(dependencies) {
+  return dependencies.includeTestData ?? process.env.NODE_ENV !== "production";
+}
+
 export async function getStoreProducts(searchParams, dependencies = {}) {
   const publicQuery = new URLSearchParams(searchParams);
   publicQuery.set("isActive", "true");
+  const includeTestData = canUseTestData(dependencies);
   const result = await (dependencies.listProducts ?? listProducts)(
-    validateProductListQuery(publicQuery),
+    { ...validateProductListQuery(publicQuery), includeTestData },
   );
   const availability = dependencies.getAvailability ?? getMockAvailability;
-  return { ...result, items: result.items.map((product) => publicProduct(product, availability)) };
+  const items = result.items
+    .filter((product) => includeTestData || !product.isTestData)
+    .map((product) => publicProduct(product, availability));
+  return { ...result, items };
 }
 
 export async function getStoreProduct(productId, dependencies = {}) {
   const product = await (dependencies.findProductById ?? findProductById)(
     validateStoreProductId(productId),
   );
-  if (!product?.isActive) {
+  if (!product?.isActive || (product.isTestData && !canUseTestData(dependencies))) {
     throw new AppError({
       code: "STORE_PRODUCT_NOT_FOUND",
       message: "No se encontró el producto solicitado.",

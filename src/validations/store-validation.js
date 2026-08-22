@@ -117,6 +117,21 @@ export function validateCartItemInput(input) {
   return { quantity: input.quantity };
 }
 
+export function validateCartItemsInput(input) {
+  object(input);
+  if (!Array.isArray(input.items) || input.items.length < 1 || input.items.length > 10) {
+    fail("Debe indicar entre uno y diez productos para agregar al carrito.");
+  }
+  const items = input.items.map((item) => {
+    const normalized = validateCartItemInput(item);
+    return { productId: uuid(item.productId, "producto"), quantity: normalized.quantity };
+  });
+  if (new Set(items.map((item) => item.productId)).size !== items.length) {
+    fail("No puede repetir un producto en la misma solicitud.");
+  }
+  return { items };
+}
+
 function buyer(value) {
   object(value);
   return {

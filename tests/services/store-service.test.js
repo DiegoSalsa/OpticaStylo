@@ -7,6 +7,7 @@ import {
   extractPrescriptionImage,
   getStoreOrder,
   putStoreCartItem,
+  putStoreCartItems,
   retryStoreOrderCheckout,
 } from "../../src/services/store-service.js";
 
@@ -54,6 +55,20 @@ test("agrega productos después de validar identificador y cantidad", async () =
     },
   });
   assert.equal(result.items[0].quantity, 2);
+});
+
+test("agrega marco y cristales en una sola operación", async () => {
+  const lensId = "00000000-0000-4000-8000-000000000004";
+  const result = await putStoreCartItems("token", null, {
+    items: [{ productId, quantity: 1 }, { productId: lensId, quantity: 1 }],
+  }, {
+    upsertItems: async (_hash, accountId, items) => {
+      assert.equal(accountId, null);
+      assert.deepEqual(items, [{ productId, quantity: 1 }, { productId: lensId, quantity: 1 }]);
+      return { cart: { ...cart, items }, reason: null };
+    },
+  });
+  assert.equal(result.items.length, 2);
 });
 
 test("convierte el carrito en venta y crea el checkout real desacoplado", async () => {

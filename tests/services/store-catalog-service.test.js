@@ -33,6 +33,31 @@ test("oculta productos inactivos por identificador", async () => {
   }), (error) => error.code === "STORE_PRODUCT_NOT_FOUND" && error.status === 404);
 });
 
+test("oculta los datos de prueba fuera del entorno local", async () => {
+  const result = await getStoreProducts(new URLSearchParams(), {
+    includeTestData: false,
+    listProducts: async (filters) => {
+      assert.equal(filters.includeTestData, false);
+      return {
+        items: [product],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      };
+    },
+  });
+  assert.equal(result.items.length, 1);
+  assert.equal(result.total, 1);
+});
+
+test("oculta un producto de prueba por identificador fuera del entorno local", async () => {
+  await assert.rejects(() => getStoreProduct(product.id, {
+    findProductById: async () => ({ ...product, isTestData: true }),
+    includeTestData: false,
+  }), (error) => error.code === "STORE_PRODUCT_NOT_FOUND" && error.status === 404);
+});
+
 test("incluye la galería y ficha del modelo HD0896-001", async () => {
   const result = await getStoreProduct(product.id, {
     findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
