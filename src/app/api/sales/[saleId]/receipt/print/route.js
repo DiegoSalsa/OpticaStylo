@@ -7,7 +7,8 @@ export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
     const { saleId } = await params;
-    const receipt = await getSaleReceipt(saleId, actor);
+    const receiptId = new URL(request.url).searchParams.get("receiptId");
+    const receipt = await getSaleReceipt(saleId, receiptId, actor);
     return new Response(renderReceiptHtml(receipt), {
       headers: {
         "Cache-Control": "private, no-store",

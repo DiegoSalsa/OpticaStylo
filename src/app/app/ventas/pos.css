@@ -521,6 +521,48 @@
 .payment-form .app-button {
   width: 100%;
 }
+.payment-history {
+  border-top: 1px dashed #ccdad7;
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+.payment-history h3 {
+  font-size: 0.9rem;
+  margin: 0;
+}
+.payment-history ul {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.payment-history li {
+  align-items: center;
+  background: #f7faf9;
+  border: 1px solid #dce7e4;
+  border-radius: 9px;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.6rem;
+}
+.payment-history li > span {
+  display: grid;
+  gap: 0.15rem;
+}
+.payment-history a,
+.payment-history small {
+  color: var(--color-text-soft);
+  font-size: 0.62rem;
+}
+.payment-history a {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  text-align: right;
+}
 .completed-actions {
   display: grid;
   gap: 0.55rem;
