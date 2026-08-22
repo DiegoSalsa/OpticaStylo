@@ -42,6 +42,9 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
 - `npm run db:migrate`: aplica las migraciones SQL pendientes.
 - `npm run db:migrate:status`: muestra el estado de las migraciones.
 - `npm run users:bootstrap-admin`: crea interactivamente el primer administrador cuando la base no contiene usuarios.
+- `npm run users:create-sales`: crea o renueva la cuenta operativa `SALES` del
+  POS usando `POS_SALES_EMAIL` y `POS_SALES_PASSWORD`; si la contraseña está
+  vacía, genera una aleatoria fuerte y la muestra al terminar.
 
 ## Estructura principal
 
@@ -85,6 +88,16 @@ npm run users:bootstrap-admin
 ```
 
 El comando solicita la contraseña sin mostrarla ni recibirla mediante argumentos del shell.
+
+Para preparar una credencial limitada al punto de venta después de crear el
+administrador:
+
+```bash
+npm run users:create-sales
+```
+
+El comando asigna exclusivamente el rol `SALES`, reactiva la cuenta si ya
+existía y revoca sus sesiones anteriores al renovar la contraseña.
 
 ## Comprobación inicial de la API
 

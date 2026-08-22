@@ -5,12 +5,15 @@ Actualizado el 21 de agosto de 2026. Este documento describe el código local; n
 ## Decisiones confirmadas
 
 - No existe rol Recepcionista.
-- Ventas trabaja en el POS del mostrador. No administra agenda, pacientes ni ficha clínica.
+- Ventas trabaja en el POS del mostrador. Puede registrar y consultar datos
+  básicos de pacientes para asociar recetas, pero no administra agenda, ficha
+  clínica ni funciones profesionales.
 - Paciente y cliente son entidades distintas y pueden vincularse explícitamente.
 - Un marco puede venderse sin receta. Solo los productos marcados como `requires_prescription` la exigen.
 - Se aceptan recetas externas de cualquier establecimiento, por imagen o ingreso manual. El OCR futuro solo podrá proponer valores; una persona debe confirmarlos.
 - Se permiten abonos y el historial de la venta es permanente. Una venta usa un solo medio de pago.
-- Se permiten descuentos manuales en POS, expresados en CLP y con motivo obligatorio auditable.
+- Se permiten descuentos manuales en POS, expresados en CLP, con motivo,
+  credenciales de autorización y trazabilidad permanente.
 - La compra web admite cuenta o invitado y conserva el carrito mediante cookie opaca.
 - Solo se mantiene el probador 3D. La implementación 2D fue retirada.
 - La disponibilidad seguirá marcada como simulada hasta integrar el inventario externo.
@@ -24,9 +27,8 @@ Implementado: Next.js 16, PostgreSQL, pool seguro, migraciones versionadas, erro
 
 Implementado además en local: cabeceras defensivas globales y validación de la firma binaria de las imágenes de recetas, no solo del MIME declarado.
 
-Las migraciones 001–018 están aplicadas en la base de pruebas configurada. Las
-migraciones clínicas 019–020 permanecen locales hasta validar y publicar este
-bloque. Continúan pendientes la prueba de restauración de respaldo,
+Las migraciones 001–021 están aplicadas en la base configurada. Continúan
+pendientes la prueba de restauración de respaldo,
 observabilidad, rate limiting distribuido para accesos públicos, alertas,
 presupuesto de disponibilidad y procedimientos de incidente.
 
@@ -46,9 +48,18 @@ Pendiente: vista de calendario visual, cancelación pública mediante token, pro
 
 ### Etapa 4 — Gestión comercial: avanzada
 
-Implementado: clientes, productos, ventas, estados, abonos, medio único, Mercado Pago, descuentos auditables, historial, POS con cliente rápido, búsqueda de productos, selección segura de receta interna, receta externa manual o con imagen privada, confirmación, abonos y comprobante imprimible.
+Implementado: clientes y pacientes separados, productos, disponibilidad
+simulada, ventas, estados, abonos permanentes, medio único, Mercado Pago,
+descuentos autorizados y auditables, historial, cotizaciones editables y
+convertibles, POS adaptable con búsqueda, receta interna segura, receta externa
+manual o mediante imagen privada sin OCR, adicionales ópticos separados,
+confirmación, comprobante imprimible, correo mediante Resend y reportes básicos
+alimentados por el POS.
 
-Pendiente: edición posterior de cotización, cancelación autorizada, cierres de caja solo si la clienta los solicita y reglas definitivas de precios de cristales/tratamientos. Reembolsos permanecen fuera de alcance por decisión expresa.
+Pendiente: cancelación autorizada, cierres de caja solo si la clienta los
+solicita y reglas definitivas de precios de cristales/tratamientos. Reembolsos,
+pagos combinados, despacho, OCR e inventario real permanecen fuera de alcance
+por decisión expresa.
 
 ### Etapa 5 — Comercio electrónico: avanzada, no lista para producción
 
@@ -81,14 +92,17 @@ Pendiente: filtros por sucursal/profesional cuando existan esos datos confirmado
 - Aplicación actual: `https://optica-stylo.vercel.app`.
 - Base confirmada: Neon `opticastylo`, proyecto `spring-forest-98534789`, São Paulo.
 - Vercel usa una `DATABASE_URL` manual hacia esa base.
-- Migraciones 001–018 están aplicadas en la base de pruebas configurada.
+- Migraciones 001–021 están aplicadas en la base configurada.
 - La migración 016 crea la cola de correos transaccionales; no envía mensajes por sí sola.
 - La migración 017 elimina la tabla del prototipo 2D; debe respaldarse y revisarse antes de aplicarla.
 - La migración 018 habilita recetas externas privadas para ventas POS y está aplicada en la base de pruebas.
 - La migración 019 conserva revisiones completas e inmutables de los antecedentes longitudinales.
 - La migración 020 rechaza distancias pupilares no positivas cuando se informan.
+- La migración 021 completa el flujo POS con paciente por venta, adicionales,
+  autorización de descuentos, vigencia de cotizaciones, comprobantes y permisos.
 - Debe configurarse el secreto de webhook de Mercado Pago antes de habilitar cobros reales.
-- No hay proveedor de correo confirmado.
+- El POS admite Resend; si no se configura, conserva el comprobante con envío
+  `SIMULATED`.
 - No hay monitoreo, SLO ni prueba documentada de restauración.
 - “Caída nula” no es una garantía realista: debe traducirse a un SLO medible, redundancia, alertas y un plan de recuperación.
 

@@ -18,7 +18,7 @@ monetaria explícita en el contrato y evita números decimales.
 - Categorías iniciales: `FRAME`, `PRESCRIPTION_LENS` y `OTHER`.
 - `requiresPrescription` gobierna la exigencia de receta, no la categoría.
 - Una venta nace como `QUOTATION`; sus líneas pueden reemplazarse mientras siga
-  en ese estado.
+  en ese estado y la cotización es válida durante 30 días.
 - Cada línea guarda SKU, nombre, categoría y precio del momento. Cambiar el
   catálogo después no altera ventas anteriores.
 - Al confirmar una cotización pasa a `PENDING` y su composición queda congelada.
@@ -29,6 +29,12 @@ monetaria explícita en el contrato y evita números decimales.
   medios dentro de una misma venta.
 - Al completar el saldo, el estado cambia automáticamente de `PENDING` a `PAID`.
 - Ventas, abonos y eventos históricos no tienen endpoints de eliminación.
+- Cliente y paciente se mantienen separados. La venta guarda `patientId` solo
+  cuando corresponde a la receta o al producto vendido.
+- Los adicionales ópticos se guardan en líneas separadas del catálogo.
+- Todo descuento exige motivo y las credenciales de una cuenta con permiso
+  `sales.discounts_authorize`; se conserva quién y cuándo lo autorizó.
+- La disponibilidad que muestra el POS es simulada hasta integrar el inventario.
 
 ## Estados y transiciones
 
@@ -131,18 +137,36 @@ Ejemplo de actualización:
 ```json
 {
   "customerId": "uuid-del-cliente",
+  "patientId": null,
   "prescriptionId": null,
+  "externalPrescriptionId": null,
   "items": [
     {
       "productId": "uuid-del-marco",
       "quantity": 1
     }
-  ]
+  ],
+  "opticalAdditions": [
+    {
+      "name": "Antirreflejo premium",
+      "description": "Tratamiento adicional",
+      "quantity": 1,
+      "unitPriceCents": 39990
+    }
+  ],
+  "discount": {
+    "amountCents": 5000,
+    "reason": "Convenio empresa",
+    "authorizerEmail": "admin@example.com",
+    "authorizerPassword": "credencial-del-autorizador"
+  }
 }
 ```
 
 Para una venta con lentes de receta, `prescriptionId` debe contener una receta
-utilizable. La receta puede pertenecer a un paciente distinto del cliente.
+utilizable o `externalPrescriptionId` una receta externa confirmada. En ambos
+casos se exige `patientId`. La receta puede pertenecer a un paciente distinto
+del cliente. Un marco o accesorio sin `requiresPrescription` no exige receta.
 
 ### Editar y confirmar
 
@@ -197,6 +221,24 @@ Para cancelar una cotización o venta pendiente sin abonos:
 - `GET /api/sales/{saleId}`
 - `GET /api/sales/{saleId}/history`
 
+### Comprobante y correo
+
+- `POST /api/sales/{saleId}/receipt` crea una sola vez el comprobante y acepta
+  opcionalmente `{ "email": "cliente@example.com" }`.
+- `GET /api/sales/{saleId}/receipt` consulta el comprobante persistente.
+- `GET /api/sales/{saleId}/receipt/print` entrega la versión imprimible.
+
+Con `RESEND_API_KEY` y `POS_EMAIL_FROM`, el `POST` envía el correo de compra
+confirmada. Sin configuración, el comprobante igualmente se emite y el estado de
+correo queda en `SIMULATED` para permitir pruebas locales seguras.
+
+### Reporte operativo del POS
+
+`GET /api/reports/sales?from=2026-08-01&to=2026-08-31&origin=IN_STORE`
+
+El rol `SALES` recibe `sales.reports_read` y accede a totales, pagos, saldos,
+descuentos, estados y evolución diaria producidos por las operaciones del POS.
+
 La vista comercial de receta incluida en una venta no expone graduaciones ni
 metadatos internos: solo identificador, versión, estado y paciente.
 
@@ -210,6 +252,9 @@ metadatos internos: solo identificador, versión, estado y paciente.
 - `409 PAYMENT_ATTEMPT_ACTIVE`: existe un cobro electrónico vigente.
 - `409 INVALID_SALE_STATUS_TRANSITION`: la transición no respeta el flujo.
 - `409 SALE_HAS_PAYMENTS`: no se cancela por este flujo una venta con abonos.
+- `403 DISCOUNT_AUTHORIZATION_FAILED`: las credenciales no pueden autorizar el
+  descuento.
+- `409 QUOTATION_EXPIRED`: la cotización superó su vigencia.
 
 Estas reglas son provisionales y están concentradas en validaciones, servicios y
 la migración comercial para poder ajustarlas cuando se confirme el proceso real
