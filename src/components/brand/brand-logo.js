@@ -8,10 +8,10 @@ export default function BrandLogo({ compact = false, priority = false }) {
         className="brand-logo__source"
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
-        height={160}
+        height={310}
         priority={priority}
         src="/brand/optica-stylo.svg"
-        width={560}
+        width={690}
       />
     </span>
   );
