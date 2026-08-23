@@ -11,7 +11,7 @@ import "../management.css";
 
 const CATEGORIES = [
   ["FRAME", "Marco"],
-  ["PRESCRIPTION_LENS", "Cristal graduado"],
+  ["PRESCRIPTION_LENS", "Opción de cristales"],
   ["TREATMENT", "Tratamiento"],
   ["ACCESSORY", "Accesorio"],
   ["OTHER", "Otro"],

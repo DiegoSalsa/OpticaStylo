@@ -8,7 +8,7 @@ import styles from "./store.module.css";
 
 const categories = [
   { label: "Todos", value: "" }, { label: "Marcos", value: "FRAME" },
-  { label: "Cristales", value: "PRESCRIPTION_LENS" }, { label: "Tratamientos", value: "TREATMENT" },
+  { label: "Tratamientos", value: "TREATMENT" },
   { label: "Accesorios", value: "ACCESSORY" }, { label: "Otros", value: "OTHER" },
 ];
 const categoryNames = Object.fromEntries(categories.map(({ label, value }) => [value, label]));

@@ -63,13 +63,16 @@ function lensMountLabel(line, lines) {
     ?? "Montura vendida";
 }
 
-function useSearch(endpoint, search) {
+function useSearch(endpoint, search, extraParams = "") {
   const [state, setState] = useState({ error: "", items: [], loading: true });
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setState((value) => ({ ...value, error: "", loading: true }));
-      fetch(`${endpoint}?search=${encodeURIComponent(search)}&pageSize=12`, {
+      const query = new URLSearchParams(extraParams);
+      query.set("pageSize", "12");
+      query.set("search", search);
+      fetch(`${endpoint}?${query}`, {
         signal: controller.signal,
       })
         .then(readResponse)
@@ -85,7 +88,7 @@ function useSearch(endpoint, search) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [endpoint, search]);
+  }, [endpoint, extraParams, search]);
   return state;
 }
 
@@ -96,11 +99,20 @@ export default function PosExperience() {
   const [productSearch, setProductSearch] = useState("");
   const customers = useSearch("/api/customers", customerSearch);
   const patients = useSearch("/api/patients", patientSearch);
-  const products = useSearch("/api/products", productSearch);
+  const products = useSearch(
+    "/api/products",
+    productSearch,
+    "excludeCategory=PRESCRIPTION_LENS",
+  );
+  const lensOptions = useSearch(
+    "/api/products",
+    "",
+    "category=PRESCRIPTION_LENS",
+  );
   const [customer, setCustomer] = useState(null);
   const [patient, setPatient] = useState(null);
   const [lines, setLines] = useState([]);
-  const [pendingLens, setPendingLens] = useState(null);
+  const [selectedLensId, setSelectedLensId] = useState("");
   const [selectedLensMountId, setSelectedLensMountId] = useState("");
   const [opticalAdditions, setOpticalAdditions] = useState([]);
   const [additionDraft, setAdditionDraft] = useState({ name: "", unitPriceCents: "" });
@@ -138,6 +150,7 @@ export default function PosExperience() {
   const total = Math.max(0, subtotal - Number(discountCents || 0));
   const requiresPrescription = lines.some((line) => line.requiresPrescription);
   const soldFrames = lines.filter((line) => line.category === "FRAME");
+  const selectedLens = lensOptions.items.find((item) => item.id === selectedLensId);
   const canSell = actor?.permissions.includes("sales.create");
 
   useEffect(() => {
@@ -196,34 +209,26 @@ export default function PosExperience() {
   }
 
   function addProduct(product) {
-    if (product.category === "PRESCRIPTION_LENS") {
-      setSale(null);
-      setError("");
-      setPendingLens(product);
-      setSelectedLensMountId((current) => (
-        current && soldFrames.some((frame) => frame.id === current)
-          ? current
-          : soldFrames.at(-1)?.id ?? ""
-      ));
-      return;
-    }
     addLine(product);
     if (product.category === "FRAME") setSelectedLensMountId(product.id);
   }
 
   function addConfiguredLens() {
-    if (!pendingLens) return;
+    if (!selectedLens) {
+      setError("Selecciona una opción de cristales antes de agregarla.");
+      return;
+    }
     const mount = selectedLensMountId
       ? { frameProductId: selectedLensMountId, source: "SOLD_FRAME" }
       : { frameProductId: null, source: "CUSTOMER_FRAME" };
-    addLine(pendingLens, mount);
-    setPendingLens(null);
+    addLine(selectedLens, mount);
+    setSelectedLensId("");
     const mountNotice =
       mount.source === "SOLD_FRAME"
         ? "Cristales vinculados a la montura vendida."
         : "Cristales vinculados a la montura del cliente.";
     setNotice(
-      pendingLens.requiresPrescription
+      selectedLens.requiresPrescription
         ? `${mountNotice} Falta seleccionar la receta.`
         : mountNotice,
     );
@@ -378,7 +383,7 @@ export default function PosExperience() {
           id: item.productId,
         })),
       );
-      setPendingLens(null);
+      setSelectedLensId("");
       setSelectedLensMountId(
         quote.items.find((item) => item.category === "FRAME")?.productId ?? "",
       );
@@ -565,6 +570,8 @@ export default function PosExperience() {
     setPatient(null);
     setPatientBirthDate("");
     setLines([]);
+    setSelectedLensId("");
+    setSelectedLensMountId("");
     setOpticalAdditions([]);
     setAdditionDraft({ name: "", unitPriceCents: "" });
     setDiscountCents(0);
@@ -860,7 +867,7 @@ export default function PosExperience() {
               <input
                 aria-label="Buscar productos"
                 onChange={(event) => setProductSearch(event.target.value)}
-                placeholder="Buscar por nombre o SKU"
+                placeholder="Buscar marcos, accesorios o SKU"
                 value={productSearch}
               />
             </div>
@@ -871,7 +878,7 @@ export default function PosExperience() {
                 <p className="inline-error">{products.error}</p>
               ) : (
                 products.items
-                  .filter((item) => item.isActive)
+                  .filter((item) => item.isActive && item.category !== "PRESCRIPTION_LENS")
                   .map((item) => (
                     <button
                       disabled={Boolean(sale)}
@@ -902,46 +909,63 @@ export default function PosExperience() {
                   ))
               )}
             </div>
-            {pendingLens && (
-              <div className="lens-configuration">
-                <div>
-                  <strong>Configurar {pendingLens.name}</strong>
-                  <p>Los cristales se agregan asociados a una montura, nunca como una venta suelta.</p>
-                </div>
-                <label className="field">
-                  <span>Montura para los cristales</span>
-                  <select
-                    disabled={Boolean(sale)}
-                    onChange={(event) => setSelectedLensMountId(event.target.value)}
-                    value={selectedLensMountId}
-                  >
-                    <option value="">Montura del cliente</option>
-                    {soldFrames.map((frame) => (
-                      <option key={frame.id} value={frame.id}>
-                        Montura vendida: {frame.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="lens-configuration-actions">
-                  <button
-                    className="text-button"
-                    onClick={() => setPendingLens(null)}
-                    type="button"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    className="app-button app-button--primary"
-                    disabled={Boolean(sale)}
-                    onClick={addConfiguredLens}
-                    type="button"
-                  >
-                    Agregar cristales
-                  </button>
-                </div>
+            <div className="lens-configuration">
+              <div>
+                <strong>Cristales para una montura</strong>
+                <p>Se agregan como opción del marco vendido o de la montura del cliente; no se venden sueltos.</p>
               </div>
-            )}
+              {lensOptions.loading ? (
+                <p>Cargando opciones de cristales…</p>
+              ) : lensOptions.error ? (
+                <p className="inline-error">{lensOptions.error}</p>
+              ) : lensOptions.items.length ? (
+                <>
+                  <label className="field">
+                    <span>Opción de cristales</span>
+                    <select
+                      disabled={Boolean(sale)}
+                      onChange={(event) => setSelectedLensId(event.target.value)}
+                      value={selectedLensId}
+                    >
+                      <option value="">Seleccionar opción</option>
+                      {lensOptions.items.filter((item) => item.isActive).map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} · {money.format(item.unitPriceCents)}
+                          {item.isTestData ? " · Datos de prueba" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Montura para los cristales</span>
+                    <select
+                      disabled={Boolean(sale)}
+                      onChange={(event) => setSelectedLensMountId(event.target.value)}
+                      value={selectedLensMountId}
+                    >
+                      <option value="">Montura del cliente</option>
+                      {soldFrames.map((frame) => (
+                        <option key={frame.id} value={frame.id}>
+                          Montura vendida: {frame.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="lens-configuration-actions">
+                    <button
+                      className="app-button app-button--primary"
+                      disabled={Boolean(sale)}
+                      onClick={addConfiguredLens}
+                      type="button"
+                    >
+                      Agregar cristales
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p>No hay opciones de cristales configuradas para esta caja.</p>
+              )}
+            </div>
           </article>
           <article className="app-card pos-section">
             <div className="pos-title">

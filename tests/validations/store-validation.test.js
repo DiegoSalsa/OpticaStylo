@@ -60,17 +60,26 @@ test("normaliza retiro y despacho por separado", () => {
 });
 
 test("valida cantidades del carrito", () => {
-  assert.deepEqual(validateCartItemInput({ quantity: 2 }), { quantity: 2 });
+  assert.deepEqual(validateCartItemInput({ quantity: 2 }), {
+    mountFrameProductId: null,
+    quantity: 2,
+  });
   assert.throws(() => validateCartItemInput({ quantity: 0 }));
 });
 
-test("valida productos distintos en una misma adición al carrito", () => {
+test("valida productos distintos y vincula cristales al marco en el carrito", () => {
   const first = "00000000-0000-4000-8000-000000000001";
   const second = "00000000-0000-4000-8000-000000000002";
   assert.deepEqual(validateCartItemsInput({
-    items: [{ productId: first, quantity: 1 }, { productId: second, quantity: 2 }],
+    items: [
+      { productId: first, quantity: 1 },
+      { mountFrameProductId: first, productId: second, quantity: 2 },
+    ],
   }), {
-    items: [{ productId: first, quantity: 1 }, { productId: second, quantity: 2 }],
+    items: [
+      { mountFrameProductId: null, productId: first, quantity: 1 },
+      { mountFrameProductId: first, productId: second, quantity: 2 },
+    ],
   });
   assert.throws(() => validateCartItemsInput({
     items: [{ productId: first, quantity: 1 }, { productId: first, quantity: 1 }],
