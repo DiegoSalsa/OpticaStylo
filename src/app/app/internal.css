@@ -290,17 +290,9 @@
   .internal-sidebar {
     padding: 1rem 0.65rem;
   }
-  .internal-brand .brand-logo__mark {
-    height: 27px;
+  .internal-brand .brand-logo__source {
     width: 58px;
   }
-  .internal-brand .brand-logo__source {
-    height: 88px;
-    left: -39px;
-    top: -31px;
-    width: 133px;
-  }
-  .internal-sidebar nav a:not(.active) {
   .internal-sidebar nav a:not(.active) {
     font-size: 0;
   }

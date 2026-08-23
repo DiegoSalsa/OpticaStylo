@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 160" role="img" aria-labelledby="tituloLogo">
+  <title id="tituloLogo">Óptica Stylo</title>
+  <path d="M112 30A58 58 0 1 0 112 130" fill="none" stroke="#2db39b" stroke-linecap="round" stroke-width="20"/>
+  <circle cx="78" cy="80" r="45" fill="#073a32"/>
+  <circle cx="78" cy="80" r="27" fill="#fff"/>
+  <path d="M77 67h52v20H77z" fill="#073a32"/>
+  <path d="M23 52C15 60 11 69 11 80s4 20 12 28" fill="none" stroke="#646766" stroke-linecap="round" stroke-width="5"/>
+  <text x="158" y="72" fill="#2db39b" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="400" letter-spacing="5">OPTICA</text>
+  <text x="156" y="140" fill="#073a32" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="400" letter-spacing="9">STYLO</text>
+</svg>
