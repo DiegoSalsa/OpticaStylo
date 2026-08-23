@@ -1,25 +1,101 @@
 .internal-shell {
   background: #f3f7f6;
   grid-template-columns: 245px minmax(0, 1fr);
+  transition: grid-template-columns 0.2s ease;
 }
 .internal-sidebar {
-  background: #073a32;
-  border-right: 0;
-  color: #fff;
+  background: #f8fbfa;
+  border-right: 1px solid #dce8e5;
+  color: #132521;
   padding: 1rem;
+  transition: padding 0.2s ease;
 }
 .internal-brand {
-  background: #fff;
-  border-radius: 13px;
   margin: 0.1rem 0 1rem;
-  padding: 0.25rem 0.55rem;
+  padding: 0;
   width: max-content;
+}
+.internal-sidebar__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.45rem;
+  justify-content: space-between;
+  margin: 0.1rem 0 1rem;
+}
+.internal-sidebar__header .internal-brand {
+  margin: 0;
+  min-width: 0;
+}
+.internal-sidebar-toggle {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #dce8e5;
+  border-radius: 9px;
+  color: #073a32;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 32px;
+  justify-content: center;
+  padding: 0;
+  width: 32px;
+}
+.internal-sidebar-toggle:hover {
+  background: #eff9f6;
+}
+.internal-sidebar-toggle:focus-visible {
+  outline: 3px solid rgba(61, 183, 159, 0.4);
+  outline-offset: 2px;
+}
+.internal-sidebar-toggle__icon--collapse {
+  transform: rotate(180deg);
+}
+.internal-sidebar-toggle__text {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+.internal-shell--collapsed {
+  grid-template-columns: 78px minmax(0, 1fr);
+}
+.internal-shell--collapsed .internal-sidebar {
+  padding: 1rem 0.65rem;
+}
+.internal-shell--collapsed .internal-sidebar__header {
+  align-items: center;
+  flex-direction: column;
+}
+.internal-shell--collapsed .internal-brand .brand-logo__source {
+  width: 58px;
+}
+.internal-shell--collapsed .internal-quick-sale {
+  font-size: 0;
+  padding: 0.6rem;
+}
+.internal-shell--collapsed .internal-quick-sale span,
+.internal-shell--collapsed .internal-nav-label,
+.internal-shell--collapsed .internal-nav-link__label,
+.internal-shell--collapsed .internal-user div {
+  display: none;
+}
+.internal-shell--collapsed .internal-sidebar nav a {
+  font-size: 0;
+  justify-content: center;
+  padding: 0.6rem;
+}
+.internal-shell--collapsed .internal-user {
+  grid-template-columns: 34px;
+  justify-content: center;
 }
 .internal-quick-sale {
   align-items: center;
-  background: var(--color-primary);
+  background: #073a32;
   border-radius: 10px;
-  color: #052d27;
+  color: #fff;
   display: flex;
   font-size: 0.73rem;
   font-weight: 850;
@@ -30,7 +106,7 @@
   text-decoration: none;
 }
 .internal-nav-label {
-  color: #7eaaa1;
+  color: #78938d;
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -42,36 +118,36 @@
 }
 .internal-sidebar nav a {
   border-radius: 9px;
-  color: #b9d1cc;
+  color: #536763;
   font-size: 0.72rem;
   gap: 0.65rem;
   min-height: 42px;
   padding: 0.6rem 0.7rem;
 }
 .internal-sidebar nav a:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: #eff9f6;
+  color: #073a32;
 }
 .internal-sidebar nav a.active {
-  background: #fff;
-  color: #073a32;
+  background: var(--color-primary);
+  color: #fff;
   box-shadow: none;
 }
 .internal-user {
-  border-color: rgba(255, 255, 255, 0.13);
+  border-color: #e3ece9;
 }
 .internal-user > span {
-  background: var(--color-primary);
-  color: #073a32;
-}
-.internal-user strong {
+  background: #073a32;
   color: #fff;
 }
+.internal-user strong {
+  color: #132521;
+}
 .internal-user small {
-  color: #8eb4ac;
+  color: #71817e;
 }
 .internal-user button {
-  color: #a9c7c1;
+  color: #647672;
 }
 .internal-content {
   min-width: 0;
@@ -88,16 +164,9 @@
   top: 0;
   z-index: 30;
 }
-.internal-topbar > div {
-  display: grid;
-}
-.internal-topbar strong {
-  color: #073a32;
-  font-size: 0.75rem;
-}
-.internal-topbar span {
-  color: #71817e;
-  font-size: 0.6rem;
+.internal-topbar__brand {
+  display: none;
+  line-height: 0;
 }
 .internal-topbar nav {
   align-items: center;
@@ -137,6 +206,12 @@
   .internal-quick-sale {
     font-size: 0;
   }
+  .internal-sidebar__header {
+    justify-content: center;
+  }
+  .internal-sidebar-toggle {
+    display: none;
+  }
   .internal-nav-label {
     display: none;
   }
@@ -152,6 +227,15 @@
     height: 56px;
   }
   .internal-topbar nav span {
+    display: none;
+  }
+  .internal-topbar__brand {
+    display: inline-flex;
+  }
+  .internal-topbar__brand .brand-logo__source {
+    width: 108px;
+  }
+  .internal-sidebar__header {
     display: none;
   }
   .internal-quick-sale {

@@ -46,6 +46,12 @@ test("traduce la receta obligatoria a conflicto comercial", async () => {
   }), (error) => error.code === "PRESCRIPTION_REQUIRED" && error.status === 409);
 });
 
+test("traduce el rechazo de cristales sin montura a conflicto comercial", async () => {
+  await assert.rejects(() => createSale(draft, actor, {
+    createSale: async () => ({ reason: "LENS_MOUNT_REQUIRED", sale: null }),
+  }), (error) => error.code === "LENS_MOUNT_REQUIRED" && error.status === 409);
+});
+
 test("traduce un descuento invÃ¡lido a conflicto comercial", async () => {
   await assert.rejects(() => createSale({
     ...draft,

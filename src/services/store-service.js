@@ -44,6 +44,11 @@ const ERRORS = Object.freeze({
   ],
   CART_EMPTY: ["CART_EMPTY", "El carrito no contiene productos.", 409],
   CART_ITEM_NOT_FOUND: ["CART_ITEM_NOT_FOUND", "El producto no está en el carrito.", 404],
+  LENS_MOUNT_REQUIRED: [
+    "STORE_LENS_MOUNT_REQUIRED",
+    "Los cristales deben estar asociados a un marco incluido en el carrito.",
+    409,
+  ],
   CART_NOT_ACTIVE: ["CART_NOT_ACTIVE", "El carrito ya no está activo.", 409],
   CART_NOT_FOUND: ["CART_NOT_FOUND", "No se encontró un carrito accesible.", 404],
   CLINICAL_PRESCRIPTION_NOT_AVAILABLE: [
@@ -69,6 +74,11 @@ const ERRORS = Object.freeze({
   PRODUCT_NOT_AVAILABLE: [
     "STORE_PRODUCT_NOT_AVAILABLE",
     "El producto no se encuentra disponible.",
+    409,
+  ],
+  UNEXPECTED_LENS_MOUNT: [
+    "STORE_UNEXPECTED_LENS_MOUNT",
+    "Solo los cristales pueden asociarse a un marco.",
     409,
   ],
 });
@@ -121,6 +131,7 @@ export async function putStoreCartItem(token, account, productId, input, depende
     credentials.accountId,
     validateStoreProductId(productId),
     item.quantity,
+    item.mountFrameProductId,
   ));
 }
 

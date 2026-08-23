@@ -36,6 +36,8 @@ const REPOSITORY_ERRORS = Object.freeze({
   EXTERNAL_PRESCRIPTION_NOT_FOUND: ["EXTERNAL_PRESCRIPTION_NOT_FOUND", "No se encontró la receta externa indicada.", 404],
   EXTERNAL_PRESCRIPTION_NOT_USABLE: ["EXTERNAL_PRESCRIPTION_NOT_USABLE", "La receta externa debe pertenecer al cliente y paciente de la venta.", 409],
   INVALID_STATUS_TRANSITION: ["INVALID_SALE_STATUS_TRANSITION", "La venta no admite ese cambio de estado.", 409],
+  INVALID_LENS_MOUNT: ["INVALID_LENS_MOUNT", "Los cristales deben vincularse a una montura incluida en la venta.", 409],
+  LENS_MOUNT_REQUIRED: ["LENS_MOUNT_REQUIRED", "Debe indicar la montura vendida o la montura del cliente para los cristales.", 409],
   PATIENT_NOT_FOUND: ["PATIENT_NOT_FOUND", "No se encontró el paciente de la venta.", 404],
   PAYMENT_ATTEMPT_ACTIVE: ["PAYMENT_ATTEMPT_ACTIVE", "Existe un cobro electrónico pendiente para esta venta.", 409],
   PAYMENT_EXCEEDS_BALANCE: ["PAYMENT_EXCEEDS_BALANCE", "El abono supera el saldo pendiente.", 409],
@@ -55,6 +57,7 @@ const REPOSITORY_ERRORS = Object.freeze({
   SALE_NOT_EDITABLE: ["SALE_NOT_EDITABLE", "Solo una cotización puede editarse.", 409],
   SALE_NOT_FOUND: ["SALE_NOT_FOUND", "No se encontró la venta.", 404],
   SALE_NOT_PAYABLE: ["SALE_NOT_PAYABLE", "Solo una venta pendiente puede recibir abonos.", 409],
+  UNEXPECTED_LENS_MOUNT: ["UNEXPECTED_LENS_MOUNT", "Solo los cristales pueden tener una montura asociada.", 409],
 });
 
 function throwRepositoryReason(reason) {

@@ -51,6 +51,7 @@ export async function findProductById(productId) {
 
 export async function listProducts({
   category,
+  excludeCategory = null,
   includeTestData = true,
   isActive,
   page,
@@ -59,17 +60,18 @@ export async function listProducts({
 }) {
   const offset = (page - 1) * pageSize;
   const pattern = `%${search}%`;
-  const parameters = [search, pattern, category, isActive, includeTestData];
+  const parameters = [search, pattern, category, isActive, includeTestData, excludeCategory];
   const filters = `
     ($1 = '' OR sku ILIKE $2 OR name ILIKE $2)
     AND ($3::VARCHAR IS NULL OR category = $3)
     AND ($4::BOOLEAN IS NULL OR is_active = $4)
     AND ($5::BOOLEAN OR is_test_data = FALSE)
+    AND ($6::VARCHAR IS NULL OR category <> $6)
   `;
   const [itemsResult, countResult] = await Promise.all([
     executeQuery(
       `SELECT * FROM products WHERE ${filters}
-       ORDER BY is_active DESC, category, name, id LIMIT $6 OFFSET $7`,
+       ORDER BY is_active DESC, category, name, id LIMIT $7 OFFSET $8`,
       [...parameters, pageSize, offset],
     ),
     executeQuery(`SELECT COUNT(*) AS total FROM products WHERE ${filters}`, parameters),

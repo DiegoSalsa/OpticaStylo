@@ -25,6 +25,12 @@ function opticalData(form) {
   };
 }
 
+function mountName(item, items) {
+  if (!item.mountFrameProductId) return null;
+  return items.find((candidate) => candidate.productId === item.mountFrameProductId)?.name
+    ?? "Marco seleccionado";
+}
+
 export default function CartExperience() {
   const [cart, setCart] = useState(null);
   const [status, setStatus] = useState("loading");
@@ -53,14 +59,17 @@ export default function CartExperience() {
       });
   }, []);
 
-  async function update(productId, quantity) {
+  async function update(item, quantity) {
     setError("");
     setStatus("saving");
     try {
       const response = quantity < 1
-        ? await fetch(`/api/store/cart/items/${productId}`, { method: "DELETE" })
-        : await fetch(`/api/store/cart/items/${productId}`, {
-          body: JSON.stringify({ quantity }),
+        ? await fetch(`/api/store/cart/items/${item.productId}`, { method: "DELETE" })
+        : await fetch(`/api/store/cart/items/${item.productId}`, {
+          body: JSON.stringify({
+            mountFrameProductId: item.mountFrameProductId,
+            quantity,
+          }),
           headers: { "Content-Type": "application/json" },
           method: "PUT",
         });
@@ -165,7 +174,7 @@ export default function CartExperience() {
       <section className="cart-content">
         <article className="cart-card">
           <h2>Productos</h2>
-          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{item.requiresPrescription ? " · Requiere receta" : ""}</small></div><div className="cart-quantity"><button onClick={() => update(item.productId, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item.productId, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item.productId, 0)} type="button">×</button></div>)}
+          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{item.requiresPrescription ? " · Requiere receta" : ""}</small>{mountName(item, cart.items) && <small>Para: {mountName(item, cart.items)}</small>}</div><div className="cart-quantity"><button onClick={() => update(item, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item, 0)} type="button">×</button></div>)}
         </article>
 
         {requiresPrescription && <article className="cart-card prescription-card">

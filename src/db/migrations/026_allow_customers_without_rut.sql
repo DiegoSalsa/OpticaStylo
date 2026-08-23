@@ -1,0 +1,2 @@
+ALTER TABLE customers
+  ALTER COLUMN rut DROP NOT NULL;

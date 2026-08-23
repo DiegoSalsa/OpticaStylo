@@ -21,6 +21,7 @@ test("fuerza el catálogo público a mostrar solo activos", async () => {
   const result = await getStoreProducts(query, {
     listProducts: async (filters) => {
       assert.equal(filters.isActive, true);
+      assert.equal(filters.excludeCategory, "PRESCRIPTION_LENS");
       return { items: [product], page: 1, pageSize: 20, total: 1, totalPages: 1 };
     },
   });
@@ -58,11 +59,24 @@ test("oculta un producto de prueba por identificador fuera del entorno local", a
   }), (error) => error.code === "STORE_PRODUCT_NOT_FOUND" && error.status === 404);
 });
 
+test("oculta los cristales como productos independientes en la tienda", async () => {
+  await assert.rejects(() => getStoreProduct(product.id, {
+    findProductById: async () => ({ ...product, category: "PRESCRIPTION_LENS" }),
+  }), (error) => error.code === "STORE_PRODUCT_NOT_FOUND" && error.status === 404);
+});
+
 test("incluye la galería y ficha del modelo HD0896-001", async () => {
   const result = await getStoreProduct(product.id, {
     findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
+    listProducts: async (filters) => {
+      assert.equal(filters.category, "PRESCRIPTION_LENS");
+      return {
+        items: [{ ...product, category: "PRESCRIPTION_LENS", isTestData: true }],
+      };
+    },
   });
   assert.equal(result.images.length, 3);
   assert.equal(result.specifications.find((item) => item.label === "Medidas")?.value, "56-15-145 mm");
+  assert.equal(result.lensOptions[0].isTestData, true);
   assert.match(result.description, /Harley-Davidson/);
 });

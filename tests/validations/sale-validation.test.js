@@ -10,6 +10,7 @@ import {
 
 const customerId = "00000000-0000-4000-8000-000000000001";
 const productId = "00000000-0000-4000-8000-000000000002";
+const frameProductId = "00000000-0000-4000-8000-000000000007";
 const patientId = "00000000-0000-4000-8000-000000000005";
 const discountAuthorization = {
   authorizerEmail: "admin@opticastylo.cl",
@@ -25,6 +26,50 @@ test("acepta una cotización sin receta", () => {
   assert.equal(result.discountCents, 0);
   assert.equal(result.discountReason, null);
   assert.equal(result.externalPrescriptionId, null);
+});
+
+test("normaliza la montura vendida de unos cristales", () => {
+  const result = validateSaleDraftInput({
+    customerId,
+    items: [
+      { productId: frameProductId, quantity: 1 },
+      {
+        mount: { frameProductId, source: "sold_frame" },
+        productId,
+        quantity: 2,
+      },
+    ],
+  });
+  assert.deepEqual(result.items[1].mount, {
+    frameProductId,
+    source: "SOLD_FRAME",
+  });
+});
+
+test("admite montura del cliente y rechaza referencias incompatibles", () => {
+  const result = validateSaleDraftInput({
+    customerId,
+    items: [{
+      mount: { source: "CUSTOMER_FRAME" },
+      productId,
+      quantity: 1,
+    }],
+  });
+  assert.deepEqual(result.items[0].mount, {
+    frameProductId: null,
+    source: "CUSTOMER_FRAME",
+  });
+  assert.throws(
+    () => validateSaleDraftInput({
+      customerId,
+      items: [{
+        mount: { frameProductId, source: "CUSTOMER_FRAME" },
+        productId,
+        quantity: 1,
+      }],
+    }),
+    /no debe apuntar a un producto/,
+  );
 });
 
 test("acepta una receta externa pero nunca junto con una interna", () => {

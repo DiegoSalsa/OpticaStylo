@@ -109,57 +109,17 @@ a:focus-visible {
   flex: 0 0 auto;
 }
 .brand-logo {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.45rem;
-}
-.brand-logo__mark {
-  background: #fff;
-  border-radius: 50%;
-  display: block;
-  height: 48px;
-  overflow: hidden;
-  position: relative;
-  width: 48px;
+  display: inline-block;
+  line-height: 0;
+  max-width: 100%;
 }
 .brand-logo__source {
-  height: 63px;
-  left: -25px;
-  max-width: none;
-  position: absolute;
-  top: -9px;
-  width: 95px;
-}
-.brand-logo__wordmark {
-  display: grid;
-  line-height: 1;
-}
-.brand-logo__wordmark small {
-  color: var(--color-primary);
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
-}
-.brand-logo__wordmark strong {
-  color: #151b19;
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-.brand-logo--compact .brand-logo__mark {
-  height: 42px;
-  width: 42px;
+  display: block;
+  height: auto;
+  width: 188px;
 }
 .brand-logo--compact .brand-logo__source {
-  height: 56px;
-  left: -22px;
-  top: -8px;
-  width: 84px;
-}
-.brand-logo--compact .brand-logo__wordmark small {
-  font-size: 0.52rem;
-}
-.brand-logo--compact .brand-logo__wordmark strong {
-  font-size: 0.95rem;
+  width: 142px;
 }
 .public-header {
   backdrop-filter: blur(18px);
@@ -172,7 +132,7 @@ a:focus-visible {
 .public-header__inner {
   align-items: center;
   display: flex;
-  height: 62px;
+  height: 76px;
   justify-content: space-between;
   margin: 0 auto;
   max-width: 1440px;
@@ -507,23 +467,8 @@ a:focus-visible {
     padding-inline: 1rem;
   }
 
-  .brand-logo__mark {
-    height: 42px;
-    width: 42px;
-  }
-
-  .brand-logo__source {
-    height: 56px;
-    left: -22px;
-    top: -8px;
-    width: 84px;
-  }
-
-  .brand-logo__wordmark strong {
-    font-size: 0.92rem;
-  }
-  .brand-logo__wordmark small {
-    font-size: 0.5rem;
+  .brand-logo--compact .brand-logo__source {
+    width: 112px;
   }
 
   .mobile-menu nav {
