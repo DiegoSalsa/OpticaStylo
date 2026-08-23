@@ -101,23 +101,23 @@ export default function HomePage() {
             </Link>
             <Link
               className={`${styles.bentoCard} ${styles.lenses}`}
-              href="/tienda?category=PRESCRIPTION_LENS"
+              href="/tienda?category=FRAME"
             >
               <Image
-                alt="Cristales ópticos"
+                alt="Cristales configurados junto a un marco"
                 fill
                 sizes="(max-width: 960px) 100vw, 50vw"
                 src={stitchImages.lenses}
               />
               <div className={styles.lensShade} />
               <div className={styles.cardCopy}>
-                <h3>Cristales</h3>
+                <h3>Cristales para tu marco</h3>
                 <p>
-                  Tecnología antirreflejo, filtro azul y alternativas de
-                  precisión.
+                  Elige un marco y configura sus cristales como parte de la
+                  misma compra.
                 </p>
                 <strong>
-                  Ver opciones <Icon name="chevron" size={13} />
+                  Elegir marco <Icon name="chevron" size={13} />
                 </strong>
               </div>
             </Link>

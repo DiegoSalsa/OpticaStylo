@@ -19,7 +19,7 @@ export default function PublicHeader() {
           {navigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </nav>
         <div className="public-header__actions">
-          <form action="/tienda" className="public-header__search"><Icon name="search" size={15} /><input aria-label="Buscar productos" name="search" placeholder="Buscar marcos, lentes..." type="search" /></form>
+          <form action="/tienda" className="public-header__search"><Icon name="search" size={15} /><input aria-label="Buscar productos" name="search" placeholder="Buscar marcos y accesorios..." type="search" /></form>
           <Link aria-label="Carrito" className="icon-button" href="/carrito"><Icon name="cart" /></Link>
           <Link aria-label="Mi cuenta" className="icon-button" href="/cuenta"><Icon name="account" /></Link>
           <details className="mobile-menu">

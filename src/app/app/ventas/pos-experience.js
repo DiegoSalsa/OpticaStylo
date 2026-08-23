@@ -51,13 +51,28 @@ function externalPrescriptionData(value) {
   };
 }
 
-function useSearch(endpoint, search) {
+function customerDetails(value) {
+  return [value.rut, value.email].filter(Boolean).join(" · ")
+    || "Datos de contacto pendientes";
+}
+
+function lensMountLabel(line, lines) {
+  if (!line.mount) return null;
+  if (line.mount.source === "CUSTOMER_FRAME") return "Montura del cliente";
+  return lines.find((item) => item.id === line.mount.frameProductId)?.name
+    ?? "Montura vendida";
+}
+
+function useSearch(endpoint, search, extraParams = "") {
   const [state, setState] = useState({ error: "", items: [], loading: true });
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setState((value) => ({ ...value, error: "", loading: true }));
-      fetch(`${endpoint}?search=${encodeURIComponent(search)}&pageSize=12`, {
+      const query = new URLSearchParams(extraParams);
+      query.set("pageSize", "12");
+      query.set("search", search);
+      fetch(`${endpoint}?${query}`, {
         signal: controller.signal,
       })
         .then(readResponse)
@@ -73,7 +88,7 @@ function useSearch(endpoint, search) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [endpoint, search]);
+  }, [endpoint, extraParams, search]);
   return state;
 }
 
@@ -84,10 +99,21 @@ export default function PosExperience() {
   const [productSearch, setProductSearch] = useState("");
   const customers = useSearch("/api/customers", customerSearch);
   const patients = useSearch("/api/patients", patientSearch);
-  const products = useSearch("/api/products", productSearch);
+  const products = useSearch(
+    "/api/products",
+    productSearch,
+    "excludeCategory=PRESCRIPTION_LENS",
+  );
+  const lensOptions = useSearch(
+    "/api/products",
+    "",
+    "category=PRESCRIPTION_LENS",
+  );
   const [customer, setCustomer] = useState(null);
   const [patient, setPatient] = useState(null);
   const [lines, setLines] = useState([]);
+  const [selectedLensId, setSelectedLensId] = useState("");
+  const [selectedLensMountId, setSelectedLensMountId] = useState("");
   const [opticalAdditions, setOpticalAdditions] = useState([]);
   const [additionDraft, setAdditionDraft] = useState({ name: "", unitPriceCents: "" });
   const [discountCents, setDiscountCents] = useState(0);
@@ -123,6 +149,8 @@ export default function PosExperience() {
   );
   const total = Math.max(0, subtotal - Number(discountCents || 0));
   const requiresPrescription = lines.some((line) => line.requiresPrescription);
+  const soldFrames = lines.filter((line) => line.category === "FRAME");
+  const selectedLens = lensOptions.items.find((item) => item.id === selectedLensId);
   const canSell = actor?.permissions.includes("sales.create");
 
   useEffect(() => {
@@ -153,7 +181,19 @@ export default function PosExperience() {
     setPrescriptionLookup({ error: "", loading: Boolean(value?.id) });
   }
 
-  function addProduct(product) {
+  function addLine(product, mount = null) {
+    const existing = lines.find((line) => line.id === product.id);
+    if (
+      existing
+      && mount
+      && (
+        existing.mount?.source !== mount.source
+        || existing.mount?.frameProductId !== mount.frameProductId
+      )
+    ) {
+      setError("Este tipo de cristal ya está configurado con otra montura en el ticket.");
+      return;
+    }
     setSale(null);
     setNotice("");
     setLines((current) => {
@@ -164,18 +204,58 @@ export default function PosExperience() {
               ? { ...line, quantity: line.quantity + 1 }
               : line,
           )
-        : [...current, { ...product, quantity: 1 }];
+        : [...current, { ...product, mount, quantity: 1 }];
     });
   }
 
-  function quantity(productId, next) {
-    setLines((current) =>
-      next < 1
-        ? current.filter((line) => line.id !== productId)
-        : current.map((line) =>
-            line.id === productId ? { ...line, quantity: next } : line,
-          ),
+  function addProduct(product) {
+    addLine(product);
+    if (product.category === "FRAME") setSelectedLensMountId(product.id);
+  }
+
+  function addConfiguredLens() {
+    if (!selectedLens) {
+      setError("Selecciona una opción de cristales antes de agregarla.");
+      return;
+    }
+    const mount = selectedLensMountId
+      ? { frameProductId: selectedLensMountId, source: "SOLD_FRAME" }
+      : { frameProductId: null, source: "CUSTOMER_FRAME" };
+    addLine(selectedLens, mount);
+    setSelectedLensId("");
+    const mountNotice =
+      mount.source === "SOLD_FRAME"
+        ? "Cristales vinculados a la montura vendida."
+        : "Cristales vinculados a la montura del cliente.";
+    setNotice(
+      selectedLens.requiresPrescription
+        ? `${mountNotice} Falta seleccionar la receta.`
+        : mountNotice,
     );
+  }
+
+  function quantity(productId, next) {
+    const product = lines.find((line) => line.id === productId);
+    const attachedLenses = next < 1 && product?.category === "FRAME"
+      ? lines.filter((line) => (
+        line.mount?.source === "SOLD_FRAME"
+        && line.mount.frameProductId === productId
+      ))
+      : [];
+    if (attachedLenses.length) {
+      setNotice("También se quitaron los cristales configurados para esa montura.");
+    }
+    if (next < 1 && selectedLensMountId === productId) {
+      setSelectedLensMountId("");
+    }
+    setLines((current) => next < 1
+      ? current.filter((line) => (
+        line.id !== productId
+        && line.mount?.frameProductId !== productId
+      ))
+      : current.map((line) => (
+        line.id === productId ? { ...line, quantity: next } : line
+      )));
   }
 
   function setExternalEye(side, field, value) {
@@ -303,6 +383,10 @@ export default function PosExperience() {
           id: item.productId,
         })),
       );
+      setSelectedLensId("");
+      setSelectedLensMountId(
+        quote.items.find((item) => item.category === "FRAME")?.productId ?? "",
+      );
       setOpticalAdditions(quote.opticalAdditions ?? []);
       setDiscountCents(quote.discount?.amountCents ?? 0);
       setDiscountReason(quote.discount?.reason ?? "");
@@ -367,13 +451,16 @@ export default function PosExperience() {
                 : null,
             externalPrescriptionId,
             items: lines.map((line) => ({
+              mount: line.mount,
               productId: line.id,
               quantity: line.quantity,
             })),
             opticalAdditions,
-            patientId: patient?.id ?? null,
+            patientId: requiresPrescription ? patient?.id ?? null : null,
             prescriptionId:
-              prescriptionMode === "internal" ? prescriptionId || null : null,
+              requiresPrescription && prescriptionMode === "internal"
+                ? prescriptionId || null
+                : null,
           }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
@@ -483,6 +570,8 @@ export default function PosExperience() {
     setPatient(null);
     setPatientBirthDate("");
     setLines([]);
+    setSelectedLensId("");
+    setSelectedLensMountId("");
     setOpticalAdditions([]);
     setAdditionDraft({ name: "", unitPriceCents: "" });
     setDiscountCents(0);
@@ -603,8 +692,8 @@ export default function PosExperience() {
             {newCustomer ? (
               <form className="quick-customer" onSubmit={createCustomer}>
                 <label className="field">
-                  <span>RUT</span>
-                  <input name="rut" placeholder="12.345.678-5" required />
+                  <span>RUT opcional</span>
+                  <input name="rut" placeholder="12.345.678-5" />
                 </label>
                 <label className="field">
                   <span>Nombres</span>
@@ -655,7 +744,7 @@ export default function PosExperience() {
                         {customer.firstNames} {customer.lastNames}
                       </strong>
                       <small>
-                        {customer.rut} · {customer.email}
+                        {customerDetails(customer)}
                       </small>
                     </div>
                     <button disabled={Boolean(sale)} onClick={() => chooseCustomer(null)} type="button">
@@ -680,7 +769,7 @@ export default function PosExperience() {
                             {item.firstNames} {item.lastNames}
                           </span>
                           <small>
-                            {item.rut} · {item.email}
+                            {customerDetails(item)}
                           </small>
                         </button>
                       ))
@@ -690,7 +779,7 @@ export default function PosExperience() {
               </>
             )}
           </article>
-          <article className="app-card pos-section">
+          {requiresPrescription && <article className="app-card pos-section">
             <div className="pos-title">
               <span>2</span>
               <div>
@@ -762,10 +851,10 @@ export default function PosExperience() {
                 )}
               </>
             )}
-          </article>
+          </article>}
           <article className="app-card pos-section">
             <div className="pos-title">
-              <span>3</span>
+              <span>{requiresPrescription ? 3 : 2}</span>
               <div>
                 <h2>Productos</h2>
                 <p>
@@ -778,7 +867,7 @@ export default function PosExperience() {
               <input
                 aria-label="Buscar productos"
                 onChange={(event) => setProductSearch(event.target.value)}
-                placeholder="Buscar por nombre o SKU"
+                placeholder="Buscar marcos, accesorios o SKU"
                 value={productSearch}
               />
             </div>
@@ -789,7 +878,7 @@ export default function PosExperience() {
                 <p className="inline-error">{products.error}</p>
               ) : (
                 products.items
-                  .filter((item) => item.isActive)
+                  .filter((item) => item.isActive && item.category !== "PRESCRIPTION_LENS")
                   .map((item) => (
                     <button
                       disabled={Boolean(sale)}
@@ -820,10 +909,67 @@ export default function PosExperience() {
                   ))
               )}
             </div>
+            <div className="lens-configuration">
+              <div>
+                <strong>Cristales para una montura</strong>
+                <p>Se agregan como opción del marco vendido o de la montura del cliente; no se venden sueltos.</p>
+              </div>
+              {lensOptions.loading ? (
+                <p>Cargando opciones de cristales…</p>
+              ) : lensOptions.error ? (
+                <p className="inline-error">{lensOptions.error}</p>
+              ) : lensOptions.items.length ? (
+                <>
+                  <label className="field">
+                    <span>Opción de cristales</span>
+                    <select
+                      disabled={Boolean(sale)}
+                      onChange={(event) => setSelectedLensId(event.target.value)}
+                      value={selectedLensId}
+                    >
+                      <option value="">Seleccionar opción</option>
+                      {lensOptions.items.filter((item) => item.isActive).map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} · {money.format(item.unitPriceCents)}
+                          {item.isTestData ? " · Datos de prueba" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Montura para los cristales</span>
+                    <select
+                      disabled={Boolean(sale)}
+                      onChange={(event) => setSelectedLensMountId(event.target.value)}
+                      value={selectedLensMountId}
+                    >
+                      <option value="">Montura del cliente</option>
+                      {soldFrames.map((frame) => (
+                        <option key={frame.id} value={frame.id}>
+                          Montura vendida: {frame.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="lens-configuration-actions">
+                    <button
+                      className="app-button app-button--primary"
+                      disabled={Boolean(sale)}
+                      onClick={addConfiguredLens}
+                      type="button"
+                    >
+                      Agregar cristales
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p>No hay opciones de cristales configuradas para esta caja.</p>
+              )}
+            </div>
           </article>
           <article className="app-card pos-section">
             <div className="pos-title">
-              <span>4</span>
+              <span>{requiresPrescription ? 4 : 3}</span>
               <div>
                 <h2>Adicionales ópticos</h2>
                 <p>Cargos separados mientras se definen los precios definitivos.</p>
@@ -888,6 +1034,11 @@ export default function PosExperience() {
                   <div>
                     <strong>{line.name}</strong>
                     <small>{money.format(line.unitPriceCents)} c/u</small>
+                    {lensMountLabel(line, lines) && (
+                      <small className="ticket-line-mount">
+                        {lensMountLabel(line, lines)}
+                      </small>
+                    )}
                   </div>
                   <div className="quantity">
                     <button
@@ -923,8 +1074,17 @@ export default function PosExperience() {
               </div>
             ))}
           </div>
+          {!requiresPrescription && lines.length > 0 && (
+            <p className="prescription-hint">
+              La montura se puede vender sola. La receta solo se solicitará al agregar cristales.
+            </p>
+          )}
           {requiresPrescription && (
             <div className="prescription-field pos-prescription">
+              <div className="prescription-heading">
+                <strong>Receta requerida para esta venta</strong>
+                <p>Selecciona una receta interna o ingresa una receta externa manualmente o con imagen.</p>
+              </div>
               <label className="field">
                 <span>Origen de la receta</span>
                 <select
@@ -933,7 +1093,7 @@ export default function PosExperience() {
                   value={prescriptionMode}
                 >
                   <option value="internal">Emitida en Óptica Stylo</option>
-                  <option value="external">Receta externa</option>
+                  <option value="external">Ingresar receta externa</option>
                 </select>
               </label>
               {prescriptionMode === "internal" ? (

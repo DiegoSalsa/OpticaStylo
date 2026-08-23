@@ -1,14 +1,18 @@
-const FULL_LOGO = "data:image/png;base64,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";
-
 import Image from "next/image";
 
 export default function BrandLogo({ compact = false, priority = false }) {
   return (
-    <span aria-label="Óptica Stylo" className={compact ? "brand-logo brand-logo--compact" : "brand-logo"} role="img">
-      <span className="brand-logo__mark" aria-hidden="true">
-        <Image className="brand-logo__source" decoding="async" fetchPriority={priority ? "high" : "auto"} height="183" src={FULL_LOGO} unoptimized width="275" alt="" />
-      </span>
-      <span className="brand-logo__wordmark" aria-hidden="true"><small>ÓPTICA</small><strong>STYLO</strong></span>
+    <span className={compact ? "brand-logo brand-logo--compact" : "brand-logo"}>
+      <Image
+        alt="Óptica Stylo"
+        className="brand-logo__source"
+        decoding="async"
+        fetchPriority={priority ? "high" : "auto"}
+        height={310}
+        priority={priority}
+        src="/brand/optica-stylo.svg"
+        width={690}
+      />
     </span>
   );
 }

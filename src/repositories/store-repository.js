@@ -79,6 +79,7 @@ async function loadCart(client, tokenHash, accountId = null) {
   if (!base) return null;
   const itemsResult = await client.query(
     `SELECT store_cart_items.product_id, store_cart_items.quantity,
+            store_cart_items.mounted_on_product_id,
             products.sku, products.name, products.category,
             products.requires_prescription, products.unit_price_cents,
             products.is_active, products.is_test_data
@@ -96,6 +97,7 @@ async function loadCart(client, tokenHash, accountId = null) {
     },
     category: row.category,
     lineTotalCents: Number(row.unit_price_cents) * row.quantity,
+    mountFrameProductId: row.mounted_on_product_id,
     name: row.name,
     productId: row.product_id,
     quantity: row.quantity,
@@ -163,31 +165,80 @@ async function lockActiveCart(client, tokenHash, accountId) {
   return { cart, reason: null };
 }
 
-export async function upsertStoreCartItem(tokenHash, accountId, productId, quantity) {
-  return upsertStoreCartItems(tokenHash, accountId, [{ productId, quantity }]);
+export async function upsertStoreCartItem(
+  tokenHash,
+  accountId,
+  productId,
+  quantity,
+  mountFrameProductId = null,
+) {
+  return upsertStoreCartItems(tokenHash, accountId, [{
+    mountFrameProductId,
+    productId,
+    quantity,
+  }]);
 }
 
 export async function upsertStoreCartItems(tokenHash, accountId, items) {
   return executeTransaction(async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
+    const productIds = [...new Set(items.flatMap((item) => [
+      item.productId,
+      item.mountFrameProductId,
+    ].filter(Boolean)))];
     const productResult = await client.query(
-      `SELECT id, is_active, is_test_data
+      `SELECT id, category, is_active, is_test_data
        FROM products WHERE id = ANY($1::UUID[]) FOR SHARE`,
-      [items.map((item) => item.productId)],
+      [productIds],
     );
     const products = new Map(productResult.rows.map((product) => [product.id, product]));
-    if (items.some((item) => {
+    if (
+      productResult.rowCount !== productIds.length
+      || productResult.rows.some((product) => (
+        !product.is_active || (!TEST_DATA_AVAILABLE && product.is_test_data)
+      ))
+    ) return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
+    const currentFrames = await client.query(
+      `SELECT store_cart_items.product_id
+       FROM store_cart_items
+       JOIN products ON products.id = store_cart_items.product_id
+       WHERE store_cart_items.cart_id = $1 AND products.category = 'FRAME'
+       FOR SHARE OF store_cart_items, products`,
+      [locked.cart.id],
+    );
+    const frameProductIds = new Set([
+      ...currentFrames.rows.map((frame) => frame.product_id),
+      ...items
+        .filter((item) => products.get(item.productId)?.category === "FRAME")
+        .map((item) => item.productId),
+    ]);
+    for (const item of items) {
       const product = products.get(item.productId);
-      return !product?.is_active || (!TEST_DATA_AVAILABLE && product.is_test_data);
-    })) return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
+      if (product.category !== "PRESCRIPTION_LENS") {
+        if (item.mountFrameProductId) {
+          return { cart: null, reason: "UNEXPECTED_LENS_MOUNT" };
+        }
+        continue;
+      }
+      const frame = products.get(item.mountFrameProductId);
+      if (
+        !item.mountFrameProductId
+        || frame?.category !== "FRAME"
+        || !frameProductIds.has(item.mountFrameProductId)
+      ) {
+        return { cart: null, reason: "LENS_MOUNT_REQUIRED" };
+      }
+    }
     for (const item of items) {
       await client.query(
-        `INSERT INTO store_cart_items (cart_id, product_id, quantity)
-         VALUES ($1, $2, $3)
+        `INSERT INTO store_cart_items (
+           cart_id, product_id, quantity, mounted_on_product_id
+         ) VALUES ($1, $2, $3, $4)
          ON CONFLICT (cart_id, product_id)
-         DO UPDATE SET quantity = EXCLUDED.quantity`,
-        [locked.cart.id, item.productId, item.quantity],
+         DO UPDATE SET quantity = EXCLUDED.quantity,
+                       mounted_on_product_id = EXCLUDED.mounted_on_product_id`,
+        [locked.cart.id, item.productId, item.quantity, item.mountFrameProductId],
       );
     }
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
@@ -203,6 +254,11 @@ export async function removeStoreCartItem(tokenHash, accountId, productId) {
       [locked.cart.id, productId],
     );
     if (result.rowCount === 0) return { cart: null, reason: "CART_ITEM_NOT_FOUND" };
+    await client.query(
+      `DELETE FROM store_cart_items
+       WHERE cart_id = $1 AND mounted_on_product_id = $2`,
+      [locked.cart.id, productId],
+    );
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
   });
 }
@@ -378,6 +434,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
     }
     const itemsResult = await client.query(
       `SELECT store_cart_items.product_id, store_cart_items.quantity,
+              store_cart_items.mounted_on_product_id,
               products.sku, products.name, products.category,
               products.requires_prescription, products.unit_price_cents,
               products.is_active, products.is_test_data
@@ -390,6 +447,20 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       !item.is_active || (!TEST_DATA_AVAILABLE && item.is_test_data)
     ))) {
       return { reason: "PRODUCT_NOT_AVAILABLE", saleId: null };
+    }
+    const frameProductIds = new Set(
+      itemsResult.rows
+        .filter((item) => item.category === "FRAME")
+        .map((item) => item.product_id),
+    );
+    if (itemsResult.rows.some((item) => (
+      item.category === "PRESCRIPTION_LENS"
+      && (
+        !item.mounted_on_product_id
+        || !frameProductIds.has(item.mounted_on_product_id)
+      )
+    ))) {
+      return { reason: "LENS_MOUNT_REQUIRED", saleId: null };
     }
     if (itemsResult.rows.some((item) => item.requires_prescription)) {
       const externalReady = cart.external_prescription_id
@@ -441,10 +512,14 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       await client.query(
         `INSERT INTO sale_items (
            sale_id, product_id, product_sku, product_name, product_category,
-           requires_prescription, position, quantity, unit_price_cents
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           requires_prescription, mount_source, mounted_on_product_id,
+           position, quantity, unit_price_cents
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [saleId, item.product_id, item.sku, item.name, item.category,
-          item.requires_prescription, index + 1, item.quantity, item.unit_price_cents],
+          item.requires_prescription,
+          item.category === "PRESCRIPTION_LENS" ? "SOLD_FRAME" : null,
+          item.category === "PRESCRIPTION_LENS" ? item.mounted_on_product_id : null,
+          index + 1, item.quantity, item.unit_price_cents],
       );
     }
     await client.query(

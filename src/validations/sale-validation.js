@@ -21,6 +21,7 @@ export const PAYMENT_METHODS = Object.freeze([
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const MAX_DISCOUNT_REASON_LENGTH = 300;
+const LENS_MOUNT_SOURCES = new Set(["SOLD_FRAME", "CUSTOMER_FRAME"]);
 
 function fail(message) {
   throw new AppError({ code: "INVALID_SALE_DATA", message, status: 400 });
@@ -36,6 +37,27 @@ export function validateSaleId(value, label = "venta") {
 function optionalId(value, label) {
   if (value == null) return null;
   return validateSaleId(value, label);
+}
+
+function lensMount(value, index) {
+  if (value == null) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    fail(`La montura de los cristales en la posición ${index + 1} no es válida.`);
+  }
+  const source = typeof value.source === "string" ? value.source.trim().toUpperCase() : "";
+  if (!LENS_MOUNT_SOURCES.has(source)) {
+    fail(`Debe indicar una montura vendida o la montura del cliente para los cristales en la posición ${index + 1}.`);
+  }
+  if (source === "CUSTOMER_FRAME") {
+    if (value.frameProductId != null) {
+      fail(`La montura del cliente no debe apuntar a un producto en la posición ${index + 1}.`);
+    }
+    return { frameProductId: null, source };
+  }
+  return {
+    frameProductId: validateSaleId(value.frameProductId, "montura"),
+    source,
+  };
 }
 
 function items(value) {
@@ -56,6 +78,7 @@ function items(value) {
       );
     }
     return {
+      mount: lensMount(item.mount, index),
       productId: validateSaleId(item.productId, "producto"),
       quantity: item.quantity,
     };

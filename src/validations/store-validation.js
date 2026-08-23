@@ -114,7 +114,12 @@ export function validateCartItemInput(input) {
   if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > 100) {
     fail("La cantidad debe ser un entero entre 1 y 100.");
   }
-  return { quantity: input.quantity };
+  return {
+    mountFrameProductId: input.mountFrameProductId == null
+      ? null
+      : uuid(input.mountFrameProductId, "montura"),
+    quantity: input.quantity,
+  };
 }
 
 export function validateCartItemsInput(input) {
@@ -124,9 +129,16 @@ export function validateCartItemsInput(input) {
   }
   const items = input.items.map((item) => {
     const normalized = validateCartItemInput(item);
-    return { productId: uuid(item.productId, "producto"), quantity: normalized.quantity };
+    return {
+      mountFrameProductId: normalized.mountFrameProductId,
+      productId: uuid(item.productId, "producto"),
+      quantity: normalized.quantity,
+    };
   });
-  if (new Set(items.map((item) => item.productId)).size !== items.length) {
+  if (
+    new Set(items.map((item) => `${item.productId}:${item.mountFrameProductId ?? ""}`)).size
+    !== items.length
+  ) {
     fail("No puede repetir un producto en la misma solicitud.");
   }
   return { items };
