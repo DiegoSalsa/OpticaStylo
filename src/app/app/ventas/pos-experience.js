@@ -51,6 +51,11 @@ function externalPrescriptionData(value) {
   };
 }
 
+function customerDetails(value) {
+  return [value.rut, value.email].filter(Boolean).join(" · ")
+    || "Datos de contacto pendientes";
+}
+
 function useSearch(endpoint, search) {
   const [state, setState] = useState({ error: "", items: [], loading: true });
   useEffect(() => {
@@ -603,8 +608,8 @@ export default function PosExperience() {
             {newCustomer ? (
               <form className="quick-customer" onSubmit={createCustomer}>
                 <label className="field">
-                  <span>RUT</span>
-                  <input name="rut" placeholder="12.345.678-5" required />
+                  <span>RUT opcional</span>
+                  <input name="rut" placeholder="12.345.678-5" />
                 </label>
                 <label className="field">
                   <span>Nombres</span>
@@ -655,7 +660,7 @@ export default function PosExperience() {
                         {customer.firstNames} {customer.lastNames}
                       </strong>
                       <small>
-                        {customer.rut} · {customer.email}
+                        {customerDetails(customer)}
                       </small>
                     </div>
                     <button disabled={Boolean(sale)} onClick={() => chooseCustomer(null)} type="button">
@@ -680,7 +685,7 @@ export default function PosExperience() {
                             {item.firstNames} {item.lastNames}
                           </span>
                           <small>
-                            {item.rut} · {item.email}
+                            {customerDetails(item)}
                           </small>
                         </button>
                       ))
@@ -923,8 +928,17 @@ export default function PosExperience() {
               </div>
             ))}
           </div>
+          {!requiresPrescription && lines.length > 0 && (
+            <p className="prescription-hint">
+              La opción para ingresar receta se habilita al agregar un producto que la requiera.
+            </p>
+          )}
           {requiresPrescription && (
             <div className="prescription-field pos-prescription">
+              <div className="prescription-heading">
+                <strong>Receta requerida para esta venta</strong>
+                <p>Selecciona una receta interna o ingresa una receta externa manualmente o con imagen.</p>
+              </div>
               <label className="field">
                 <span>Origen de la receta</span>
                 <select
@@ -933,7 +947,7 @@ export default function PosExperience() {
                   value={prescriptionMode}
                 >
                   <option value="internal">Emitida en Óptica Stylo</option>
-                  <option value="external">Receta externa</option>
+                  <option value="external">Ingresar receta externa</option>
                 </select>
               </label>
               {prescriptionMode === "internal" ? (
