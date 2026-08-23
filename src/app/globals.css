@@ -121,15 +121,24 @@ a:focus-visible {
   position: relative;
   width: 197px;
 }
+.brand-logo__mark::before,
 .brand-logo__mark::after {
   background: #fff;
-  bottom: 0;
   content: "";
+  height: 22px;
   position: absolute;
   right: 0;
-  top: 0;
-  width: 5px;
+  width: 18px;
   z-index: 1;
+}
+.brand-logo__mark::before {
+  border-bottom-left-radius: 18px;
+  top: 0;
+}
+.brand-logo__mark::after {
+  bottom: 0;
+  height: 100%;
+  width: 10px;
 }
 .brand-logo__source {
   height: 305px;
@@ -144,13 +153,13 @@ a:focus-visible {
   height: 68px;
   width: 145px;
 }
+.brand-logo--compact .brand-logo__mark::before,
 .brand-logo--compact .brand-logo__mark::after {
-  display: block;
-  width: 6px;
+  display: none;
 }
 .brand-logo--compact .brand-logo__source {
   height: 220px;
-  left: -94px;
+  left: -105px;
   top: -77px;
   width: 330px;
 }
@@ -507,7 +516,7 @@ a:focus-visible {
 
   .brand-logo--compact .brand-logo__source {
     height: 189px;
-    left: -80px;
+    left: -91px;
     top: -66px;
     width: 284px;
   }
