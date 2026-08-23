@@ -111,15 +111,48 @@ a:focus-visible {
 .brand-logo {
   display: inline-block;
   line-height: 0;
-  max-width: 100%;
+}
+.brand-logo__mark {
+  background: #fff;
+  border-radius: 14px;
+  display: block;
+  height: 94px;
+  overflow: hidden;
+  position: relative;
+  width: 197px;
+}
+.brand-logo__mark::after {
+  background: #fff;
+  bottom: 0;
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  z-index: 1;
 }
 .brand-logo__source {
+  height: 305px;
+  left: -133px;
+  max-width: none;
+  position: absolute;
+  top: -107px;
+  width: 458px;
+  z-index: 0;
+}
+.brand-logo--compact .brand-logo__mark {
+  height: 68px;
+  width: 145px;
+}
+.brand-logo--compact .brand-logo__mark::after {
   display: block;
-  height: auto;
-  width: 205px;
+  width: 6px;
 }
 .brand-logo--compact .brand-logo__source {
-  width: 172px;
+  height: 220px;
+  left: -94px;
+  top: -77px;
+  width: 330px;
 }
 .public-header {
   backdrop-filter: blur(18px);
@@ -132,7 +165,7 @@ a:focus-visible {
 .public-header__inner {
   align-items: center;
   display: flex;
-  height: 62px;
+  height: 76px;
   justify-content: space-between;
   margin: 0 auto;
   max-width: 1440px;
@@ -467,11 +500,16 @@ a:focus-visible {
     padding-inline: 1rem;
   }
 
-  .brand-logo__source {
-    width: 178px;
+  .brand-logo--compact .brand-logo__mark {
+    height: 58px;
+    width: 126px;
   }
+
   .brand-logo--compact .brand-logo__source {
-    width: 150px;
+    height: 189px;
+    left: -80px;
+    top: -66px;
+    width: 284px;
   }
 
   .mobile-menu nav {
