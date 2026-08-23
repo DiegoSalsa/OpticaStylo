@@ -31,6 +31,7 @@ export default function InternalShell({ children }) {
   const router = useRouter();
   const [actor, setActor] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -54,15 +55,21 @@ export default function InternalShell({ children }) {
   }
 
   return (
-    <div className="internal-shell">
+    <div className={sidebarCollapsed ? "internal-shell internal-shell--collapsed" : "internal-shell"}>
       <aside className="internal-sidebar">
-        <Link className="internal-brand" href="/app"><BrandLogo /></Link>
-        {actor?.permissions.includes("sales.create") && <Link className="internal-quick-sale" href="/app/ventas"><Icon name="plus" size={17} /> Nueva venta</Link>}
+        <div className="internal-sidebar__header">
+          <Link className="internal-brand" href="/app"><BrandLogo compact={sidebarCollapsed} /></Link>
+          <button aria-controls="navegacion-interna" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? "Expandir barra lateral" : "Contraer barra lateral"} className="internal-sidebar-toggle" onClick={() => setSidebarCollapsed((collapsed) => !collapsed)} type="button">
+            <Icon className={sidebarCollapsed ? "" : "internal-sidebar-toggle__icon--collapse"} name="chevron" size={16} />
+            <span className="internal-sidebar-toggle__text">{sidebarCollapsed ? "Expandir" : "Contraer"}</span>
+          </button>
+        </div>
+        {actor?.permissions.includes("sales.create") && <Link aria-label="Nueva venta" className="internal-quick-sale" href="/app/ventas"><Icon name="plus" size={17} /> <span>Nueva venta</span></Link>}
         <p className="internal-nav-label">Operación</p>
-        <nav aria-label="Navegación interna">
+        <nav aria-label="Navegación interna" id="navegacion-interna">
           {navigation.map((item) => {
             const active = item.href === "/app" ? pathname === item.href : pathname.startsWith(item.href);
-            return <Link aria-current={active ? "page" : undefined} className={active ? "active" : ""} href={item.href} key={item.href}><Icon name={item.icon} size={19} />{item.label}</Link>;
+            return <Link aria-current={active ? "page" : undefined} aria-label={item.label} className={active ? "active" : ""} href={item.href} key={item.href}><Icon name={item.icon} size={19} /><span className="internal-nav-link__label">{item.label}</span></Link>;
           })}
         </nav>
         <div className="internal-user">
@@ -71,7 +78,7 @@ export default function InternalShell({ children }) {
           <button aria-label="Cerrar sesión" onClick={logout} type="button"><Icon name="logout" size={18} /></button>
         </div>
       </aside>
-      <div className="internal-content"><header className="internal-topbar"><div><strong>Óptica Stylo</strong><span>Gestión interna</span></div><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>{children}</ActorContext.Provider></main></div>
+      <div className="internal-content"><header className="internal-topbar"><Link aria-label="Ir al dashboard" className="internal-topbar__brand" href="/app"><BrandLogo compact /></Link><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>{children}</ActorContext.Provider></main></div>
     </div>
   );
 }
