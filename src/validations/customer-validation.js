@@ -27,6 +27,11 @@ function rut(value) {
   return normalized;
 }
 
+function optionalRut(value) {
+  if (value == null || value === "") return null;
+  return rut(value);
+}
+
 function email(value) {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
   if (normalized.length > 254 || !EMAIL_PATTERN.test(normalized)) {
@@ -75,7 +80,7 @@ export function validateCreateCustomerInput(input) {
     lastNames: text(input.lastNames, "Los apellidos", 150),
     patientId: linkedPatientId,
     phone: phone(input.phone),
-    rut: rut(input.rut),
+    rut: optionalRut(input.rut),
   };
 }
 

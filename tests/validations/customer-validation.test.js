@@ -21,6 +21,11 @@ test("normaliza un cliente independiente o vinculado", () => {
   assert.equal(result.email, "cliente@example.com");
 });
 
+test("permite crear un cliente de mostrador sin RUT", () => {
+  const result = validateCreateCustomerInput({ ...customer, rut: "" });
+  assert.equal(result.rut, null);
+});
+
 test("permite crear un cliente copiando un paciente", () => {
   assert.deepEqual(validateCreateCustomerInput({ patientId }), {
     copyPatientData: true, patientId,

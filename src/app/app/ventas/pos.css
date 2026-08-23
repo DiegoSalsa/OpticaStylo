@@ -419,6 +419,25 @@
   border-top: 1px dashed #ccdad7;
   padding-top: 1rem;
 }
+.prescription-heading {
+  display: grid;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
+}
+.prescription-heading strong {
+  font-size: 0.78rem;
+}
+.prescription-heading p,
+.prescription-hint {
+  color: var(--color-text-soft);
+  font-size: 0.67rem;
+  line-height: 1.45;
+  margin: 0;
+}
+.prescription-hint {
+  border-top: 1px dashed #ccdad7;
+  padding-top: 0.8rem;
+}
 .pos-prescription {
   display: grid;
   gap: 0.75rem;
