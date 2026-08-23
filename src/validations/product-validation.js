@@ -93,6 +93,10 @@ export function validateProductListQuery(searchParams) {
   const search = (searchParams.get("search") ?? "").trim();
   const rawCategory = searchParams.get("category");
   const category = rawCategory ? rawCategory.trim().toUpperCase() : null;
+  const rawExcludedCategory = searchParams.get("excludeCategory");
+  const excludeCategory = rawExcludedCategory
+    ? rawExcludedCategory.trim().toUpperCase()
+    : null;
   const rawActive = searchParams.get("isActive");
 
   if (!Number.isInteger(page) || page < 1) fail("La página no es válida.");
@@ -101,12 +105,16 @@ export function validateProductListQuery(searchParams) {
   }
   if (search.length > 100) fail("La búsqueda no puede superar 100 caracteres.");
   if (category && !PRODUCT_CATEGORIES.includes(category)) fail("La categoría no es válida.");
+  if (excludeCategory && !PRODUCT_CATEGORIES.includes(excludeCategory)) {
+    fail("La categoría excluida no es válida.");
+  }
   if (rawActive !== null && !["true", "false"].includes(rawActive)) {
     fail("isActive debe ser true o false.");
   }
 
   return {
     category,
+    excludeCategory,
     isActive: rawActive === null ? null : rawActive === "true",
     page,
     pageSize,

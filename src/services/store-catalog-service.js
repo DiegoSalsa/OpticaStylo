@@ -14,6 +14,7 @@ function publicProduct(product, availabilityProvider) {
     category: product.category,
     description: presentation.description,
     id: product.id,
+    isTestData: product.isTestData,
     images: presentation.images,
     name: product.name,
     requiresPrescription: product.requiresPrescription,
@@ -32,7 +33,11 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
   publicQuery.set("isActive", "true");
   const includeTestData = canUseTestData(dependencies);
   const result = await (dependencies.listProducts ?? listProducts)(
-    { ...validateProductListQuery(publicQuery), includeTestData },
+    {
+      ...validateProductListQuery(publicQuery),
+      excludeCategory: "PRESCRIPTION_LENS",
+      includeTestData,
+    },
   );
   const availability = dependencies.getAvailability ?? getMockAvailability;
   const items = result.items
@@ -45,12 +50,31 @@ export async function getStoreProduct(productId, dependencies = {}) {
   const product = await (dependencies.findProductById ?? findProductById)(
     validateStoreProductId(productId),
   );
-  if (!product?.isActive || (product.isTestData && !canUseTestData(dependencies))) {
+  if (
+    !product?.isActive
+    || product.category === "PRESCRIPTION_LENS"
+    || (product.isTestData && !canUseTestData(dependencies))
+  ) {
     throw new AppError({
       code: "STORE_PRODUCT_NOT_FOUND",
       message: "No se encontró el producto solicitado.",
       status: 404,
     });
   }
-  return publicProduct(product, dependencies.getAvailability ?? getMockAvailability);
+  const availability = dependencies.getAvailability ?? getMockAvailability;
+  const presentation = publicProduct(product, availability);
+  if (product.category !== "FRAME") return presentation;
+  const lenses = await (dependencies.listProducts ?? listProducts)({
+    category: "PRESCRIPTION_LENS",
+    excludeCategory: null,
+    includeTestData: canUseTestData(dependencies),
+    isActive: true,
+    page: 1,
+    pageSize: 100,
+    search: "",
+  });
+  return {
+    ...presentation,
+    lensOptions: lenses.items.map((lens) => publicProduct(lens, availability)),
+  };
 }

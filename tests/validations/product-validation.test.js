@@ -37,7 +37,8 @@ test("rechaza vaciar un campo definido del catálogo", () => {
 });
 
 test("valida filtros del catálogo", () => {
-  const result = validateProductListQuery(new URLSearchParams("category=frame&isActive=true"));
+  const result = validateProductListQuery(new URLSearchParams("category=frame&excludeCategory=prescription_lens&isActive=true"));
   assert.equal(result.category, "FRAME");
+  assert.equal(result.excludeCategory, "PRESCRIPTION_LENS");
   assert.equal(result.isActive, true);
 });
