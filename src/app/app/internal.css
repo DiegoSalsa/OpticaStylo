@@ -290,7 +290,10 @@
   .internal-sidebar {
     padding: 1rem 0.65rem;
   }
-  .internal-brand .brand-logo__wordmark,
+  .internal-brand .brand-logo__source {
+    width: 58px;
+  }
+  .internal-sidebar nav a:not(.active) {
   .internal-sidebar nav a:not(.active) {
     font-size: 0;
   }
