@@ -9,10 +9,8 @@
   padding: 1rem;
 }
 .internal-brand {
-  background: #fff;
-  border-radius: 13px;
   margin: 0.1rem 0 1rem;
-  padding: 0.25rem 0.55rem;
+  padding: 0;
   width: max-content;
 }
 .internal-quick-sale {

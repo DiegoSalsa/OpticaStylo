@@ -116,10 +116,10 @@ a:focus-visible {
 .brand-logo__source {
   display: block;
   height: auto;
-  width: 230px;
+  width: 188px;
 }
 .brand-logo--compact .brand-logo__source {
-  width: 180px;
+  width: 142px;
 }
 .public-header {
   backdrop-filter: blur(18px);
@@ -468,7 +468,7 @@ a:focus-visible {
   }
 
   .brand-logo--compact .brand-logo__source {
-    width: 150px;
+    width: 112px;
   }
 
   .mobile-menu nav {
