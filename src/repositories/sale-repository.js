@@ -186,6 +186,10 @@ async function findSaleWithClient(client, saleId) {
       productId: row.product_id,
       quantity: row.quantity,
       requiresPrescription: row.requires_prescription,
+      mount: row.mount_source ? {
+        frameProductId: row.mounted_on_product_id,
+        source: row.mount_source,
+      } : null,
       sku: row.product_sku,
       unitPriceCents: Number(row.unit_price_cents),
     })),
@@ -250,6 +254,23 @@ async function loadDraftReferences(client, draft) {
   if (productResult.rows.some((product) => !product.is_active))
     return { reason: "PRODUCT_INACTIVE" };
 
+  const productsById = new Map(
+    productResult.rows.map((product) => [product.id, product]),
+  );
+  for (const item of draft.items) {
+    const product = productsById.get(item.productId);
+    if (product.category !== "PRESCRIPTION_LENS") {
+      if (item.mount) return { reason: "UNEXPECTED_LENS_MOUNT" };
+      continue;
+    }
+    if (!item.mount) return { reason: "LENS_MOUNT_REQUIRED" };
+    if (item.mount.source === "CUSTOMER_FRAME") continue;
+    const frame = productsById.get(item.mount.frameProductId);
+    if (!frame || frame.category !== "FRAME") {
+      return { reason: "INVALID_LENS_MOUNT" };
+    }
+  }
+
   let prescription = null;
   let externalPrescription = null;
   if (draft.prescriptionId) {
@@ -302,11 +323,9 @@ async function loadDraftReferences(client, draft) {
     return { reason: "PRESCRIPTION_REQUIRED" };
   }
 
-  const productsById = new Map(
-    productResult.rows.map((product) => [product.id, product]),
-  );
   const lines = draft.items.map((item, index) => ({
     ...productsById.get(item.productId),
+    mount: item.mount,
     position: index + 1,
     quantity: item.quantity,
   }));
@@ -337,8 +356,9 @@ async function insertItems(client, saleId, lines) {
     await client.query(
       `INSERT INTO sale_items (
          sale_id, product_id, product_sku, product_name, product_category,
-         requires_prescription, position, quantity, unit_price_cents
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+         requires_prescription, mount_source, mounted_on_product_id,
+         position, quantity, unit_price_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         saleId,
         line.id,
@@ -346,6 +366,8 @@ async function insertItems(client, saleId, lines) {
         line.name,
         line.category,
         line.requires_prescription,
+        line.mount?.source ?? null,
+        line.mount?.frameProductId ?? null,
         line.position,
         line.quantity,
         line.unit_price_cents,
