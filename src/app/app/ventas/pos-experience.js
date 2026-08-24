@@ -142,7 +142,6 @@ export default function PosExperience() {
   const [cashRegister, setCashRegister] = useState(null);
   const [cashReceivedCents, setCashReceivedCents] = useState("");
   const [cancelReason, setCancelReason] = useState("");
-  const [mercadoPagoCheckout, setMercadoPagoCheckout] = useState(null);
   const [externalPrescriptionId, setExternalPrescriptionId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("");
   const scannerRef = useRef(null);
@@ -591,45 +590,6 @@ export default function PosExperience() {
     }
   }
 
-  async function startMercadoPagoCheckout() {
-    if (!sale) return;
-    setPending(true);
-    setError("");
-    try {
-      const checkout = await readResponse(await fetch(
-        `/api/sales/${sale.id}/checkout/mercado-pago`,
-        { method: "POST" },
-      ));
-      setMercadoPagoCheckout(checkout);
-      setNotice("Cobro de Mercado Pago creado. El pago se acreditará solo al confirmarse por webhook.");
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function refreshMercadoPagoStatus() {
-    if (!sale) return;
-    setPending(true);
-    setError("");
-    try {
-      const [currentSale, attempts] = await Promise.all([
-        readResponse(await fetch(`/api/sales/${sale.id}`, { cache: "no-store" })),
-        readResponse(await fetch(`/api/sales/${sale.id}/checkout/mercado-pago`, { cache: "no-store" })),
-      ]);
-      setSale(currentSale);
-      setMercadoPagoCheckout(attempts[0] ?? null);
-      setNotice(currentSale.status === "PAID"
-        ? "Mercado Pago confirmó el pago de forma segura."
-        : "El cobro sigue pendiente de confirmación segura.");
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setPending(false);
-    }
-  }
-
   async function cancelQuotation() {
     if (!sale) return;
     setPending(true);
@@ -713,7 +673,6 @@ export default function PosExperience() {
     setCashReceivedCents("");
     setCancelReason("");
     setExternalPrescriptionId(null);
-    setMercadoPagoCheckout(null);
     setPaymentMethod("");
     requestKeys.current = { payment: null, sale: null };
     setNewCustomer(false);
@@ -1495,8 +1454,8 @@ export default function PosExperience() {
               </button>
               </form>
               <section className="mercado-pago-panel" aria-labelledby="mercado-pago-title">
-                <div><h3 id="mercado-pago-title">Mercado Pago</h3><p>No se registra manualmente. Se acredita solo después de la confirmación segura por webhook.</p></div>
-                {!mercadoPagoCheckout ? <button className="app-button app-button--soft" disabled={pending} onClick={startMercadoPagoCheckout} type="button">Generar checkout seguro</button> : <div className="mercado-pago-actions"><a className="app-button app-button--primary" href={mercadoPagoCheckout.checkoutUrl} rel="noreferrer" target="_blank">Abrir checkout seguro</a><button className="app-button app-button--soft" disabled={pending} onClick={refreshMercadoPagoStatus} type="button">Consultar estado</button><small>Estado: {mercadoPagoCheckout.status}</small></div>}
+                <div><h3 id="mercado-pago-title">Mercado Pago presencial</h3><p>El checkout web se reserva para la tienda. Este POS habilitará cobro por Point o QR cuando la cuenta comercial y su caja estén vinculadas.</p></div>
+                <span className="status-chip status-chip--pending">Pendiente de configuración comercial</span>
               </section>
             </>
           )}
