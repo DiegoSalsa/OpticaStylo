@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   readResponse,
@@ -9,6 +9,8 @@ import {
 } from "@/components/internal/internal-shell";
 import Icon from "@/components/ui/icon";
 import { buildPosPaymentInput } from "@/utils/pos-payment";
+import CashRegisterPanel from "./cash-register-panel";
+import DiscountAuthorizationPanel from "./discount-authorization-panel";
 
 const money = new Intl.NumberFormat("es-CL", {
   currency: "CLP",
@@ -20,7 +22,6 @@ const PAYMENT_METHODS = [
   ["BANK_TRANSFER", "Transferencia"],
   ["TRANSBANK", "Transbank"],
   ["GETNET", "Getnet"],
-  ["MERCADO_PAGO", "Mercado Pago"],
 ];
 const EMPTY_EYE = { addition: "", axis: "", cylinder: "0", sphere: "0" };
 const EMPTY_EXTERNAL_PRESCRIPTION = {
@@ -115,11 +116,9 @@ export default function PosExperience() {
   const [selectedLensId, setSelectedLensId] = useState("");
   const [selectedLensMountId, setSelectedLensMountId] = useState("");
   const [opticalAdditions, setOpticalAdditions] = useState([]);
-  const [additionDraft, setAdditionDraft] = useState({ name: "", unitPriceCents: "" });
   const [discountCents, setDiscountCents] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
-  const [discountAuthorizerEmail, setDiscountAuthorizerEmail] = useState("");
-  const [discountAuthorizerPassword, setDiscountAuthorizerPassword] = useState("");
+  const [discountAuthorization, setDiscountAuthorization] = useState(null);
   const [prescriptionId, setPrescriptionId] = useState("");
   const [internalPrescriptions, setInternalPrescriptions] = useState([]);
   const [prescriptionLookup, setPrescriptionLookup] = useState({ error: "", loading: false });
@@ -138,6 +137,15 @@ export default function PosExperience() {
   const [quotations, setQuotations] = useState([]);
   const [showQuotations, setShowQuotations] = useState(false);
   const [receipt, setReceipt] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("ALL");
+  const [cashRegister, setCashRegister] = useState(null);
+  const [cashReceivedCents, setCashReceivedCents] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
+  const [mercadoPagoCheckout, setMercadoPagoCheckout] = useState(null);
+  const [externalPrescriptionId, setExternalPrescriptionId] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const scannerRef = useRef(null);
+  const requestKeys = useRef({ payment: null, sale: null });
 
   const subtotal = useMemo(
     () =>
@@ -152,6 +160,17 @@ export default function PosExperience() {
   const soldFrames = lines.filter((line) => line.category === "FRAME");
   const selectedLens = lensOptions.items.find((item) => item.id === selectedLensId);
   const canSell = actor?.permissions.includes("sales.create");
+  const canEdit = !sale || sale.status === "QUOTATION";
+  const draftIncomplete = !customer
+    || !lines.length
+    || total <= 0
+    || (requiresPrescription && !patient)
+    || (requiresPrescription && prescriptionMode === "internal" && !prescriptionId)
+    || (Number(discountCents) > 0 && (!discountReason.trim() || !discountAuthorization));
+
+  useEffect(() => {
+    if (!sale || sale.status === "QUOTATION") scannerRef.current?.focus();
+  }, [sale]);
 
   useEffect(() => {
     if (!patient?.id) return;
@@ -166,6 +185,7 @@ export default function PosExperience() {
   function chooseCustomer(value) {
     setCustomer(value);
     choosePatient(null);
+    setExternalPrescriptionId(null);
     if (value?.patientId) {
       fetch(`/api/patients/${value.patientId}`, { cache: "no-store" })
         .then(readResponse)
@@ -179,9 +199,11 @@ export default function PosExperience() {
     setPrescriptionId("");
     setInternalPrescriptions([]);
     setPrescriptionLookup({ error: "", loading: Boolean(value?.id) });
+    setExternalPrescriptionId(null);
   }
 
   function addLine(product, mount = null) {
+    if (!canEdit) return false;
     const existing = lines.find((line) => line.id === product.id);
     if (
       existing
@@ -192,9 +214,8 @@ export default function PosExperience() {
       )
     ) {
       setError("Este tipo de cristal ya está configurado con otra montura en el ticket.");
-      return;
+      return false;
     }
-    setSale(null);
     setNotice("");
     setLines((current) => {
       const found = current.find((line) => line.id === product.id);
@@ -206,11 +227,18 @@ export default function PosExperience() {
           )
         : [...current, { ...product, mount, quantity: 1 }];
     });
+    return true;
   }
 
   function addProduct(product) {
-    addLine(product);
-    if (product.category === "FRAME") setSelectedLensMountId(product.id);
+    if (product.category === "PRESCRIPTION_LENS") {
+      setSelectedLensId(product.id);
+      setError("Selecciona la montura antes de agregar los cristales al ticket.");
+      return false;
+    }
+    const added = addLine(product);
+    if (added && product.category === "FRAME") setSelectedLensMountId(product.id);
+    return added;
   }
 
   function addConfiguredLens() {
@@ -221,7 +249,7 @@ export default function PosExperience() {
     const mount = selectedLensMountId
       ? { frameProductId: selectedLensMountId, source: "SOLD_FRAME" }
       : { frameProductId: null, source: "CUSTOMER_FRAME" };
-    addLine(selectedLens, mount);
+    if (!addLine(selectedLens, mount)) return;
     setSelectedLensId("");
     const mountNotice =
       mount.source === "SOLD_FRAME"
@@ -259,6 +287,7 @@ export default function PosExperience() {
   }
 
   function setExternalEye(side, field, value) {
+    setExternalPrescriptionId(null);
     setExternalPrescription((current) => ({
       ...current,
       [side]: { ...current[side], [field]: value },
@@ -331,25 +360,6 @@ export default function PosExperience() {
     }
   }
 
-  function addOpticalAddition() {
-    const amount = Number(additionDraft.unitPriceCents);
-    if (!additionDraft.name.trim() || !Number.isSafeInteger(amount) || amount <= 0) {
-      setError("Indica un nombre y un valor entero positivo para el adicional.");
-      return;
-    }
-    setOpticalAdditions((current) => [
-      ...current,
-      {
-        description: null,
-        name: additionDraft.name.trim(),
-        quantity: 1,
-        unitPriceCents: amount,
-      },
-    ]);
-    setAdditionDraft({ name: "", unitPriceCents: "" });
-    setError("");
-  }
-
   async function loadQuotations() {
     setShowQuotations(true);
     setPending(true);
@@ -390,12 +400,14 @@ export default function PosExperience() {
       setOpticalAdditions(quote.opticalAdditions ?? []);
       setDiscountCents(quote.discount?.amountCents ?? 0);
       setDiscountReason(quote.discount?.reason ?? "");
+      setDiscountAuthorization(null);
       setPrescriptionId(quote.prescription?.id ?? "");
       setPrescriptionMode(quote.externalPrescription ? "external" : "internal");
+      setExternalPrescriptionId(quote.externalPrescription?.id ?? null);
       setSale(quote);
       setShowQuotations(false);
       setNotice(
-        `Cotización N.º ${quote.saleNumber} cargada. Revisa y confirma la venta.`,
+        `Cotización N.º ${quote.saleNumber} cargada. Puedes editarla, cancelarla o confirmarla.`,
       );
     } catch (requestError) {
       setError(requestError.message);
@@ -404,89 +416,96 @@ export default function PosExperience() {
     }
   }
 
-  async function createQuotation() {
+  function createRequestKey() {
+    return globalThis.crypto?.randomUUID?.()
+      ?? `pos-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  async function ensureExternalPrescription() {
+    if (externalPrescriptionId) return externalPrescriptionId;
+    const confirmedData = externalPrescriptionData(externalPrescription);
+    let response;
+    if (prescriptionFile) {
+      const body = new FormData();
+      body.set("confirmedData", JSON.stringify(confirmedData));
+      body.set("customerId", customer.id);
+      body.set("image", prescriptionFile);
+      body.set("patientId", patient.id);
+      response = await fetch("/api/external-prescriptions", { body, method: "POST" });
+    } else {
+      response = await fetch("/api/external-prescriptions", {
+        body: JSON.stringify({ confirmedData, customerId: customer.id, patientId: patient.id }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+    }
+    const created = await readResponse(response);
+    setExternalPrescriptionId(created.id);
+    return created.id;
+  }
+
+  async function buildDraft() {
+    const selectedExternalPrescriptionId = requiresPrescription && prescriptionMode === "external"
+      ? await ensureExternalPrescription()
+      : null;
+    return {
+      customerId: customer.id,
+      discount: Number(discountCents || 0) > 0
+        ? {
+            amountCents: Number(discountCents),
+            authorizationId: discountAuthorization?.id,
+            reason: discountReason,
+          }
+        : null,
+      externalPrescriptionId: selectedExternalPrescriptionId,
+      items: lines.map((line) => ({
+        mount: line.mount,
+        productId: line.id,
+        quantity: line.quantity,
+      })),
+      patientId: patient?.id ?? null,
+      prescriptionId: prescriptionMode === "internal" ? prescriptionId || null : null,
+    };
+  }
+
+  async function saveOperation(operation) {
     setPending(true);
     setError("");
     setNotice("");
     try {
-      let externalPrescriptionId = null;
-      if (requiresPrescription && prescriptionMode === "external") {
-        const confirmedData = externalPrescriptionData(externalPrescription);
-        let response;
-        if (prescriptionFile) {
-          const body = new FormData();
-          body.set("confirmedData", JSON.stringify(confirmedData));
-          body.set("customerId", customer.id);
-          body.set("image", prescriptionFile);
-          body.set("patientId", patient.id);
-          response = await fetch("/api/external-prescriptions", {
-            body,
-            method: "POST",
-          });
-        } else {
-          response = await fetch("/api/external-prescriptions", {
-            body: JSON.stringify({
-              confirmedData,
-              customerId: customer.id,
-              patientId: patient.id,
-            }),
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          });
-        }
-        externalPrescriptionId = (await readResponse(response)).id;
-      }
-      const created = await readResponse(
-        await fetch("/api/sales", {
-          body: JSON.stringify({
-            customerId: customer.id,
-            discount:
-              Number(discountCents || 0) > 0
-                ? {
-                    amountCents: Number(discountCents),
-                    authorizerEmail: discountAuthorizerEmail,
-                    authorizerPassword: discountAuthorizerPassword,
-                    reason: discountReason,
-                  }
-                : null,
-            externalPrescriptionId,
-            items: lines.map((line) => ({
-              mount: line.mount,
-              productId: line.id,
-              quantity: line.quantity,
-            })),
-            opticalAdditions,
-            patientId: requiresPrescription ? patient?.id ?? null : null,
-            prescriptionId:
-              requiresPrescription && prescriptionMode === "internal"
-                ? prescriptionId || null
-                : null,
-          }),
+      const draft = await buildDraft();
+      if (sale?.status === "QUOTATION") {
+        const updated = await readResponse(await fetch(`/api/sales/${sale.id}`, {
+          body: JSON.stringify(draft),
           headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        }));
+        if (operation === "SALE") {
+          const confirmed = await readResponse(await fetch(`/api/sales/${updated.id}/confirm`, {
+            method: "POST",
+          }));
+          setSale(confirmed);
+          setNotice("Cotización actualizada y confirmada para cobro.");
+        } else {
+          setSale(updated);
+          setNotice(`Cotización N.º ${updated.saleNumber} actualizada.`);
+        }
+      } else {
+        requestKeys.current.sale ??= createRequestKey();
+        const created = await readResponse(await fetch("/api/sales", {
+          body: JSON.stringify({ ...draft, operation }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-Idempotency-Key": requestKeys.current.sale,
+          },
           method: "POST",
-        }),
-      );
-      setSale(created);
-      setDiscountAuthorizerPassword("");
-      setNotice(
-        `Cotización N.º ${created.saleNumber} creada con trazabilidad.`,
-      );
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function confirmSale() {
-    setPending(true);
-    setError("");
-    try {
-      const confirmed = await readResponse(
-        await fetch(`/api/sales/${sale.id}/confirm`, { method: "POST" }),
-      );
-      setSale(confirmed);
-      setNotice("Venta confirmada. Ya puede registrar abonos.");
+        }));
+        setSale(created);
+        requestKeys.current.sale = null;
+        setNotice(operation === "SALE"
+          ? `Venta N.º ${created.saleNumber} lista para cobrar.`
+          : `Cotización N.º ${created.saleNumber} creada con trazabilidad.`);
+      }
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -504,7 +523,10 @@ export default function PosExperience() {
       const updated = await readResponse(
         await fetch(`/api/sales/${sale.id}/payments`, {
           body: JSON.stringify(buildPosPaymentInput(form, sale.paymentMethod)),
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Idempotency-Key": requestKeys.current.payment ??= createRequestKey(),
+          },
           method: "POST",
         }),
       );
@@ -536,11 +558,93 @@ export default function PosExperience() {
           ? "Venta pagada y comprobante emitido."
           : `Abono registrado y comprobante emitido. Saldo: ${money.format(updated.balanceCents)}.`,
       );
+      requestKeys.current.payment = null;
       paymentForm.reset();
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setPending(false);
+    }
+  }
+
+  async function startMercadoPagoCheckout() {
+    if (!sale) return;
+    setPending(true);
+    setError("");
+    try {
+      const checkout = await readResponse(await fetch(
+        `/api/sales/${sale.id}/checkout/mercado-pago`,
+        { method: "POST" },
+      ));
+      setMercadoPagoCheckout(checkout);
+      setNotice("Cobro de Mercado Pago creado. El pago se acreditará solo al confirmarse por webhook.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function refreshMercadoPagoStatus() {
+    if (!sale) return;
+    setPending(true);
+    setError("");
+    try {
+      const [currentSale, attempts] = await Promise.all([
+        readResponse(await fetch(`/api/sales/${sale.id}`, { cache: "no-store" })),
+        readResponse(await fetch(`/api/sales/${sale.id}/checkout/mercado-pago`, { cache: "no-store" })),
+      ]);
+      setSale(currentSale);
+      setMercadoPagoCheckout(attempts[0] ?? null);
+      setNotice(currentSale.status === "PAID"
+        ? "Mercado Pago confirmó el pago de forma segura."
+        : "El cobro sigue pendiente de confirmación segura.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function cancelQuotation() {
+    if (!sale) return;
+    setPending(true);
+    setError("");
+    try {
+      const cancelled = await readResponse(await fetch(`/api/sales/${sale.id}/status`, {
+        body: JSON.stringify({ cancellationReason: cancelReason, status: "CANCELLED" }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      }));
+      setSale(cancelled);
+      setNotice(`Cotización N.º ${cancelled.saleNumber} cancelada.`);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function scanSku(event) {
+    event.preventDefault();
+    const code = scannerRef.current?.value.trim().toUpperCase();
+    if (!code || !canEdit) return;
+    setError("");
+    try {
+      const result = await readResponse(await fetch(
+        `/api/products?search=${encodeURIComponent(code)}&pageSize=12`,
+        { cache: "no-store" },
+      ));
+      const product = result.items.find((item) => item.isActive && item.sku === code);
+      if (!product) {
+        setError(`No existe un producto activo con el SKU ${code}.`);
+        return;
+      }
+      if (!addProduct(product)) return;
+      scannerRef.current.value = "";
+      setNotice(`${product.name} se agregó al ticket.`);
+    } catch (requestError) {
+      setError(requestError.message);
     }
   }
 
@@ -573,17 +677,21 @@ export default function PosExperience() {
     setSelectedLensId("");
     setSelectedLensMountId("");
     setOpticalAdditions([]);
-    setAdditionDraft({ name: "", unitPriceCents: "" });
     setDiscountCents(0);
     setDiscountReason("");
-    setDiscountAuthorizerEmail("");
-    setDiscountAuthorizerPassword("");
+    setDiscountAuthorization(null);
     setPrescriptionId("");
     setPrescriptionMode("internal");
     setExternalPrescription(EMPTY_EXTERNAL_PRESCRIPTION);
     setPrescriptionFile(null);
     setSale(null);
     setReceipt(null);
+    setCashReceivedCents("");
+    setCancelReason("");
+    setExternalPrescriptionId(null);
+    setMercadoPagoCheckout(null);
+    setPaymentMethod("");
+    requestKeys.current = { payment: null, sale: null };
     setNewCustomer(false);
     setNewPatient(false);
     setShowQuotations(false);
@@ -671,6 +779,7 @@ export default function PosExperience() {
           )}
         </section>
       )}
+      {canSell && <CashRegisterPanel onChange={setCashRegister} />}
       <div className="pos-layout">
         <section className="pos-workspace">
           <article className="app-card pos-section">
@@ -682,7 +791,7 @@ export default function PosExperience() {
               </div>
               <button
                 className="text-button"
-                disabled={Boolean(sale)}
+                disabled={!canEdit}
                 onClick={() => setNewCustomer((value) => !value)}
                 type="button"
               >
@@ -696,24 +805,8 @@ export default function PosExperience() {
                   <input name="rut" placeholder="12.345.678-5" />
                 </label>
                 <label className="field">
-                  <span>Nombres</span>
-                  <input name="firstNames" required />
-                </label>
-                <label className="field">
-                  <span>Apellidos</span>
-                  <input name="lastNames" required />
-                </label>
-                <label className="field">
-                  <span>Teléfono</span>
-                  <input name="phone" placeholder="+56912345678" required />
-                </label>
-                <label className="field">
-                  <span>Correo</span>
-                  <input name="email" required type="email" />
-                </label>
-                <label className="field field-wide">
-                  <span>Dirección</span>
-                  <input name="address" required />
+                  <span>Nombre</span>
+                  <input name="firstNames" placeholder="Nombre completo" required />
                 </label>
                 <button
                   className="app-button app-button--primary"
@@ -743,11 +836,9 @@ export default function PosExperience() {
                       <strong>
                         {customer.firstNames} {customer.lastNames}
                       </strong>
-                      <small>
-                        {customerDetails(customer)}
-                      </small>
+                      <small>{customerDetails(customer)}</small>
                     </div>
-                    <button disabled={Boolean(sale)} onClick={() => chooseCustomer(null)} type="button">
+                    <button disabled={!canEdit} onClick={() => chooseCustomer(null)} type="button">
                       Cambiar
                     </button>
                   </div>
@@ -788,7 +879,7 @@ export default function PosExperience() {
               </div>
               <button
                 className="text-button"
-                disabled={Boolean(sale)}
+                disabled={!canEdit}
                 onClick={() => setNewPatient((value) => !value)}
                 type="button"
               >
@@ -837,7 +928,7 @@ export default function PosExperience() {
                       <strong>{patient.firstNames} {patient.lastNames}</strong>
                       <small>{patient.rut} · paciente de la receta</small>
                     </div>
-                    <button disabled={Boolean(sale)} onClick={() => choosePatient(null)} type="button">Cambiar</button>
+                    <button disabled={!canEdit} onClick={() => choosePatient(null)} type="button">Cambiar</button>
                   </div>
                 ) : (
                   <div className="result-list">
@@ -857,11 +948,18 @@ export default function PosExperience() {
               <span>{requiresPrescription ? 3 : 2}</span>
               <div>
                 <h2>Productos</h2>
-                <p>
-                  Precios vigentes con disponibilidad simulada hasta integrar inventario.
-                </p>
+                <p>Catálogo rápido con precios controlados. La disponibilidad es simulada hasta integrar inventario.</p>
               </div>
             </div>
+            <form className="scanner-field" onSubmit={scanSku}>
+              <Icon name="receipt" size={18} />
+              <input
+                aria-label="Ingresar SKU con escáner"
+                placeholder="Escanear SKU y presionar Enter"
+                ref={scannerRef}
+              />
+              <button className="app-button app-button--primary" disabled={!canEdit} type="submit">Agregar</button>
+            </form>
             <div className="search-field">
               <Icon name="search" size={18} />
               <input
@@ -871,6 +969,12 @@ export default function PosExperience() {
                 value={productSearch}
               />
             </div>
+            <div className="product-categories" aria-label="Filtrar catálogo por categoría">
+              <button className={activeCategory === "ALL" ? "active" : ""} onClick={() => setActiveCategory("ALL")} type="button">Todo</button>
+              {[...new Set(products.items.map((item) => item.category))].map((category) => (
+                <button className={activeCategory === category ? "active" : ""} key={category} onClick={() => setActiveCategory(category)} type="button">{category === "FRAME" ? "Marcos" : category === "PRESCRIPTION_LENS" ? "Lentes" : category === "TREATMENT" ? "Tratamientos" : category === "ACCESSORY" ? "Accesorios" : "Otros"}</button>
+              ))}
+            </div>
             <div className="product-results">
               {products.loading ? (
                 <p>Cargando productos…</p>
@@ -878,10 +982,12 @@ export default function PosExperience() {
                 <p className="inline-error">{products.error}</p>
               ) : (
                 products.items
-                  .filter((item) => item.isActive && item.category !== "PRESCRIPTION_LENS")
+                  .filter((item) => item.isActive
+                    && item.category !== "PRESCRIPTION_LENS"
+                    && (activeCategory === "ALL" || item.category === activeCategory))
                   .map((item) => (
                     <button
-                      disabled={Boolean(sale)}
+                      disabled={!canEdit}
                       key={item.id}
                       onClick={() => addProduct(item)}
                       type="button"
@@ -898,9 +1004,10 @@ export default function PosExperience() {
                           {item.requiresPrescription
                             ? " · Requiere receta"
                             : ""}
-                          {item.availability?.source === "MOCK"
-                            ? " · Disponibilidad simulada"
-                            : ""}
+                           {item.availability?.source === "MOCK"
+                             ? " · Disponibilidad simulada"
+                             : ""}
+                          {item.isTestData ? " · Dato de prueba" : ""}
                         </small>
                       </span>
                       <b>{money.format(item.unitPriceCents)}</b>
@@ -923,7 +1030,7 @@ export default function PosExperience() {
                   <label className="field">
                     <span>Opción de cristales</span>
                     <select
-                      disabled={Boolean(sale)}
+                      disabled={!canEdit}
                       onChange={(event) => setSelectedLensId(event.target.value)}
                       value={selectedLensId}
                     >
@@ -939,7 +1046,7 @@ export default function PosExperience() {
                   <label className="field">
                     <span>Montura para los cristales</span>
                     <select
-                      disabled={Boolean(sale)}
+                      disabled={!canEdit}
                       onChange={(event) => setSelectedLensMountId(event.target.value)}
                       value={selectedLensMountId}
                     >
@@ -954,7 +1061,7 @@ export default function PosExperience() {
                   <div className="lens-configuration-actions">
                     <button
                       className="app-button app-button--primary"
-                      disabled={Boolean(sale)}
+                      disabled={!canEdit}
                       onClick={addConfiguredLens}
                       type="button"
                     >
@@ -966,52 +1073,6 @@ export default function PosExperience() {
                 <p>No hay opciones de cristales configuradas para esta caja.</p>
               )}
             </div>
-          </article>
-          <article className="app-card pos-section">
-            <div className="pos-title">
-              <span>{requiresPrescription ? 4 : 3}</span>
-              <div>
-                <h2>Adicionales ópticos</h2>
-                <p>Cargos separados mientras se definen los precios definitivos.</p>
-              </div>
-            </div>
-            <div className="addition-entry">
-              <label className="field">
-                <span>Nombre</span>
-                <input
-                  disabled={Boolean(sale)}
-                  onChange={(event) => setAdditionDraft({ ...additionDraft, name: event.target.value })}
-                  placeholder="Ej.: Antirreflejo premium"
-                  value={additionDraft.name}
-                />
-              </label>
-              <label className="field">
-                <span>Valor CLP</span>
-                <input
-                  disabled={Boolean(sale)}
-                  min="1"
-                  onChange={(event) => setAdditionDraft({ ...additionDraft, unitPriceCents: event.target.value })}
-                  type="number"
-                  value={additionDraft.unitPriceCents}
-                />
-              </label>
-              <button className="app-button app-button--soft" disabled={Boolean(sale)} onClick={addOpticalAddition} type="button">
-                <Icon name="plus" size={16} /> Agregar
-              </button>
-            </div>
-            {opticalAdditions.length ? (
-              <div className="addition-list">
-                {opticalAdditions.map((addition, index) => (
-                  <div key={`${addition.name}-${index}`}>
-                    <span><strong>{addition.name}</strong><small>Adicional óptico</small></span>
-                    <b>{money.format(addition.unitPriceCents * addition.quantity)}</b>
-                    {!sale && <button aria-label={`Quitar ${addition.name}`} onClick={() => setOpticalAdditions((current) => current.filter((_, position) => position !== index))} type="button">×</button>}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="addition-empty">Sin adicionales en esta operación.</p>
-            )}
           </article>
         </section>
         <aside className="app-card pos-ticket">
@@ -1043,7 +1104,7 @@ export default function PosExperience() {
                   <div className="quantity">
                     <button
                       aria-label={`Quitar ${line.name}`}
-                      disabled={Boolean(sale)}
+                      disabled={!canEdit}
                       onClick={() => quantity(line.id, line.quantity - 1)}
                       type="button"
                     >
@@ -1052,7 +1113,7 @@ export default function PosExperience() {
                     <span>{line.quantity}</span>
                     <button
                       aria-label={`Agregar ${line.name}`}
-                      disabled={Boolean(sale)}
+                      disabled={!canEdit}
                       onClick={() => quantity(line.id, line.quantity + 1)}
                       type="button"
                     >
@@ -1067,7 +1128,7 @@ export default function PosExperience() {
               <div className="ticket-line ticket-line--addition" key={`${addition.name}-${index}`}>
                 <div>
                   <strong>{addition.name}</strong>
-                  <small>Adicional óptico</small>
+                  <small>Adicional óptico histórico</small>
                 </div>
                 <span className="addition-quantity">{addition.quantity}</span>
                 <b>{money.format(addition.unitPriceCents * addition.quantity)}</b>
@@ -1088,8 +1149,11 @@ export default function PosExperience() {
               <label className="field">
                 <span>Origen de la receta</span>
                 <select
-                  disabled={Boolean(sale)}
-                  onChange={(event) => setPrescriptionMode(event.target.value)}
+                  disabled={!canEdit}
+                  onChange={(event) => {
+                    setPrescriptionMode(event.target.value);
+                    setExternalPrescriptionId(null);
+                  }}
                   value={prescriptionMode}
                 >
                   <option value="internal">Emitida en Óptica Stylo</option>
@@ -1100,7 +1164,7 @@ export default function PosExperience() {
                 <label className="field">
                   <span>Receta interna activa</span>
                   <select
-                    disabled={Boolean(sale)}
+                    disabled={!canEdit}
                     onChange={(event) => setPrescriptionId(event.target.value)}
                     value={prescriptionId}
                   >
@@ -1117,10 +1181,11 @@ export default function PosExperience() {
                     <span>Imagen opcional de respaldo</span>
                     <input
                       accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                      disabled={Boolean(sale)}
-                      onChange={(event) =>
-                        setPrescriptionFile(event.target.files?.[0] ?? null)
-                      }
+                      disabled={!canEdit}
+                      onChange={(event) => {
+                        setPrescriptionFile(event.target.files?.[0] ?? null);
+                        setExternalPrescriptionId(null);
+                      }}
                       type="file"
                     />
                     <small>
@@ -1152,7 +1217,7 @@ export default function PosExperience() {
                         ].map(([field, nullable]) => (
                           <input
                             aria-label={`${label} ${field}`}
-                            disabled={Boolean(sale)}
+                            disabled={!canEdit}
                             key={field}
                             max={field === "axis" ? 180 : undefined}
                             min={field === "axis" ? 0 : undefined}
@@ -1172,13 +1237,14 @@ export default function PosExperience() {
                     <label className="field">
                       <span>Distancia pupilar</span>
                       <input
-                        disabled={Boolean(sale)}
-                        onChange={(event) =>
+                        disabled={!canEdit}
+                        onChange={(event) => {
+                          setExternalPrescriptionId(null);
                           setExternalPrescription({
                             ...externalPrescription,
                             pupillaryDistance: event.target.value,
-                          })
-                        }
+                          });
+                        }}
                         step="0.01"
                         type="number"
                         value={externalPrescription.pupillaryDistance}
@@ -1187,14 +1253,15 @@ export default function PosExperience() {
                     <label className="field">
                       <span>Notas de fabricación</span>
                       <input
-                        disabled={Boolean(sale)}
+                        disabled={!canEdit}
                         maxLength="1000"
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          setExternalPrescriptionId(null);
                           setExternalPrescription({
                             ...externalPrescription,
                             fulfillmentNotes: event.target.value,
-                          })
-                        }
+                          });
+                        }}
                         value={externalPrescription.fulfillmentNotes}
                       />
                     </label>
@@ -1207,44 +1274,42 @@ export default function PosExperience() {
             <label className="field">
               <span>Descuento manual (CLP)</span>
               <input
-                disabled={Boolean(sale)}
+                disabled={!canEdit}
                 min="0"
-                onChange={(event) => setDiscountCents(event.target.value)}
+                onChange={(event) => {
+                  setDiscountCents(event.target.value);
+                  setDiscountAuthorization(null);
+                }}
                 type="number"
                 value={discountCents}
               />
             </label>
-            {Number(discountCents) > 0 && !sale && (
-              <div className="discount-authorization">
+            {Number(discountCents) > 0 && canEdit && (
+              <>
                 <label className="field">
                   <span>Motivo obligatorio</span>
                   <input
                     maxLength="300"
-                    onChange={(event) => setDiscountReason(event.target.value)}
+                    onChange={(event) => {
+                      setDiscountReason(event.target.value);
+                      setDiscountAuthorization(null);
+                    }}
                     placeholder="Ej.: convenio autorizado"
                     value={discountReason}
                   />
                 </label>
-                <label className="field">
-                  <span>Correo del autorizador</span>
-                  <input
-                    autoComplete="username"
-                    onChange={(event) => setDiscountAuthorizerEmail(event.target.value)}
-                    type="email"
-                    value={discountAuthorizerEmail}
+                {discountAuthorization ? (
+                  <p className="inline-success" role="status">Descuento autorizado temporalmente hasta {new Date(discountAuthorization.expiresAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}.</p>
+                ) : discountReason.trim() ? (
+                  <DiscountAuthorizationPanel
+                    amountCents={Number(discountCents)}
+                    onAuthorized={setDiscountAuthorization}
+                    reason={discountReason}
                   />
-                </label>
-                <label className="field">
-                  <span>Contraseña del autorizador</span>
-                  <input
-                    autoComplete="current-password"
-                    onChange={(event) => setDiscountAuthorizerPassword(event.target.value)}
-                    type="password"
-                    value={discountAuthorizerPassword}
-                  />
-                  <small>Debe ser una cuenta con permiso para autorizar descuentos.</small>
-                </label>
-              </div>
+                ) : (
+                  <small>Indica el motivo antes de solicitar la autorización puntual.</small>
+                )}
+              </>
             )}
           </div>
           <dl className="ticket-totals">
@@ -1273,39 +1338,31 @@ export default function PosExperience() {
               {notice}
             </p>
           )}
-          {!sale && (
-            <button
-              className="app-button app-button--primary ticket-action"
-              disabled={
-                pending ||
-                !canSell ||
-                !customer ||
-                !lines.length ||
-                total <= 0 ||
-                (requiresPrescription && !patient) ||
-                (requiresPrescription &&
-                  prescriptionMode === "internal" &&
-                  !prescriptionId) ||
-                (Number(discountCents) > 0 &&
-                  (!discountReason.trim() ||
-                    !discountAuthorizerEmail.trim() ||
-                    !discountAuthorizerPassword))
-              }
-              onClick={createQuotation}
-              type="button"
-            >
-              {pending ? "Guardando…" : "Crear cotización"}
-            </button>
+          {canEdit && (
+            <div className="ticket-operation-actions">
+              <button
+                className="app-button app-button--primary ticket-action"
+                disabled={pending || !canSell || draftIncomplete}
+                onClick={() => saveOperation("SALE")}
+                type="button"
+              >
+                <Icon name="check" size={16} /> {sale ? "Confirmar y cobrar" : "Continuar al cobro"}
+              </button>
+              <button
+                className="app-button app-button--soft ticket-action"
+                disabled={pending || !canSell || draftIncomplete}
+                onClick={() => saveOperation("QUOTATION")}
+                type="button"
+              >
+                <Icon name="file" size={16} /> {sale ? "Guardar cotización" : "Crear cotización"}
+              </button>
+            </div>
           )}
           {sale?.status === "QUOTATION" && (
-            <button
-              className="app-button app-button--primary ticket-action"
-              disabled={pending}
-              onClick={confirmSale}
-              type="button"
-            >
-              Confirmar venta
-            </button>
+            <div className="quotation-cancel">
+              <label className="field"><span>Motivo para cancelar</span><input maxLength="500" onChange={(event) => setCancelReason(event.target.value)} value={cancelReason} /></label>
+              <button className="app-button app-button--soft" disabled={pending || !cancelReason.trim()} onClick={cancelQuotation} type="button">Cancelar cotización</button>
+            </div>
           )}
           {sale?.payments?.length > 0 && (
             <section className="payment-history" aria-labelledby="payment-history-title">
@@ -1334,11 +1391,13 @@ export default function PosExperience() {
             </section>
           )}
           {sale?.status === "PENDING" && (
-            <form className="payment-form" onSubmit={registerPayment}>
-              <h3>Registrar abono</h3>
+            <>
+              <form className="payment-form" onSubmit={registerPayment}>
+              <h3>Registrar abono manual</h3>
               <label className="field">
                 <span>Monto (máx. {money.format(sale.balanceCents)})</span>
                 <input
+                  defaultValue={sale.balanceCents}
                   max={sale.balanceCents}
                   min="1"
                   name="amountCents"
@@ -1358,7 +1417,7 @@ export default function PosExperience() {
                     <input name="paymentMethod" type="hidden" value={sale.paymentMethod} />
                   </>
                 ) : (
-                  <select defaultValue="" name="paymentMethod" required>
+                  <select name="paymentMethod" onChange={(event) => setPaymentMethod(event.target.value)} required value={paymentMethod}>
                     <option disabled value="">
                       Seleccionar
                     </option>
@@ -1370,22 +1429,29 @@ export default function PosExperience() {
                   </select>
                 )}
               </label>
+              {((sale.paymentMethod ?? paymentMethod) === "CASH") && (
+                <label className="field"><span>Monto recibido</span><input min="1" name="cashReceivedCents" onChange={(event) => setCashReceivedCents(event.target.value)} required type="number" value={cashReceivedCents} /><small>Vuelto estimado: {money.format(Math.max(0, Number(cashReceivedCents || 0) - Math.min(Number(cashReceivedCents || 0), sale.balanceCents)))}</small>{!cashRegister && <small className="inline-error">Abre la caja de prueba antes de registrar efectivo.</small>}</label>
+              )}
+              {(["BANK_TRANSFER", "TRANSBANK", "GETNET"].includes(sale.paymentMethod ?? paymentMethod)) && (
+                <label className="field"><span>Referencia o folio obligatorio</span><input maxLength="200" name="reference" required /></label>
+              )}
               <label className="field">
-                <span>Referencia opcional</span>
-                <input maxLength="200" name="reference" />
-              </label>
-              <label className="field">
-                <span>Enviar comprobante a</span>
-                <input defaultValue={customer?.email ?? ""} name="email" required type="email" />
+                <span>Enviar comprobante a (opcional)</span>
+                <input defaultValue={customer?.email ?? ""} name="email" type="email" />
               </label>
               <button
                 className="app-button app-button--primary"
-                disabled={pending}
+                disabled={pending || ((sale.paymentMethod ?? paymentMethod) === "CASH" && !cashRegister)}
                 type="submit"
               >
                 Registrar abono
               </button>
-            </form>
+              </form>
+              <section className="mercado-pago-panel" aria-labelledby="mercado-pago-title">
+                <div><h3 id="mercado-pago-title">Mercado Pago</h3><p>No se registra manualmente. Se acredita solo después de la confirmación segura por webhook.</p></div>
+                {!mercadoPagoCheckout ? <button className="app-button app-button--soft" disabled={pending} onClick={startMercadoPagoCheckout} type="button">Generar checkout seguro</button> : <div className="mercado-pago-actions"><a className="app-button app-button--primary" href={mercadoPagoCheckout.checkoutUrl} rel="noreferrer" target="_blank">Abrir checkout seguro</a><button className="app-button app-button--soft" disabled={pending} onClick={refreshMercadoPagoStatus} type="button">Consultar estado</button><small>Estado: {mercadoPagoCheckout.status}</small></div>}
+              </section>
+            </>
           )}
           {receipt && (
             <div className="receipt-result">
