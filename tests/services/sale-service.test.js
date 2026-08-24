@@ -54,10 +54,34 @@ test("crea una venta directa pendiente de cobro sin una confirmación intermedia
   assert.equal(result.status, "PENDING");
 });
 
-test("traduce la receta obligatoria a conflicto comercial", async () => {
-  await assert.rejects(() => createSale(draft, actor, {
-    createSale: async () => ({ reason: "PRESCRIPTION_REQUIRED", sale: null }),
-  }), (error) => error.code === "PRESCRIPTION_REQUIRED" && error.status === 409);
+test("permite crear una venta de cristales sin adjuntar receta", async () => {
+  const result = await createSale({
+    ...draft,
+    items: [{
+      mount: { frameProductId: productId, source: "SOLD_FRAME" },
+      productId,
+      quantity: 1,
+    }],
+  }, actor, {
+    createSale: async (data) => {
+      assert.equal(data.patientId, null);
+      assert.equal(data.prescriptionId, null);
+      assert.equal(data.externalPrescriptionId, null);
+      return { reason: null, sale: { id: saleId, status: "QUOTATION" } };
+    },
+  });
+  assert.equal(result.status, "QUOTATION");
+});
+
+test("confirma una cotización sin adjuntar receta", async () => {
+  const result = await confirmSale(saleId, actor, {
+    confirmSale: async (id, actorId) => {
+      assert.equal(id, saleId);
+      assert.equal(actorId, userId);
+      return { reason: null, sale: { id: saleId, status: "PENDING" } };
+    },
+  });
+  assert.equal(result.status, "PENDING");
 });
 
 test("traduce el rechazo de cristales sin montura a conflicto comercial", async () => {

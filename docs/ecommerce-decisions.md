@@ -26,10 +26,9 @@ o no configurados siguen pendientes de definición externa, no de interfaz.
 
 ## Recetas externas
 
-- Una compra de solo marco no requiere receta.
-- Una compra que incluya cristales con graduación sí requiere una receta.
-- El comprador podrá subir una imagen de la receta o completar sus datos
-  manualmente.
+- Toda compra puede continuar sin receta, incluso cuando incluya cristales.
+- El comprador podrá adjuntar una imagen de la receta o completar sus datos
+  manualmente de forma opcional.
 - Se proyecta una lectura asistida de la imagen para proponer los datos al
   negocio. El resultado se guardará como borrador y deberá poder corregirse
   antes de utilizarlo; el archivo original se conservará como respaldo.

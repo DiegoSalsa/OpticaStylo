@@ -324,14 +324,6 @@ async function loadDraftReferences(client, draft) {
     }
   }
 
-  if (
-    productResult.rows.some((product) => product.requires_prescription)
-    && !prescription
-    && !externalPrescription
-  ) {
-    return { reason: "PRESCRIPTION_REQUIRED" };
-  }
-
   const lines = draft.items.map((item, index) => ({
     ...productsById.get(item.productId),
     mount: item.mount,
@@ -612,13 +604,6 @@ export async function confirmSale(saleId, actorUserId) {
     );
     if (productsResult.rows.some((product) => !product.is_active)) {
       return { reason: "PRODUCT_INACTIVE", sale: null };
-    }
-    if (
-      productsResult.rows.some((product) => product.requires_prescription)
-      && !sale.prescription_id
-      && !sale.external_prescription_id
-    ) {
-      return { reason: "PRESCRIPTION_REQUIRED", sale: null };
     }
     if (sale.prescription_id) {
       const prescriptionResult = await client.query(

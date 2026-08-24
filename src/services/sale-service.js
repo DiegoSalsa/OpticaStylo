@@ -51,7 +51,6 @@ const REPOSITORY_ERRORS = Object.freeze({
   PRESCRIPTION_NOT_FOUND: ["PRESCRIPTION_NOT_FOUND", "No se encontró la receta indicada.", 404],
   PRESCRIPTION_NOT_USABLE: ["PRESCRIPTION_NOT_USABLE", "La receta debe estar activa y utilizable.", 409],
   PRESCRIPTION_PATIENT_MISMATCH: ["PRESCRIPTION_PATIENT_MISMATCH", "La receta no pertenece al paciente seleccionado.", 409],
-  PRESCRIPTION_REQUIRED: ["PRESCRIPTION_REQUIRED", "La venta incluye lentes que requieren receta.", 409],
   PRODUCT_INACTIVE: ["PRODUCT_INACTIVE", "La venta contiene un producto inactivo.", 409],
   PRODUCT_NOT_FOUND: ["PRODUCT_NOT_FOUND", "No se encontró uno de los productos.", 404],
   QUOTATION_EXPIRED: ["QUOTATION_EXPIRED", "La cotización venció y debe actualizarse.", 409],
