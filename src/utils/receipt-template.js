@@ -39,13 +39,22 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
   const receiptTitle = receipt.type === "PAYMENT"
     ? "Comprobante de abono"
     : "Comprobante final de venta";
-  const customer = `${receipt.payload.customer.firstNames} ${receipt.payload.customer.lastNames}`;
+  const customer = [
+    receipt.payload.customer.firstNames,
+    receipt.payload.customer.lastNames,
+  ].filter(Boolean).join(" ");
   const patient = receipt.payload.patient
-    ? `${receipt.payload.patient.firstNames} ${receipt.payload.patient.lastNames}`
+    ? [
+      receipt.payload.patient.firstNames,
+      receipt.payload.patient.lastNames,
+    ].filter(Boolean).join(" ")
     : "No aplica";
   const discountRow = receipt.payload.discount ? `
     <div class="total-row discount"><span>Descuento autorizado</span><strong>−${money(receipt.payload.discount.amountCents)}</strong></div>
     <p class="discount-reason">${escapeHtml(receipt.payload.discount.reason)}</p>` : "";
+  const cashRow = receipt.payload.payment?.paymentMethod === "CASH" ? `
+        <div class="total-row"><span>Recibido en efectivo</span><strong>${money(receipt.payload.payment.cashReceivedCents)}</strong></div>
+        <div class="total-row"><span>Vuelto</span><strong>${money(receipt.payload.payment.changeCents)}</strong></div>` : "";
   const body = `
     <main class="receipt">
       <header>
@@ -68,6 +77,7 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
         ${discountRow}
         <div class="total-row grand"><span>Total</span><strong>${money(receipt.payload.totalCents)}</strong></div>
         <div class="total-row"><span>Pagado / abonado</span><strong>${money(receipt.payload.paidCents)}</strong></div>
+        ${cashRow}
         <div class="total-row"><span>Saldo</span><strong>${money(receipt.payload.balanceCents)}</strong></div>
       </section>
       <footer>Gracias por preferir Óptica Stylo. Este comprobante inmutable conserva el estado de la operación al momento de emitirse.</footer>

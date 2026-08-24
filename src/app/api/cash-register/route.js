@@ -1,23 +1,25 @@
 import { authenticateRequest } from "@/auth/authenticate-request";
-import { createSale, getSaleList } from "@/services/sale-service";
+import {
+  getOpenCashRegister,
+  openCashRegister,
+} from "@/services/cash-register-service";
 import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
-import { readIdempotencyKey } from "@/utils/idempotency-key";
 
 export async function GET(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    return createSuccessResponse(await getSaleList(new URL(request.url).searchParams, actor));
+    return createSuccessResponse(await getOpenCashRegister(actor));
   });
 }
 
 export async function POST(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    const sale = await createSale(await readJsonBody(request), actor, {
-      requestKey: readIdempotencyKey(request),
-    });
-    return createSuccessResponse(sale, { status: 201 });
+    return createSuccessResponse(
+      await openCashRegister(await readJsonBody(request), actor),
+      { status: 201 },
+    );
   });
 }

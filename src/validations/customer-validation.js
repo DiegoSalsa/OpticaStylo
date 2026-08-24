@@ -21,6 +21,11 @@ function text(value, label, maximumLength) {
   return normalized;
 }
 
+function optionalText(value, label, maximumLength) {
+  if (value == null || value === "") return null;
+  return text(value, label, maximumLength);
+}
+
 function rut(value) {
   const normalized = normalizeChileanRut(value);
   if (!normalized) fail("El RUT no es válido.");
@@ -40,12 +45,22 @@ function email(value) {
   return normalized;
 }
 
+function optionalEmail(value) {
+  if (value == null || value === "") return null;
+  return email(value);
+}
+
 function phone(value) {
   const normalized = typeof value === "string"
     ? value.trim().replace(/[\s()-]/g, "")
     : "";
   if (!/^\+?\d{8,15}$/.test(normalized)) fail("El teléfono no es válido.");
   return normalized;
+}
+
+function optionalPhone(value) {
+  if (value == null || value === "") return null;
+  return phone(value);
 }
 
 export function validateCustomerId(value, label = "cliente") {
@@ -74,12 +89,12 @@ export function validateCreateCustomerInput(input) {
   }
 
   return {
-    address: text(input.address, "La dirección", 500),
-    email: email(input.email),
+    address: optionalText(input.address, "La dirección", 500),
+    email: optionalEmail(input.email),
     firstNames: text(input.firstNames, "Los nombres", 150),
-    lastNames: text(input.lastNames, "Los apellidos", 150),
+    lastNames: optionalText(input.lastNames, "Los apellidos", 150),
     patientId: linkedPatientId,
-    phone: phone(input.phone),
+    phone: optionalPhone(input.phone),
     rut: optionalRut(input.rut),
   };
 }
