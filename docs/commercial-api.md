@@ -69,11 +69,11 @@ pueden asignar manualmente. `DELIVERED` y `CANCELLED` son terminales.
 
 Los pagos manuales de transferencia, Transbank y Getnet exigen referencia o
 folio y no representan integraciones automáticas. Efectivo exige monto recibido
-y calcula el vuelto. Mercado Pago no se registra por el endpoint de abonos:
-debe crear un intento de Checkout Pro y acreditarse solo por conciliación segura
-o webhook. El primer abono fija el único medio de pago de la venta. Una venta
-rápida sin cliente también puede iniciar Checkout Pro; Mercado Pago solicita
-los datos del pagador durante su checkout seguro cuando corresponda.
+y calcula el vuelto. Mercado Pago no se registra por el endpoint de abonos. En
+el POS permanece pendiente hasta vincular la cuenta comercial con una caja Point
+o QR presencial; no crea un Checkout Pro ni abre un navegador. Checkout Pro se
+mantiene exclusivamente para la tienda web y se acredita solo por conciliación
+segura o webhook. El primer abono fija el único medio de pago de la venta.
 
 ## Clientes
 
