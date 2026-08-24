@@ -6,8 +6,10 @@ import {
   changeSaleStatus,
   confirmSale,
   createSale,
+  grantDiscountAuthorization,
   issueSaleReceipt,
   registerSalePayment,
+  updateSaleDraft,
 } from "../../src/services/sale-service.js";
 
 const userId = "00000000-0000-4000-8000-000000000001";
@@ -40,6 +42,18 @@ test("crea la venta como cotización", async () => {
   assert.equal(result, sale);
 });
 
+test("crea una venta directa pendiente de cobro sin una confirmación intermedia", async () => {
+  const result = await createSale({ ...draft, operation: "SALE" }, actor, {
+    createSale: async (data, actorId, options) => {
+      assert.equal(data.customerId, customerId);
+      assert.equal(actorId, userId);
+      assert.equal(options.status, "PENDING");
+      return { reason: null, sale: { id: saleId, status: "PENDING" } };
+    },
+  });
+  assert.equal(result.status, "PENDING");
+});
+
 test("traduce la receta obligatoria a conflicto comercial", async () => {
   await assert.rejects(() => createSale(draft, actor, {
     createSale: async () => ({ reason: "PRESCRIPTION_REQUIRED", sale: null }),
@@ -52,13 +66,12 @@ test("traduce el rechazo de cristales sin montura a conflicto comercial", async 
   }), (error) => error.code === "LENS_MOUNT_REQUIRED" && error.status === 409);
 });
 
-test("traduce un descuento invÃ¡lido a conflicto comercial", async () => {
+test("traduce un descuento inválido a conflicto comercial", async () => {
   await assert.rejects(() => createSale({
     ...draft,
     discount: {
       amountCents: 1000,
-      authorizerEmail: "admin@opticastylo.cl",
-      authorizerPassword: "Una-clave-segura-2026",
+      authorizationId: "00000000-0000-4000-8000-000000000005",
       reason: "Convenio",
     },
   }, actor, {
@@ -74,15 +87,12 @@ test("traduce un descuento invÃ¡lido a conflicto comercial", async () => {
   }), (error) => error.code === "DISCOUNT_EXCEEDS_SUBTOTAL" && error.status === 409);
 });
 
-test("rechaza credenciales sin permiso para autorizar descuentos", async () => {
-  await assert.rejects(() => createSale({
-    ...draft,
-    discount: {
-      amountCents: 1000,
-      authorizerEmail: "ventas@opticastylo.cl",
-      authorizerPassword: "clave",
-      reason: "Convenio",
-    },
+test("rechaza una autorización sin permiso de supervisor", async () => {
+  await assert.rejects(() => grantDiscountAuthorization({
+    amountCents: 1000,
+    authorizerEmail: "ventas@opticastylo.cl",
+    authorizerPassword: "clave",
+    reason: "Convenio",
   }, actor, {
     ...allowedDiscountAttempt,
     findDiscountAuthorizer: async () => null,
@@ -90,15 +100,41 @@ test("rechaza credenciales sin permiso para autorizar descuentos", async () => {
   }), (error) => error.code === "DISCOUNT_AUTHORIZATION_FAILED" && error.status === 403);
 });
 
-test("limita los intentos repetidos de autorización de descuentos", async () => {
-  await assert.rejects(() => createSale({
-    ...draft,
-    discount: {
-      amountCents: 1000,
-      authorizerEmail: "admin@opticastylo.cl",
-      authorizerPassword: "clave",
-      reason: "Convenio",
+test("otorga una autorización temporal de descuento auditada", async () => {
+  const now = new Date("2026-08-23T12:00:00.000Z");
+  const authorization = await grantDiscountAuthorization({
+    amountCents: 1000,
+    authorizerEmail: "admin@opticastylo.cl",
+    authorizerPassword: "clave",
+    reason: "Convenio de prueba",
+  }, actor, {
+    ...allowedDiscountAttempt,
+    createDiscountAuthorizationGrant: async (input) => {
+      assert.equal(input.amountCents, 1000);
+      assert.equal(input.authorizedBy, "00000000-0000-4000-8000-000000000009");
+      assert.equal(input.requestedBy, userId);
+      assert.equal(input.reason, "Convenio de prueba");
+      assert.equal(input.expiresAt.toISOString(), "2026-08-23T12:05:00.000Z");
+      return { id: "00000000-0000-4000-8000-000000000010" };
     },
+    currentDate: now,
+    findDiscountAuthorizer: async () => ({
+      id: "00000000-0000-4000-8000-000000000009",
+      isActive: true,
+      lockedUntil: null,
+      passwordHash: "hash",
+    }),
+    verifyPassword: async () => true,
+  });
+  assert.equal(authorization.id, "00000000-0000-4000-8000-000000000010");
+});
+
+test("limita los intentos repetidos de autorización de descuentos", async () => {
+  await assert.rejects(() => grantDiscountAuthorization({
+    amountCents: 1000,
+    authorizerEmail: "admin@opticastylo.cl",
+    authorizerPassword: "clave",
+    reason: "Convenio",
   }, actor, {
     beginDiscountAuthorizationAttempt: async ({ attemptedBy, authorizerEmail }) => {
       assert.equal(attemptedBy, userId);
@@ -117,9 +153,21 @@ test("confirma una cotización sin aceptar un cuerpo manipulable", async () => {
   assert.equal(result.status, "PENDING");
 });
 
+test("permite editar una cotización vigente antes de confirmarla", async () => {
+  const result = await updateSaleDraft(saleId, draft, actor, {
+    updateSaleDraft: async (id, normalizedDraft, actorId) => {
+      assert.equal(id, saleId);
+      assert.equal(normalizedDraft.customerId, customerId);
+      assert.equal(actorId, userId);
+      return { reason: null, sale: { id, status: "QUOTATION" } };
+    },
+  });
+  assert.equal(result.status, "QUOTATION");
+});
+
 test("rechaza cambiar el medio después del primer abono", async () => {
   await assert.rejects(() => registerSalePayment(saleId, {
-    amountCents: 10000, paymentMethod: "CASH",
+    amountCents: 10000, cashReceivedCents: 10000, paymentMethod: "CASH",
   }, actor, {
     registerSalePayment: async () => ({ reason: "PAYMENT_METHOD_MISMATCH", sale: null }),
   }), (error) => error.code === "PAYMENT_METHOD_MISMATCH");
@@ -132,6 +180,22 @@ test("registra un abono con permiso específico", async () => {
     registerSalePayment: async (id, payment) => ({
       reason: null, sale: { id, paidCents: payment.amountCents, status: "PENDING" },
     }),
+  });
+  assert.equal(result.paidCents, 10000);
+});
+
+test("conserva una clave de reintento para no duplicar un abono", async () => {
+  const result = await registerSalePayment(saleId, {
+    amountCents: 10000, paymentMethod: "TRANSBANK", reference: "op-1",
+  }, actor, {
+    registerSalePayment: async (id, payment, actorId, options) => {
+      assert.equal(id, saleId);
+      assert.equal(payment.reference, "op-1");
+      assert.equal(actorId, userId);
+      assert.equal(options.requestKey, "pago-prueba-0001");
+      return { reason: null, sale: { id, paidCents: payment.amountCents, status: "PENDING" } };
+    },
+    requestKey: "pago-prueba-0001",
   });
   assert.equal(result.paidCents, 10000);
 });

@@ -39,11 +39,12 @@ test("rechaza actualizar el vínculo paciente por accidente", () => {
   );
 });
 
-test("rechaza vaciar un dato comercial obligatorio", () => {
-  assert.throws(
-    () => validateUpdateCustomerInput({ phone: null }, { ...customer, patientId }),
-    /teléfono no es válido/,
+test("permite completar o vaciar datos comerciales opcionales", () => {
+  const result = validateUpdateCustomerInput(
+    { phone: null },
+    { ...customer, patientId },
   );
+  assert.equal(result.phone, null);
 });
 
 test("valida la búsqueda paginada de clientes", () => {
