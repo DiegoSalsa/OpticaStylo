@@ -1,0 +1,17 @@
+# Contexto de build: no incluir artefactos locales, secretos ni metadatos.
+.git
+.github
+.next
+node_modules
+coverage
+tmp
+*.log
+.env*
+!.env.example
+!.env.production.example
+secrets
+*.crt
+docs
+tests
+AGENTS.md
+CLAUDE.md

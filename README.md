@@ -31,6 +31,12 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
    npm run db:migrate
    ```
 
+## Despliegue Linux con Docker
+
+La aplicación se despliega como contenedor y utiliza PostgreSQL externo. La
+configuración de producción, el certificado TLS de PostgreSQL y el procedimiento
+de actualización están en [docs/deployment-linux.md](docs/deployment-linux.md).
+
 ## Comandos disponibles
 
 - `npm run dev`: inicia el servidor de desarrollo.

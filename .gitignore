@@ -35,6 +35,8 @@ yarn-error.log*
 # Variables de entorno locales
 .env*
 !.env.example
+!.env.production.example
+secrets/
 
 # Vercel
 .vercel

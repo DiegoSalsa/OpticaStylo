@@ -21,6 +21,7 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
   headers() {
     return [{ headers: securityHeaders, source: "/:path*" }];
