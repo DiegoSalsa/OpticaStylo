@@ -17,8 +17,11 @@ monetaria explícita en el contrato y evita números decimales.
 - Los productos tienen precio definido, se desactivan y no se eliminan.
 - Categorías iniciales: `FRAME`, `PRESCRIPTION_LENS` y `OTHER`.
 - `requiresPrescription` gobierna la exigencia de receta, no la categoría.
-- Una venta nace como `QUOTATION`; sus líneas pueden reemplazarse mientras siga
-  en ese estado y la cotización es válida durante 30 días.
+- La caja puede crear una venta directa con `operation: "SALE"`; nace en
+  `PENDING` y queda lista para cobrar sin una confirmación intermedia.
+- `operation: "QUOTATION"` mantiene la cotización como alternativa explícita.
+  Sus líneas se pueden editar mientras siga vigente durante 30 días, y se puede
+  cancelar solo si no tiene abonos.
 - Cada línea guarda SKU, nombre, categoría y precio del momento. Cambiar el
   catálogo después no altera ventas anteriores.
 - Al confirmar una cotización pasa a `PENDING` y su composición queda congelada.
@@ -31,10 +34,16 @@ monetaria explícita en el contrato y evita números decimales.
 - Ventas, abonos y eventos históricos no tienen endpoints de eliminación.
 - Cliente y paciente se mantienen separados. La venta guarda `patientId` solo
   cuando corresponde a la receta o al producto vendido.
-- Los adicionales ópticos se guardan en líneas separadas del catálogo.
-- Todo descuento exige motivo y las credenciales de una cuenta con permiso
-  `sales.discounts_authorize`; se conserva quién y cuándo lo autorizó.
+- El POS no admite adicionales ópticos de precio libre. Los adicionales deben
+  provenir de catálogo o configuración administrable; los adicionales históricos
+  se conservan como parte inmutable de la operación anterior.
+- Todo descuento exige motivo y una autorización temporal de una cuenta con
+  permiso `sales.discounts_authorize`. La autorización registra solicitante,
+  autorizador, monto, motivo, vencimiento y venta que la consumió.
 - La disponibilidad que muestra el POS es simulada hasta integrar el inventario.
+- Un cliente de mostrador requiere nombres. RUT, apellidos, teléfono, correo y
+  dirección se pueden completar posteriormente; el correo solo es necesario si
+  se solicita el envío de un comprobante.
 
 ## Estados y transiciones
 
@@ -54,6 +63,12 @@ pueden asignar manualmente. `DELIVERED` y `CANCELLED` son terminales.
 - `MERCADO_PAGO`
 - `TRANSBANK`
 - `GETNET`
+
+Los pagos manuales de transferencia, Transbank y Getnet exigen referencia o
+folio y no representan integraciones automáticas. Efectivo exige monto recibido
+y calcula el vuelto. Mercado Pago no se registra por el endpoint de abonos:
+debe crear un intento de Checkout Pro y acreditarse solo por conciliación segura
+o webhook. El primer abono fija el único medio de pago de la venta.
 
 ## Clientes
 
@@ -130,12 +145,13 @@ Ejemplo de actualización:
 
 ## Ventas
 
-### Crear cotización
+### Crear una venta o cotización
 
 `POST /api/sales`
 
 ```json
 {
+  "operation": "SALE",
   "customerId": "uuid-del-cliente",
   "patientId": null,
   "prescriptionId": null,
@@ -144,29 +160,51 @@ Ejemplo de actualización:
     {
       "productId": "uuid-del-marco",
       "quantity": 1
-    }
-  ],
-  "opticalAdditions": [
+    },
     {
-      "name": "Antirreflejo premium",
-      "description": "Tratamiento adicional",
+      "productId": "uuid-de-los-cristales",
       "quantity": 1,
-      "unitPriceCents": 39990
+      "mount": {
+        "source": "SOLD_FRAME",
+        "frameProductId": "uuid-del-marco"
+      }
     }
   ],
   "discount": {
     "amountCents": 5000,
     "reason": "Convenio empresa",
-    "authorizerEmail": "admin@example.com",
-    "authorizerPassword": "credencial-del-autorizador"
+    "authorizationId": "uuid-de-la-autorizacion-temporal"
   }
 }
 ```
+
+`operation: "SALE"` crea una venta pendiente de cobro. Omitirlo, o usar
+`operation: "QUOTATION"`, crea una cotización. Para cristales, `mount` debe
+identificar una montura vendida o indicar `CUSTOMER_FRAME` sin
+`frameProductId`. Los precios, el descuento y el vínculo de la montura se
+verifican en el servidor.
 
 Para una venta con lentes de receta, `prescriptionId` debe contener una receta
 utilizable o `externalPrescriptionId` una receta externa confirmada. En ambos
 casos se exige `patientId`. La receta puede pertenecer a un paciente distinto
 del cliente. Un marco o accesorio sin `requiresPrescription` no exige receta.
+
+### Autorizar un descuento temporal
+
+`POST /api/sales/discount-authorization`
+
+```json
+{
+  "amountCents": 5000,
+  "reason": "Convenio empresa",
+  "authorizerEmail": "admin@example.com",
+  "authorizerPassword": "credencial-del-autorizador"
+}
+```
+
+Este paso se realiza fuera del formulario de venta. Devuelve una autorización
+de un único uso, válida durante cinco minutos y auditada con solicitante y
+supervisor. La venta solo recibe su identificador.
 
 ### Editar y confirmar
 
@@ -183,17 +221,33 @@ Confirmar no recibe cuerpo. Los precios y productos se vuelven inmutables.
 ```json
 {
   "amountCents": 20000,
-  "paymentMethod": "BANK_TRANSFER",
-  "reference": "Transferencia 12345"
+  "paymentMethod": "CASH",
+  "cashReceivedCents": 25000,
+  "reference": null
 }
 ```
 
-Respuesta: `201 Created`. `reference` es opcional. La respuesta devuelve
+Para `BANK_TRANSFER`, `TRANSBANK` y `GETNET`, `reference` o folio es
+obligatorio. En efectivo, `cashReceivedCents` debe cubrir el abono y el
+servidor calcula el vuelto. La caja de prueba debe estar abierta antes de
+registrar efectivo. `MERCADO_PAGO` no es admisible en este endpoint: se
+acredita únicamente desde su checkout seguro, consulta, conciliación y webhook.
+
+Respuesta: `201 Created`. La respuesta devuelve
 `paidCents`, `balanceCents`, todos los abonos y el estado resultante.
 
 Si la venta mantiene un intento electrónico vigente, el abono manual responde
 `409 PAYMENT_ATTEMPT_ACTIVE`. El checkout y la conciliación de Mercado Pago se
 documentan en `docs/mercado-pago.md`.
+
+### Caja de prueba
+
+- `GET /api/cash-register` consulta la sesión abierta.
+- `POST /api/cash-register` abre una sesión con fondo inicial y observación.
+- `POST /api/cash-register/{sessionId}/movements` registra ingreso o egreso
+  manual con motivo.
+- `POST /api/cash-register/{sessionId}/close` registra el arqueo y calcula la
+  diferencia en el servidor.
 
 ### Avanzar o cancelar
 
@@ -259,6 +313,10 @@ metadatos internos: solo identificador, versión, estado y paciente.
 - `409 PAYMENT_ATTEMPT_ACTIVE`: existe un cobro electrónico vigente.
 - `409 INVALID_SALE_STATUS_TRANSITION`: la transición no respeta el flujo.
 - `409 SALE_HAS_PAYMENTS`: no se cancela por este flujo una venta con abonos.
+- `409 CASH_REGISTER_CLOSED`: se intentó registrar efectivo sin una caja de
+  prueba abierta.
+- `409 DISCOUNT_AUTHORIZATION_INVALID`: la autorización temporal venció, ya se
+  consumió o no corresponde al descuento.
 - `403 DISCOUNT_AUTHORIZATION_FAILED`: las credenciales no pueden autorizar el
   descuento.
 - `429 DISCOUNT_AUTHORIZATION_RATE_LIMITED`: se superó el límite temporal de
