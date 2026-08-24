@@ -32,10 +32,6 @@ const ATTEMPT_ERRORS = Object.freeze({
     "PAYMENT_METHOD_MISMATCH",
     "La venta ya utiliza otro medio de pago.",
   ],
-  CUSTOMER_REQUIRED_FOR_MERCADO_PAGO: [
-    "CUSTOMER_REQUIRED_FOR_MERCADO_PAGO",
-    "Mercado Pago requiere un cliente registrado para crear el checkout seguro.",
-  ],
   SALE_NOT_FOUND: ["SALE_NOT_FOUND", "No se encontró la venta."],
   SALE_NOT_PAYABLE: ["SALE_NOT_PAYABLE", "Solo una venta pendiente con saldo puede pagarse."],
 });
@@ -67,7 +63,6 @@ async function createCheckout(saleId, initiatedBy, dependencies) {
   const expiresAt = new Date(currentDate.getTime() + 30 * 60 * 1000);
   const sale = await (dependencies.findSaleById ?? findSaleById)(id);
   if (!sale) throwAttemptReason("SALE_NOT_FOUND");
-  if (!sale.customer) throwAttemptReason("CUSTOMER_REQUIRED_FOR_MERCADO_PAGO");
   const reservation = await (
     dependencies.reserveMercadoPagoAttempt ?? reserveMercadoPagoAttempt
   )(id, initiatedBy, expiresAt);

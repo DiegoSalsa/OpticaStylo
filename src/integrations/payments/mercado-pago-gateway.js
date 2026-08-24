@@ -46,6 +46,11 @@ export function selectMercadoPagoCheckoutUrl(preference) {
 }
 
 export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
+  const payer = sale.customer ? {
+    email: sale.customer.email,
+    name: sale.customer.firstNames,
+    surname: sale.customer.lastNames,
+  } : null;
   return {
       ...checkoutUrls(config.publicUrl),
       external_reference: attempt.id,
@@ -63,11 +68,7 @@ export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
         sale_id: sale.id,
         sale_number: sale.saleNumber,
       },
-      payer: {
-        email: sale.customer.email,
-        name: sale.customer.firstNames,
-        surname: sale.customer.lastNames,
-      },
+      ...(payer ? { payer } : {}),
       statement_descriptor: "OPTICA STYLO",
   };
 }

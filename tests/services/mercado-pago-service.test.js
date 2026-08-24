@@ -97,12 +97,27 @@ test("no reserva un intento si el webhook seguro no está listo", async () => {
   }), (error) => error.code === "PAYMENT_PROVIDER_NOT_CONFIGURED" && error.status === 503);
 });
 
-test("no crea un checkout para una venta sin cliente registrado", async () => {
-  await assert.rejects(() => createMercadoPagoCheckout(saleId, actor, {
+test("crea un checkout para una venta rápida sin cliente registrado", async () => {
+  const result = await createMercadoPagoCheckout(saleId, actor, {
+    attachMercadoPagoPreference: async (attemptId, preference) => ({
+      ...attempt,
+      ...preference,
+      id: attemptId,
+      status: "PENDING",
+    }),
+    createMercadoPagoPreference: async ({ sale }) => {
+      assert.equal(sale.customer, null);
+      return {
+        checkoutUrl: "https://www.mercadopago.cl/checkout/v1/venta-rapida",
+        externalPreferenceId: "preferencia-venta-rapida",
+        sandboxCheckoutUrl: null,
+      };
+    },
     findSaleById: async () => ({ customer: null, id: saleId }),
     getMercadoPagoConfig: () => readyConfig,
-    reserveMercadoPagoAttempt: async () => assert.fail("No debe reservar un cobro sin cliente"),
-  }), (error) => error.code === "CUSTOMER_REQUIRED_FOR_MERCADO_PAGO" && error.status === 409);
+    reserveMercadoPagoAttempt: async () => ({ attempt, reason: null }),
+  });
+  assert.equal(result.externalPreferenceId, "preferencia-venta-rapida");
 });
 
 test("lista intentos solo con permiso de lectura de ventas", async () => {

@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  buildPaymentReceiptSnapshot,
-  canCreateFrameSaleWithoutCustomer,
-} from "../../src/repositories/sale-repository.js";
+import { buildPaymentReceiptSnapshot } from "../../src/repositories/sale-repository.js";
 
 const firstPaymentId = "00000000-0000-4000-8000-000000000001";
 const secondPaymentId = "00000000-0000-4000-8000-000000000002";
@@ -41,17 +38,4 @@ test("rechaza un abono que no pertenece a la venta", () => {
     buildPaymentReceiptSnapshot(sale, "00000000-0000-4000-8000-000000000003"),
     null,
   );
-});
-
-test("permite omitir cliente únicamente en una venta de monturas sin datos clínicos", () => {
-  const frame = { category: "FRAME" };
-  const baseDraft = {
-    customerId: null,
-    externalPrescriptionId: null,
-    patientId: null,
-    prescriptionId: null,
-  };
-  assert.equal(canCreateFrameSaleWithoutCustomer(baseDraft, [frame]), true);
-  assert.equal(canCreateFrameSaleWithoutCustomer(baseDraft, [{ category: "PRESCRIPTION_LENS" }]), false);
-  assert.equal(canCreateFrameSaleWithoutCustomer({ ...baseDraft, patientId: firstPaymentId }, [frame]), false);
 });

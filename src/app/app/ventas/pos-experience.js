@@ -111,7 +111,6 @@ export default function PosExperience() {
     "category=PRESCRIPTION_LENS",
   );
   const [customer, setCustomer] = useState(null);
-  const [saleWithoutRegisteredCustomer, setSaleWithoutRegisteredCustomer] = useState(false);
   const [patient, setPatient] = useState(null);
   const [lines, setLines] = useState([]);
   const [selectedLensId, setSelectedLensId] = useState("");
@@ -160,8 +159,6 @@ export default function PosExperience() {
   const total = Math.max(0, subtotal - Number(discountCents || 0));
   const offersPrescriptionAttachment = lines.some((line) => line.requiresPrescription);
   const soldFrames = lines.filter((line) => line.category === "FRAME");
-  const hasOnlyFrames = lines.length > 0 && lines.every((line) => line.category === "FRAME");
-  const customerIsRequired = !hasOnlyFrames || attachPrescription;
   const selectedLens = lensOptions.items.find((item) => item.id === selectedLensId);
   const canSell = actor?.permissions.includes("sales.create");
   const canEdit = !sale || sale.status === "QUOTATION";
@@ -169,23 +166,21 @@ export default function PosExperience() {
     ? "Tu cuenta no tiene permiso para registrar ventas."
     : !lines.length
       ? "Agrega al menos un producto para continuar al cobro."
-      : !customer && customerIsRequired
-        ? "Selecciona o registra un cliente para continuar al cobro."
-        : !customer && !saleWithoutRegisteredCustomer
-          ? "Selecciona un cliente o usa la opción de venta de solo marco sin cliente registrado."
-          : total <= 0
-            ? "El total debe ser mayor que cero para continuar al cobro."
-            : attachPrescription && !patient
-              ? "Selecciona un paciente solo porque decidiste adjuntar una receta."
-              : attachPrescription && prescriptionMode === "internal" && !prescriptionId
-                ? "Selecciona la receta interna que decidiste adjuntar."
-                : Number(discountCents) > 0 && (!discountReason.trim() || !discountAuthorization)
-                  ? "Indica el motivo y la autorización temporal para aplicar el descuento."
-                  : "";
+      : total <= 0
+        ? "El total debe ser mayor que cero para continuar al cobro."
+        : attachPrescription && !patient
+          ? "Selecciona un paciente solo porque decidiste adjuntar una receta."
+          : attachPrescription && prescriptionMode === "external" && !customer
+            ? "Para adjuntar una receta externa, selecciona o registra un cliente."
+            : attachPrescription && prescriptionMode === "internal" && !prescriptionId
+              ? "Selecciona la receta interna que decidiste adjuntar."
+              : Number(discountCents) > 0 && (!discountReason.trim() || !discountAuthorization)
+                ? "Indica el motivo y la autorización temporal para aplicar el descuento."
+                : "";
   const draftIncomplete = !lines.length
-    || (customerIsRequired ? !customer : !customer && !saleWithoutRegisteredCustomer)
     || total <= 0
     || (attachPrescription && !patient)
+    || (attachPrescription && prescriptionMode === "external" && !customer)
     || (attachPrescription && prescriptionMode === "internal" && !prescriptionId)
     || (Number(discountCents) > 0 && (!discountReason.trim() || !discountAuthorization));
 
@@ -212,7 +207,6 @@ export default function PosExperience() {
 
   function chooseCustomer(value) {
     setCustomer(value);
-    setSaleWithoutRegisteredCustomer(false);
     choosePatient(null);
     setExternalPrescriptionId(null);
     if (value?.patientId) {
@@ -233,7 +227,6 @@ export default function PosExperience() {
 
   function addLine(product, mount = null) {
     if (!canEdit) return false;
-    if (product.category !== "FRAME") setSaleWithoutRegisteredCustomer(false);
     const existing = lines.find((line) => line.id === product.id);
     if (
       existing
@@ -415,7 +408,6 @@ export default function PosExperience() {
         await fetch(`/api/sales/${id}`, { cache: "no-store" }),
       );
       setCustomer(quote.customer);
-      setSaleWithoutRegisteredCustomer(!quote.customer);
       choosePatient(quote.patient);
       setLines(
         quote.items.map((item) => ({
@@ -703,7 +695,6 @@ export default function PosExperience() {
 
   function reset() {
     setCustomer(null);
-    setSaleWithoutRegisteredCustomer(false);
     setPatient(null);
     setPatientBirthDate("");
     setLines([]);
@@ -821,8 +812,8 @@ export default function PosExperience() {
             <div className="pos-title">
               <span>1</span>
               <div>
-                <h2>Cliente</h2>
-                <p>Cliente comercial; se solicita por defecto y no crea una ficha clínica.</p>
+                <h2>Cliente opcional</h2>
+                <p>Úsalo para historial o contacto; la venta rápida no exige registro.</p>
               </div>
               <button
                 className="text-button"
@@ -869,25 +860,7 @@ export default function PosExperience() {
                     </button>
                   </div>
                 )}
-                {saleWithoutRegisteredCustomer && (
-                  <div className="selected-customer">
-                    <span>
-                      <Icon name="check" size={17} />
-                    </span>
-                    <div>
-                      <strong>Venta de solo marco sin cliente registrado</strong>
-                      <small>Disponible únicamente mientras el ticket contenga monturas.</small>
-                    </div>
-                    <button
-                      disabled={!canEdit}
-                      onClick={() => setSaleWithoutRegisteredCustomer(false)}
-                      type="button"
-                    >
-                      Asignar cliente
-                    </button>
-                  </div>
-                )}
-                {!customer && !saleWithoutRegisteredCustomer && (
+                {!customer && (
                   <>
                     <div className="search-field">
                       <Icon name="search" size={18} />
@@ -920,16 +893,9 @@ export default function PosExperience() {
                         ))
                       )}
                     </div>
-                    {hasOnlyFrames && (
-                      <button
-                        className="app-button app-button--soft"
-                        disabled={!canEdit}
-                        onClick={() => setSaleWithoutRegisteredCustomer(true)}
-                        type="button"
-                      >
-                        Vender solo marco sin cliente registrado
-                      </button>
-                    )}
+                    <p className="prescription-hint">
+                      Puedes continuar sin seleccionar un cliente.
+                    </p>
                   </>
                 )}
               </>
@@ -1216,10 +1182,7 @@ export default function PosExperience() {
                 <input
                   checked={attachPrescription}
                   disabled={!canEdit}
-                  onChange={(event) => {
-                    setAttachPrescription(event.target.checked);
-                    if (event.target.checked) setSaleWithoutRegisteredCustomer(false);
-                  }}
+                  onChange={(event) => setAttachPrescription(event.target.checked)}
                   type="checkbox"
                 />
               </label>
@@ -1533,9 +1496,7 @@ export default function PosExperience() {
               </form>
               <section className="mercado-pago-panel" aria-labelledby="mercado-pago-title">
                 <div><h3 id="mercado-pago-title">Mercado Pago</h3><p>No se registra manualmente. Se acredita solo después de la confirmación segura por webhook.</p></div>
-                {sale.customer ? (
-                  !mercadoPagoCheckout ? <button className="app-button app-button--soft" disabled={pending} onClick={startMercadoPagoCheckout} type="button">Generar checkout seguro</button> : <div className="mercado-pago-actions"><a className="app-button app-button--primary" href={mercadoPagoCheckout.checkoutUrl} rel="noreferrer" target="_blank">Abrir checkout seguro</a><button className="app-button app-button--soft" disabled={pending} onClick={refreshMercadoPagoStatus} type="button">Consultar estado</button><small>Estado: {mercadoPagoCheckout.status}</small></div>
-                ) : <small>Requiere un cliente registrado para crear un checkout seguro.</small>}
+                {!mercadoPagoCheckout ? <button className="app-button app-button--soft" disabled={pending} onClick={startMercadoPagoCheckout} type="button">Generar checkout seguro</button> : <div className="mercado-pago-actions"><a className="app-button app-button--primary" href={mercadoPagoCheckout.checkoutUrl} rel="noreferrer" target="_blank">Abrir checkout seguro</a><button className="app-button app-button--soft" disabled={pending} onClick={refreshMercadoPagoStatus} type="button">Consultar estado</button><small>Estado: {mercadoPagoCheckout.status}</small></div>}
               </section>
             </>
           )}

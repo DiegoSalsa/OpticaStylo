@@ -19,9 +19,9 @@ monetaria explícita en el contrato y evita números decimales.
 - `requiresPrescription` indica que el producto admite adjuntar receta; nunca bloquea una venta ni un cobro.
 - La caja puede crear una venta directa con `operation: "SALE"`; nace en
   `PENDING` y queda lista para cobrar sin una confirmación intermedia.
-- El cliente se solicita por defecto. Solo una venta de mostrador compuesta
-  exclusivamente por monturas puede usar `customerId: null`; no puede incluir
-  paciente ni receta y se identifica como venta sin cliente registrado.
+- El cliente es opcional en el POS. Una venta rápida puede usar
+  `customerId: null` con monturas, cristales u otros productos, sin crear una
+  ficha ficticia.
 - `operation: "QUOTATION"` mantiene la cotización como alternativa explícita.
   Sus líneas se pueden editar mientras siga vigente durante 30 días, y se puede
   cancelar solo si no tiene abonos.
@@ -71,9 +71,9 @@ Los pagos manuales de transferencia, Transbank y Getnet exigen referencia o
 folio y no representan integraciones automáticas. Efectivo exige monto recibido
 y calcula el vuelto. Mercado Pago no se registra por el endpoint de abonos:
 debe crear un intento de Checkout Pro y acreditarse solo por conciliación segura
-o webhook. El primer abono fija el único medio de pago de la venta.
-Una venta sin cliente registrado no puede iniciar Mercado Pago porque el
-checkout seguro requiere los datos del pagador.
+o webhook. El primer abono fija el único medio de pago de la venta. Una venta
+rápida sin cliente también puede iniciar Checkout Pro; Mercado Pago solicita
+los datos del pagador durante su checkout seguro cuando corresponda.
 
 ## Clientes
 
@@ -194,10 +194,10 @@ utilizable o `externalPrescriptionId` una receta externa confirmada. En ambos
 casos se exige `patientId`. La receta puede pertenecer a un paciente distinto
 del cliente. Ninguna línea exige receta para continuar al cobro.
 
-Para una venta directa de solo marco, el POS permite enviar `customerId: null`
-después de confirmar expresamente la opción. El servidor solo acepta esa
-excepción si todas las líneas son `FRAME` y no se adjuntan paciente ni receta;
-no crea un cliente ficticio.
+Para una venta rápida, el POS permite enviar `customerId: null` con cualquier
+producto. No crea un cliente ficticio. Una receta externa sí requiere cliente,
+porque su imagen y datos confirmados se conservan vinculados a esa relación
+comercial; una receta interna puede vincularse solo al paciente.
 
 ### Autorizar un descuento temporal
 

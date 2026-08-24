@@ -31,6 +31,14 @@ test("crea una preferencia por el saldo exacto reservado", () => {
   assert.equal(body.metadata.sale_id, input.sale.id);
 });
 
+test("omite los datos del pagador en una venta rápida sin cliente", () => {
+  const body = createMercadoPagoPreferenceBody({
+    ...input,
+    sale: { ...input.sale, customer: null },
+  });
+  assert.equal(Object.hasOwn(body, "payer"), false);
+});
+
 test("configura retornos y webhook sin usar la URL como confirmación", () => {
   const body = createMercadoPagoPreferenceBody(input);
   assert.equal(body.auto_return, "approved");

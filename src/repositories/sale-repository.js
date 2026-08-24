@@ -238,15 +238,6 @@ export async function findSaleById(saleId) {
   );
 }
 
-export function canCreateFrameSaleWithoutCustomer(draft, products) {
-  return !draft.customerId
-    && !draft.patientId
-    && !draft.prescriptionId
-    && !draft.externalPrescriptionId
-    && products.length > 0
-    && products.every((product) => product.category === "FRAME");
-}
-
 async function loadDraftReferences(client, draft) {
   if (draft.customerId) {
     const customerResult = await client.query(
@@ -273,12 +264,6 @@ async function loadDraftReferences(client, draft) {
     return { reason: "PRODUCT_NOT_FOUND" };
   if (productResult.rows.some((product) => !product.is_active))
     return { reason: "PRODUCT_INACTIVE" };
-  if (!draft.customerId && !canCreateFrameSaleWithoutCustomer(
-    draft,
-    productResult.rows,
-  )) {
-    return { reason: "CUSTOMER_REQUIRED_FOR_SALE_DETAILS" };
-  }
 
   const productsById = new Map(
     productResult.rows.map((product) => [product.id, product]),
@@ -614,25 +599,13 @@ export async function confirmSale(saleId, actorUserId) {
       return { reason: "QUOTATION_EXPIRED", sale: null };
     }
     const productsResult = await client.query(
-      `SELECT sale_items.product_category, products.is_active
+      `SELECT products.is_active
        FROM sale_items JOIN products ON products.id = sale_items.product_id
        WHERE sale_items.sale_id = $1 FOR SHARE OF products`,
       [saleId],
     );
     if (productsResult.rows.some((product) => !product.is_active)) {
       return { reason: "PRODUCT_INACTIVE", sale: null };
-    }
-    if (
-      !sale.customer_id
-      && (
-        sale.patient_id
-        || sale.prescription_id
-        || sale.external_prescription_id
-        || productsResult.rows.length === 0
-        || productsResult.rows.some((product) => product.product_category !== "FRAME")
-      )
-    ) {
-      return { reason: "CUSTOMER_REQUIRED_FOR_SALE_DETAILS", sale: null };
     }
     if (sale.prescription_id) {
       const prescriptionResult = await client.query(
