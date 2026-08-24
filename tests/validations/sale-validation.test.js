@@ -27,6 +27,14 @@ test("acepta una cotización sin receta", () => {
   assert.equal(result.externalPrescriptionId, null);
 });
 
+test("admite el identificador de cliente vacío para una venta de solo marco", () => {
+  const result = validateSaleDraftInput({
+    customerId: null,
+    items: [{ productId: frameProductId, quantity: 1 }],
+  });
+  assert.equal(result.customerId, null);
+});
+
 test("normaliza la montura vendida de unos cristales", () => {
   const result = validateSaleDraftInput({
     customerId,
