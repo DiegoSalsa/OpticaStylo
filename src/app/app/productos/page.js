@@ -225,7 +225,7 @@ export default function ProductsPage() {
                     </small>
                     <small>
                       {money.format(product.unitPriceCents)}
-                      {product.requiresPrescription ? " · Requiere receta" : ""}
+                      {product.requiresPrescription ? " · Receta opcional" : ""}
                     </small>
                   </span>
                   <i
@@ -341,10 +341,10 @@ export default function ProductsPage() {
                   }
                   type="checkbox"
                 />
-                <span>Requiere receta para completar la venta</span>
+                <span>Ofrece adjuntar receta a la venta</span>
                 <small>
-                  Los marcos pueden venderse sin receta; actívalo solo cuando el
-                  lente o producto la necesite.
+                  Activarlo permite ofrecer el registro opcional de receta para
+                  lentes u otros productos.
                 </small>
               </label>
               {selectedId && (

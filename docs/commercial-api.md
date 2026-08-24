@@ -16,7 +16,7 @@ monetaria explícita en el contrato y evita números decimales.
 - Esa copia es un snapshot comercial y no se sincroniza automáticamente.
 - Los productos tienen precio definido, se desactivan y no se eliminan.
 - Categorías iniciales: `FRAME`, `PRESCRIPTION_LENS` y `OTHER`.
-- `requiresPrescription` gobierna la exigencia de receta, no la categoría.
+- `requiresPrescription` indica que el producto admite adjuntar receta; nunca bloquea una venta ni un cobro.
 - La caja puede crear una venta directa con `operation: "SALE"`; nace en
   `PENDING` y queda lista para cobrar sin una confirmación intermedia.
 - `operation: "QUOTATION"` mantiene la cotización como alternativa explícita.
@@ -25,8 +25,8 @@ monetaria explícita en el contrato y evita números decimales.
 - Cada línea guarda SKU, nombre, categoría y precio del momento. Cambiar el
   catálogo después no altera ventas anteriores.
 - Al confirmar una cotización pasa a `PENDING` y su composición queda congelada.
-- Si alguna línea requiere receta, la venta debe indicar una receta `ACTIVE`
-  perteneciente a una atención `FINALIZED`.
+- Una receta puede adjuntarse de forma opcional. Si se indica una receta interna,
+  debe estar `ACTIVE` y pertenecer a una atención `FINALIZED`.
 - Se permiten varios abonos, sin exceder el saldo.
 - El primer abono fija el medio de pago de la venta. Por ahora no se mezclan
   medios dentro de una misma venta.
@@ -184,10 +184,10 @@ identificar una montura vendida o indicar `CUSTOMER_FRAME` sin
 `frameProductId`. Los precios, el descuento y el vínculo de la montura se
 verifican en el servidor.
 
-Para una venta con lentes de receta, `prescriptionId` debe contener una receta
+Para una venta que adjunte receta, `prescriptionId` debe contener una receta
 utilizable o `externalPrescriptionId` una receta externa confirmada. En ambos
 casos se exige `patientId`. La receta puede pertenecer a un paciente distinto
-del cliente. Un marco o accesorio sin `requiresPrescription` no exige receta.
+del cliente. Ninguna línea exige receta para continuar al cobro.
 
 ### Autorizar un descuento temporal
 
@@ -305,7 +305,6 @@ metadatos internos: solo identificador, versión, estado y paciente.
 
 ## Errores comerciales relevantes
 
-- `409 PRESCRIPTION_REQUIRED`: una línea exige receta y no se indicó una.
 - `409 PRESCRIPTION_NOT_USABLE`: receta anulada o atención sin finalizar.
 - `409 PRODUCT_INACTIVE`: un producto fue desactivado.
 - `409 PAYMENT_METHOD_MISMATCH`: se intentó mezclar medios de pago.

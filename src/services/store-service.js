@@ -66,11 +66,6 @@ const ERRORS = Object.freeze({
     "Primero debe cargar una imagen de la receta.",
     404,
   ],
-  PRESCRIPTION_REQUIRED: [
-    "PRESCRIPTION_REQUIRED",
-    "El carrito incluye cristales con graduación y requiere una receta lista.",
-    409,
-  ],
   PRODUCT_NOT_AVAILABLE: [
     "STORE_PRODUCT_NOT_AVAILABLE",
     "El producto no se encuentra disponible.",

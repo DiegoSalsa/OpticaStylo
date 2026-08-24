@@ -122,6 +122,7 @@ export default function PosExperience() {
   const [prescriptionId, setPrescriptionId] = useState("");
   const [internalPrescriptions, setInternalPrescriptions] = useState([]);
   const [prescriptionLookup, setPrescriptionLookup] = useState({ error: "", loading: false });
+  const [attachPrescription, setAttachPrescription] = useState(false);
   const [prescriptionMode, setPrescriptionMode] = useState("internal");
   const [externalPrescription, setExternalPrescription] = useState(
     EMPTY_EXTERNAL_PRESCRIPTION,
@@ -156,16 +157,31 @@ export default function PosExperience() {
     [lines, opticalAdditions],
   );
   const total = Math.max(0, subtotal - Number(discountCents || 0));
-  const requiresPrescription = lines.some((line) => line.requiresPrescription);
+  const offersPrescriptionAttachment = lines.some((line) => line.requiresPrescription);
   const soldFrames = lines.filter((line) => line.category === "FRAME");
   const selectedLens = lensOptions.items.find((item) => item.id === selectedLensId);
   const canSell = actor?.permissions.includes("sales.create");
   const canEdit = !sale || sale.status === "QUOTATION";
+  const checkoutBlockedReason = !canSell
+    ? "Tu cuenta no tiene permiso para registrar ventas."
+    : !customer
+      ? "Selecciona o registra un cliente para continuar al cobro."
+      : !lines.length
+        ? "Agrega al menos un producto para continuar al cobro."
+        : total <= 0
+          ? "El total debe ser mayor que cero para continuar al cobro."
+          : attachPrescription && !patient
+            ? "Selecciona un paciente solo porque decidiste adjuntar una receta."
+            : attachPrescription && prescriptionMode === "internal" && !prescriptionId
+              ? "Selecciona la receta interna que decidiste adjuntar."
+              : Number(discountCents) > 0 && (!discountReason.trim() || !discountAuthorization)
+                ? "Indica el motivo y la autorización temporal para aplicar el descuento."
+                : "";
   const draftIncomplete = !customer
     || !lines.length
     || total <= 0
-    || (requiresPrescription && !patient)
-    || (requiresPrescription && prescriptionMode === "internal" && !prescriptionId)
+    || (attachPrescription && !patient)
+    || (attachPrescription && prescriptionMode === "internal" && !prescriptionId)
     || (Number(discountCents) > 0 && (!discountReason.trim() || !discountAuthorization));
 
   useEffect(() => {
@@ -173,14 +189,21 @@ export default function PosExperience() {
   }, [sale]);
 
   useEffect(() => {
-    if (!patient?.id) return;
+    if (
+      !offersPrescriptionAttachment
+      || !attachPrescription
+      || prescriptionMode !== "internal"
+      || !patient?.id
+    ) {
+      return;
+    }
     const controller = new AbortController();
     fetch(`/api/prescriptions?patientId=${patient.id}`, { cache: "no-store", signal: controller.signal })
       .then(readResponse)
       .then((items) => { setInternalPrescriptions(items); setPrescriptionLookup({ error: "", loading: false }); })
       .catch((requestError) => { if (requestError.name !== "AbortError") setPrescriptionLookup({ error: requestError.message, loading: false }); });
     return () => controller.abort();
-  }, [patient]);
+  }, [attachPrescription, offersPrescriptionAttachment, patient, prescriptionMode]);
 
   function chooseCustomer(value) {
     setCustomer(value);
@@ -198,7 +221,7 @@ export default function PosExperience() {
     setPatient(value);
     setPrescriptionId("");
     setInternalPrescriptions([]);
-    setPrescriptionLookup({ error: "", loading: Boolean(value?.id) });
+    setPrescriptionLookup({ error: "", loading: false });
     setExternalPrescriptionId(null);
   }
 
@@ -255,11 +278,7 @@ export default function PosExperience() {
       mount.source === "SOLD_FRAME"
         ? "Cristales vinculados a la montura vendida."
         : "Cristales vinculados a la montura del cliente.";
-    setNotice(
-      selectedLens.requiresPrescription
-        ? `${mountNotice} Falta seleccionar la receta.`
-        : mountNotice,
-    );
+    setNotice(`${mountNotice} Puedes adjuntar una receta si corresponde.`);
   }
 
   function quantity(productId, next) {
@@ -275,6 +294,9 @@ export default function PosExperience() {
     }
     if (next < 1 && selectedLensMountId === productId) {
       setSelectedLensMountId("");
+    }
+    if (next < 1 && product?.requiresPrescription && product.quantity === 1) {
+      setNotice("");
     }
     setLines((current) => next < 1
       ? current.filter((line) => (
@@ -445,7 +467,7 @@ export default function PosExperience() {
   }
 
   async function buildDraft() {
-    const selectedExternalPrescriptionId = requiresPrescription && prescriptionMode === "external"
+    const selectedExternalPrescriptionId = attachPrescription && prescriptionMode === "external"
       ? await ensureExternalPrescription()
       : null;
     return {
@@ -464,7 +486,9 @@ export default function PosExperience() {
         quantity: line.quantity,
       })),
       patientId: patient?.id ?? null,
-      prescriptionId: prescriptionMode === "internal" ? prescriptionId || null : null,
+      prescriptionId: attachPrescription && prescriptionMode === "internal"
+        ? prescriptionId || null
+        : null,
     };
   }
 
@@ -870,7 +894,7 @@ export default function PosExperience() {
               </>
             )}
           </article>
-          {requiresPrescription && <article className="app-card pos-section">
+          {attachPrescription && offersPrescriptionAttachment && <article className="app-card pos-section">
             <div className="pos-title">
               <span>2</span>
               <div>
@@ -945,7 +969,7 @@ export default function PosExperience() {
           </article>}
           <article className="app-card pos-section">
             <div className="pos-title">
-              <span>{requiresPrescription ? 3 : 2}</span>
+              <span>{attachPrescription && offersPrescriptionAttachment ? 3 : 2}</span>
               <div>
                 <h2>Productos</h2>
                 <p>Catálogo rápido con precios controlados. La disponibilidad es simulada hasta integrar inventario.</p>
@@ -1002,7 +1026,7 @@ export default function PosExperience() {
                         <small>
                           {item.sku}
                           {item.requiresPrescription
-                            ? " · Requiere receta"
+                            ? " · Receta opcional"
                             : ""}
                            {item.availability?.source === "MOCK"
                              ? " · Disponibilidad simulada"
@@ -1135,17 +1159,28 @@ export default function PosExperience() {
               </div>
             ))}
           </div>
-          {!requiresPrescription && lines.length > 0 && (
+          {!offersPrescriptionAttachment && lines.length > 0 && (
             <p className="prescription-hint">
-              La montura se puede vender sola. La receta solo se solicitará al agregar cristales.
+              La montura se puede vender sola. Puedes adjuntar una receta solo si corresponde.
             </p>
           )}
-          {requiresPrescription && (
+          {offersPrescriptionAttachment && (
             <div className="prescription-field pos-prescription">
               <div className="prescription-heading">
-                <strong>Receta requerida para esta venta</strong>
-                <p>Selecciona una receta interna o ingresa una receta externa manualmente o con imagen.</p>
+                <strong>Receta opcional para esta venta</strong>
+                <p>La venta puede continuar sin receta. Si la adjuntas, selecciona una interna o ingresa una externa manualmente o con imagen.</p>
               </div>
+              <label className="field">
+                <span>¿Deseas adjuntar una receta?</span>
+                <input
+                  checked={attachPrescription}
+                  disabled={!canEdit}
+                  onChange={(event) => setAttachPrescription(event.target.checked)}
+                  type="checkbox"
+                />
+              </label>
+              {attachPrescription && (
+                <>
               <label className="field">
                 <span>Origen de la receta</span>
                 <select
@@ -1268,6 +1303,8 @@ export default function PosExperience() {
                   </div>
                 </>
               )}
+                </>
+              )}
             </div>
           )}
           <div className="discount-box">
@@ -1357,6 +1394,9 @@ export default function PosExperience() {
                 <Icon name="file" size={16} /> {sale ? "Guardar cotización" : "Crear cotización"}
               </button>
             </div>
+          )}
+          {canEdit && checkoutBlockedReason && (
+            <p className="prescription-hint">{checkoutBlockedReason}</p>
           )}
           {sale?.status === "QUOTATION" && (
             <div className="quotation-cancel">

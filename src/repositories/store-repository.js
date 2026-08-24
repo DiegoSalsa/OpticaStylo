@@ -462,13 +462,6 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
     ))) {
       return { reason: "LENS_MOUNT_REQUIRED", saleId: null };
     }
-    if (itemsResult.rows.some((item) => item.requires_prescription)) {
-      const externalReady = cart.external_prescription_id
-        && cart.external_prescription_status === "READY";
-      if (!cart.clinical_prescription_id && !externalReady) {
-        return { reason: "PRESCRIPTION_REQUIRED", saleId: null };
-      }
-    }
     let customerId;
     if (accountId) {
       const account = await client.query(
