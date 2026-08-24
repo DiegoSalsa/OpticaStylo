@@ -7,6 +7,8 @@ import {
   useInternalActor,
 } from "@/components/internal/internal-shell";
 import Icon from "@/components/ui/icon";
+import AgendaCalendar from "./agenda-calendar";
+import { addCalendarDays, buildAgendaDays } from "./agenda-calendar-model";
 import InternalBooking from "./internal-booking";
 import ProfessionalManager from "./professional-manager";
 import "./agenda.css";
@@ -45,11 +47,8 @@ export default function AgendaPage() {
   const actor = useInternalActor();
   const today = useMemo(() => new Date(), []);
   const [from, setFrom] = useState(dateOnly(today));
-  const [to, setTo] = useState(() => {
-    const value = new Date(today);
-    value.setDate(value.getDate() + 30);
-    return dateOnly(value);
-  });
+  const [to, setTo] = useState(() => addCalendarDays(dateOnly(today), 6));
+  const [calendarView, setCalendarView] = useState("week");
   const [professionals, setProfessionals] = useState([]);
   const [professionalId, setProfessionalId] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -69,6 +68,17 @@ export default function AgendaPage() {
       to: new Date(`${to}T23:59:59`).toISOString(),
     }),
     [from, to],
+  );
+  const calendarDays = useMemo(
+    () =>
+      buildAgendaDays({
+        appointments,
+        blocks,
+        from,
+        schedule: week,
+        to,
+      }),
+    [appointments, blocks, from, to, week],
   );
 
   useEffect(() => {
@@ -199,6 +209,14 @@ export default function AgendaPage() {
       setStatus("ready");
     }
   }
+  function updateCalendarStart(nextFrom) {
+    setFrom(nextFrom);
+    setTo(addCalendarDays(nextFrom, calendarView === "day" ? 0 : 6));
+  }
+  function changeCalendarView(nextView) {
+    setCalendarView(nextView);
+    setTo(addCalendarDays(from, nextView === "day" ? 0 : 6));
+  }
   function updateDay(index, field, value) {
     setWeek((days) =>
       days.map((day, dayIndex) =>
@@ -325,12 +343,23 @@ export default function AgendaPage() {
           </select>
         </label>
         <label className="field">
-          <span>Desde</span>
+          <span>{calendarView === "day" ? "Fecha" : "Desde"}</span>
           <input
-            onChange={(event) => setFrom(event.target.value)}
+            onChange={(event) => updateCalendarStart(event.target.value)}
             type="date"
             value={from}
           />
+        </label>
+        <label className="field agenda-view-control">
+          <span>Vista</span>
+          <select
+            aria-label="Vista de calendario"
+            onChange={(event) => changeCalendarView(event.target.value)}
+            value={calendarView}
+          >
+            <option value="day">Diaria</option>
+            <option value="week">Semanal</option>
+          </select>
         </label>
         <label className="field">
           <span>Hasta</span>
@@ -363,7 +392,21 @@ export default function AgendaPage() {
         <InternalBooking onCreated={refresh} professionals={professionals} />
       )}
       <div className="agenda-layout" id="agenda-operativa">
-        <section className="app-card agenda-list">
+        <div className="agenda-calendar-area">
+          {status === "loading" ? (
+            <section className="app-card agenda-list">
+              <p className="directory-state">Cargando agenda…</p>
+            </section>
+          ) : (
+            <AgendaCalendar
+              actor={actor}
+              days={calendarDays}
+              onChangeStatus={changeAppointment}
+              saving={status === "saving"}
+            />
+          )}
+        <section className="app-card agenda-list agenda-list--details">
+          <h2>Detalle de reservas</h2>
           {status === "loading" ? (
             <p className="directory-state">Cargando agenda…</p>
           ) : !appointments.length ? (
@@ -444,6 +487,7 @@ export default function AgendaPage() {
             })
           )}
         </section>
+        </div>
         <aside className="schedule-panel" id="configuracion-profesionales">
           <form className="app-card schedule-card" onSubmit={saveWeek}>
             <h2>Horario semanal</h2>

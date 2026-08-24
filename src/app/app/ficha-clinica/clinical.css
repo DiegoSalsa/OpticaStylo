@@ -21,6 +21,12 @@
   font-size: 1.05rem;
   margin: 0 0 0.3rem;
 }
+.clinical-appointment-context {
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  margin: 0;
+}
 .clinical-section > p {
   color: var(--color-text-soft);
   font-size: 0.75rem;

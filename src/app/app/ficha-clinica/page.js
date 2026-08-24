@@ -165,6 +165,7 @@ export default function ClinicalRecordPage() {
   const [notice, setNotice] = useState(null);
   const detailController = useRef(null);
   const operationInProgress = useRef(false);
+  const openAppointmentRef = useRef(null);
   const busy = status === "saving";
   const activePrescription = useMemo(
     () =>
@@ -249,12 +250,22 @@ export default function ClinicalRecordPage() {
     )
       .then(readResponse)
       .then((data) => {
-        setAppointments(
-          data.filter((item) =>
-            ["CONFIRMED", "CHECKED_IN", "COMPLETED"].includes(item.status),
-          ),
+        const availableAppointments = data.filter((item) =>
+          ["CONFIRMED", "CHECKED_IN", "COMPLETED"].includes(item.status),
         );
-        setStatus("ready");
+        const requestedAppointmentId = new URLSearchParams(
+          window.location.search,
+        ).get("appointmentId");
+        const requestedAppointment = availableAppointments.find(
+          (item) => item.id === requestedAppointmentId,
+        );
+
+        setAppointments(availableAppointments);
+        if (requestedAppointment) {
+          void openAppointmentRef.current?.(requestedAppointment);
+        } else {
+          setStatus("ready");
+        }
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
@@ -354,6 +365,9 @@ export default function ClinicalRecordPage() {
       setStatus("ready");
     }
   }
+  useEffect(() => {
+    openAppointmentRef.current = openAppointment;
+  });
 
   async function markPresent() {
     await perform(async () => {
@@ -642,6 +656,11 @@ export default function ClinicalRecordPage() {
                     <h2>
                       {selected.patient.firstNames} {selected.patient.lastNames}
                     </h2>
+                    <p className="clinical-appointment-context">
+                      Reserva del {new Date(selected.startAt).toLocaleString("es-CL", { timeZone: "America/Santiago" })}
+                      {" · "}
+                      {selected.professional.firstName} {selected.professional.lastName}
+                    </p>
                   </div>
                   <span className="status-chip">{LABELS[selected.status]}</span>
                 </div>
