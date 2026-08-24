@@ -73,10 +73,14 @@ test("permite crear una venta de cristales sin adjuntar receta", async () => {
   assert.equal(result.status, "QUOTATION");
 });
 
-test("normaliza una venta directa de solo marco sin cliente registrado", async () => {
+test("normaliza una venta directa de cristales sin cliente registrado", async () => {
   const result = await createSale({
     customerId: null,
-    items: [{ productId, quantity: 1 }],
+    items: [{
+      mount: { frameProductId: productId, source: "SOLD_FRAME" },
+      productId,
+      quantity: 1,
+    }],
     operation: "SALE",
   }, actor, {
     createSale: async (data, actorId, options) => {
@@ -87,15 +91,6 @@ test("normaliza una venta directa de solo marco sin cliente registrado", async (
     },
   });
   assert.equal(result.status, "PENDING");
-});
-
-test("traduce el rechazo de una venta sin cliente que no es solo de monturas", async () => {
-  await assert.rejects(() => createSale({
-    customerId: null,
-    items: [{ productId, quantity: 1 }],
-  }, actor, {
-    createSale: async () => ({ reason: "CUSTOMER_REQUIRED_FOR_SALE_DETAILS", sale: null }),
-  }), (error) => error.code === "CUSTOMER_REQUIRED_FOR_SALE_DETAILS" && error.status === 409);
 });
 
 test("confirma una cotización sin adjuntar receta", async () => {

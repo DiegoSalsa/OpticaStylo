@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-test("la migración 030 permite ventas de montura sin alterar las anteriores", async () => {
+test("la migración 030 permite ventas POS sin cliente sin alterar las anteriores", async () => {
   const migration = await readFile(fileURLToPath(new URL(
     "../../src/db/migrations/030_allow_frame_sales_without_customer.sql",
     import.meta.url,
