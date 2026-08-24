@@ -151,7 +151,7 @@ export function validateSaleDraftInput(input) {
       });
 
   return {
-    customerId: validateSaleId(input.customerId, "cliente"),
+    customerId: optionalId(input.customerId, "cliente"),
     discount: normalizedDiscount,
     discountCents: normalizedDiscount?.amountCents ?? 0,
     discountReason: normalizedDiscount?.reason ?? null,

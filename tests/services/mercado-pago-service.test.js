@@ -47,7 +47,7 @@ test("crea una preferencia idempotente para el saldo reservado", async () => {
       };
     },
     currentDate: now,
-    findSaleById: async () => ({ id: saleId, items: [] }),
+    findSaleById: async () => ({ customer: {}, id: saleId, items: [] }),
     getMercadoPagoConfig: () => readyConfig,
     reserveMercadoPagoAttempt: async (id, actorId, expiresAt) => {
       assert.equal(id, saleId);
@@ -65,6 +65,7 @@ test("reutiliza un checkout pendiente sin crear otra preferencia", async () => {
   const existing = { ...attempt, checkoutUrl: "https://checkout.example", status: "PENDING" };
   const result = await createMercadoPagoCheckout(saleId, actor, {
     createMercadoPagoPreference: async () => assert.fail("No debe duplicar la preferencia"),
+    findSaleById: async () => ({ customer: {}, id: saleId }),
     getMercadoPagoConfig: () => readyConfig,
     reserveMercadoPagoAttempt: async () => ({ attempt: existing, reason: null }),
   });
@@ -76,7 +77,7 @@ test("marca el intento fallido cuando el proveedor no responde", async () => {
   let markedAttemptId = null;
   await assert.rejects(() => createMercadoPagoCheckout(saleId, actor, {
     createMercadoPagoPreference: async () => { throw new Error("timeout"); },
-    findSaleById: async () => ({ id: saleId, items: [] }),
+    findSaleById: async () => ({ customer: {}, id: saleId, items: [] }),
     getMercadoPagoConfig: () => readyConfig,
     markPaymentAttemptFailed: async (id) => { markedAttemptId = id; },
     reserveMercadoPagoAttempt: async () => ({ attempt, reason: null }),
@@ -94,6 +95,14 @@ test("no reserva un intento si el webhook seguro no está listo", async () => {
     }),
     reserveMercadoPagoAttempt: async () => assert.fail("No debe reservar un cobro"),
   }), (error) => error.code === "PAYMENT_PROVIDER_NOT_CONFIGURED" && error.status === 503);
+});
+
+test("no crea un checkout para una venta sin cliente registrado", async () => {
+  await assert.rejects(() => createMercadoPagoCheckout(saleId, actor, {
+    findSaleById: async () => ({ customer: null, id: saleId }),
+    getMercadoPagoConfig: () => readyConfig,
+    reserveMercadoPagoAttempt: async () => assert.fail("No debe reservar un cobro sin cliente"),
+  }), (error) => error.code === "CUSTOMER_REQUIRED_FOR_MERCADO_PAGO" && error.status === 409);
 });
 
 test("lista intentos solo con permiso de lectura de ventas", async () => {

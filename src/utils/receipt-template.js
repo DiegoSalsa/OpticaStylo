@@ -39,9 +39,10 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
   const receiptTitle = receipt.type === "PAYMENT"
     ? "Comprobante de abono"
     : "Comprobante final de venta";
+  const customerData = receipt.payload.customer ?? null;
   const customer = [
-    receipt.payload.customer.firstNames,
-    receipt.payload.customer.lastNames,
+    customerData?.firstNames,
+    customerData?.lastNames,
   ].filter(Boolean).join(" ");
   const patient = receipt.payload.patient
     ? [
@@ -64,8 +65,8 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
       <section class="meta">
         <p><span>Venta</span><strong>#${receipt.payload.saleNumber}</strong></p>
         <p><span>Fecha</span><strong>${new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(receipt.issuedAt))}</strong></p>
-        <p><span>Cliente</span><strong>${escapeHtml(customer)}</strong></p>
-        <p><span>RUT cliente</span><strong>${escapeHtml(receipt.payload.customer.rut)}</strong></p>
+        <p><span>Cliente</span><strong>${escapeHtml(customer || "Venta sin cliente registrado")}</strong></p>
+        <p><span>RUT cliente</span><strong>${escapeHtml(customerData?.rut || "No informado")}</strong></p>
         <p><span>Paciente</span><strong>${escapeHtml(patient)}</strong></p>
       </section>
       <table>

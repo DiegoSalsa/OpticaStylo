@@ -14,14 +14,14 @@ function mapSaleBase(row) {
     cancellationReason: row.cancellation_reason,
     cancelledAt: row.cancelled_at,
     createdAt: row.created_at,
-    customer: {
+    customer: row.customer_id ? {
       email: row.customer_email,
       firstNames: row.customer_first_names,
       id: row.customer_id,
       lastNames: row.customer_last_names,
       phone: row.customer_phone,
       rut: row.customer_rut,
-    },
+    } : null,
     id: row.id,
     discountCents: Number(row.discount_cents ?? 0),
     discountReason: row.discount_reason,
@@ -124,7 +124,7 @@ const SALE_SELECT = `
       WHERE sale_payments.sale_id = sales.id
     ), 0) AS paid_cents
   FROM sales
-  JOIN customers ON customers.id = sales.customer_id
+  LEFT JOIN customers ON customers.id = sales.customer_id
   LEFT JOIN store_carts ON store_carts.sale_id = sales.id
   LEFT JOIN optical_prescriptions ON optical_prescriptions.id = sales.prescription_id
   LEFT JOIN external_prescriptions
@@ -238,12 +238,23 @@ export async function findSaleById(saleId) {
   );
 }
 
+export function canCreateFrameSaleWithoutCustomer(draft, products) {
+  return !draft.customerId
+    && !draft.patientId
+    && !draft.prescriptionId
+    && !draft.externalPrescriptionId
+    && products.length > 0
+    && products.every((product) => product.category === "FRAME");
+}
+
 async function loadDraftReferences(client, draft) {
-  const customerResult = await client.query(
-    "SELECT id FROM customers WHERE id = $1 FOR SHARE",
-    [draft.customerId],
-  );
-  if (customerResult.rowCount === 0) return { reason: "CUSTOMER_NOT_FOUND" };
+  if (draft.customerId) {
+    const customerResult = await client.query(
+      "SELECT id FROM customers WHERE id = $1 FOR SHARE",
+      [draft.customerId],
+    );
+    if (customerResult.rowCount === 0) return { reason: "CUSTOMER_NOT_FOUND" };
+  }
 
   if (draft.patientId) {
     const patientResult = await client.query(
@@ -262,6 +273,12 @@ async function loadDraftReferences(client, draft) {
     return { reason: "PRODUCT_NOT_FOUND" };
   if (productResult.rows.some((product) => !product.is_active))
     return { reason: "PRODUCT_INACTIVE" };
+  if (!draft.customerId && !canCreateFrameSaleWithoutCustomer(
+    draft,
+    productResult.rows,
+  )) {
+    return { reason: "CUSTOMER_REQUIRED_FOR_SALE_DETAILS" };
+  }
 
   const productsById = new Map(
     productResult.rows.map((product) => [product.id, product]),
@@ -597,13 +614,25 @@ export async function confirmSale(saleId, actorUserId) {
       return { reason: "QUOTATION_EXPIRED", sale: null };
     }
     const productsResult = await client.query(
-      `SELECT sale_items.requires_prescription, products.is_active
+      `SELECT sale_items.product_category, products.is_active
        FROM sale_items JOIN products ON products.id = sale_items.product_id
        WHERE sale_items.sale_id = $1 FOR SHARE OF products`,
       [saleId],
     );
     if (productsResult.rows.some((product) => !product.is_active)) {
       return { reason: "PRODUCT_INACTIVE", sale: null };
+    }
+    if (
+      !sale.customer_id
+      && (
+        sale.patient_id
+        || sale.prescription_id
+        || sale.external_prescription_id
+        || productsResult.rows.length === 0
+        || productsResult.rows.some((product) => product.product_category !== "FRAME")
+      )
+    ) {
+      return { reason: "CUSTOMER_REQUIRED_FOR_SALE_DETAILS", sale: null };
     }
     if (sale.prescription_id) {
       const prescriptionResult = await client.query(
@@ -653,11 +682,11 @@ export async function confirmSale(saleId, actorUserId) {
     });
     const emailResult = await client.query(
       `SELECT sales.sale_number, sales.total_cents, customers.email
-       FROM sales JOIN customers ON customers.id = sales.customer_id
+       FROM sales LEFT JOIN customers ON customers.id = sales.customer_id
        WHERE sales.id = $1`,
       [saleId],
     );
-    if (emailResult.rows[0].email) {
+    if (emailResult.rows[0]?.email) {
       await client.query(
         `INSERT INTO transactional_email_outbox (
            template_code, recipient_email, payload, deduplication_key, sale_id
@@ -678,7 +707,7 @@ export async function registerSalePayment(saleId, payment, actorUserId, options 
     const result = await client.query(
       `SELECT sales.status, sales.payment_method, sales.total_cents,
               sales.sale_number, customers.email AS customer_email
-       FROM sales JOIN customers ON customers.id = sales.customer_id
+       FROM sales LEFT JOIN customers ON customers.id = sales.customer_id
        WHERE sales.id = $1 FOR UPDATE OF sales`,
       [saleId],
     );
@@ -946,7 +975,7 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
       return { reason: null, receipt: mapReceipt(existingResult.rows[0]) };
     }
 
-    const emailedTo = request.email ?? sale.customer.email;
+    const emailedTo = request.email ?? sale.customer?.email ?? null;
     const paidCents = snapshot?.paidCents ?? sale.paidCents;
     const balanceCents = snapshot?.balanceCents ?? sale.balanceCents;
     const payload = {

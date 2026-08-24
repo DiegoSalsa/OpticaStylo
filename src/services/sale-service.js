@@ -33,6 +33,7 @@ import { validateDiscountAuthorizationInput } from "../validations/discount-auth
 
 const REPOSITORY_ERRORS = Object.freeze({
   CUSTOMER_NOT_FOUND: ["CUSTOMER_NOT_FOUND", "No se encontró el cliente de la venta.", 404],
+  CUSTOMER_REQUIRED_FOR_SALE_DETAILS: ["CUSTOMER_REQUIRED_FOR_SALE_DETAILS", "Debe seleccionar un cliente cuando la venta no sea solo de monturas o incluya una receta o paciente.", 409],
   CASH_REGISTER_CLOSED: ["CASH_REGISTER_CLOSED", "Debe abrir la caja de prueba antes de registrar efectivo.", 409],
   DISCOUNT_EXCEEDS_SUBTOTAL: ["DISCOUNT_EXCEEDS_SUBTOTAL", "El descuento debe ser menor que el subtotal de la venta.", 409],
   DISCOUNT_EXCEEDS_TOTAL: ["DISCOUNT_EXCEEDS_TOTAL", "El descuento debe ser menor que el total de la venta.", 409],

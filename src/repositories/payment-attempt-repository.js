@@ -279,7 +279,7 @@ export async function reconcileMercadoPagoPaymentWithClient(
       const saleResult = await client.query(
         `SELECT sales.status, sales.total_cents, sales.sale_number,
                 customers.email AS customer_email
-         FROM sales JOIN customers ON customers.id = sales.customer_id
+         FROM sales LEFT JOIN customers ON customers.id = sales.customer_id
          WHERE sales.id = $1 FOR UPDATE OF sales`,
         [attempt.sale_id],
       );
