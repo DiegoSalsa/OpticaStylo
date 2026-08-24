@@ -173,6 +173,23 @@ test("rechaza cambiar el medio después del primer abono", async () => {
   }), (error) => error.code === "PAYMENT_METHOD_MISMATCH");
 });
 
+test("exige una caja abierta antes de registrar efectivo", async () => {
+  await assert.rejects(() => registerSalePayment(saleId, {
+    amountCents: 10000,
+    cashReceivedCents: 12000,
+    paymentMethod: "CASH",
+  }, actor, {
+    registerSalePayment: async () => ({ reason: "CASH_REGISTER_CLOSED", sale: null }),
+  }), (error) => error.code === "CASH_REGISTER_CLOSED" && error.status === 409);
+});
+
+test("exige permiso de ventas para crear una operación", async () => {
+  await assert.rejects(() => createSale(draft, {
+    permissions: [],
+    userId,
+  }), (error) => error.code === "INSUFFICIENT_PERMISSIONS");
+});
+
 test("registra un abono con permiso específico", async () => {
   const result = await registerSalePayment(saleId, {
     amountCents: 10000, paymentMethod: "TRANSBANK", reference: "op-1",
