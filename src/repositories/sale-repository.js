@@ -1,4 +1,8 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import {
+  consumeDiscountAuthorizationWithClient,
+  lockDiscountAuthorizationWithClient,
+} from "./discount-authorization-grant-repository.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapSaleBase(row) {
@@ -152,10 +156,11 @@ async function findSaleWithClient(client, saleId) {
       [saleId],
     ),
     client.query(
-      `SELECT sale_payments.id, sale_payments.amount_cents,
+       `SELECT sale_payments.id, sale_payments.amount_cents,
               sale_payments.payment_method, sale_payments.reference,
               sale_payments.received_by, sale_payments.paid_at,
               sale_payments.source, sale_payments.provider_attempt_id,
+              sale_payments.cash_received_cents, sale_payments.change_cents,
               sale_receipts.id AS receipt_id,
               sale_receipts.receipt_number,
               sale_receipts.email_status AS receipt_email_status,
@@ -204,6 +209,10 @@ async function findSaleWithClient(client, saleId) {
     })),
     payments: paymentsResult.rows.map((row) => ({
       amountCents: Number(row.amount_cents),
+      cashReceivedCents: row.cash_received_cents == null
+        ? null
+        : Number(row.cash_received_cents),
+      changeCents: row.change_cents == null ? null : Number(row.change_cents),
       id: row.id,
       paidAt: row.paid_at,
       paymentMethod: row.payment_method,
@@ -423,42 +432,94 @@ async function insertSaleEvent(
   );
 }
 
-export async function createSale(draft, actorUserId) {
+async function authorizeDiscountWithClient(client, draft, actorUserId) {
+  if (!draft.discount) return draft;
+  const authorizedBy = await lockDiscountAuthorizationWithClient(client, {
+    ...draft.discount,
+    requestedBy: actorUserId,
+  });
+  if (!authorizedBy) return null;
+  return {
+    ...draft,
+    discount: {
+      ...draft.discount,
+      authorizedAt: new Date(),
+      authorizedBy,
+    },
+  };
+}
+
+async function consumeDiscountWithClient(client, draft, saleId) {
+  if (!draft.discount) return;
+  await consumeDiscountAuthorizationWithClient(
+    client,
+    draft.discount.authorizationId,
+    saleId,
+  );
+}
+
+export async function createSale(draft, actorUserId, options = {}) {
   return executeTransaction(async (client) => {
+    if (options.requestKey) {
+      const existing = await client.query(
+        `SELECT id FROM sales
+         WHERE created_by = $1 AND request_key = $2`,
+        [actorUserId, options.requestKey],
+      );
+      if (existing.rows[0]) {
+        return { reason: null, sale: await findSaleWithClient(client, existing.rows[0].id) };
+      }
+    }
     const references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
+    const authorizedDraft = await authorizeDiscountWithClient(client, draft, actorUserId);
+    if (!authorizedDraft) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
+    const status = options.status === "PENDING" ? "PENDING" : "QUOTATION";
+    const quotationValidUntil = status === "QUOTATION";
 
     const saleResult = await client.query(
       `INSERT INTO sales (
          customer_id, patient_id, prescription_id, external_prescription_id,
          subtotal_cents, discount_cents, discount_reason,
          discount_authorized_by, discount_authorized_at, total_cents,
-         quotation_valid_until, created_by, updated_by
-       ) VALUES (
-         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-         CURRENT_TIMESTAMP + INTERVAL '30 days', $11, $11
-       ) RETURNING id`,
-      [draft.customerId, draft.patientId, draft.prescriptionId,
-        draft.externalPrescriptionId, references.subtotalCents,
-        references.discountCents, draft.discount?.reason ?? null,
-        draft.discount?.authorizedBy ?? null, draft.discount?.authorizedAt ?? null,
-        references.totalCents, actorUserId],
-    );
+          quotation_valid_until, status, request_key, created_by, updated_by
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          CASE WHEN $11 THEN CURRENT_TIMESTAMP + INTERVAL '30 days' ELSE NULL END,
+          $12, $13, $14, $14
+        ) ON CONFLICT (created_by, request_key) WHERE request_key IS NOT NULL
+        DO NOTHING RETURNING id`,
+        [draft.customerId, draft.patientId, draft.prescriptionId,
+          draft.externalPrescriptionId, references.subtotalCents,
+          references.discountCents, authorizedDraft.discount?.reason ?? null,
+          authorizedDraft.discount?.authorizedBy ?? null,
+          authorizedDraft.discount?.authorizedAt ?? null,
+          references.totalCents, quotationValidUntil, status, options.requestKey ?? null,
+          actorUserId],
+      );
+    if (!saleResult.rows[0]) {
+      const existing = await client.query(
+        `SELECT id FROM sales WHERE created_by = $1 AND request_key = $2`,
+        [actorUserId, options.requestKey],
+      );
+      return { reason: null, sale: await findSaleWithClient(client, existing.rows[0].id) };
+    }
     const saleId = saleResult.rows[0].id;
     await insertItems(client, saleId, references.lines);
-    await insertOpticalAdditions(client, saleId, draft.opticalAdditions);
+    await insertOpticalAdditions(client, saleId, authorizedDraft.opticalAdditions);
     await insertSaleEvent(client, saleId, "CREATED", actorUserId, {
       details: {
         additionsSubtotalCents: references.additionsSubtotalCents,
         discountCents: references.discountCents,
-        discountReason: draft.discount?.reason ?? null,
+        discountReason: authorizedDraft.discount?.reason ?? null,
         productSubtotalCents: references.productSubtotalCents,
         subtotalCents: references.subtotalCents,
         totalCents: references.totalCents,
       },
-      newStatus: "QUOTATION",
+      newStatus: status,
     });
-    await insertDiscountEvent(client, saleId, draft, actorUserId);
+    await insertDiscountEvent(client, saleId, authorizedDraft, actorUserId, status);
+    await consumeDiscountWithClient(client, authorizedDraft, saleId);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -473,36 +534,58 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
       return { reason: "SALE_NOT_FOUND", sale: null };
     if (saleResult.rows[0].status !== "QUOTATION")
       return { reason: "SALE_NOT_EDITABLE", sale: null };
-    const references = await loadDraftReferences(client, draft);
+    let references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
+    const preservedAdditions = await client.query(
+      `SELECT COALESCE(SUM(line_total_cents), 0) AS subtotal_cents
+       FROM sale_optical_additions WHERE sale_id = $1`,
+      [saleId],
+    );
+    const additionsSubtotalCents = Number(preservedAdditions.rows[0].subtotal_cents);
+    if (additionsSubtotalCents > 0) {
+      const subtotalCents = references.productSubtotalCents + additionsSubtotalCents;
+      const discountCents = references.discountCents;
+      if (discountCents >= subtotalCents) {
+        return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL", sale: null };
+      }
+      references = {
+        ...references,
+        additionsSubtotalCents,
+        subtotalCents,
+        totalCents: subtotalCents - discountCents,
+      };
+    }
+    const authorizedDraft = await authorizeDiscountWithClient(client, draft, actorUserId);
+    if (!authorizedDraft) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
 
     await client.query("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
-    await client.query("DELETE FROM sale_optical_additions WHERE sale_id = $1", [saleId]);
     await client.query(
       `UPDATE sales SET customer_id = $2, patient_id = $3, prescription_id = $4,
          external_prescription_id = $5, subtotal_cents = $6,
          discount_cents = $7, discount_reason = $8,
          discount_authorized_by = $9, discount_authorized_at = $10,
          total_cents = $11, updated_by = $12 WHERE id = $1`,
-      [saleId, draft.customerId, draft.patientId, draft.prescriptionId,
-        draft.externalPrescriptionId, references.subtotalCents,
-        references.discountCents, draft.discount?.reason ?? null,
-        draft.discount?.authorizedBy ?? null, draft.discount?.authorizedAt ?? null,
-        references.totalCents, actorUserId],
+       [saleId, authorizedDraft.customerId, authorizedDraft.patientId,
+         authorizedDraft.prescriptionId, authorizedDraft.externalPrescriptionId,
+         references.subtotalCents, references.discountCents,
+         authorizedDraft.discount?.reason ?? null,
+         authorizedDraft.discount?.authorizedBy ?? null,
+         authorizedDraft.discount?.authorizedAt ?? null,
+         references.totalCents, actorUserId],
     );
     await insertItems(client, saleId, references.lines);
-    await insertOpticalAdditions(client, saleId, draft.opticalAdditions);
     await insertSaleEvent(client, saleId, "UPDATED", actorUserId, {
       details: {
         discountCents: references.discountCents,
-        discountReason: draft.discount?.reason ?? null,
+        discountReason: authorizedDraft.discount?.reason ?? null,
         subtotalCents: references.subtotalCents,
         totalCents: references.totalCents,
       },
       previousStatus: "QUOTATION",
       newStatus: "QUOTATION",
     });
-    await insertDiscountEvent(client, saleId, draft, actorUserId);
+    await insertDiscountEvent(client, saleId, authorizedDraft, actorUserId);
+    await consumeDiscountWithClient(client, authorizedDraft, saleId);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -589,21 +672,23 @@ export async function confirmSale(saleId, actorUserId) {
        WHERE sales.id = $1`,
       [saleId],
     );
-    await client.query(
-      `INSERT INTO transactional_email_outbox (
-         template_code, recipient_email, payload, deduplication_key, sale_id
-       ) VALUES ('ORDER_CONFIRMED', $1, $2::JSONB, $3, $4)
-       ON CONFLICT (deduplication_key) DO NOTHING`,
-      [emailResult.rows[0].email, JSON.stringify({
-        saleNumber: Number(emailResult.rows[0].sale_number),
-        totalCents: Number(emailResult.rows[0].total_cents),
-      }), transactionalEmailDeduplicationKey("ORDER_CONFIRMED", saleId), saleId],
-    );
+    if (emailResult.rows[0].email) {
+      await client.query(
+        `INSERT INTO transactional_email_outbox (
+           template_code, recipient_email, payload, deduplication_key, sale_id
+         ) VALUES ('ORDER_CONFIRMED', $1, $2::JSONB, $3, $4)
+         ON CONFLICT (deduplication_key) DO NOTHING`,
+        [emailResult.rows[0].email, JSON.stringify({
+          saleNumber: Number(emailResult.rows[0].sale_number),
+          totalCents: Number(emailResult.rows[0].total_cents),
+        }), transactionalEmailDeduplicationKey("ORDER_CONFIRMED", saleId), saleId],
+      );
+    }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
 
-export async function registerSalePayment(saleId, payment, actorUserId) {
+export async function registerSalePayment(saleId, payment, actorUserId, options = {}) {
   return executeTransaction(async (client) => {
     const result = await client.query(
       `SELECT sales.status, sales.payment_method, sales.total_cents,
@@ -614,10 +699,28 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
     );
     const sale = result.rows[0];
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
+    if (options.requestKey) {
+      const existing = await client.query(
+        `SELECT id FROM sale_payments
+         WHERE sale_id = $1 AND request_key = $2`,
+        [saleId, options.requestKey],
+      );
+      if (existing.rows[0]) {
+        return { reason: null, sale: await findSaleWithClient(client, saleId) };
+      }
+    }
     if (sale.status !== "PENDING")
       return { reason: "SALE_NOT_PAYABLE", sale: null };
     if (sale.payment_method && sale.payment_method !== payment.paymentMethod) {
       return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
+    }
+    if (payment.paymentMethod === "CASH") {
+      const openCashRegister = await client.query(
+        "SELECT id FROM cash_register_sessions WHERE status = 'OPEN' FOR SHARE",
+      );
+      if (!openCashRegister.rows[0]) {
+        return { reason: "CASH_REGISTER_CLOSED", sale: null };
+      }
     }
     const activeAttemptResult = await client.query(
       `SELECT id FROM payment_attempts
@@ -641,14 +744,18 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
 
     const paymentResult = await client.query(
       `INSERT INTO sale_payments (
-         sale_id, amount_cents, payment_method, reference, received_by
-       ) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+         sale_id, amount_cents, payment_method, reference, received_by,
+         request_key, cash_received_cents, change_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [
         saleId,
         payment.amountCents,
         payment.paymentMethod,
         payment.reference,
         actorUserId,
+        options.requestKey ?? null,
+        payment.cashReceivedCents,
+        payment.changeCents,
       ],
     );
     const newStatus =
@@ -660,24 +767,28 @@ export async function registerSalePayment(saleId, payment, actorUserId) {
     await insertSaleEvent(client, saleId, "PAYMENT_REGISTERED", actorUserId, {
       details: {
         amountCents: payment.amountCents,
+        cashReceivedCents: payment.cashReceivedCents,
+        changeCents: payment.changeCents,
         paymentMethod: payment.paymentMethod,
       },
       previousStatus: "PENDING",
       newStatus,
     });
     const paymentId = paymentResult.rows[0].id;
-    await client.query(
-      `INSERT INTO transactional_email_outbox (
-         template_code, recipient_email, payload, deduplication_key,
-         sale_id, payment_id
-       ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
-       ON CONFLICT (deduplication_key) DO NOTHING`,
-      [sale.customer_email, JSON.stringify({
-        amountCents: payment.amountCents,
-        saleNumber: Number(sale.sale_number),
-      }), transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", paymentId),
-      saleId, paymentId],
-    );
+    if (sale.customer_email) {
+      await client.query(
+        `INSERT INTO transactional_email_outbox (
+           template_code, recipient_email, payload, deduplication_key,
+           sale_id, payment_id
+         ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
+         ON CONFLICT (deduplication_key) DO NOTHING`,
+        [sale.customer_email, JSON.stringify({
+          amountCents: payment.amountCents,
+          saleNumber: Number(sale.sale_number),
+        }), transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", paymentId),
+        saleId, paymentId],
+      );
+    }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
   });
 }
@@ -875,18 +986,20 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
        ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [saleId, request.paymentId, receiptType, payload, emailedTo, actorUserId],
     );
-    await client.query(
-      `INSERT INTO transactional_email_outbox (
-         template_code, recipient_email, payload, deduplication_key,
-         sale_id, payment_id, receipt_id
-       ) VALUES ($1, $2, '{}'::JSONB, $3, $4, $5, $6)
-       ON CONFLICT (deduplication_key) DO NOTHING`,
-      [receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
-        emailedTo, transactionalEmailDeduplicationKey(
-          receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
-          result.rows[0].id,
-        ), saleId, request.paymentId, result.rows[0].id],
-    );
+    if (emailedTo) {
+      await client.query(
+        `INSERT INTO transactional_email_outbox (
+           template_code, recipient_email, payload, deduplication_key,
+           sale_id, payment_id, receipt_id
+         ) VALUES ($1, $2, '{}'::JSONB, $3, $4, $5, $6)
+         ON CONFLICT (deduplication_key) DO NOTHING`,
+        [receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
+          emailedTo, transactionalEmailDeduplicationKey(
+            receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
+            result.rows[0].id,
+          ), saleId, request.paymentId, result.rows[0].id],
+      );
+    }
     await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
       details: {
         paymentId: request.paymentId,
@@ -906,17 +1019,19 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
         [saleId, payload, emailedTo, actorUserId],
       );
       if (finalResult.rows[0]) {
-        await client.query(
-          `INSERT INTO transactional_email_outbox (
-             template_code, recipient_email, payload, deduplication_key,
-             sale_id, receipt_id
-           ) VALUES ('POS_FINAL_RECEIPT', $1, '{}'::JSONB, $2, $3, $4)
-           ON CONFLICT (deduplication_key) DO NOTHING`,
-          [emailedTo, transactionalEmailDeduplicationKey(
-            "POS_FINAL_RECEIPT",
-            finalResult.rows[0].id,
-          ), saleId, finalResult.rows[0].id],
-        );
+        if (emailedTo) {
+          await client.query(
+            `INSERT INTO transactional_email_outbox (
+               template_code, recipient_email, payload, deduplication_key,
+               sale_id, receipt_id
+             ) VALUES ('POS_FINAL_RECEIPT', $1, '{}'::JSONB, $2, $3, $4)
+             ON CONFLICT (deduplication_key) DO NOTHING`,
+            [emailedTo, transactionalEmailDeduplicationKey(
+              "POS_FINAL_RECEIPT",
+              finalResult.rows[0].id,
+            ), saleId, finalResult.rows[0].id],
+          );
+        }
         await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
           details: {
             paymentId: null,

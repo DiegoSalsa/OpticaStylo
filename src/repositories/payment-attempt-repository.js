@@ -326,21 +326,23 @@ export async function reconcileMercadoPagoPaymentWithClient(
           source: "PROVIDER",
         })],
       );
-      await client.query(
-        `INSERT INTO transactional_email_outbox (
-           template_code, recipient_email, payload, deduplication_key,
-           sale_id, payment_id
-         ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
-         ON CONFLICT (deduplication_key) DO NOTHING`,
-        [sale.customer_email, JSON.stringify({
-          amountCents: Number(attempt.amount_cents),
-          saleNumber: Number(sale.sale_number),
-        }), transactionalEmailDeduplicationKey(
-          "PAYMENT_CONFIRMED",
-          paymentResult.rows[0].id,
-        ), attempt.sale_id,
-        paymentResult.rows[0].id],
-      );
+      if (sale.customer_email) {
+        await client.query(
+          `INSERT INTO transactional_email_outbox (
+             template_code, recipient_email, payload, deduplication_key,
+             sale_id, payment_id
+           ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
+           ON CONFLICT (deduplication_key) DO NOTHING`,
+          [sale.customer_email, JSON.stringify({
+            amountCents: Number(attempt.amount_cents),
+            saleNumber: Number(sale.sale_number),
+          }), transactionalEmailDeduplicationKey(
+            "PAYMENT_CONFIRMED",
+            paymentResult.rows[0].id,
+          ), attempt.sale_id,
+          paymentResult.rows[0].id],
+        );
+      }
     }
 
     await finishProviderEvent(client, eventId, "PROCESSED");

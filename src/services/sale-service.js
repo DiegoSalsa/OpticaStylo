@@ -5,6 +5,7 @@ import {
   beginDiscountAuthorizationAttempt,
   completeDiscountAuthorizationAttempt,
 } from "../repositories/discount-authorization-repository.js";
+import { createDiscountAuthorizationGrant } from "../repositories/discount-authorization-grant-repository.js";
 import {
   changeSaleStatus as changeSaleStatusRepository,
   confirmSale as confirmSaleRepository,
@@ -24,14 +25,18 @@ import {
   validateSaleDraftInput,
   validateSaleId,
   validateSaleListQuery,
+  validateSaleOperation,
   validateSalePaymentInput,
   validateSaleStatusInput,
 } from "../validations/sale-validation.js";
+import { validateDiscountAuthorizationInput } from "../validations/discount-authorization-validation.js";
 
 const REPOSITORY_ERRORS = Object.freeze({
   CUSTOMER_NOT_FOUND: ["CUSTOMER_NOT_FOUND", "No se encontró el cliente de la venta.", 404],
+  CASH_REGISTER_CLOSED: ["CASH_REGISTER_CLOSED", "Debe abrir la caja de prueba antes de registrar efectivo.", 409],
   DISCOUNT_EXCEEDS_SUBTOTAL: ["DISCOUNT_EXCEEDS_SUBTOTAL", "El descuento debe ser menor que el subtotal de la venta.", 409],
   DISCOUNT_EXCEEDS_TOTAL: ["DISCOUNT_EXCEEDS_TOTAL", "El descuento debe ser menor que el total de la venta.", 409],
+  DISCOUNT_AUTHORIZATION_INVALID: ["DISCOUNT_AUTHORIZATION_INVALID", "La autorización de descuento venció, ya fue utilizada o no coincide con esta operación.", 409],
   RECEIPT_PAYMENT_REQUIRED: ["RECEIPT_PAYMENT_REQUIRED", "El comprobante de un abono debe identificar el pago registrado.", 409],
   EXTERNAL_PRESCRIPTION_NOT_FOUND: ["EXTERNAL_PRESCRIPTION_NOT_FOUND", "No se encontró la receta externa indicada.", 404],
   EXTERNAL_PRESCRIPTION_NOT_USABLE: ["EXTERNAL_PRESCRIPTION_NOT_USABLE", "La receta externa debe pertenecer al cliente y paciente de la venta.", 409],
@@ -72,8 +77,7 @@ function unwrap(result) {
   return result.sale;
 }
 
-async function authorizeDraftDiscount(draft, actor, dependencies) {
-  if (!draft.discount) return draft;
+async function authorizeDiscountRequest(input, actor, dependencies) {
   const findAuthorizer = dependencies.findDiscountAuthorizer ?? findUserForPermissionAuthorization;
   const passwordVerifier = dependencies.verifyPassword ?? verifyPassword;
   const beginAttempt = dependencies.beginDiscountAuthorizationAttempt
@@ -82,7 +86,7 @@ async function authorizeDraftDiscount(draft, actor, dependencies) {
     ?? completeDiscountAuthorizationAttempt;
   const attempt = await beginAttempt({
     attemptedBy: actor.userId,
-    authorizerEmail: draft.discount.authorizerEmail,
+    authorizerEmail: input.authorizerEmail,
   });
   if (!attempt.allowed) {
     throw new AppError({
@@ -96,11 +100,11 @@ async function authorizeDraftDiscount(draft, actor, dependencies) {
   let authorized = false;
   try {
     authorizer = await findAuthorizer(
-      draft.discount.authorizerEmail,
+      input.authorizerEmail,
       PERMISSIONS.SALES_DISCOUNTS_AUTHORIZE,
     );
     const passwordIsValid = authorizer
-      ? await passwordVerifier(draft.discount.authorizerPassword, authorizer.passwordHash)
+      ? await passwordVerifier(input.authorizerPassword, authorizer.passwordHash)
       : false;
     const isLocked = authorizer?.lockedUntil && authorizer.lockedUntil > new Date();
     authorized = Boolean(
@@ -119,21 +123,37 @@ async function authorizeDraftDiscount(draft, actor, dependencies) {
       status: 403,
     });
   }
-  return {
-    ...draft,
-    discount: {
-      amountCents: draft.discount.amountCents,
-      authorizedAt: dependencies.currentDate ?? new Date(),
-      authorizedBy: authorizer.id,
-      reason: draft.discount.reason,
-    },
-  };
+  return authorizer.id;
 }
 
 export async function createSale(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
-  const draft = await authorizeDraftDiscount(validateSaleDraftInput(input), actor, dependencies);
-  return unwrap(await (dependencies.createSale ?? createSaleRepository)(draft, actor.userId));
+  const draft = validateSaleDraftInput(input);
+  const operation = validateSaleOperation(input.operation);
+  return unwrap(await (dependencies.createSale ?? createSaleRepository)(
+    draft,
+    actor.userId,
+    {
+      requestKey: dependencies.requestKey ?? null,
+      status: operation === "SALE" ? "PENDING" : "QUOTATION",
+    },
+  ));
+}
+
+export async function grantDiscountAuthorization(input, actor, dependencies = {}) {
+  requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
+  const request = validateDiscountAuthorizationInput(input);
+  const authorizedBy = await authorizeDiscountRequest(request, actor, dependencies);
+  const currentDate = dependencies.currentDate ?? new Date();
+  const expiresAt = new Date(currentDate.getTime() + 5 * 60 * 1000);
+  return (dependencies.createDiscountAuthorizationGrant
+    ?? createDiscountAuthorizationGrant)({
+    amountCents: request.amountCents,
+    authorizedBy,
+    expiresAt,
+    reason: request.reason,
+    requestedBy: actor.userId,
+  });
 }
 
 export async function getSale(saleId, actor, dependencies = {}) {
@@ -151,7 +171,7 @@ export async function getSaleList(searchParams, actor, dependencies = {}) {
 
 export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
-  const draft = await authorizeDraftDiscount(validateSaleDraftInput(input), actor, dependencies);
+  const draft = validateSaleDraftInput(input);
   return unwrap(await (dependencies.updateSaleDraft ?? updateSaleDraftRepository)(
     validateSaleId(saleId), draft, actor.userId,
   ));
@@ -168,6 +188,7 @@ export async function registerSalePayment(saleId, input, actor, dependencies = {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
   return unwrap(await (dependencies.registerSalePayment ?? registerSalePaymentRepository)(
     validateSaleId(saleId), validateSalePaymentInput(input), actor.userId,
+    { requestKey: dependencies.requestKey ?? null },
   ));
 }
 

@@ -18,6 +18,7 @@ export const PAYMENT_METHODS = Object.freeze([
   "TRANSBANK",
   "GETNET",
 ]);
+export const SALE_OPERATIONS = Object.freeze(["QUOTATION", "SALE"]);
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const MAX_DISCOUNT_REASON_LENGTH = 300;
@@ -92,42 +93,8 @@ function items(value) {
 }
 
 function opticalAdditions(value) {
-  if (value == null) return [];
-  if (!Array.isArray(value) || value.length > 50) {
-    fail("Los adicionales ópticos deben ser una lista de hasta 50 elementos.");
-  }
-
-  return value.map((addition, index) => {
-    if (!addition || typeof addition !== "object" || Array.isArray(addition)) {
-      fail(`El adicional óptico en la posición ${index + 1} no es válido.`);
-    }
-    const name = typeof addition.name === "string"
-      ? addition.name.trim().replace(/\s+/g, " ")
-      : "";
-    const description = addition.description == null
-      ? null
-      : typeof addition.description === "string"
-        ? addition.description.trim().replace(/\s+/g, " ")
-        : "";
-    if (!name || name.length > 160) {
-      fail(`El nombre del adicional óptico en la posición ${index + 1} no es válido.`);
-    }
-    if (addition.description != null && (!description || description.length > 500)) {
-      fail(`La descripción del adicional óptico en la posición ${index + 1} no es válida.`);
-    }
-    if (!Number.isInteger(addition.quantity) || addition.quantity < 1 || addition.quantity > 100) {
-      fail(`La cantidad del adicional óptico en la posición ${index + 1} no es válida.`);
-    }
-    if (!Number.isSafeInteger(addition.unitPriceCents) || addition.unitPriceCents <= 0) {
-      fail(`El precio del adicional óptico en la posición ${index + 1} no es válido.`);
-    }
-    return {
-      description,
-      name,
-      quantity: addition.quantity,
-      unitPriceCents: addition.unitPriceCents,
-    };
-  });
+  if (value == null || (Array.isArray(value) && value.length === 0)) return [];
+  fail("Los adicionales deben agregarse desde el catálogo con su precio controlado.");
 }
 
 function discount(value) {
@@ -136,7 +103,7 @@ function discount(value) {
     fail("El descuento no es válido.");
   }
   if (value.amountCents === 0) {
-    if (value.reason || value.authorizerEmail || value.authorizerPassword) {
+    if (value.reason || value.authorizationId) {
       fail("El motivo y la autorización solo corresponden cuando existe un descuento.");
     }
     return null;
@@ -147,22 +114,14 @@ function discount(value) {
   const reason = typeof value.reason === "string"
     ? value.reason.trim().replace(/\s+/g, " ")
     : "";
-  const authorizerEmail = typeof value.authorizerEmail === "string"
-    ? value.authorizerEmail.trim().toLowerCase()
-    : "";
-  const authorizerPassword = typeof value.authorizerPassword === "string"
-    ? value.authorizerPassword
-    : "";
   if (!reason || reason.length > MAX_DISCOUNT_REASON_LENGTH) {
     fail(`El descuento requiere un motivo de hasta ${MAX_DISCOUNT_REASON_LENGTH} caracteres.`);
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authorizerEmail)) {
-    fail("El correo de quien autoriza el descuento no es válido.");
-  }
-  if (!authorizerPassword || Buffer.byteLength(authorizerPassword, "utf8") > 1_024) {
-    fail("La contraseña de autorización no es válida.");
-  }
-  return { amountCents: value.amountCents, authorizerEmail, authorizerPassword, reason };
+  return {
+    amountCents: value.amountCents,
+    authorizationId: validateSaleId(value.authorizationId, "autorización de descuento"),
+    reason,
+  };
 }
 
 export function validateSaleDraftInput(input) {
@@ -187,8 +146,7 @@ export function validateSaleDraftInput(input) {
     ? null
     : discount(input.discount ?? {
         amountCents: input.discountCents,
-        authorizerEmail: input.discountAuthorizerEmail,
-        authorizerPassword: input.discountAuthorizerPassword,
+        authorizationId: input.discountAuthorizationId,
         reason: input.discountReason,
       });
 
@@ -283,6 +241,9 @@ export function validateSalePaymentInput(input) {
   if (!PAYMENT_METHODS.includes(paymentMethod)) {
     fail(`El medio de pago debe ser uno de: ${PAYMENT_METHODS.join(", ")}.`);
   }
+  if (paymentMethod === "MERCADO_PAGO") {
+    fail("Mercado Pago solo puede acreditarse mediante su checkout y webhook seguro.");
+  }
   let reference = null;
   if (input.reference != null) {
     reference =
@@ -291,7 +252,36 @@ export function validateSalePaymentInput(input) {
       fail("La referencia debe tener entre 1 y 200 caracteres.");
     }
   }
-  return { amountCents: input.amountCents, paymentMethod, reference };
+  if (["BANK_TRANSFER", "TRANSBANK", "GETNET"].includes(paymentMethod) && !reference) {
+    fail("Este medio de pago requiere una referencia o folio.");
+  }
+  let cashReceivedCents = null;
+  let changeCents = null;
+  if (paymentMethod === "CASH") {
+    if (!Number.isSafeInteger(input.cashReceivedCents) || input.cashReceivedCents < input.amountCents) {
+      fail("El monto recibido en efectivo debe cubrir el abono.");
+    }
+    cashReceivedCents = input.cashReceivedCents;
+    changeCents = cashReceivedCents - input.amountCents;
+  } else if (input.cashReceivedCents != null || input.changeCents != null) {
+    fail("El monto recibido y el vuelto solo corresponden al efectivo.");
+  }
+  return {
+    amountCents: input.amountCents,
+    cashReceivedCents,
+    changeCents,
+    paymentMethod,
+    reference,
+  };
+}
+
+export function validateSaleOperation(value) {
+  if (value == null) return "QUOTATION";
+  const operation = typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (!SALE_OPERATIONS.includes(operation)) {
+    fail("La operación comercial no es válida.");
+  }
+  return operation;
 }
 
 export function validateSaleListQuery(searchParams) {

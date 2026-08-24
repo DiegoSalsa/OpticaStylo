@@ -3,6 +3,7 @@ import { createSale, getSaleList } from "@/services/sale-service";
 import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
+import { readIdempotencyKey } from "@/utils/idempotency-key";
 
 export async function GET(request) {
   return executeApiHandler(async () => {
@@ -14,7 +15,9 @@ export async function GET(request) {
 export async function POST(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    const sale = await createSale(await readJsonBody(request), actor);
+    const sale = await createSale(await readJsonBody(request), actor, {
+      requestKey: readIdempotencyKey(request),
+    });
     return createSuccessResponse(sale, { status: 201 });
   });
 }
