@@ -13,8 +13,7 @@ const productId = "00000000-0000-4000-8000-000000000002";
 const frameProductId = "00000000-0000-4000-8000-000000000007";
 const patientId = "00000000-0000-4000-8000-000000000005";
 const discountAuthorization = {
-  authorizerEmail: "admin@opticastylo.cl",
-  authorizerPassword: "Una-clave-segura-2026",
+  authorizationId: "00000000-0000-4000-8000-000000000009",
 };
 
 test("acepta una cotización sin receta", () => {
@@ -106,7 +105,7 @@ test("normaliza un descuento manual con motivo auditable", () => {
   });
   assert.equal(result.discountCents, 5000);
   assert.equal(result.discountReason, "Convenio empresa");
-  assert.equal(result.discount.authorizerEmail, "admin@opticastylo.cl");
+  assert.equal(result.discount.authorizationId, discountAuthorization.authorizationId);
 });
 
 test("rechaza descuentos sin motivo y motivos sin descuento", () => {
@@ -130,23 +129,12 @@ test("rechaza descuentos sin motivo y motivos sin descuento", () => {
   );
 });
 
-test("normaliza adicionales ópticos como cargos separados", () => {
-  const result = validateSaleDraftInput({
+test("rechaza adicionales ópticos de precio libre", () => {
+  assert.throws(() => validateSaleDraftInput({
     customerId,
     items: [{ productId, quantity: 1 }],
-    opticalAdditions: [{
-      description: "  Capa de alta resistencia  ",
-      name: "  Antirreflejo premium  ",
-      quantity: 1,
-      unitPriceCents: 39990,
-    }],
-  });
-  assert.deepEqual(result.opticalAdditions, [{
-    description: "Capa de alta resistencia",
-    name: "Antirreflejo premium",
-    quantity: 1,
-    unitPriceCents: 39990,
-  }]);
+    opticalAdditions: [{ name: "Adicional libre", quantity: 1, unitPriceCents: 39990 }],
+  }), /catálogo/);
 });
 
 test("impide repetir productos en una venta", () => {
@@ -168,16 +156,37 @@ test("valida abonos enteros y medios definidos", () => {
     validateSalePaymentInput({
       amountCents: 10000,
       paymentMethod: "bank_transfer",
+      reference: "TRX-PRUEBA-1",
     }),
     {
       amountCents: 10000,
+      cashReceivedCents: null,
+      changeCents: null,
       paymentMethod: "BANK_TRANSFER",
-      reference: null,
+      reference: "TRX-PRUEBA-1",
     },
   );
   assert.throws(
     () => validateSalePaymentInput({ amountCents: 100, paymentMethod: "CARD" }),
     /medio de pago/,
+  );
+});
+
+test("calcula vuelto solo para efectivo y bloquea Mercado Pago manual", () => {
+  assert.deepEqual(validateSalePaymentInput({
+    amountCents: 15000,
+    cashReceivedCents: 20000,
+    paymentMethod: "CASH",
+  }), {
+    amountCents: 15000,
+    cashReceivedCents: 20000,
+    changeCents: 5000,
+    paymentMethod: "CASH",
+    reference: null,
+  });
+  assert.throws(
+    () => validateSalePaymentInput({ amountCents: 15000, paymentMethod: "MERCADO_PAGO" }),
+    /checkout y webhook seguro/,
   );
 });
 
