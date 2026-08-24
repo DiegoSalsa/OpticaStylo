@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/icon";
+import { PUBLIC_BOOKING_CONFIRMATION_NOTE } from "./booking-copy";
 import styles from "./booking.module.css";
 
 function chileDate(offsetDays = 0) {
@@ -89,7 +90,7 @@ export default function BookingExperience() {
   }
 
   if (confirmation) {
-    return <section className={styles.confirmation}><span><Icon name="check" size={32} /></span><p className="eyebrow">Reserva confirmada</p><h2>Tu hora quedó agendada</h2><p>Te esperamos el {new Intl.DateTimeFormat("es-CL", { dateStyle: "long", timeStyle: "short", timeZone: "America/Santiago" }).format(new Date(confirmation.startAt))}.</p><dl><div><dt>Profesional</dt><dd>{confirmation.professional.firstName} {confirmation.professional.lastName}</dd></div><div><dt>Referencia</dt><dd>{confirmation.id}</dd></div></dl><p className={styles.confirmationNote}>Conserva esta referencia. El correo de confirmación se enviará cuando el servicio de notificaciones esté configurado.</p></section>;
+    return <section className={styles.confirmation}><span><Icon name="check" size={32} /></span><p className="eyebrow">Reserva confirmada</p><h2>Tu hora quedó agendada</h2><p>Te esperamos el {new Intl.DateTimeFormat("es-CL", { dateStyle: "long", timeStyle: "short", timeZone: "America/Santiago" }).format(new Date(confirmation.startAt))}.</p><dl><div><dt>Profesional</dt><dd>{confirmation.professional.firstName} {confirmation.professional.lastName}</dd></div><div><dt>Referencia</dt><dd>{confirmation.id}</dd></div></dl><p className={styles.confirmationNote}>{PUBLIC_BOOKING_CONFIRMATION_NOTE}</p></section>;
   }
 
   return (
