@@ -40,18 +40,6 @@
   width: 100%;
   z-index: 2;
 }
-.heroKicker {
-  background: #3db79f;
-  border-radius: 999px;
-  color: #073a32;
-  display: inline-flex;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 0.42rem 0.7rem;
-  text-transform: uppercase;
-  width: fit-content;
-}
 .heroCopy h1 {
   color: #151919;
   font-family: Sora, Inter, sans-serif;
