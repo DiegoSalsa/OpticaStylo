@@ -42,7 +42,6 @@ export default function HomePage() {
           />
           <div className={styles.heroShade} />
           <div className={styles.heroCopy}>
-            <span className={styles.heroKicker}>Nueva colección 2024</span>
             <h1>
               <span>Mira el mundo</span>
               <span>con tu mejor</span>
