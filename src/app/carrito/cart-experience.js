@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/icon";
 import { ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-client";
 
+import PrescriptionImageInput from "./prescription-image-input";
+
 function opticalData(form) {
   const value = (name, nullable = false) => {
     const raw = form.get(name);
@@ -51,6 +53,7 @@ export default function CartExperience() {
   const [notice, setNotice] = useState("");
   const [prescriptionMode, setPrescriptionMode] = useState("IMAGE");
   const [prescriptionDraft, setPrescriptionDraft] = useState(null);
+  const [prescriptionImage, setPrescriptionImage] = useState(null);
   const offersPrescriptionAttachment = useMemo(
     () => cart?.items.some((item) => item.requiresPrescription),
     [cart],
@@ -99,17 +102,20 @@ export default function CartExperience() {
     const form = new FormData(event.currentTarget);
     try {
       if (prescriptionMode === "IMAGE") {
-        const file = form.get("image");
-        const hasNewImage = file instanceof File && file.size > 0;
+        const hasNewImage = prescriptionImage instanceof File && prescriptionImage.size > 0;
         let currentCart = cart;
+        if (!hasNewImage && !currentCart.externalPrescription?.hasImage) {
+          throw new Error("Adjunta una imagen o toma una foto de la receta para continuar.");
+        }
         if (hasNewImage) {
           const upload = new FormData();
-          upload.set("image", file);
+          upload.set("image", prescriptionImage);
           currentCart = await readStoreResponse(await fetch("/api/store/cart/prescription/image", {
             body: upload,
             method: "PUT",
           }));
           setCart(currentCart);
+          setPrescriptionImage(null);
           setPrescriptionDraft(null);
         }
         const currentDraft = prescriptionDraft ?? currentCart.externalPrescription?.extractedData;
@@ -223,7 +229,7 @@ export default function CartExperience() {
           <>
             <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} onClick={() => { setPrescriptionMode("MANUAL"); setPrescriptionDraft(null); }} type="button">Ingresar manualmente</button></div>
             <form className="prescription-form" key={prescriptionDraft ? JSON.stringify(prescriptionDraft) : "sin-borrador"} onSubmit={savePrescription}>
-              {prescriptionMode === "IMAGE" && <label className="field field-full"><span>{cart.externalPrescription?.hasImage ? "Reemplazar imagen de la receta" : "Imagen de la receta (máx. 4 MiB)"}</span><input accept="image/jpeg,image/png,image/webp,image/heic,image/heif" name="image" required={!cart.externalPrescription?.hasImage} type="file" /><small>La lectura automática usa JPEG, PNG o WEBP. HEIC y HEIF se conservan como respaldo y pueden completarse manualmente.</small></label>}
+              {prescriptionMode === "IMAGE" && <PrescriptionImageInput disabled={status === "saving"} hasStoredImage={cart.externalPrescription?.hasImage} image={prescriptionImage} onImageChange={setPrescriptionImage} />}
               {prescriptionMode === "IMAGE" && !prescriptionDraft && !cart.externalPrescription?.extractedData && cart.externalPrescription?.hasImage && <button className="button button--secondary field-full" onClick={enableManualImageReview} type="button">Completar valores manualmente</button>}
               {prescriptionMode === "IMAGE" && prescriptionDraft && <div className="inline-success field-full"><strong>Lectura automática: {prescriptionDraft.confidence === "HIGH" ? "confianza alta" : prescriptionDraft.confidence === "MEDIUM" ? "confianza media" : "confianza baja"}.</strong><span> Revisa todos los campos antes de confirmar.</span>{prescriptionDraft.warnings?.length > 0 && <ul>{prescriptionDraft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}</div>}
               <h3>Ojo derecho</h3><span />
