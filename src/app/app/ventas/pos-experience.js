@@ -30,6 +30,11 @@ const EMPTY_EXTERNAL_PRESCRIPTION = {
   pupillaryDistance: "",
   rightEye: { ...EMPTY_EYE },
 };
+const PRESCRIPTION_READER_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 const ADULT_BIRTH_DATE_CUTOFF = (() => {
   const date = new Date();
   date.setFullYear(date.getFullYear() - 18);
@@ -48,6 +53,25 @@ function externalPrescriptionData(value) {
     leftEye: eye("leftEye"),
     pupillaryDistance:
       value.pupillaryDistance === "" ? null : Number(value.pupillaryDistance),
+    rightEye: eye("rightEye"),
+  };
+}
+
+function fieldValue(value) {
+  return value == null ? "" : String(value);
+}
+
+function externalPrescriptionDraft(value) {
+  const eye = (side) => ({
+    addition: fieldValue(value?.[side]?.addition),
+    axis: fieldValue(value?.[side]?.axis),
+    cylinder: fieldValue(value?.[side]?.cylinder),
+    sphere: fieldValue(value?.[side]?.sphere),
+  });
+  return {
+    fulfillmentNotes: value?.fulfillmentNotes ?? "",
+    leftEye: eye("leftEye"),
+    pupillaryDistance: fieldValue(value?.pupillaryDistance),
     rightEye: eye("rightEye"),
   };
 }
@@ -128,6 +152,11 @@ export default function PosExperience() {
     EMPTY_EXTERNAL_PRESCRIPTION,
   );
   const [prescriptionFile, setPrescriptionFile] = useState(null);
+  const [prescriptionReader, setPrescriptionReader] = useState({
+    file: null,
+    loading: false,
+    result: null,
+  });
   const [sale, setSale] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -440,6 +469,30 @@ export default function PosExperience() {
   function createRequestKey() {
     return globalThis.crypto?.randomUUID?.()
       ?? `pos-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  async function readExternalPrescriptionImage() {
+    if (!prescriptionFile || !PRESCRIPTION_READER_IMAGE_TYPES.has(prescriptionFile.type)) {
+      setError("La lectura automática admite imágenes JPEG, PNG o WEBP.");
+      return;
+    }
+    setError("");
+    setPrescriptionReader({ file: prescriptionFile, loading: true, result: null });
+    try {
+      const form = new FormData();
+      form.set("image", prescriptionFile);
+      const extraction = await readResponse(await fetch("/api/external-prescriptions/extract", {
+        body: form,
+        method: "POST",
+      }));
+      setExternalPrescription(externalPrescriptionDraft(extraction.data));
+      setExternalPrescriptionId(null);
+      setPrescriptionReader({ file: prescriptionFile, loading: false, result: extraction.data });
+      setNotice("Revisa y corrige cada valor sugerido antes de guardar la receta externa.");
+    } catch (requestError) {
+      setPrescriptionReader({ file: null, loading: false, result: null });
+      setError(requestError.message);
+    }
   }
 
   async function ensureExternalPrescription() {
@@ -1186,14 +1239,37 @@ export default function PosExperience() {
                       onChange={(event) => {
                         setPrescriptionFile(event.target.files?.[0] ?? null);
                         setExternalPrescriptionId(null);
+                        setPrescriptionReader({ file: null, loading: false, result: null });
                       }}
                       type="file"
                     />
                     <small>
-                      Se conserva de forma privada. Los valores de abajo deben
-                      ser leídos y confirmados por una persona.
+                      Se guarda de forma privada al confirmar la venta. Los valores
+                      de abajo deben ser revisados y confirmados por una persona.
                     </small>
                   </label>
+                  {prescriptionFile && PRESCRIPTION_READER_IMAGE_TYPES.has(prescriptionFile.type) && (
+                    <button
+                      className="button button--secondary"
+                      disabled={!canEdit || pending || prescriptionReader.loading || prescriptionReader.file === prescriptionFile}
+                      onClick={readExternalPrescriptionImage}
+                      type="button"
+                    >
+                      {prescriptionReader.loading ? "Leyendo receta…" : prescriptionReader.file === prescriptionFile ? "Lectura aplicada" : "Leer receta automáticamente"}
+                    </button>
+                  )}
+                  {prescriptionFile && !PRESCRIPTION_READER_IMAGE_TYPES.has(prescriptionFile.type) && (
+                    <small>HEIC y HEIF se conservan como respaldo, pero deben completarse manualmente.</small>
+                  )}
+                  {prescriptionReader.result && prescriptionReader.file === prescriptionFile && (
+                    <div className="inline-success">
+                      <strong>Lectura automática: {prescriptionReader.result.confidence === "HIGH" ? "confianza alta" : prescriptionReader.result.confidence === "MEDIUM" ? "confianza media" : "confianza baja"}.</strong>
+                      <span> Revisa todos los campos antes de guardar.</span>
+                      {prescriptionReader.result.warnings?.length > 0 && (
+                        <ul>{prescriptionReader.result.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+                      )}
+                    </div>
+                  )}
                   <div className="pos-eye-grid">
                     <strong />
                     {[
