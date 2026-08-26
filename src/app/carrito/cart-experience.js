@@ -25,6 +25,19 @@ function opticalData(form) {
   };
 }
 
+const EMPTY_PRESCRIPTION_DRAFT = Object.freeze({
+  confidence: "LOW",
+  fulfillmentNotes: null,
+  leftEye: Object.freeze({ addition: null, axis: null, cylinder: null, sphere: null }),
+  pupillaryDistance: null,
+  rightEye: Object.freeze({ addition: null, axis: null, cylinder: null, sphere: null }),
+  warnings: Object.freeze([]),
+});
+
+function fieldValue(value) {
+  return value ?? "";
+}
+
 function mountName(item, items) {
   if (!item.mountFrameProductId) return null;
   return items.find((candidate) => candidate.productId === item.mountFrameProductId)?.name
@@ -37,6 +50,7 @@ export default function CartExperience() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [prescriptionMode, setPrescriptionMode] = useState("IMAGE");
+  const [prescriptionDraft, setPrescriptionDraft] = useState(null);
   const offersPrescriptionAttachment = useMemo(
     () => cart?.items.some((item) => item.requiresPrescription),
     [cart],
@@ -46,6 +60,7 @@ export default function CartExperience() {
     ensureStoreCart()
       .then((data) => {
         setCart(data);
+        setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
         setStatus("ready");
       })
       .catch((requestError) => {
@@ -84,17 +99,35 @@ export default function CartExperience() {
     const form = new FormData(event.currentTarget);
     try {
       if (prescriptionMode === "IMAGE") {
-        const upload = new FormData();
-        upload.set("image", form.get("image"));
-        await readStoreResponse(await fetch("/api/store/cart/prescription/image", {
-          body: upload,
-          method: "PUT",
-        }));
+        const file = form.get("image");
+        const hasNewImage = file instanceof File && file.size > 0;
+        let currentCart = cart;
+        if (hasNewImage) {
+          const upload = new FormData();
+          upload.set("image", file);
+          currentCart = await readStoreResponse(await fetch("/api/store/cart/prescription/image", {
+            body: upload,
+            method: "PUT",
+          }));
+          setCart(currentCart);
+          setPrescriptionDraft(null);
+        }
+        const currentDraft = prescriptionDraft ?? currentCart.externalPrescription?.extractedData;
+        if (!currentDraft) {
+          const extraction = await readStoreResponse(await fetch("/api/store/cart/prescription/extract", {
+            method: "POST",
+          }));
+          setCart(extraction.cart);
+          setPrescriptionDraft(extraction.extraction.data);
+          setNotice("Revisa cada valor sugerido antes de confirmar la receta. La lectura automática no la aprueba.");
+          return;
+        }
         setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/confirm", {
           body: JSON.stringify(opticalData(form)),
           headers: { "Content-Type": "application/json" },
           method: "PATCH",
         })));
+        setPrescriptionDraft(null);
       } else {
         setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/manual", {
           body: JSON.stringify(opticalData(form)),
@@ -108,6 +141,12 @@ export default function CartExperience() {
     } finally {
       setStatus("ready");
     }
+  }
+
+  function enableManualImageReview() {
+    setError("");
+    setNotice("Completa y confirma los valores manualmente. La imagen se conservará como respaldo privado.");
+    setPrescriptionDraft(EMPTY_PRESCRIPTION_DRAFT);
   }
 
   async function checkout(event) {
@@ -182,22 +221,24 @@ export default function CartExperience() {
           </div>
 
           <>
-            <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} onClick={() => setPrescriptionMode("MANUAL")} type="button">Ingresar manualmente</button></div>
-            <form className="prescription-form" onSubmit={savePrescription}>
-              {prescriptionMode === "IMAGE" && <label className="field field-full"><span>Imagen de la receta (máx. 8 MiB)</span><input accept="image/jpeg,image/png,image/webp,image/heic,image/heif" name="image" required type="file" /><small>Después de cargarla, debes transcribir y confirmar los valores. El OCR futuro solo ayudará a completar estos campos.</small></label>}
+            <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} onClick={() => { setPrescriptionMode("MANUAL"); setPrescriptionDraft(null); }} type="button">Ingresar manualmente</button></div>
+            <form className="prescription-form" key={prescriptionDraft ? JSON.stringify(prescriptionDraft) : "sin-borrador"} onSubmit={savePrescription}>
+              {prescriptionMode === "IMAGE" && <label className="field field-full"><span>{cart.externalPrescription?.hasImage ? "Reemplazar imagen de la receta" : "Imagen de la receta (máx. 4 MiB)"}</span><input accept="image/jpeg,image/png,image/webp,image/heic,image/heif" name="image" required={!cart.externalPrescription?.hasImage} type="file" /><small>La lectura automática usa JPEG, PNG o WEBP. HEIC y HEIF se conservan como respaldo y pueden completarse manualmente.</small></label>}
+              {prescriptionMode === "IMAGE" && !prescriptionDraft && !cart.externalPrescription?.extractedData && cart.externalPrescription?.hasImage && <button className="button button--secondary field-full" onClick={enableManualImageReview} type="button">Completar valores manualmente</button>}
+              {prescriptionMode === "IMAGE" && prescriptionDraft && <div className="inline-success field-full"><strong>Lectura automática: {prescriptionDraft.confidence === "HIGH" ? "confianza alta" : prescriptionDraft.confidence === "MEDIUM" ? "confianza media" : "confianza baja"}.</strong><span> Revisa todos los campos antes de confirmar.</span>{prescriptionDraft.warnings?.length > 0 && <ul>{prescriptionDraft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}</div>}
               <h3>Ojo derecho</h3><span />
-              <label className="field"><span>Esfera</span><input name="rightSphere" required step="0.25" type="number" /></label>
-              <label className="field"><span>Cilindro</span><input name="rightCylinder" required step="0.25" type="number" /></label>
-              <label className="field"><span>Eje</span><input max="180" min="0" name="rightAxis" type="number" /></label>
-              <label className="field"><span>Adición</span><input name="rightAddition" step="0.25" type="number" /></label>
+              <label className="field"><span>Esfera</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.sphere)} name="rightSphere" required step="0.25" type="number" /></label>
+              <label className="field"><span>Cilindro</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.cylinder)} name="rightCylinder" required step="0.25" type="number" /></label>
+              <label className="field"><span>Eje</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.axis)} max="180" min="0" name="rightAxis" type="number" /></label>
+              <label className="field"><span>Adición</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.addition)} name="rightAddition" step="0.25" type="number" /></label>
               <h3>Ojo izquierdo</h3><span />
-              <label className="field"><span>Esfera</span><input name="leftSphere" required step="0.25" type="number" /></label>
-              <label className="field"><span>Cilindro</span><input name="leftCylinder" required step="0.25" type="number" /></label>
-              <label className="field"><span>Eje</span><input max="180" min="0" name="leftAxis" type="number" /></label>
-              <label className="field"><span>Adición</span><input name="leftAddition" step="0.25" type="number" /></label>
-              <label className="field"><span>Distancia pupilar</span><input name="pupillaryDistance" step="0.5" type="number" /></label>
-              <label className="field field-wide"><span>Indicaciones</span><input name="fulfillmentNotes" /></label>
-              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">Guardar receta para revisión</button>
+              <label className="field"><span>Esfera</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.sphere)} name="leftSphere" required step="0.25" type="number" /></label>
+              <label className="field"><span>Cilindro</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.cylinder)} name="leftCylinder" required step="0.25" type="number" /></label>
+              <label className="field"><span>Eje</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.axis)} max="180" min="0" name="leftAxis" type="number" /></label>
+              <label className="field"><span>Adición</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.addition)} name="leftAddition" step="0.25" type="number" /></label>
+              <label className="field"><span>Distancia pupilar</span><input defaultValue={fieldValue(prescriptionDraft?.pupillaryDistance)} name="pupillaryDistance" step="0.5" type="number" /></label>
+              <label className="field field-wide"><span>Indicaciones</span><input defaultValue={fieldValue(prescriptionDraft?.fulfillmentNotes)} name="fulfillmentNotes" /></label>
+              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">{prescriptionMode === "IMAGE" && (prescriptionDraft ?? cart.externalPrescription?.extractedData) ? "Confirmar valores revisados" : prescriptionMode === "IMAGE" ? "Subir y leer receta" : "Guardar receta para revisión"}</button>
             </form>
           </>
         </article>}
