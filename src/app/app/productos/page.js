@@ -362,9 +362,16 @@ export default function ProductsPage() {
                   <span>Categoría</span>
                   <select
                     disabled={!canManage}
-                    onChange={(event) =>
-                      setForm({ ...form, category: event.target.value })
-                    }
+                    onChange={(event) => {
+                      const category = event.target.value;
+                      setForm({
+                        ...form,
+                        category,
+                        requiresPrescription: category === "PRESCRIPTION_LENS"
+                          ? form.requiresPrescription
+                          : false,
+                      });
+                    }}
                     value={form.category}
                   >
                     {CATEGORIES.map(([code, label]) => (
@@ -397,7 +404,7 @@ export default function ProductsPage() {
               <label className="active-switch">
                 <input
                   checked={form.requiresPrescription}
-                  disabled={!canManage}
+                  disabled={!canManage || form.category !== "PRESCRIPTION_LENS"}
                   onChange={(event) =>
                     setForm({
                       ...form,
@@ -406,10 +413,10 @@ export default function ProductsPage() {
                   }
                   type="checkbox"
                 />
-                <span>Ofrece adjuntar receta a la venta</span>
+                <span>Exige receta antes de vender</span>
                 <small>
-                  Activarlo permite ofrecer el registro opcional de receta para
-                  lentes u otros productos.
+                  Solo aplica a cristales ópticos. El marco siempre puede venderse
+                  con o sin receta.
                 </small>
               </label>
               {selectedId && (

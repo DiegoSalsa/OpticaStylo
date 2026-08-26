@@ -3,6 +3,7 @@ import { listActiveProductImages } from "../repositories/product-image-repositor
 import { findProductById, listProducts } from "../repositories/product-repository.js";
 import { getProductPresentation } from "../config/product-presentations.js";
 import { AppError } from "../utils/app-error.js";
+import { canUseStoreTestData } from "../utils/store-test-data.js";
 import {
   validateProductListQuery,
 } from "../validations/product-validation.js";
@@ -35,7 +36,7 @@ function groupImagesByProduct(images) {
 }
 
 function canUseTestData(dependencies) {
-  return dependencies.includeTestData ?? process.env.NODE_ENV !== "production";
+  return dependencies.includeTestData ?? canUseStoreTestData();
 }
 
 export async function getStoreProducts(searchParams, dependencies = {}) {
