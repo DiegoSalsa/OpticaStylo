@@ -88,8 +88,8 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
     setCameraMessage("");
     try {
       const capturedImage = await createCameraFile(videoRef.current);
-      onImageChange(capturedImage);
       stopCamera();
+      await onImageChange(capturedImage);
     } catch (error) {
       setCameraMessage(error.message);
     }
@@ -103,7 +103,8 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
 
   function selectImage(event) {
     const file = event.target.files?.[0] ?? null;
-    if (file) onImageChange(file);
+    event.target.value = "";
+    if (file) void onImageChange(file);
   }
 
   function selectSource(nextSource) {
@@ -123,7 +124,7 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
 
     <div aria-label="Forma de adjuntar la receta" className="prescription-image-source" role="group">
       <button aria-pressed={source === "CAMERA"} className={source === "CAMERA" ? "active" : ""} disabled={disabled} onClick={() => selectSource("CAMERA")} type="button"><Icon name="eye" size={16} />Tomar foto</button>
-      <button aria-pressed={source === "FILE"} className={source === "FILE" ? "active" : ""} disabled={disabled} onClick={() => selectSource("FILE")} type="button"><Icon name="file" size={16} />Subir archivo</button>
+      <button aria-pressed={source === "FILE"} className={source === "FILE" ? "active" : ""} disabled={disabled} onClick={() => selectSource("FILE")} type="button"><Icon name="file" size={16} />Galería o archivo</button>
     </div>
 
     {source === "CAMERA" && <div className="prescription-camera-panel">
@@ -134,7 +135,7 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
       {cameraMessage && <p className="prescription-camera-message" role="alert">{cameraMessage}</p>}
     </div>}
 
-    {source === "FILE" && <label className="prescription-file-picker"><span><Icon name="file" size={18} />Seleccionar imagen</span><input accept={PRESCRIPTION_IMAGE_ACCEPT} capture="environment" disabled={disabled} onChange={selectImage} type="file" /></label>}
+    {source === "FILE" && <label className="prescription-file-picker"><span><Icon name="file" size={18} />Seleccionar imagen</span><input accept={PRESCRIPTION_IMAGE_ACCEPT} disabled={disabled} onChange={selectImage} type="file" /></label>}
 
     {previewUrl && <div className="prescription-image-preview"><Image alt="Vista previa de la receta seleccionada" height={52} src={previewUrl} unoptimized width={52} /><div><strong>{image.name}</strong><span>{Math.ceil(image.size / 1024)} KiB · lista para leer</span></div><button disabled={disabled} onClick={() => onImageChange(null)} type="button">Quitar</button></div>}
     {!image && hasStoredImage && <p className="prescription-current-image">Ya hay una imagen de receta guardada. Puedes conservarla o reemplazarla.</p>}
