@@ -1,6 +1,7 @@
 import { validateCreatePrescriptionInput } from "./clinical-validation.js";
 import { normalizeChileanRut } from "../utils/chilean-rut.js";
 import { AppError } from "../utils/app-error.js";
+import { hasSafeImageDimensions } from "./image-dimensions.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN =
@@ -12,7 +13,7 @@ const IMAGE_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
-export const MAX_PRESCRIPTION_IMAGE_BYTES = 8 * 1024 * 1024;
+export const MAX_PRESCRIPTION_IMAGE_BYTES = 4 * 1024 * 1024;
 export const MAX_PRESCRIPTION_UPLOAD_BYTES = MAX_PRESCRIPTION_IMAGE_BYTES + 128 * 1024;
 
 const HEIF_BRANDS = new Set([
@@ -209,7 +210,7 @@ export function validatePrescriptionImage(file) {
     fail("La receta debe ser una imagen JPEG, PNG, WEBP, HEIC o HEIF.", "INVALID_PRESCRIPTION_IMAGE");
   }
   if (!Number.isSafeInteger(file.size) || file.size < 1 || file.size > MAX_PRESCRIPTION_IMAGE_BYTES) {
-    fail("La imagen de la receta no puede superar 8 MiB.", "INVALID_PRESCRIPTION_IMAGE");
+    fail("La imagen de la receta no puede superar 4 MiB.", "INVALID_PRESCRIPTION_IMAGE");
   }
   const filename = text(file.name || "receta", "El nombre del archivo", 255)
     .replace(/[^\p{L}\p{N}._ -]/gu, "_");
@@ -224,7 +225,7 @@ function bytesStartWith(data, signature, offset = 0) {
 export function validatePrescriptionImageBytes(value, mediaType) {
   const data = Buffer.isBuffer(value) ? value : Buffer.from(value ?? []);
   if (data.length < 1 || data.length > MAX_PRESCRIPTION_IMAGE_BYTES) {
-    fail("La imagen de la receta no puede superar 8 MiB.", "INVALID_PRESCRIPTION_IMAGE");
+    fail("La imagen de la receta no puede superar 4 MiB.", "INVALID_PRESCRIPTION_IMAGE");
   }
 
   const matches = {
@@ -241,6 +242,12 @@ export function validatePrescriptionImageBytes(value, mediaType) {
   if (!matches[mediaType]) {
     fail(
       "El contenido del archivo no coincide con una imagen admitida.",
+      "INVALID_PRESCRIPTION_IMAGE",
+    );
+  }
+  if (!hasSafeImageDimensions(data, mediaType)) {
+    fail(
+      "La imagen supera las dimensiones permitidas o no contiene dimensiones vÃ¡lidas.",
       "INVALID_PRESCRIPTION_IMAGE",
     );
   }
