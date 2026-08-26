@@ -50,7 +50,10 @@ export function validateCreateProductInput(input) {
     fail(`La categoría debe ser una de: ${PRODUCT_CATEGORIES.join(", ")}.`);
   }
   if (typeof input.requiresPrescription !== "boolean") {
-    fail("Debe indicar si el producto ofrece adjuntar receta.");
+    fail("Debe indicar si el producto requiere receta.");
+  }
+  if (category !== "PRESCRIPTION_LENS" && input.requiresPrescription) {
+    fail("Solo los cristales ópticos pueden requerir receta.");
   }
 
   return {

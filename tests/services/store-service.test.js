@@ -149,6 +149,15 @@ test("convierte el carrito en venta y crea el checkout real desacoplado", async 
   assert.equal(result.order.totalCents, 50000);
 });
 
+test("bloquea el checkout cuando los cristales requieren una receta confirmada", async () => {
+  await assert.rejects(
+    () => checkoutCart("token", null, {
+      checkoutCart: async () => ({ reason: "PRESCRIPTION_REQUIRED", saleId: null }),
+    }),
+    (error) => error.code === "PRESCRIPTION_REQUIRED" && error.status === 409,
+  );
+});
+
 test("una cuenta consulta solamente sus propios pedidos", async () => {
   const result = await getStoreOrder(orderId, null, account, {
     findSaleById: async () => sale,

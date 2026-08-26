@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import Icon from "@/components/ui/icon";
+import {
+  cartHasReadyPrescription,
+  cartRequiresPrescription,
+  itemRequiresPrescription,
+} from "@/utils/prescription-requirement";
 import { ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-client";
 
 import PrescriptionImageInput from "./prescription-image-input";
@@ -54,10 +59,11 @@ export default function CartExperience() {
   const [prescriptionMode, setPrescriptionMode] = useState("IMAGE");
   const [prescriptionDraft, setPrescriptionDraft] = useState(null);
   const [prescriptionImage, setPrescriptionImage] = useState(null);
-  const offersPrescriptionAttachment = useMemo(
-    () => cart?.items.some((item) => item.requiresPrescription),
+  const prescriptionRequired = useMemo(
+    () => cartRequiresPrescription(cart?.items),
     [cart],
   );
+  const prescriptionReady = cartHasReadyPrescription(cart, cart?.items);
 
   useEffect(() => {
     ensureStoreCart()
@@ -209,21 +215,21 @@ export default function CartExperience() {
   return <main className="cart-page">
     <nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav>
     <header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header>
-    <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className="complete"><span>2</span><div><strong>Receta</strong><small>{offersPrescriptionAttachment ? "Opcional" : "No necesaria"}</small></div></li><li className="active"><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
+    <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className={prescriptionRequired && !prescriptionReady ? "active" : "complete"}><span>2</span><div><strong>Receta</strong><small>{prescriptionRequired ? prescriptionReady ? "Lista" : "Obligatoria" : "No necesaria"}</small></div></li><li className="active"><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
     <div className="cart-layout">
       <section className="cart-content">
         <article className="cart-card">
           <h2>Productos</h2>
-          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{item.requiresPrescription ? " · Receta opcional" : ""}</small>{mountName(item, cart.items) && <small>Para: {mountName(item, cart.items)}</small>}</div><div className="cart-quantity"><button onClick={() => update(item, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item, 0)} type="button">×</button></div>)}
+          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{itemRequiresPrescription(item) ? " · Receta obligatoria" : ""}</small>{mountName(item, cart.items) && <small>Para: {mountName(item, cart.items)}</small>}</div><div className="cart-quantity"><button onClick={() => update(item, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item, 0)} type="button">×</button></div>)}
         </article>
 
-        {offersPrescriptionAttachment && <article className="cart-card prescription-card">
+        {prescriptionRequired && <article className="cart-card prescription-card">
           <div className="cart-card-heading">
             <div>
-              <h2>Receta óptica opcional</h2>
-              <p>No necesitas adjuntarla para comprar. Si la registras, los datos deben ser confirmados por una persona.</p>
+              <h2>Receta óptica obligatoria</h2>
+              <p>Los cristales seleccionados requieren una receta confirmada antes de continuar al pago.</p>
             </div>
-            {cart.externalPrescription?.status === "READY" && <span className="status-chip">Receta guardada</span>}
+            {prescriptionReady && <span className="status-chip">Receta lista</span>}
           </div>
 
           <>
@@ -244,7 +250,7 @@ export default function CartExperience() {
               <label className="field"><span>Adición</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.addition)} name="leftAddition" step="0.25" type="number" /></label>
               <label className="field"><span>Distancia pupilar</span><input defaultValue={fieldValue(prescriptionDraft?.pupillaryDistance)} name="pupillaryDistance" step="0.5" type="number" /></label>
               <label className="field field-wide"><span>Indicaciones</span><input defaultValue={fieldValue(prescriptionDraft?.fulfillmentNotes)} name="fulfillmentNotes" /></label>
-              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">{prescriptionMode === "IMAGE" && (prescriptionDraft ?? cart.externalPrescription?.extractedData) ? "Confirmar valores revisados" : prescriptionMode === "IMAGE" ? "Subir y leer receta" : "Guardar receta para revisión"}</button>
+              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">{prescriptionMode === "IMAGE" && (prescriptionDraft ?? cart.externalPrescription?.extractedData) ? "Confirmar valores revisados" : prescriptionMode === "IMAGE" ? "Subir y leer receta" : "Guardar receta obligatoria"}</button>
             </form>
           </>
         </article>}

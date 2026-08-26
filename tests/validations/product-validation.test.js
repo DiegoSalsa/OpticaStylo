@@ -24,6 +24,18 @@ test("rechaza precios fraccionarios o sin lista definida", () => {
   assert.throws(() => validateCreateProductInput({ ...product, unitPriceCents: 0 }), /entero positivo/);
 });
 
+test("reserva la receta obligatoria para los cristales ópticos", () => {
+  assert.throws(
+    () => validateCreateProductInput({ ...product, requiresPrescription: true }),
+    /Solo los cristales ópticos pueden requerir receta/,
+  );
+  assert.equal(validateCreateProductInput({
+    ...product,
+    category: "prescription_lens",
+    requiresPrescription: true,
+  }).requiresPrescription, true);
+});
+
 test("permite desactivar un producto sin eliminarlo", () => {
   const result = validateUpdateProductInput({ isActive: false }, { ...validateCreateProductInput(product), isActive: true });
   assert.equal(result.isActive, false);

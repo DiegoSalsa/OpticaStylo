@@ -70,6 +70,11 @@ const ERRORS = Object.freeze({
     "Primero debe cargar una imagen de la receta.",
     404,
   ],
+  PRESCRIPTION_REQUIRED: [
+    "PRESCRIPTION_REQUIRED",
+    "Los cristales seleccionados requieren una receta confirmada antes de continuar al pago.",
+    409,
+  ],
   PRESCRIPTION_EXTRACTION_IN_PROGRESS: [
     "PRESCRIPTION_EXTRACTION_IN_PROGRESS",
     "La receta se está leyendo. Espere un momento antes de volver a intentarlo.",

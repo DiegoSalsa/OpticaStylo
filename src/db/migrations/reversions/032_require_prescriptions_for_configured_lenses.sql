@@ -1,0 +1,2 @@
+ALTER TABLE products
+DROP CONSTRAINT products_prescription_only_for_lenses;

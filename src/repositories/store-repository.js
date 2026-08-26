@@ -1,7 +1,9 @@
 import { executeQuery, executeTransaction } from "../db/query.js";
+import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
+import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
-const TEST_DATA_AVAILABLE = process.env.NODE_ENV !== "production";
+const TEST_DATA_AVAILABLE = canUseStoreTestData();
 
 function mapCartBase(row) {
   if (!row) return null;
@@ -597,6 +599,15 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       )
     ))) {
       return { reason: "LENS_MOUNT_REQUIRED", saleId: null };
+    }
+    if (!cartHasReadyPrescription({
+      clinicalPrescriptionId: cart.clinical_prescription_id,
+      externalPrescriptionStatus: cart.external_prescription_status,
+    }, itemsResult.rows.map((item) => ({
+      category: item.category,
+      requiresPrescription: item.requires_prescription,
+    })))) {
+      return { reason: "PRESCRIPTION_REQUIRED", saleId: null };
     }
     let customerId;
     if (accountId) {
