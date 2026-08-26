@@ -159,6 +159,193 @@
   cursor: pointer;
   justify-content: center;
 }
+.prescription-image-input {
+  background: #f8fbfa;
+  border: 1px solid #dce9e5;
+  border-radius: 14px;
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+}
+.prescription-image-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+}
+.prescription-image-heading > div {
+  display: grid;
+  gap: 0.22rem;
+}
+.prescription-image-heading strong {
+  color: var(--color-primary-dark);
+  font-size: 0.78rem;
+}
+.prescription-image-heading span,
+.prescription-current-image {
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  margin: 0;
+}
+.prescription-image-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.prescription-image-source button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #cdded9;
+  border-radius: 9px;
+  color: var(--color-primary-dark);
+  display: inline-flex;
+  font-size: 0.7rem;
+  gap: 0.35rem;
+  padding: 0.55rem 0.7rem;
+}
+.prescription-image-source button.active {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #fff;
+}
+.prescription-image-source button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.prescription-file-picker {
+  align-items: center;
+  background: #fff;
+  border: 1px dashed #a9c5bc;
+  border-radius: 10px;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 750;
+  justify-content: center;
+  min-height: 76px;
+  padding: 0.75rem;
+  position: relative;
+}
+.prescription-file-picker span {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+.prescription-file-picker input {
+  cursor: pointer;
+  height: 100%;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+}
+.prescription-camera-panel {
+  background: #0d2621;
+  border-radius: 12px;
+  min-height: 180px;
+  overflow: hidden;
+  position: relative;
+}
+.prescription-camera-panel video {
+  display: none;
+  height: min(54vw, 360px);
+  object-fit: cover;
+  width: 100%;
+}
+.prescription-camera-panel video.is-visible {
+  display: block;
+}
+.prescription-camera-state {
+  align-items: center;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.72rem;
+  gap: 0.45rem;
+  justify-content: center;
+  line-height: 1.45;
+  min-height: 180px;
+  padding: 1rem;
+  text-align: center;
+}
+.prescription-camera-state span {
+  color: #c7d7d2;
+  max-width: 420px;
+}
+.prescription-camera-state .button {
+  margin-top: 0.25rem;
+}
+.prescription-camera-actions {
+  align-items: center;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.7), transparent);
+  bottom: 0;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  left: 0;
+  padding: 2.5rem 1rem 1rem;
+  position: absolute;
+  right: 0;
+}
+.prescription-camera-actions .button {
+  min-height: 38px;
+}
+.prescription-camera-message {
+  background: #fff3f1;
+  color: #913d35;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+}
+.prescription-image-preview {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d9e8e3;
+  border-radius: 10px;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  padding: 0.55rem;
+}
+.prescription-image-preview img {
+  border-radius: 7px;
+  height: 52px;
+  object-fit: cover;
+  width: 52px;
+}
+.prescription-image-preview div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.prescription-image-preview strong,
+.prescription-image-preview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prescription-image-preview strong {
+  color: var(--color-primary-dark);
+  font-size: 0.72rem;
+}
+.prescription-image-preview span {
+  color: var(--color-text-soft);
+  font-size: 0.65rem;
+}
+.prescription-image-preview button {
+  background: transparent;
+  border: 0;
+  color: #934941;
+  font-size: 0.68rem;
+  font-weight: 750;
+  padding: 0.35rem;
+}
+.prescription-image-help {
+  margin: 0;
+}
 .buyer-form {
   display: grid;
   gap: 0.8rem;
@@ -279,6 +466,9 @@
   .prescription-form .field-wide {
     grid-column: 1/-1;
   }
+  .prescription-camera-panel video {
+    height: min(72vw, 360px);
+  }
 }
 @media (max-width: 430px) {
   .prescription-form,
@@ -312,6 +502,24 @@
   .mode-toggle button {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+
+  .prescription-image-heading {
+    flex-direction: column;
+  }
+
+  .prescription-image-preview {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .prescription-image-preview img {
+    height: 46px;
+    width: 46px;
+  }
+
+  .prescription-image-preview button {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .pickup-choice {
