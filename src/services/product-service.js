@@ -1,6 +1,7 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
+import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import {
   createProduct as createProductRepository,
   findProductById,
@@ -48,9 +49,11 @@ export async function getProduct(productId, actor, dependencies = {}) {
   const id = validateProductId(productId);
   const product = await (dependencies.findProductById ?? findProductById)(id);
   if (!product) notFound();
+  const images = await (dependencies.listImages ?? listActiveProductImages)([id]);
   return {
     ...product,
     availability: (dependencies.getAvailability ?? getMockAvailability)(product),
+    images: images.map(({ productId: _productId, ...image }) => image),
   };
 }
 

@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
+import { getCloudinaryMediaGateway } from "../integrations/media/cloudinary-media-gateway.js";
+import { readPrescriptionImage } from "../integrations/prescriptions/prescription-reader.js";
 import {
   createPointOfSaleExternalPrescription as createPosPrescriptionRepository,
   findExternalPrescriptionById,
@@ -61,6 +63,56 @@ async function createWithRepository(data, actor, dependencies) {
   return result.prescription;
 }
 
+async function uploadPrescriptionImage(image, dependencies) {
+  const data = validatePrescriptionImageBytes(
+    Buffer.from(await image.file.arrayBuffer()),
+    image.mediaType,
+  );
+  if (data.length !== image.size) {
+    throw new AppError({ code: "INVALID_PRESCRIPTION_IMAGE", message: "El tamaño recibido no coincide con el archivo declarado.", status: 400 });
+  }
+  const cloudinary = await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
+    .uploadPrivatePrescription({ data });
+  return {
+    cloudinary,
+    data: null,
+    filename: image.filename,
+    mediaType: image.mediaType,
+    sha256: createHash("sha256").update(data).digest("hex"),
+    size: data.length,
+  };
+}
+
+async function readPrescriptionImageDraft(image, dependencies) {
+  const data = validatePrescriptionImageBytes(
+    Buffer.from(await image.file.arrayBuffer()),
+    image.mediaType,
+  );
+  if (data.length !== image.size) {
+    throw new AppError({
+      code: "INVALID_PRESCRIPTION_IMAGE",
+      message: "El tamaño recibido no coincide con el archivo declarado.",
+      status: 400,
+    });
+  }
+  return (dependencies.readImage ?? readPrescriptionImage)({
+    data,
+    mediaType: image.mediaType,
+  });
+}
+
+async function createUploadedPrescription(data, actor, dependencies) {
+  try {
+    return await createWithRepository(data, actor, dependencies);
+  } catch (error) {
+    if (data.cloudinary) {
+      await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
+        .deletePrivatePrescription(data.cloudinary);
+    }
+    throw error;
+  }
+}
+
 export async function createPointOfSaleExternalPrescription(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   if (!input || typeof input !== "object" || Array.isArray(input)) {
@@ -72,29 +124,30 @@ export async function createPointOfSaleExternalPrescription(input, actor, depend
   let file = { data: null, filename: null, mediaType: null, sha256: null, size: null, source: "MANUAL" };
   if (input.image) {
     const image = validatePrescriptionImage(input.image);
-    const data = validatePrescriptionImageBytes(
-      Buffer.from(await image.file.arrayBuffer()),
-      image.mediaType,
-    );
-    if (data.length !== image.size) {
-      throw new AppError({ code: "INVALID_PRESCRIPTION_IMAGE", message: "El tamaño recibido no coincide con el archivo declarado.", status: 400 });
-    }
     file = {
-      data,
-      filename: image.filename,
-      mediaType: image.mediaType,
-      sha256: createHash("sha256").update(data).digest("hex"),
-      size: data.length,
+      ...(await uploadPrescriptionImage(image, dependencies)),
       source: "IMAGE",
     };
   }
-  return createWithRepository({
+  return createUploadedPrescription({
     ...file,
     confirmedAt: dependencies.currentDate ?? new Date(),
     confirmedData,
     customerId,
     patientId,
   }, actor, dependencies);
+}
+
+export async function readPointOfSaleExternalPrescriptionImage(input, actor, dependencies = {}) {
+  requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new AppError({
+      code: "INVALID_PRESCRIPTION_IMAGE",
+      message: "Debe adjuntar una imagen de receta para leerla.",
+      status: 400,
+    });
+  }
+  return readPrescriptionImageDraft(validatePrescriptionImage(input.image), dependencies);
 }
 
 export async function createExternalPrescription(input, actor, dependencies = {}) {
@@ -122,20 +175,12 @@ export async function createExternalPrescription(input, actor, dependencies = {}
   }
   if (source === "IMAGE") {
     const image = validatePrescriptionImage(input.file);
-    const data = validatePrescriptionImageBytes(
-      Buffer.from(await image.file.arrayBuffer()),
-      image.mediaType,
-    );
-    return createWithRepository({
+    return createUploadedPrescription({
       confirmedAt,
       confirmedData: { notes: normalizeNotes(input.notes) },
       customerId,
-      data,
-      filename: image.filename,
-      mediaType: image.mediaType,
+      ...(await uploadPrescriptionImage(image, dependencies)),
       patientId,
-      sha256: createHash("sha256").update(data).digest("hex"),
-      size: data.length,
       source,
     }, actor, dependencies);
   }
@@ -163,5 +208,8 @@ export async function getExternalPrescriptionFile(id, actor, dependencies = {}) 
     validateExternalPrescriptionId(id),
   );
   if (!file) notFound();
-  return file;
+  if (!file.cloudinary) return file;
+  const data = await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
+    .downloadPrivatePrescription(file.cloudinary);
+  return { ...file, data };
 }

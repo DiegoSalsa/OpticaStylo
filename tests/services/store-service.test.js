@@ -6,6 +6,8 @@ import {
   createStoreCart,
   extractPrescriptionImage,
   getStoreOrder,
+  getPrescriptionImage,
+  putPrescriptionImage,
   putStoreCartItem,
   putStoreCartItems,
   retryStoreOrderCheckout,
@@ -30,6 +32,20 @@ const sale = {
   subtotalCents: 50000,
   totalCents: 50000,
 };
+
+function imageFile() {
+  const data = Buffer.alloc(24);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(data);
+  data.writeUInt32BE(13, 8);
+  data.write("IHDR", 12, "ascii");
+  data.writeUInt32BE(1, 16);
+  data.writeUInt32BE(1, 20);
+  const file = new Blob([
+    data,
+  ], { type: "image/png" });
+  Object.defineProperty(file, "name", { value: "receta.png" });
+  return file;
+}
 
 test("crea un carrito invitado con token opaco", async () => {
   const result = await createStoreCart(null, {
@@ -85,6 +101,43 @@ test("traduce el rechazo de cristales sin marco en el carrito", async () => {
   }), (error) => error.code === "STORE_LENS_MOUNT_REQUIRED" && error.status === 409);
 });
 
+test("guarda la receta del carrito como activo privado de Cloudinary", async () => {
+  const result = await putPrescriptionImage("token", null, imageFile(), {
+    hashToken: () => "hash",
+    mediaGateway: {
+      deletePrivatePrescription: async () => assert.fail("No debe compensar una carga exitosa"),
+      uploadPrivatePrescription: async () => ({
+        assetId: "asset-uno",
+        format: "png",
+        publicId: "opticastylo/recetas/uno",
+        version: 1,
+      }),
+    },
+    saveImage: async (_hash, _accountId, image) => {
+      assert.equal(image.data, undefined);
+      assert.equal(image.cloudinary.assetId, "asset-uno");
+      return { cart, reason: null };
+    },
+  });
+  assert.equal(result.id, cart.id);
+});
+
+test("recupera una receta privada mediante el servidor", async () => {
+  const result = await getPrescriptionImage("token", null, {
+    findImage: async () => ({
+      cloudinary: { assetId: "asset-uno", format: "png", publicId: "opticastylo/recetas/uno", version: 1 },
+      data: null,
+      filename: "receta.png",
+      mediaType: "image/png",
+    }),
+    hashToken: () => "hash",
+    mediaGateway: {
+      downloadPrivatePrescription: async () => Buffer.from("image"),
+    },
+  });
+  assert.deepEqual(result.data, Buffer.from("image"));
+});
+
 test("convierte el carrito en venta y crea el checkout real desacoplado", async () => {
   const result = await checkoutCart("token", null, {
     checkoutCart: async () => ({ reason: null, saleId: orderId }),
@@ -125,6 +178,55 @@ test("rechaza reintentar un pedido ya pagado", async () => {
 
 test("mantiene cerrada la lectura automática sin proveedor autorizado", async () => {
   await assert.rejects(() => extractPrescriptionImage("token", null, {
-    findImage: async () => ({ data: Buffer.from("image"), mediaType: "image/png" }),
+    claimExtraction: async () => ({
+      cached: false,
+      image: { data: Buffer.from("image"), mediaType: "image/png" },
+      reason: null,
+    }),
+    failExtraction: async () => ({ reason: null }),
   }), (error) => error.code === "PRESCRIPTION_READER_NOT_CONFIGURED" && error.status === 503);
+});
+
+test("guarda la lectura de Luna como borrador antes de confirmar la receta", async () => {
+  const result = await extractPrescriptionImage("token", null, {
+    claimExtraction: async () => ({
+      cached: false,
+      image: { data: Buffer.from("imagen"), mediaType: "image/png" },
+      reason: null,
+    }),
+    completeExtraction: async (_hash, _accountId, provider, data) => {
+      assert.equal(provider, "OPENAI_GPT_5_6_LUNA");
+      assert.equal(data.rightEye.sphere, -1.25);
+      return { cart, reason: null };
+    },
+    readPrescriptionImage: async () => ({
+      data: {
+        confidence: "MEDIUM",
+        fulfillmentNotes: null,
+        leftEye: { addition: null, axis: null, cylinder: null, sphere: null },
+        pupillaryDistance: null,
+        rightEye: { addition: null, axis: 90, cylinder: -0.5, sphere: -1.25 },
+        warnings: ["Confirmar valores."],
+      },
+      provider: "OPENAI_GPT_5_6_LUNA",
+    }),
+  });
+  assert.equal(result.cart.id, cart.id);
+  assert.equal(result.extraction.cached, false);
+  assert.equal(result.extraction.data.confidence, "MEDIUM");
+});
+
+test("reutiliza un borrador de receta ya leído sin cobrar otra lectura", async () => {
+  const result = await extractPrescriptionImage("token", null, {
+    claimExtraction: async () => ({
+      cached: true,
+      cart,
+      data: { confidence: "LOW" },
+      provider: "OPENAI_GPT_5_6_LUNA",
+      reason: null,
+    }),
+    readPrescriptionImage: async () => assert.fail("No debe solicitar otra lectura"),
+  });
+  assert.equal(result.extraction.cached, true);
+  assert.equal(result.extraction.data.confidence, "LOW");
 });

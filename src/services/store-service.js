@@ -1,16 +1,20 @@
 import { createHash } from "node:crypto";
 
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
+import { getCloudinaryMediaGateway } from "../integrations/media/cloudinary-media-gateway.js";
 import { readPrescriptionImage } from "../integrations/prescriptions/prescription-reader.js";
 import { createStoreMercadoPagoCheckout } from "./mercado-pago-service.js";
 import { findSaleById } from "../repositories/sale-repository.js";
 import {
+  claimCartPrescriptionExtraction,
   checkoutStoreCart,
+  completeCartPrescriptionExtraction,
   configureStoreCart,
   confirmExternalPrescription,
   createOrRotateStoreCart,
   findCartPrescriptionImage,
   findStoreCart,
+  failCartPrescriptionExtraction,
   listStoreOrders,
   removeStoreCartItem,
   saveExternalPrescriptionImage,
@@ -66,6 +70,11 @@ const ERRORS = Object.freeze({
     "Primero debe cargar una imagen de la receta.",
     404,
   ],
+  PRESCRIPTION_EXTRACTION_IN_PROGRESS: [
+    "PRESCRIPTION_EXTRACTION_IN_PROGRESS",
+    "La receta se está leyendo. Espere un momento antes de volver a intentarlo.",
+    409,
+  ],
   PRODUCT_NOT_AVAILABLE: [
     "STORE_PRODUCT_NOT_AVAILABLE",
     "El producto no se encuentra disponible.",
@@ -95,6 +104,17 @@ function unwrap(result) {
 function access(token, account) {
   if (!token) throwReason("CART_NOT_FOUND");
   return { accountId: account?.id ?? null, tokenHash: hashSessionToken(token) };
+}
+
+async function deleteReplacedPrivatePrescription(asset, dependencies) {
+  if (!asset) return;
+  try {
+    const removed = await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
+      .deletePrivatePrescription(asset);
+    if (!removed) console.error("Una receta privada reemplazada requiere limpieza manual en Cloudinary.", asset.assetId);
+  } catch (error) {
+    console.error("No fue posible limpiar una receta privada reemplazada.", error);
+  }
 }
 
 export async function createStoreCart(account, dependencies = {}) {
@@ -151,23 +171,29 @@ export async function deleteStoreCartItem(token, account, productId, dependencie
 
 export async function updateStoreCart(token, account, input, dependencies = {}) {
   const credentials = access(token, account);
-  return unwrap(await (dependencies.configureCart ?? configureStoreCart)(
+  const result = await (dependencies.configureCart ?? configureStoreCart)(
     credentials.tokenHash,
     credentials.accountId,
     validateCartConfiguration(input),
-  ));
+  );
+  const cart = unwrap(result);
+  await deleteReplacedPrivatePrescription(result.removedCloudinary, dependencies);
+  return cart;
 }
 
 export async function putManualPrescription(token, account, input, dependencies = {}) {
   const credentials = access(token, account);
-  return unwrap(await (
+  const result = await (
     dependencies.saveManualPrescription ?? saveManualExternalPrescription
   )(
     credentials.tokenHash,
     credentials.accountId,
     validateExternalPrescriptionData(input),
     dependencies.currentDate ?? new Date(),
-  ));
+  );
+  const cart = unwrap(result);
+  await deleteReplacedPrivatePrescription(result.replacedCloudinary, dependencies);
+  return cart;
 }
 
 export async function putPrescriptionImage(token, account, file, dependencies = {}) {
@@ -178,13 +204,26 @@ export async function putPrescriptionImage(token, account, file, dependencies = 
     image.mediaType,
   );
   const sha256 = createHash("sha256").update(data).digest("hex");
-  return unwrap(await (
-    dependencies.saveImage ?? saveExternalPrescriptionImage
-  )(
-    credentials.tokenHash,
-    credentials.accountId,
-    { ...image, data, file: undefined, sha256 },
-  ));
+  const gateway = dependencies.mediaGateway ?? getCloudinaryMediaGateway();
+  const cloudinary = await gateway.uploadPrivatePrescription({ data });
+  try {
+    const result = await (
+      dependencies.saveImage ?? saveExternalPrescriptionImage
+    )(
+      credentials.tokenHash,
+      credentials.accountId,
+      { ...image, cloudinary, file: undefined, sha256 },
+    );
+    const cart = unwrap(result);
+    await deleteReplacedPrivatePrescription(result.replacedCloudinary, {
+      ...dependencies,
+      mediaGateway: gateway,
+    });
+    return cart;
+  } catch (error) {
+    await gateway.deletePrivatePrescription(cloudinary);
+    throw error;
+  }
 }
 
 export async function completeImagePrescription(token, account, input, dependencies = {}) {
@@ -206,12 +245,64 @@ export async function getPrescriptionImage(token, account, dependencies = {}) {
     credentials.accountId,
   );
   if (!image) throwReason("PRESCRIPTION_IMAGE_NOT_FOUND");
-  return image;
+  if (!image.cloudinary) return image;
+  const data = await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
+    .downloadPrivatePrescription(image.cloudinary);
+  return { ...image, data };
 }
 
 export async function extractPrescriptionImage(token, account, dependencies = {}) {
-  const image = await getPrescriptionImage(token, account, dependencies);
-  return (dependencies.readPrescriptionImage ?? readPrescriptionImage)(image);
+  const credentials = access(token, account);
+  const provider = "OPENAI_GPT_5_6_LUNA";
+  const claim = await (
+    dependencies.claimExtraction ?? claimCartPrescriptionExtraction
+  )(
+    credentials.tokenHash,
+    credentials.accountId,
+    provider,
+  );
+  if (claim.reason) throwReason(claim.reason);
+  if (claim.cached) {
+    return {
+      cart: claim.cart,
+      extraction: { cached: true, data: claim.data, provider: claim.provider },
+    };
+  }
+  let image = claim.image;
+  try {
+    if (image.cloudinary) {
+      const data = await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
+        .downloadPrivatePrescription(image.cloudinary);
+      image = { ...image, data };
+    }
+    const extraction = await (
+      dependencies.readPrescriptionImage ?? readPrescriptionImage
+    )(image);
+    const result = await (
+      dependencies.completeExtraction ?? completeCartPrescriptionExtraction
+    )(
+      credentials.tokenHash,
+      credentials.accountId,
+      extraction.provider,
+      extraction.data,
+    );
+    if (result.reason) throwReason(result.reason);
+    return {
+      cart: result.cart,
+      extraction: { cached: false, data: extraction.data, provider: extraction.provider },
+    };
+  } catch (error) {
+    try {
+      await (dependencies.failExtraction ?? failCartPrescriptionExtraction)(
+        credentials.tokenHash,
+        credentials.accountId,
+        provider,
+      );
+    } catch (failure) {
+      console.error("No fue posible registrar el error de lectura automática de la receta.", failure);
+    }
+    throw error;
+  }
 }
 
 function publicOrder(sale) {

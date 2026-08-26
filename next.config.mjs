@@ -22,6 +22,11 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
+  images: {
+    remotePatterns: [
+      { hostname: "res.cloudinary.com", pathname: "/**", protocol: "https" },
+    ],
+  },
   headers() {
     return [{ headers: securityHeaders, source: "/:path*" }];
   },

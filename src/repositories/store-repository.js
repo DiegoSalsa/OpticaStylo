@@ -40,6 +40,7 @@ function mapPrescription(row) {
   return {
     confirmedData: row.confirmed_data,
     createdAt: row.prescription_created_at,
+    extractedData: row.extracted_data,
     extractionProvider: row.extraction_provider,
     extractionStatus: row.extraction_status,
     hasImage: row.source === "IMAGE",
@@ -62,6 +63,7 @@ async function loadCart(client, tokenHash, accountId = null) {
             external_prescriptions.media_type,
             external_prescriptions.extraction_status,
             external_prescriptions.extraction_provider,
+            external_prescriptions.extracted_data,
             external_prescriptions.confirmed_data,
             external_prescriptions.created_at AS prescription_created_at,
             external_prescriptions.updated_at AS prescription_updated_at
@@ -308,7 +310,18 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
         fulfillment.notes, configuration.clinicalPrescriptionId],
     );
     if (configuration.clinicalPrescriptionId) {
+      const external = await client.query(
+        `SELECT cloudinary_asset_id, cloudinary_public_id, cloudinary_version, cloudinary_format
+         FROM external_prescriptions WHERE cart_id = $1 FOR UPDATE`,
+        [locked.cart.id],
+      );
+      const removedCloudinary = cloudinaryAsset(external.rows[0]);
       await client.query("DELETE FROM external_prescriptions WHERE cart_id = $1", [locked.cart.id]);
+      return {
+        cart: await loadCart(client, tokenHash, accountId),
+        reason: null,
+        removedCloudinary,
+      };
     }
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
   });
@@ -318,6 +331,12 @@ export async function saveManualExternalPrescription(tokenHash, accountId, data,
   return executeTransaction(async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
+    const existing = await client.query(
+      `SELECT cloudinary_asset_id, cloudinary_public_id, cloudinary_version, cloudinary_format
+       FROM external_prescriptions WHERE cart_id = $1 FOR UPDATE`,
+      [locked.cart.id],
+    );
+    const replacedCloudinary = cloudinaryAsset(existing.rows[0]);
     await client.query(
       `INSERT INTO external_prescriptions (
          cart_id, source, status, extraction_status, confirmed_data, confirmed_at
@@ -325,7 +344,8 @@ export async function saveManualExternalPrescription(tokenHash, accountId, data,
        ON CONFLICT (cart_id) DO UPDATE SET
          source = 'MANUAL', status = 'READY', original_filename = NULL,
          media_type = NULL, file_size_bytes = NULL, file_sha256 = NULL,
-         file_data = NULL, extraction_status = 'NOT_REQUESTED',
+         file_data = NULL, cloudinary_asset_id = NULL, cloudinary_public_id = NULL,
+         cloudinary_version = NULL, cloudinary_format = NULL, extraction_status = 'NOT_REQUESTED',
          extraction_provider = NULL, extracted_data = NULL,
          confirmed_data = EXCLUDED.confirmed_data,
          confirmed_at = EXCLUDED.confirmed_at`,
@@ -335,7 +355,7 @@ export async function saveManualExternalPrescription(tokenHash, accountId, data,
       "UPDATE store_carts SET clinical_prescription_id = NULL WHERE id = $1",
       [locked.cart.id],
     );
-    return { cart: await loadCart(client, tokenHash, accountId), reason: null };
+    return { cart: await loadCart(client, tokenHash, accountId), reason: null, replacedCloudinary };
   });
 }
 
@@ -343,24 +363,37 @@ export async function saveExternalPrescriptionImage(tokenHash, accountId, image)
   return executeTransaction(async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
+    const existing = await client.query(
+      `SELECT cloudinary_asset_id, cloudinary_public_id, cloudinary_version, cloudinary_format
+       FROM external_prescriptions WHERE cart_id = $1 FOR UPDATE`,
+      [locked.cart.id],
+    );
+    const replacedCloudinary = cloudinaryAsset(existing.rows[0]);
     await client.query(
       `INSERT INTO external_prescriptions (
          cart_id, source, status, original_filename, media_type,
-         file_size_bytes, file_sha256, file_data, extraction_status
-       ) VALUES ($1, 'IMAGE', 'DRAFT', $2, $3, $4, $5, $6, 'NOT_CONFIGURED')
+         file_size_bytes, file_sha256, file_data, cloudinary_asset_id,
+         cloudinary_public_id, cloudinary_version, cloudinary_format, extraction_status
+       ) VALUES ($1, 'IMAGE', 'DRAFT', $2, $3, $4, $5, NULL, $6, $7, $8, $9, 'NOT_REQUESTED')
        ON CONFLICT (cart_id) DO UPDATE SET
          source = 'IMAGE', status = 'DRAFT', original_filename = EXCLUDED.original_filename,
          media_type = EXCLUDED.media_type, file_size_bytes = EXCLUDED.file_size_bytes,
-         file_sha256 = EXCLUDED.file_sha256, file_data = EXCLUDED.file_data,
-         extraction_status = 'NOT_CONFIGURED', extraction_provider = NULL,
+         file_sha256 = EXCLUDED.file_sha256, file_data = NULL,
+         cloudinary_asset_id = EXCLUDED.cloudinary_asset_id,
+         cloudinary_public_id = EXCLUDED.cloudinary_public_id,
+         cloudinary_version = EXCLUDED.cloudinary_version,
+         cloudinary_format = EXCLUDED.cloudinary_format,
+         extraction_status = 'NOT_REQUESTED', extraction_provider = NULL,
          extracted_data = NULL, confirmed_data = NULL, confirmed_at = NULL`,
-      [locked.cart.id, image.filename, image.mediaType, image.size, image.sha256, image.data],
+      [locked.cart.id, image.filename, image.mediaType, image.size, image.sha256,
+        image.cloudinary.assetId, image.cloudinary.publicId, image.cloudinary.version,
+        image.cloudinary.format],
     );
     await client.query(
       "UPDATE store_carts SET clinical_prescription_id = NULL WHERE id = $1",
       [locked.cart.id],
     );
-    return { cart: await loadCart(client, tokenHash, accountId), reason: null };
+    return { cart: await loadCart(client, tokenHash, accountId), reason: null, replacedCloudinary };
   });
 }
 
@@ -379,10 +412,93 @@ export async function confirmExternalPrescription(tokenHash, accountId, data, co
   });
 }
 
+export async function claimCartPrescriptionExtraction(tokenHash, accountId, provider) {
+  return executeTransaction(async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return { cart: null, reason: locked.reason };
+    const result = await client.query(
+      `SELECT original_filename, media_type, file_data, cloudinary_asset_id,
+              cloudinary_public_id, cloudinary_version, cloudinary_format,
+              extraction_status, extraction_provider, extracted_data
+       FROM external_prescriptions
+       WHERE cart_id = $1 AND source = 'IMAGE'
+       FOR UPDATE`,
+      [locked.cart.id],
+    );
+    const prescription = result.rows[0];
+    if (!prescription) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
+    if (prescription.extraction_status === "PENDING") {
+      return { cart: null, reason: "PRESCRIPTION_EXTRACTION_IN_PROGRESS" };
+    }
+    if (prescription.extraction_status === "COMPLETED" && prescription.extracted_data) {
+      return {
+        cart: await loadCart(client, tokenHash, accountId),
+        cached: true,
+        data: prescription.extracted_data,
+        provider: prescription.extraction_provider,
+        reason: null,
+      };
+    }
+    await client.query(
+      `UPDATE external_prescriptions
+       SET extraction_status = 'PENDING', extraction_provider = $2, extracted_data = NULL
+       WHERE cart_id = $1`,
+      [locked.cart.id, provider],
+    );
+    return {
+      cached: false,
+      image: {
+        cloudinary: cloudinaryAsset(prescription),
+        data: prescription.file_data,
+        filename: prescription.original_filename,
+        mediaType: prescription.media_type,
+      },
+      reason: null,
+    };
+  });
+}
+
+export async function completeCartPrescriptionExtraction(
+  tokenHash,
+  accountId,
+  provider,
+  data,
+) {
+  return executeTransaction(async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return { cart: null, reason: locked.reason };
+    const result = await client.query(
+      `UPDATE external_prescriptions
+       SET extraction_status = 'COMPLETED', extraction_provider = $2, extracted_data = $3::JSONB
+       WHERE cart_id = $1 AND source = 'IMAGE' AND extraction_status = 'PENDING'
+       RETURNING id`,
+      [locked.cart.id, provider, JSON.stringify(data)],
+    );
+    if (result.rowCount === 0) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
+    return { cart: await loadCart(client, tokenHash, accountId), reason: null };
+  });
+}
+
+export async function failCartPrescriptionExtraction(tokenHash, accountId, provider) {
+  return executeTransaction(async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return { reason: locked.reason };
+    await client.query(
+      `UPDATE external_prescriptions
+       SET extraction_status = 'FAILED', extraction_provider = $2, extracted_data = NULL
+       WHERE cart_id = $1 AND source = 'IMAGE' AND extraction_status = 'PENDING'`,
+      [locked.cart.id, provider],
+    );
+    return { reason: null };
+  });
+}
+
 export async function findCartPrescriptionImage(tokenHash, accountId) {
   const result = await executeQuery(
-    `SELECT external_prescriptions.original_filename,
-            external_prescriptions.media_type, external_prescriptions.file_data
+    `SELECT external_prescriptions.original_filename, external_prescriptions.media_type,
+            external_prescriptions.file_data, external_prescriptions.cloudinary_asset_id,
+            external_prescriptions.cloudinary_public_id,
+            external_prescriptions.cloudinary_version, external_prescriptions.cloudinary_format
      FROM store_carts
      JOIN external_prescriptions ON external_prescriptions.cart_id = store_carts.id
      WHERE store_carts.token_hash = $1
@@ -391,7 +507,27 @@ export async function findCartPrescriptionImage(tokenHash, accountId) {
     [tokenHash, accountId],
   );
   const row = result.rows[0];
-  return row ? { data: row.file_data, filename: row.original_filename, mediaType: row.media_type } : null;
+  return row ? {
+    cloudinary: row.cloudinary_asset_id ? {
+      assetId: row.cloudinary_asset_id,
+      format: row.cloudinary_format,
+      publicId: row.cloudinary_public_id,
+      version: Number(row.cloudinary_version),
+    } : null,
+    data: row.file_data,
+    filename: row.original_filename,
+    mediaType: row.media_type,
+  } : null;
+}
+
+function cloudinaryAsset(row) {
+  if (!row?.cloudinary_asset_id) return null;
+  return {
+    assetId: row.cloudinary_asset_id,
+    format: row.cloudinary_format,
+    publicId: row.cloudinary_public_id,
+    version: Number(row.cloudinary_version),
+  };
 }
 
 async function ensureGuestCustomer(client, buyer) {
@@ -583,11 +719,17 @@ export async function findExternalPrescriptionById(prescriptionId) {
 
 export async function findExternalPrescriptionFileById(prescriptionId) {
   const result = await executeQuery(
-    `SELECT original_filename, media_type, file_data
+    `SELECT original_filename, media_type, file_data, cloudinary_asset_id,
+            cloudinary_public_id, cloudinary_version, cloudinary_format
      FROM external_prescriptions
      WHERE id = $1 AND source = 'IMAGE'`,
     [prescriptionId],
   );
   const row = result.rows[0];
-  return row ? { data: row.file_data, filename: row.original_filename, mediaType: row.media_type } : null;
+  return row ? {
+    cloudinary: cloudinaryAsset(row),
+    data: row.file_data,
+    filename: row.original_filename,
+    mediaType: row.media_type,
+  } : null;
 }

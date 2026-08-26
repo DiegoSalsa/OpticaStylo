@@ -7,6 +7,7 @@ function mapPrescription(row) {
     confirmedData: row.confirmed_data,
     createdAt: row.created_at,
     customerId: row.customer_id,
+    cloudinaryAssetId: row.cloudinary_asset_id,
     fileSha256: row.file_sha256,
     fileSizeBytes: row.file_size_bytes,
     hasImage: row.source === "IMAGE",
@@ -45,14 +46,17 @@ export async function createPointOfSaleExternalPrescription(input, actorUserId) 
     const result = await client.query(
       `INSERT INTO external_prescriptions (
          customer_id, patient_id, source, status, original_filename, media_type,
-         file_size_bytes, file_sha256, file_data, extraction_status,
+         file_size_bytes, file_sha256, file_data, cloudinary_asset_id,
+         cloudinary_public_id, cloudinary_version, cloudinary_format, extraction_status,
          confirmed_data, confirmed_at, created_by
        ) VALUES (
          $1, $2, $3, 'READY', $4, $5, $6, $7, $8,
-         $9, $10::JSONB, $11, $12
+         $9, $10, $11, $12, $13, $14, $15::JSONB, $16
        ) RETURNING id`,
       [input.customerId, input.patientId, input.source, input.filename,
         input.mediaType, input.size, input.sha256, input.data,
+        input.cloudinary?.assetId ?? null, input.cloudinary?.publicId ?? null,
+        input.cloudinary?.version ?? null, input.cloudinary?.format ?? null,
         input.source === "IMAGE" ? "NOT_CONFIGURED" : "NOT_REQUESTED",
         JSON.stringify(input.confirmedData), input.confirmedAt, actorUserId],
     );
@@ -88,10 +92,22 @@ export async function listExternalPrescriptionsByPatient(patientId) {
 
 export async function findExternalPrescriptionFileById(id) {
   const result = await executeQuery(
-    `SELECT original_filename, media_type, file_data FROM external_prescriptions
+    `SELECT original_filename, media_type, file_data, cloudinary_asset_id,
+            cloudinary_public_id, cloudinary_version, cloudinary_format
+     FROM external_prescriptions
      WHERE id = $1 AND source = 'IMAGE'`,
     [id],
   );
   const row = result.rows[0];
-  return row ? { data: row.file_data, filename: row.original_filename, mediaType: row.media_type } : null;
+  return row ? {
+    cloudinary: row.cloudinary_asset_id ? {
+      assetId: row.cloudinary_asset_id,
+      format: row.cloudinary_format,
+      publicId: row.cloudinary_public_id,
+      version: Number(row.cloudinary_version),
+    } : null,
+    data: row.file_data,
+    filename: row.original_filename,
+    mediaType: row.media_type,
+  } : null;
 }
