@@ -19,6 +19,7 @@ const product = {
 test("fuerza el catálogo público a mostrar solo activos", async () => {
   const query = new URLSearchParams("isActive=false");
   const result = await getStoreProducts(query, {
+    listProductImages: async () => [],
     listProducts: async (filters) => {
       assert.equal(filters.isActive, true);
       assert.equal(filters.excludeCategory, "PRESCRIPTION_LENS");
@@ -37,6 +38,7 @@ test("oculta productos inactivos por identificador", async () => {
 test("oculta los datos de prueba fuera del entorno local", async () => {
   const result = await getStoreProducts(new URLSearchParams(), {
     includeTestData: false,
+    listProductImages: async () => [],
     listProducts: async (filters) => {
       assert.equal(filters.includeTestData, false);
       return {
@@ -68,6 +70,7 @@ test("oculta los cristales como productos independientes en la tienda", async ()
 test("incluye la galería y ficha del modelo HD0896-001", async () => {
   const result = await getStoreProduct(product.id, {
     findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
+    listProductImages: async () => [],
     listProducts: async (filters) => {
       assert.equal(filters.category, "PRESCRIPTION_LENS");
       return {

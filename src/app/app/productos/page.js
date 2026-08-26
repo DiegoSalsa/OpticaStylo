@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 
 import {
   readResponse,
@@ -36,6 +37,10 @@ export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [form, setForm] = useState(EMPTY);
+  const [imageAlt, setImageAlt] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [images, setImages] = useState([]);
+  const [imageStatus, setImageStatus] = useState("idle");
   const [selectedId, setSelectedId] = useState(null);
   const [status, setStatus] = useState("loading");
   const [notice, setNotice] = useState(null);
@@ -50,6 +55,17 @@ export default function ProductsPage() {
       ),
     [submitted],
   );
+
+  const loadImages = useCallback(async (productId) => {
+    try {
+      const data = await readResponse(await fetch(`/api/products/${productId}/images`, {
+        cache: "no-store",
+      }));
+      setImages(data);
+    } catch (error) {
+      setNotice({ kind: "error", text: error.message });
+    }
+  }, []);
 
   useEffect(() => {
     if (!actor?.permissions.includes("products.read")) return;
@@ -71,12 +87,19 @@ export default function ProductsPage() {
   function select(product) {
     setSelectedId(product.id);
     setForm({ ...product, unitPriceCents: String(product.unitPriceCents) });
+    setImages([]);
+    setImageAlt("");
+    setImageFile(null);
     setNotice(null);
+    void loadImages(product.id);
   }
 
   function reset() {
     setSelectedId(null);
     setForm(EMPTY);
+    setImages([]);
+    setImageAlt("");
+    setImageFile(null);
     setNotice(null);
   }
 
@@ -122,6 +145,7 @@ export default function ProductsPage() {
       );
       setSelectedId(saved.id);
       setForm({ ...saved, unitPriceCents: String(saved.unitPriceCents) });
+      void loadImages(saved.id);
       const data = await requestProducts();
       setItems(data.items);
       setStatus("ready");
@@ -134,6 +158,47 @@ export default function ProductsPage() {
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
       setStatus("ready");
+    }
+  }
+
+  async function uploadImage(event) {
+    event.preventDefault();
+    if (!selectedId || !imageFile) return;
+    setImageStatus("uploading");
+    setNotice(null);
+    const payload = new FormData();
+    payload.set("alt", imageAlt);
+    payload.set("image", imageFile);
+    try {
+      const created = await readResponse(await fetch(`/api/products/${selectedId}/images`, {
+        body: payload,
+        method: "POST",
+      }));
+      setImages((current) => [...current, created]);
+      setImageAlt("");
+      setImageFile(null);
+      setImageStatus("idle");
+      setNotice({ kind: "success", text: "Imagen guardada en Cloudinary." });
+    } catch (error) {
+      setImageStatus("idle");
+      setNotice({ kind: "error", text: error.message });
+    }
+  }
+
+  async function removeImage(imageId) {
+    if (!selectedId) return;
+    setImageStatus(`removing:${imageId}`);
+    setNotice(null);
+    try {
+      await readResponse(await fetch(`/api/products/${selectedId}/images/${imageId}`, {
+        method: "DELETE",
+      }));
+      setImages((current) => current.filter((image) => image.id !== imageId));
+      setNotice({ kind: "success", text: "Imagen retirada del catálogo." });
+    } catch (error) {
+      setNotice({ kind: "error", text: error.message });
+    } finally {
+      setImageStatus("idle");
     }
   }
 
@@ -362,6 +427,75 @@ export default function ProductsPage() {
                     Desactivar conserva historial de ventas y versiones.
                   </small>
                 </label>
+              )}
+              {selectedId && (
+                <section className="product-image-manager" aria-labelledby="product-images-heading">
+                  <div>
+                    <h3 id="product-images-heading">Galería del producto</h3>
+                    <p>Las imágenes se almacenan y entregan desde Cloudinary.</p>
+                  </div>
+                  {images.length > 0 && (
+                    <div className="product-image-grid">
+                      {images.map((image) => (
+                        <article className="product-image-card" key={image.id}>
+                          <div className="product-image-preview">
+                            <Image
+                              alt={image.alt}
+                              fill
+                              sizes="(max-width: 900px) 45vw, 180px"
+                              src={image.url}
+                              unoptimized
+                            />
+                          </div>
+                          <div>
+                            <span>{image.alt}</span>
+                            {canManage && (
+                              <button
+                                className="app-button app-button--quiet"
+                                disabled={imageStatus !== "idle"}
+                                onClick={() => removeImage(image.id)}
+                                type="button"
+                              >
+                                {imageStatus === `removing:${image.id}` ? "Retirando…" : "Retirar"}
+                              </button>
+                            )}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                  {canManage && (
+                    <form className="product-image-upload" onSubmit={uploadImage}>
+                      <label className="field field-wide">
+                        <span>Imagen</span>
+                        <input
+                          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                          onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
+                          required
+                          type="file"
+                        />
+                        <small>JPEG, PNG, WEBP, HEIC o HEIF; máximo 4 MiB.</small>
+                      </label>
+                      <label className="field field-wide">
+                        <span>Descripción de la imagen</span>
+                        <input
+                          maxLength="300"
+                          onChange={(event) => setImageAlt(event.target.value)}
+                          placeholder="Ejemplo: Vista frontal de la montura negra"
+                          required
+                          value={imageAlt}
+                        />
+                      </label>
+                      <button
+                        className="app-button"
+                        disabled={!imageFile || imageStatus !== "idle"}
+                        type="submit"
+                      >
+                        {imageStatus === "uploading" ? "Subiendo…" : "Agregar imagen"}
+                      </button>
+                    </form>
+                  )}
+                </section>
               )}
               <div className="editor-actions">
                 <button

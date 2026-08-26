@@ -141,6 +141,64 @@
   justify-content: flex-end;
   margin-top: 1.5rem;
 }
+.product-image-manager {
+  border-top: 1px solid #e5eeeb;
+  margin-top: 1.25rem;
+  padding-top: 1.2rem;
+}
+.product-image-manager h3 {
+  font-size: 0.84rem;
+  margin: 0;
+}
+.product-image-manager > div > p {
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  margin: 0.25rem 0 0;
+}
+.product-image-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin-top: 0.9rem;
+}
+.product-image-card {
+  background: #f6faf9;
+  border: 1px solid #dbe8e4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.product-image-preview {
+  aspect-ratio: 1.2;
+  display: block;
+  position: relative;
+}
+.product-image-preview img {
+  object-fit: cover;
+  width: 100%;
+}
+.product-image-card > div {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: space-between;
+  padding: 0.5rem;
+}
+.product-image-card span {
+  font-size: 0.62rem;
+  line-height: 1.25;
+}
+.product-image-card .app-button {
+  flex: 0 0 auto;
+  font-size: 0.6rem;
+  padding: 0.35rem 0.45rem;
+}
+.product-image-upload {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  margin-top: 1rem;
+}
 @media (max-width: 900px) {
   .management-layout {
     grid-template-columns: 1fr;
@@ -150,6 +208,9 @@
   }
   .field-wide {
     grid-column: auto;
+  }
+  .product-image-upload {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 560px) {
