@@ -21,6 +21,16 @@ const account = {
   rut: "12.345.678-5",
 };
 
+function pngHeader(width, height) {
+  const data = Buffer.alloc(24);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(data);
+  data.writeUInt32BE(13, 8);
+  data.write("IHDR", 12, "ascii");
+  data.writeUInt32BE(width, 16);
+  data.writeUInt32BE(height, 20);
+  return data;
+}
+
 test("normaliza el registro de una cuenta de cliente", () => {
   const result = validateStoreAccountRegistration(account);
   assert.equal(result.email, "cliente@example.com");
@@ -106,7 +116,7 @@ test("limita la carga a imágenes admitidas", () => {
 });
 
 test("comprueba la firma binaria de las recetas cargadas", () => {
-  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const png = pngHeader(4000, 6000);
   assert.equal(validatePrescriptionImageBytes(png, "image/png"), png);
   assert.throws(
     () => validatePrescriptionImageBytes(Buffer.from("no es una imagen"), "image/png"),
@@ -115,5 +125,12 @@ test("comprueba la firma binaria de las recetas cargadas", () => {
   assert.throws(
     () => validatePrescriptionImageBytes(png, "image/jpeg"),
     (error) => error.code === "INVALID_PRESCRIPTION_IMAGE",
+  );
+});
+
+test("rechaza recetas con dimensiones que agotan recursos", () => {
+  assert.throws(
+    () => validatePrescriptionImageBytes(pngHeader(8001, 1), "image/png"),
+    (error) => error.code === "INVALID_PRESCRIPTION_IMAGE" && error.status === 400,
   );
 });

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -17,6 +18,8 @@ function dependencies(attemptsByBucket = new Map()) {
     },
   };
 }
+
+const source = (path) => readFile(new URL(`../../src/${path}`, import.meta.url), "utf8");
 
 test("limita el inicio de sesión antes de llegar al servicio costoso", async () => {
   const deps = dependencies();
@@ -56,5 +59,81 @@ test("mantiene cuotas separadas para identidades distintas", async () => {
     PUBLIC_REQUEST_LIMIT_OPERATIONS.PUBLIC_BOOKING,
     "87654321-4",
     deps,
+  );
+});
+
+test("limita la creacion anonima de carritos antes de persistirlos", async () => {
+  const deps = dependencies();
+  const request = new Request("https://example.com/api/store/cart", { method: "POST" });
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_CART_CREATION,
+      null,
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_CART_CREATION,
+      null,
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,
+  );
+});
+
+test("limita la carga de recetas antes de enviarlas a Cloudinary", async () => {
+  const deps = dependencies();
+  const request = new Request("https://example.com/api/store/cart/prescription/image", { method: "PUT" });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.PRESCRIPTION_UPLOAD,
+      "carrito-de-prueba",
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.PRESCRIPTION_UPLOAD,
+      "carrito-de-prueba",
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,
+  );
+});
+
+test("aplica las cuotas antes de crear recursos o leer archivos multipart", async () => {
+  const [cart, image] = await Promise.all([
+    source("app/api/store/cart/route.js"),
+    source("app/api/store/cart/prescription/image/route.js"),
+  ]);
+
+  assert.match(cart, /enforcePublicRequestRateLimit\([\s\S]*createStoreCart\(/);
+  assert.match(image, /enforcePublicRequestRateLimit\([\s\S]*readMultipartFormData\(/);
+});
+
+test("limita las lecturas automáticas de recetas antes de consumir saldo", async () => {
+  const deps = dependencies();
+  const request = new Request("https://example.com/api/store/cart/prescription/extract", { method: "POST" });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.PRESCRIPTION_EXTRACTION,
+      "carrito-de-prueba",
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.PRESCRIPTION_EXTRACTION,
+      "carrito-de-prueba",
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,
   );
 });
