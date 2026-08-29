@@ -1,16 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import PasswordRecoveryForm from "@/components/auth/password-recovery-form";
 import Icon from "@/components/ui/icon";
 import { formatClp, readStoreResponse } from "@/utils/store-client";
 
 const orderLabels = { CANCELLED: "Cancelado", DELIVERED: "Entregado", PAID: "Pagado", PAYMENT_PENDING: "Pago pendiente", PENDING: "Pendiente", READY: "Listo", IN_PREPARATION: "En preparación" };
 
 export default function AccountExperience() {
+  const searchParams = useSearchParams();
+  const hasRecoveryReference = searchParams.has("recoveryRequest")
+    || searchParams.has("recoveryToken");
+  const [recoveryCredentials] = useState(() => ({
+    recoveryRequest: searchParams.get("recoveryRequest"),
+    recoveryToken: searchParams.get("recoveryToken"),
+  }));
   const [account, setAccount] = useState(null);
   const [orders, setOrders] = useState([]);
-  const [mode, setMode] = useState("LOGIN");
+  const [mode, setMode] = useState(hasRecoveryReference ? "RESET" : "LOGIN");
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
 
@@ -42,8 +51,92 @@ export default function AccountExperience() {
 
   async function logout() { try { await readStoreResponse(await fetch("/api/store/accounts/logout", { method: "POST" })); } finally { setAccount(null); setOrders([]); setMode("LOGIN"); } }
 
+  function returnToLogin() {
+    setAccount(null);
+    setError("");
+    setMode("LOGIN");
+  }
+
   if (status === "loading") return <main className="account-page"><div className="account-loading" aria-label="Cargando tu cuenta" /></main>;
-  if (!account) return <main className="account-page account-access"><section className="account-intro"><p className="eyebrow">Mi cuenta Stylo</p><h1>{mode === "LOGIN" ? "Qué bueno verte" : "Crea tu cuenta"}</h1><p>Tu carrito también funciona como invitado. Con una cuenta puedes revisar tus pedidos y conservar tus datos de compra.</p><div className="account-benefits"><span><Icon name="receipt" /> Historial de pedidos</span><span><Icon name="cart" /> Compra más rápida</span><span><Icon name="shield" /> Sesión protegida</span></div></section><section className="account-auth"><div className="account-tabs"><button className={mode === "LOGIN" ? "active" : ""} onClick={() => setMode("LOGIN")} type="button">Ingresar</button><button className={mode === "REGISTER" ? "active" : ""} onClick={() => setMode("REGISTER")} type="button">Crear cuenta</button></div><form onSubmit={authenticate}>{mode === "REGISTER" && <><label className="field"><span>RUT</span><input name="rut" required /></label><label className="field"><span>Nombres</span><input name="firstNames" required /></label><label className="field"><span>Apellidos</span><input name="lastNames" required /></label><label className="field"><span>Teléfono</span><input name="phone" required /></label><label className="field field-full"><span>Dirección</span><input name="address" required /></label></>}<label className="field field-full"><span>Correo electrónico</span><input autoComplete="email" name="email" required type="email" /></label><label className="field field-full"><span>Contraseña {mode === "REGISTER" && "(mínimo 15 caracteres)"}</span><input autoComplete={mode === "LOGIN" ? "current-password" : "new-password"} minLength={mode === "REGISTER" ? 15 : 1} name="password" required type="password" /></label>{error && <p className="inline-error field-full">{error}</p>}<button className="button button--primary field-full" disabled={status === "saving"} type="submit">{status === "saving" ? "Procesando…" : mode === "LOGIN" ? "Ingresar" : "Crear cuenta segura"}</button></form></section></main>;
+  if (!account || mode === "RESET") {
+    const copy = mode === "LOGIN"
+      ? {
+          lead: "Tu carrito también funciona como invitado. Con una cuenta puedes revisar tus pedidos y conservar tus datos de compra.",
+          title: "Qué bueno verte",
+        }
+      : mode === "REGISTER"
+        ? {
+            lead: "Crea una cuenta para revisar pedidos y conservar tus datos de compra sin mezclar tu información clínica.",
+            title: "Crea tu cuenta",
+          }
+        : mode === "REQUEST"
+          ? {
+              lead: "Escribe el correo de tu cuenta. Por seguridad, recibirás la misma confirmación exista o no una cuenta asociada.",
+              title: "Recupera tu cuenta",
+            }
+          : {
+              lead: "Define una contraseña nueva y extensa. El enlace dejará de funcionar después de usarlo.",
+              title: "Crea una contraseña nueva",
+            };
+
+    return (
+      <main className="account-page account-access">
+        <section className="account-intro">
+          <p className="eyebrow">Mi cuenta Stylo</p>
+          <h1>{copy.title}</h1>
+          <p>{copy.lead}</p>
+          <div className="account-benefits">
+            <span><Icon name="receipt" /> Historial de pedidos</span>
+            <span><Icon name="cart" /> Compra más rápida</span>
+            <span><Icon name="shield" /> Sesión protegida</span>
+          </div>
+        </section>
+        <section className={`account-auth ${mode === "REQUEST" || mode === "RESET" ? "account-auth--recovery" : ""}`}>
+          {mode === "LOGIN" || mode === "REGISTER" ? (
+            <>
+              <div className="account-tabs">
+                <button className={mode === "LOGIN" ? "active" : ""} onClick={() => setMode("LOGIN")} type="button">Ingresar</button>
+                <button className={mode === "REGISTER" ? "active" : ""} onClick={() => setMode("REGISTER")} type="button">Crear cuenta</button>
+              </div>
+              <form onSubmit={authenticate}>
+                {mode === "REGISTER" && (
+                  <>
+                    <label className="field"><span>RUT</span><input name="rut" required /></label>
+                    <label className="field"><span>Nombres</span><input name="firstNames" required /></label>
+                    <label className="field"><span>Apellidos</span><input name="lastNames" required /></label>
+                    <label className="field"><span>Teléfono</span><input name="phone" required /></label>
+                    <label className="field field-full"><span>Dirección</span><input name="address" required /></label>
+                  </>
+                )}
+                <label className="field field-full"><span>Correo electrónico</span><input autoComplete="email" name="email" required type="email" /></label>
+                <label className="field field-full">
+                  <span>Contraseña {mode === "REGISTER" && "(mínimo 15 caracteres)"}</span>
+                  <input autoComplete={mode === "LOGIN" ? "current-password" : "new-password"} maxLength={128} minLength={mode === "REGISTER" ? 15 : 1} name="password" required type="password" />
+                </label>
+                {error && <p className="inline-error field-full" role="alert">{error}</p>}
+                <button className="button button--primary field-full" disabled={status === "saving"} type="submit">
+                  {status === "saving" ? "Procesando…" : mode === "LOGIN" ? "Ingresar" : "Crear cuenta segura"}
+                </button>
+              </form>
+              {mode === "LOGIN" && (
+                <button className="account-recovery-link" onClick={() => setMode("REQUEST")} type="button">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              )}
+            </>
+          ) : (
+            <PasswordRecoveryForm
+              endpointBase="/api/store/accounts"
+              flow={mode}
+              onBack={returnToLogin}
+              recoveryRequest={recoveryCredentials.recoveryRequest}
+              recoveryToken={recoveryCredentials.recoveryToken}
+            />
+          )}
+        </section>
+      </main>
+    );
+  }
 
   return <main className="account-page account-dashboard">
     <aside className="account-sidebar"><div><span className="account-avatar">{account.firstNames?.[0]}{account.lastNames?.[0]}</span><strong>{account.firstNames} {account.lastNames}</strong><small>{account.email}</small></div><nav aria-label="Navegación de mi cuenta"><a className="active" href="#resumen"><Icon name="home" /> Resumen</a><a href="#pedidos"><Icon name="receipt" /> Mis pedidos</a><a href="#datos"><Icon name="account" /> Mis datos</a><Link href="/carrito"><Icon name="cart" /> Mi carrito</Link><Link href="/reservar"><Icon name="calendar" /> Reservar hora</Link></nav><button onClick={logout} type="button"><Icon name="logout" /> Cerrar sesión</button></aside>

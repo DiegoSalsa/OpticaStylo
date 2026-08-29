@@ -45,16 +45,16 @@ La hoja de ruta requiere Reserva pública, Clientes y Pacientes, pero el proyect
 
 ## Recuperación y restablecimiento de contraseña
 
-Las 15 pantallas aprobadas no incluyen recuperación ni restablecimiento de contraseña para el acceso interno o Mi cuenta. No se añadió una pantalla nueva ni se amplió visualmente `/ingresar` o `/cuenta`, porque el contrato no autoriza esa extensión.
+Las 15 pantallas aprobadas no incluyen recuperación ni restablecimiento de contraseña para el acceso interno o Mi cuenta. A solicitud del responsable del proyecto, se implementó una propuesta visual como extensión mínima de `/ingresar` y `/cuenta`, sin crear rutas visuales independientes.
 
-Queda pendiente aprobar dos estados accesibles dentro de los patrones existentes: solicitud y resultado de recuperación para acceso interno, y solicitud y resultado equivalentes para Mi cuenta. La implementación de servidor, las rutas separadas por ámbito y la plantilla de correo están preparadas; la entrega debe conservarse desactivada hasta contar con esa aprobación y conectar los formularios a las rutas ya disponibles.
+La propuesta reutiliza tipografías, color, radios, campos, botones y jerarquía de las pantallas existentes. Incluye solicitud, enlace inválido, formulario de nueva contraseña y resultados accesibles en ambos ámbitos. Permanece pendiente de aprobación visual; hasta entonces, la entrega de correos debe conservarse desactivada.
 
 ## Verificación
 
 - Lint sin errores.
-- 252 pruebas automatizadas aprobadas.
+- 462 pruebas automatizadas aprobadas.
 - Build de producción Next.js 16.3.0 completado.
-- QA visual de escritorio y móvil sin desbordamiento horizontal en Inicio, Catálogo, Checkout, Mi cuenta y Probador 3D.
+- QA visual de escritorio y móvil sin desbordamiento horizontal en Inicio, Catálogo, Checkout, Mi cuenta, Probador 3D y los estados propuestos de recuperación/restablecimiento.
 - Catálogo y carrito se validaron conectados a la base configurada sin copiar credenciales al repositorio.
 - Migraciones 001–018 aplicadas en la base de pruebas; la migración 017 retiró el esquema 2D legado según la decisión aprobada.
 - Migraciones clínicas 019–020 validadas transaccionalmente y pendientes de publicación.

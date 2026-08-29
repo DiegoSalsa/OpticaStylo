@@ -46,6 +46,9 @@
   box-shadow: var(--shadow-card);
   padding: 1.5rem;
 }
+.account-auth--recovery {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
 .account-tabs {
   background: #eff5f3;
   border-radius: 11px;
@@ -80,6 +83,21 @@
 }
 .account-auth form > button {
   border: 0;
+}
+.account-recovery-link {
+  background: transparent;
+  border: 0;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 750;
+  margin: 0.9rem auto 0;
+  padding: 0.4rem;
+}
+.account-recovery-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
 }
 .account-dashboard {
   align-items: start;

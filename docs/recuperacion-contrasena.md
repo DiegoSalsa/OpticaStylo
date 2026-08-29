@@ -29,7 +29,11 @@ información clínica.
 
 La entrega de correo continúa sujeta a la configuración existente de la
 outbox. Además requiere configurar el origen público y la clave de derivación
-descritos en la documentación de correos transaccionales. La interfaz de
-solicitud y restablecimiento no se implementó porque no existe una pantalla
-Stitch aprobada para esos estados; debe aprobarse antes de habilitar entrega
-para personas usuarias.
+descritos en la documentación de correos transaccionales.
+
+Como propuesta pendiente de aprobación, `/ingresar` y `/cuenta` incorporan
+estados accesibles para solicitar la recuperación, definir una contraseña nueva
+y comunicar el resultado. La referencia recibida por correo se elimina de la
+barra de direcciones al abrir el formulario y nunca se representa en pantalla.
+La entrega para personas usuarias debe conservarse desactivada hasta aprobar
+estos estados visuales y completar la configuración pública correspondiente.
