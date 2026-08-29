@@ -12,6 +12,7 @@ const payloadByCode = {
   APPOINTMENT_REMINDER: { startAt: "2026-08-24T13:00:00.000Z" },
   ORDER_CONFIRMED: { saleNumber: 21, totalCents: 45000 },
   PAYMENT_CONFIRMED: { amountCents: 20000, saleNumber: 21 },
+  PASSWORD_RECOVERY: { scope: "INTERNAL_USER" },
   POS_PAYMENT_RECEIPT: { balanceCents: 25000, paidCents: 20000, receiptNumber: 8, saleNumber: 21 },
   POS_FINAL_RECEIPT: { balanceCents: 0, receiptNumber: 9, saleNumber: 21, totalCents: 45000 },
 };
@@ -19,14 +20,26 @@ const payloadByCode = {
 for (const templateCode of TRANSACTIONAL_EMAIL_TEMPLATE_CODES) {
   test(`${templateCode} genera HTML responsivo, texto y versión`, () => {
     const rendered = renderTransactionalEmail(
-      { payload: payloadByCode[templateCode], templateCode },
-      { mode: "live", timeZone: "America/Santiago" },
+      {
+        ...(templateCode === "PASSWORD_RECOVERY"
+          ? { passwordResetRequestId: "00000000-0000-4000-8000-000000000021" }
+          : {}),
+        payload: payloadByCode[templateCode],
+        templateCode,
+      },
+      {
+        ...(templateCode === "PASSWORD_RECOVERY"
+          ? { createPasswordRecoveryUrl: () => "accion-de-prueba" }
+          : {}),
+        mode: "live",
+        timeZone: "America/Santiago",
+      },
     );
     assert.match(rendered.html, /<meta name="viewport"/);
     assert.match(rendered.html, /Stylo Vivo/);
     assert.ok(rendered.text.length > 20);
     assert.match(rendered.subject, /^Stylo Vivo · /);
-    assert.match(rendered.version, /\.v1$/);
+    assert.match(rendered.version, /\.v2$/);
   });
 }
 
@@ -47,6 +60,29 @@ test("marca claramente una redirección de prueba", () => {
   assert.match(rendered.subject, /^\[PRUEBA\]/);
   assert.match(rendered.html, /MENSAJE DE PRUEBA/);
   assert.match(rendered.text, /No fue enviado al destinatario original/);
+});
+
+test("la plantilla de recuperación recibe referencias y no un token persistido", () => {
+  let request;
+  renderTransactionalEmail(
+    {
+      passwordResetRequestId: "00000000-0000-4000-8000-000000000023",
+      payload: payloadByCode.PASSWORD_RECOVERY,
+      templateCode: "PASSWORD_RECOVERY",
+    },
+    {
+      createPasswordRecoveryUrl: (input) => {
+        request = input;
+        return "accion-de-prueba";
+      },
+      mode: "live",
+    },
+  );
+  assert.deepEqual(request, {
+    requestId: "00000000-0000-4000-8000-000000000023",
+    scope: "INTERNAL_USER",
+  });
+  assert.equal(Object.hasOwn(request, "token"), false);
 });
 
 test("formatea reservas en America Santiago sin depender de la zona del servidor", () => {

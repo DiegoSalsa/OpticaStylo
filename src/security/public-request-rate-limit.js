@@ -6,12 +6,16 @@ import { getRequestMetadata } from "../utils/request-metadata.js";
 
 export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   INTERNAL_LOGIN: "internal_login",
+  INTERNAL_PASSWORD_RECOVERY_REQUEST: "internal_password_recovery_request",
+  INTERNAL_PASSWORD_RESET: "internal_password_reset",
   INTERNAL_PRESCRIPTION_EXTRACTION: "internal_prescription_extraction",
   PUBLIC_BOOKING: "public_booking",
   PRESCRIPTION_EXTRACTION: "prescription_extraction",
   PRESCRIPTION_UPLOAD: "prescription_upload",
   STORE_CART_CREATION: "store_cart_creation",
   STORE_LOGIN: "store_login",
+  STORE_PASSWORD_RECOVERY_REQUEST: "store_password_recovery_request",
+  STORE_PASSWORD_RESET: "store_password_reset",
   STORE_REGISTRATION: "store_registration",
 });
 
@@ -19,6 +23,14 @@ const LIMITS = Object.freeze({
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_LOGIN]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 4, windowSeconds: 15 * 60 }),
     network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),
+  }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_PASSWORD_RECOVERY_REQUEST]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 3, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),
+  }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_PASSWORD_RESET]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 5, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 15, windowSeconds: 15 * 60 }),
   }),
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_PRESCRIPTION_EXTRACTION]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 8, windowSeconds: 60 * 60 }),
@@ -43,6 +55,14 @@ const LIMITS = Object.freeze({
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_LOGIN]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 4, windowSeconds: 15 * 60 }),
     network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),
+  }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PASSWORD_RECOVERY_REQUEST]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 3, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),
+  }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PASSWORD_RESET]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 5, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 15, windowSeconds: 15 * 60 }),
   }),
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_REGISTRATION]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 2, windowSeconds: 15 * 60 }),

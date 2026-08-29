@@ -36,6 +36,7 @@ function mapEmail(row) {
     lockedBy: row.locked_by,
     nextAttemptAt: row.next_attempt_at,
     paymentId: row.payment_id,
+    passwordResetRequestId: row.password_reset_request_id,
     payload: {
       ...payload,
       ...(row.receipt_number == null ? {} : {

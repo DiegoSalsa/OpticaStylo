@@ -1,5 +1,11 @@
+import {
+  createPasswordRecoveryUrl,
+  derivePasswordRecoveryToken,
+  getPasswordRecoveryConfiguration,
+} from "../../auth/password-recovery-token.js";
+
 const BRAND_NAME = "Stylo Vivo";
-const TEMPLATE_VERSION = "2026-08-22.v1";
+const TEMPLATE_VERSION = "2026-08-29.v2";
 
 export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
   "ACCOUNT_CREATED",
@@ -7,6 +13,7 @@ export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
   "APPOINTMENT_REMINDER",
   "ORDER_CONFIRMED",
   "PAYMENT_CONFIRMED",
+  "PASSWORD_RECOVERY",
   "POS_PAYMENT_RECEIPT",
   "POS_FINAL_RECEIPT",
 ]);
@@ -50,7 +57,34 @@ function receiptReference(payload) {
   return Number.isSafeInteger(value) && value > 0 ? `N.º ${value}` : null;
 }
 
-function contentFor(email, timeZone) {
+function passwordRecoveryUrl(email, options) {
+  if (!email.passwordResetRequestId || typeof email.payload?.scope !== "string") {
+    throw new Error("La recuperación de contraseña no contiene la solicitud requerida.");
+  }
+
+  if (options.createPasswordRecoveryUrl) {
+    return options.createPasswordRecoveryUrl({
+      requestId: email.passwordResetRequestId,
+      scope: email.payload.scope,
+    });
+  }
+
+  const configuration = options.passwordRecoveryConfiguration
+    ?? getPasswordRecoveryConfiguration();
+  const token = derivePasswordRecoveryToken({
+    requestId: email.passwordResetRequestId,
+    scope: email.payload.scope,
+    tokenSecret: configuration.tokenSecret,
+  });
+  return createPasswordRecoveryUrl({
+    appOrigin: configuration.appOrigin,
+    requestId: email.passwordResetRequestId,
+    scope: email.payload.scope,
+    token,
+  });
+}
+
+function contentFor(email, timeZone, options) {
   const payload = email.payload ?? {};
   switch (email.templateCode) {
     case "ACCOUNT_CREATED":
@@ -85,6 +119,16 @@ function contentFor(email, timeZone) {
         intro: "El pago fue conciliado y registrado correctamente.",
         title: "Pago confirmado",
       };
+    case "PASSWORD_RECOVERY":
+      return {
+        action: {
+          href: passwordRecoveryUrl(email, options),
+          label: "Restablecer contraseña",
+        },
+        facts: [],
+        intro: "Recibimos una solicitud para restablecer tu contraseña. Si no la realizaste, puedes ignorar este correo.",
+        title: "Restablece tu contraseña",
+      };
     case "POS_PAYMENT_RECEIPT":
       return {
         facts: [
@@ -116,8 +160,9 @@ function visibleFacts(facts) {
   return facts.filter(([, value]) => value != null && value !== "");
 }
 
-export function renderTransactionalEmail(email, { mode, timeZone = "America/Santiago" }) {
-  const content = contentFor(email, timeZone);
+export function renderTransactionalEmail(email, options = {}) {
+  const { mode, timeZone = "America/Santiago" } = options;
+  const content = contentFor(email, timeZone, options);
   const facts = visibleFacts(content.facts);
   const isTest = mode === "test";
   const prefix = isTest ? "[PRUEBA] " : "";
@@ -128,7 +173,10 @@ export function renderTransactionalEmail(email, { mode, timeZone = "America/Sant
   const factHtml = facts.length > 0
     ? `<table role="presentation" style="width:100%;border-collapse:collapse;margin:24px 0">${facts.map(([label, value]) => `<tr><td style="padding:12px 0;border-top:1px solid #dce7e3;color:#55706a">${escapeEmailHtml(label)}</td><td style="padding:12px 0;border-top:1px solid #dce7e3;text-align:right;font-weight:700">${escapeEmailHtml(value)}</td></tr>`).join("")}</table>`
     : "";
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeEmailHtml(subject)}</title></head><body style="margin:0;background:#f4f1eb;font-family:Arial,sans-serif;color:#17352f;line-height:1.6">${testHtml}<main style="max-width:600px;margin:0 auto;padding:24px"><section style="background:#ffffff;border:1px solid #dce7e3;border-radius:18px;padding:32px"><p style="margin:0 0 8px;color:#08705d;font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">${BRAND_NAME}</p><h1 style="margin:0 0 20px;font-size:28px;line-height:1.2">${escapeEmailHtml(content.title)}</h1><p style="margin:0">${escapeEmailHtml(content.intro)}</p>${factHtml}<p style="margin:24px 0 0;color:#55706a;font-size:13px">Este correo contiene solo la información mínima de esta operación.</p></section><p style="text-align:center;color:#6f7d79;font-size:12px">Plantilla ${TEMPLATE_VERSION}</p></main></body></html>`;
+  const actionHtml = content.action
+    ? `<p style="margin:24px 0 0"><a href="${escapeEmailHtml(content.action.href)}" style="display:inline-block;background:#073a32;border-radius:10px;color:#ffffff;font-weight:700;padding:12px 18px;text-decoration:none">${escapeEmailHtml(content.action.label)}</a></p>`
+    : "";
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeEmailHtml(subject)}</title></head><body style="margin:0;background:#f4f1eb;font-family:Arial,sans-serif;color:#17352f;line-height:1.6">${testHtml}<main style="max-width:600px;margin:0 auto;padding:24px"><section style="background:#ffffff;border:1px solid #dce7e3;border-radius:18px;padding:32px"><p style="margin:0 0 8px;color:#08705d;font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">${BRAND_NAME}</p><h1 style="margin:0 0 20px;font-size:28px;line-height:1.2">${escapeEmailHtml(content.title)}</h1><p style="margin:0">${escapeEmailHtml(content.intro)}</p>${factHtml}${actionHtml}<p style="margin:24px 0 0;color:#55706a;font-size:13px">Este correo contiene solo la información mínima de esta operación.</p></section><p style="text-align:center;color:#6f7d79;font-size:12px">Plantilla ${TEMPLATE_VERSION}</p></main></body></html>`;
   const textFacts = facts.map(([label, value]) => `${label}: ${value}`).join("\n");
   const text = [
     isTest ? "MENSAJE DE PRUEBA. No fue enviado al destinatario original." : null,
@@ -136,6 +184,7 @@ export function renderTransactionalEmail(email, { mode, timeZone = "America/Sant
     content.title,
     content.intro,
     textFacts || null,
+    content.action ? `${content.action.label}: ${content.action.href}` : null,
     `Plantilla ${TEMPLATE_VERSION}`,
   ].filter(Boolean).join("\n\n");
   return { html, subject, text, version: TEMPLATE_VERSION };

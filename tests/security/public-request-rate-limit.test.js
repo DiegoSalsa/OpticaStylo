@@ -45,6 +45,34 @@ test("limita el inicio de sesión antes de llegar al servicio costoso", async ()
   );
 });
 
+test("separa y limita solicitudes e intentos de recuperación", async () => {
+  const deps = dependencies();
+  const request = new Request("https://example.com/api/auth/password-recovery", { method: "POST" });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_PASSWORD_RECOVERY_REQUEST,
+      "persona@example.test",
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_PASSWORD_RECOVERY_REQUEST,
+      "persona@example.test",
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED",
+  );
+  await enforcePublicRequestRateLimit(
+    request,
+    PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_PASSWORD_RESET,
+    "00000000-0000-4000-8000-000000000022",
+    deps,
+  );
+});
+
 test("mantiene cuotas separadas para identidades distintas", async () => {
   const deps = dependencies();
   const request = new Request("https://example.com/api/store/booking", { method: "POST" });

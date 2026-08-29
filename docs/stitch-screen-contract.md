@@ -43,6 +43,12 @@ Estas rutas no deben rediseñarse ni ampliarse sin una referencia aprobada:
 
 La hoja de ruta requiere Reserva pública, Clientes y Pacientes, pero el proyecto final de 15 pantallas no contiene diseños dedicados para esas vistas. Se mantienen funcionales con el estilo compartido existente y quedan señaladas como referencias faltantes.
 
+## Recuperación y restablecimiento de contraseña
+
+Las 15 pantallas aprobadas no incluyen recuperación ni restablecimiento de contraseña para el acceso interno o Mi cuenta. No se añadió una pantalla nueva ni se amplió visualmente `/ingresar` o `/cuenta`, porque el contrato no autoriza esa extensión.
+
+Queda pendiente aprobar dos estados accesibles dentro de los patrones existentes: solicitud y resultado de recuperación para acceso interno, y solicitud y resultado equivalentes para Mi cuenta. La implementación de servidor, las rutas separadas por ámbito y la plantilla de correo están preparadas; la entrega debe conservarse desactivada hasta contar con esa aprobación y conectar los formularios a las rutas ya disponibles.
+
 ## Verificación
 
 - Lint sin errores.

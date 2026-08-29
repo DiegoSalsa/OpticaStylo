@@ -4,6 +4,7 @@ const PREFIXES = Object.freeze({
   APPOINTMENT_REMINDER: "appointment-reminder",
   ORDER_CONFIRMED: "order-confirmed",
   PAYMENT_CONFIRMED: "payment-confirmed",
+  PASSWORD_RECOVERY: "password-recovery",
   POS_FINAL_RECEIPT: "receipt-final",
   POS_PAYMENT_RECEIPT: "receipt-payment",
 });

@@ -58,6 +58,11 @@ Los cuatro modos son explícitos:
 - `live`: envía al destinatario original y falla de forma cerrada si no están
   configurados la clave, el remitente y la confirmación del dominio.
 
+La plantilla `PASSWORD_RECOVERY` usa solamente el identificador de la solicitud
+y su ámbito desde la outbox. El enlace se deriva recién al renderizar el correo
+con una clave de servidor; la outbox, la auditoría y las transiciones nunca
+conservan el token ni el enlace en claro.
+
 El valor provisional del recordatorio es 24 horas y se configura mediante
 `EMAIL_APPOINTMENT_REMINDER_HOURS`. La generación y la elegibilidad usan
 `America/Santiago`; ninguna decisión depende de la zona horaria del proceso.
@@ -99,6 +104,8 @@ un endpoint HTTPS y su secreto de firma en Resend.
 | `EMAIL_RETRY_MAX_SECONDS` | Tope de espera; valor provisional `3600`. |
 | `EMAIL_APPOINTMENT_REMINDER_HOURS` | Anticipación provisional; valor `24`. |
 | `APP_TIME_ZONE` | Debe ser `America/Santiago`. |
+| `PASSWORD_RESET_APP_ORIGIN` | Origen público validado que se usa al renderizar la recuperación. |
+| `PASSWORD_RESET_TOKEN_SECRET` | Clave de servidor de al menos 32 bytes para derivar el token efímero. |
 
 En producción `simulate` se rechaza, y `live` falla de forma cerrada si falta
 la clave, el remitente o la confirmación explícita del dominio. `test` conserva
