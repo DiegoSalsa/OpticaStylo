@@ -1,11 +1,13 @@
 import { AppError } from "../utils/app-error.js";
+import {
+  MAXIMUM_PASSWORD_LENGTH,
+  MINIMUM_PASSWORD_LENGTH,
+} from "./password-policy.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
-const MINIMUM_PASSWORD_LENGTH = 15;
-const MAXIMUM_PASSWORD_LENGTH = 128;
 
 function fail(message) {
   throw new AppError({

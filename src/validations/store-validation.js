@@ -2,6 +2,10 @@ import { validateCreatePrescriptionInput } from "./clinical-validation.js";
 import { normalizeChileanRut } from "../utils/chilean-rut.js";
 import { AppError } from "../utils/app-error.js";
 import { hasSafeImageDimensions } from "./image-dimensions.js";
+import {
+  MAXIMUM_PASSWORD_LENGTH,
+  MINIMUM_PASSWORD_LENGTH,
+} from "./password-policy.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN =
@@ -81,10 +85,12 @@ function password(value, { allowLegacy = false } = {}) {
   if (typeof value !== "string" || value.length === 0) {
     fail("La contraseña es obligatoria.");
   }
-  if (!allowLegacy && value.length < 15) {
-    fail("La contraseña debe contener al menos 15 caracteres.");
+  if (!allowLegacy && value.length < MINIMUM_PASSWORD_LENGTH) {
+    fail(`La contraseña debe contener al menos ${MINIMUM_PASSWORD_LENGTH} caracteres.`);
   }
-  if (value.length > 128) fail("La contraseña no puede superar 128 caracteres.");
+  if (value.length > MAXIMUM_PASSWORD_LENGTH) {
+    fail(`La contraseña no puede superar ${MAXIMUM_PASSWORD_LENGTH} caracteres.`);
+  }
   return value;
 }
 

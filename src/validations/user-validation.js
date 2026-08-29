@@ -1,9 +1,11 @@
 import { ROLE_CODES } from "../auth/roles.js";
 import { AppError } from "../utils/app-error.js";
+import {
+  MAXIMUM_PASSWORD_LENGTH,
+  MINIMUM_PASSWORD_LENGTH,
+} from "./password-policy.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 15;
-const MAX_PASSWORD_LENGTH = 128;
 const MAX_NAME_LENGTH = 100;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -56,15 +58,15 @@ function validatePassword(value) {
     throwValidationError("La contraseña es obligatoria.");
   }
 
-  if (value.length < MIN_PASSWORD_LENGTH) {
+  if (value.length < MINIMUM_PASSWORD_LENGTH) {
     throwValidationError(
-      `La contraseña debe contener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      `La contraseña debe contener al menos ${MINIMUM_PASSWORD_LENGTH} caracteres.`,
     );
   }
 
-  if (value.length > MAX_PASSWORD_LENGTH) {
+  if (value.length > MAXIMUM_PASSWORD_LENGTH) {
     throwValidationError(
-      `La contraseña no puede superar ${MAX_PASSWORD_LENGTH} caracteres.`,
+      `La contraseña no puede superar ${MAXIMUM_PASSWORD_LENGTH} caracteres.`,
     );
   }
 
@@ -76,9 +78,9 @@ function validateLoginPassword(value) {
     throwValidationError("La contraseña es obligatoria.");
   }
 
-  if (value.length > MAX_PASSWORD_LENGTH) {
+  if (value.length > MAXIMUM_PASSWORD_LENGTH) {
     throwValidationError(
-      `La contraseña no puede superar ${MAX_PASSWORD_LENGTH} caracteres.`,
+      `La contraseña no puede superar ${MAXIMUM_PASSWORD_LENGTH} caracteres.`,
     );
   }
 
