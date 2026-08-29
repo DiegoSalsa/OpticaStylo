@@ -17,12 +17,20 @@ const resetInput = {
   recoveryToken: Buffer.alloc(32, 7).toString("base64url"),
 };
 
+function safeRequestDependencies(overrides = {}) {
+  return {
+    delay: async () => {},
+    logger: { error() {} },
+    ...overrides,
+  };
+}
+
 test("acepta una solicitud desconocida con la misma respuesta genérica en ambos ámbitos", async () => {
   const audits = [];
-  const dependencies = {
+  const dependencies = safeRequestDependencies({
     findTarget: async () => null,
     recordAudit: async (entry) => audits.push(entry),
-  };
+  });
   const [internalResult, storeResult] = await Promise.all([
     requestPasswordRecovery(
       PASSWORD_RECOVERY_SCOPES.INTERNAL_USER,
@@ -53,7 +61,7 @@ test("crea una recuperación sin entregar ni persistir el token en claro", async
     PASSWORD_RECOVERY_SCOPES.STORE_ACCOUNT,
     recoveryInput,
     { ipAddress: "203.0.113.9", userAgent: "Prueba" },
-    {
+    safeRequestDependencies({
       createRequest: async (input) => { requestData = input; },
       createRequestId: () => requestId,
       deriveToken: () => resetInput.recoveryToken,
@@ -61,7 +69,7 @@ test("crea una recuperación sin entregar ni persistir el token en claro", async
       getConfiguration: () => ({ tokenSecret: Buffer.alloc(32, 8) }),
       hashToken: () => "a".repeat(64),
       now: () => new Date("2026-08-29T12:00:00.000Z"),
-    },
+    }),
   );
 
   assert.deepEqual(result, { message: PASSWORD_RECOVERY_REQUEST_MESSAGE });
@@ -77,15 +85,66 @@ test("mantiene la respuesta genérica cuando la recuperación no está configura
     PASSWORD_RECOVERY_SCOPES.INTERNAL_USER,
     recoveryInput,
     {},
-    {
+    safeRequestDependencies({
       findTarget: async () => ({ email: recoveryInput.email, id: "00000000-0000-4000-8000-000000000013" }),
       getConfiguration: () => { throw new Error("configuración ausente"); },
       recordAudit: async (entry) => audits.push(entry),
-    },
+    }),
   );
 
   assert.deepEqual(result, { message: PASSWORD_RECOVERY_REQUEST_MESSAGE });
   assert.equal(audits[0].event, "REQUEST_UNAVAILABLE");
+});
+
+test("iguala el tiempo mínimo para cuentas conocidas y desconocidas", async () => {
+  const delays = [];
+  const base = safeRequestDependencies({
+    delay: async (milliseconds) => delays.push(milliseconds),
+    getConfiguration: () => ({ tokenSecret: Buffer.alloc(32, 8) }),
+    hashToken: () => "e".repeat(64),
+    monotonicNow: () => 100,
+    random: () => 0,
+    recordAudit: async () => {},
+  });
+  await requestPasswordRecovery(
+    PASSWORD_RECOVERY_SCOPES.INTERNAL_USER,
+    recoveryInput,
+    {},
+    { ...base, findTarget: async () => null },
+  );
+  await requestPasswordRecovery(
+    PASSWORD_RECOVERY_SCOPES.INTERNAL_USER,
+    recoveryInput,
+    {},
+    {
+      ...base,
+      createRequest: async () => {},
+      createRequestId: () => requestId,
+      deriveToken: () => resetInput.recoveryToken,
+      findTarget: async () => ({ email: recoveryInput.email, id: requestId }),
+    },
+  );
+  assert.deepEqual(delays, [500, 500]);
+});
+
+test("mantiene la respuesta genérica si falla la persistencia", async () => {
+  const audits = [];
+  const result = await requestPasswordRecovery(
+    PASSWORD_RECOVERY_SCOPES.STORE_ACCOUNT,
+    recoveryInput,
+    {},
+    safeRequestDependencies({
+      createRequest: async () => { throw new Error("fallo controlado"); },
+      createRequestId: () => requestId,
+      deriveToken: () => resetInput.recoveryToken,
+      findTarget: async () => ({ email: recoveryInput.email, id: requestId }),
+      getConfiguration: () => ({ tokenSecret: Buffer.alloc(32, 8) }),
+      hashToken: () => "f".repeat(64),
+      recordAudit: async (entry) => audits.push(entry),
+    }),
+  );
+  assert.deepEqual(result, { message: PASSWORD_RECOVERY_REQUEST_MESSAGE });
+  assert.equal(audits.at(-1).event, "REQUEST_UNAVAILABLE");
 });
 
 test("restablece la contraseña sin exponerla y solicita revocar sesiones", async () => {

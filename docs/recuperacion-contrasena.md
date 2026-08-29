@@ -6,7 +6,9 @@ solicitud de un ámbito nunca busca ni consume credenciales del otro.
 
 La solicitud devuelve el mismo mensaje para una dirección desconocida, una
 cuenta inactiva y una cuenta válida. Se aplican cuotas por red e identificador
-antes de consultar la cuenta o ejecutar el restablecimiento.
+antes de consultar la cuenta o ejecutar el restablecimiento. Las solicitudes
+con formato válido usan además una duración mínima con variación acotada para
+reducir diferencias temporales observables entre cuentas existentes y ausentes.
 
 Cada solicitud válida revoca sus solicitudes anteriores, registra solo el hash
 del token, vence en quince minutos y crea un mensaje `PASSWORD_RECOVERY` en la
@@ -14,6 +16,10 @@ outbox. El correo obtiene el enlace al momento de enviarse a partir del
 identificador de solicitud, el ámbito y una clave de servidor. No se almacenan
 tokens ni enlaces de recuperación en la base de datos, registros, pruebas o
 documentación.
+
+Antes de renderizar un correo, el trabajador consulta nuevamente la solicitud.
+Los mensajes asociados a solicitudes vencidas, revocadas, consumidas o ausentes
+se suprimen sin generar ni enviar el enlace.
 
 Al consumir una solicitud válida, la actualización de contraseña, el consumo
 de un solo uso, la revocación de solicitudes restantes y la revocación de todas

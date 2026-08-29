@@ -171,6 +171,28 @@ test("omite una reserva cancelada y registra el motivo", async () => {
   assert.equal(reason, "APPOINTMENT_CANCELLED");
 });
 
+test("suprime una recuperación vencida antes de renderizar o enviar", async () => {
+  let reason;
+  const recovery = {
+    ...email,
+    passwordResetRequestId: "00000000-0000-4000-8000-000000000052",
+    payload: { scope: "INTERNAL_USER" },
+    templateCode: "PASSWORD_RECOVERY",
+  };
+  const dependencies = runDependencies("live", {
+    claimBatch: async () => ({ emails: [recovery], recoveredCount: 0 }),
+    getEligibility: async () => ({
+      eligible: false,
+      reason: "PASSWORD_RECOVERY_EXPIRED",
+    }),
+    provider: { send: async () => assert.fail("No debe enviar recuperaciones vencidas") },
+    renderEmail: () => assert.fail("No debe renderizar recuperaciones vencidas"),
+    suppressEmail: async (_id, _worker, value) => { reason = value; },
+  });
+  assert.equal((await processTransactionalEmailBatch({}, dependencies)).sent, 0);
+  assert.equal(reason, "PASSWORD_RECOVERY_EXPIRED");
+});
+
 test("añade jitter controlado y respeta máximo", () => {
   assert.equal(calculateRetryDelaySeconds({
     attemptCount: 2, baseSeconds: 30, maxSeconds: 3600, random: () => 0,

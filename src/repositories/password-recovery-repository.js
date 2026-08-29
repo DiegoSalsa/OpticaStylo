@@ -63,18 +63,22 @@ async function insertAudit(client, {
   );
 }
 
-export async function findPasswordRecoveryTarget(scope, email) {
+export async function findPasswordRecoveryTarget(scope, email, dependencies = {}) {
   assertScope(scope);
   return findActiveTarget(
-    { query: (text, parameters) => executeQuery(text, parameters) },
+    {
+      query: (text, parameters) => (
+        dependencies.executeQuery ?? executeQuery
+      )(text, parameters),
+    },
     scope,
     { email },
   );
 }
 
-export async function recordPasswordRecoveryAudit(input) {
+export async function recordPasswordRecoveryAudit(input, dependencies = {}) {
   assertScope(input.scope);
-  await executeQuery(
+  await (dependencies.executeQuery ?? executeQuery)(
     `INSERT INTO password_recovery_audit (
        password_reset_request_id, scope, event, request_ip, request_user_agent
      ) VALUES ($1, $2, $3, $4, $5)`,
@@ -95,9 +99,9 @@ export async function createPasswordRecoveryRequest({
   scope,
   target,
   tokenHash,
-}) {
+}, dependencies = {}) {
   assertScope(scope);
-  return executeTransaction(async (client) => {
+  return (dependencies.executeTransaction ?? executeTransaction)(async (client) => {
     const lockedTarget = await findActiveTarget(client, scope, { id: target.id }, true);
     if (!lockedTarget) {
       await insertAudit(client, { event: "REQUEST_IGNORED", metadata, scope });
@@ -163,9 +167,40 @@ export async function consumePasswordRecoveryRequest({
   requestId,
   scope,
   tokenHash,
-}) {
+}, dependencies = {}) {
   assertScope(scope);
-  return executeTransaction(async (client) => {
+  return (dependencies.executeTransaction ?? executeTransaction)(async (client) => {
+    const candidateResult = await client.query(
+      `SELECT *
+       FROM password_reset_requests
+       WHERE id = $1
+         AND scope = $2
+         AND token_hash = $3
+         AND expires_at > CURRENT_TIMESTAMP
+         AND revoked_at IS NULL
+         AND consumed_at IS NULL`,
+      [requestId, scope, tokenHash],
+    );
+    const candidate = candidateResult.rows[0];
+    if (!candidate) {
+      await insertAudit(client, { event: "RESET_REJECTED", metadata, scope });
+      return null;
+    }
+
+    const targetId = scope === PASSWORD_RECOVERY_SCOPES.INTERNAL_USER
+      ? candidate.user_id
+      : candidate.customer_account_id;
+    const target = await findActiveTarget(client, scope, { id: targetId }, true);
+    if (!target) {
+      await insertAudit(client, {
+        event: "RESET_REJECTED",
+        metadata,
+        requestId: candidate.id,
+        scope,
+      });
+      return null;
+    }
+
     const requestResult = await client.query(
       `SELECT *
        FROM password_reset_requests
@@ -181,20 +216,6 @@ export async function consumePasswordRecoveryRequest({
     const request = requestResult.rows[0];
     if (!request) {
       await insertAudit(client, { event: "RESET_REJECTED", metadata, scope });
-      return null;
-    }
-
-    const targetId = scope === PASSWORD_RECOVERY_SCOPES.INTERNAL_USER
-      ? request.user_id
-      : request.customer_account_id;
-    const target = await findActiveTarget(client, scope, { id: targetId }, true);
-    if (!target) {
-      await insertAudit(client, {
-        event: "RESET_REJECTED",
-        metadata,
-        requestId: request.id,
-        scope,
-      });
       return null;
     }
 

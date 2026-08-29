@@ -17,7 +17,7 @@ import {
   failTransactionalEmail,
   findRecipientSuppression,
   finishTransactionalEmailWorkerRun,
-  getAppointmentReminderEligibility,
+  getTransactionalEmailEligibility,
   getTransactionalEmailMetrics,
   retryTransactionalEmail,
   startTransactionalEmailWorkerRun,
@@ -100,7 +100,9 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
   for (const email of claim.emails) {
     const eligibility = await (
-      dependencies.getReminderEligibility ?? getAppointmentReminderEligibility
+      dependencies.getEligibility
+      ?? dependencies.getReminderEligibility
+      ?? getTransactionalEmailEligibility
     )(email);
     if (!eligibility.eligible) {
       await (dependencies.suppressEmail ?? suppressTransactionalEmail)(

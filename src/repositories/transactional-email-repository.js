@@ -305,11 +305,39 @@ export async function suppressTransactionalEmail(emailId, workerId, reasonCode) 
   });
 }
 
-export async function getAppointmentReminderEligibility(email) {
+export async function getTransactionalEmailEligibility(email, dependencies = {}) {
+  const query = dependencies.executeQuery ?? executeQuery;
+  if (email.templateCode === "PASSWORD_RECOVERY") {
+    if (
+      !email.passwordResetRequestId
+      || !["INTERNAL_USER", "STORE_ACCOUNT"].includes(email.payload?.scope)
+    ) {
+      return { eligible: false, reason: "PASSWORD_RECOVERY_INVALID_REFERENCE" };
+    }
+    const result = await query(
+      `SELECT consumed_at, revoked_at, expires_at > CURRENT_TIMESTAMP AS is_current
+       FROM password_reset_requests
+       WHERE id = $1 AND scope = $2`,
+      [email.passwordResetRequestId, email.payload.scope],
+    );
+    const request = result.rows[0];
+    if (!request) return { eligible: false, reason: "PASSWORD_RECOVERY_NOT_FOUND" };
+    if (request.consumed_at) {
+      return { eligible: false, reason: "PASSWORD_RECOVERY_CONSUMED" };
+    }
+    if (request.revoked_at) {
+      return { eligible: false, reason: "PASSWORD_RECOVERY_REVOKED" };
+    }
+    if (!request.is_current) {
+      return { eligible: false, reason: "PASSWORD_RECOVERY_EXPIRED" };
+    }
+    return { eligible: true, reason: null };
+  }
+
   if (email.templateCode !== "APPOINTMENT_REMINDER" || !email.appointmentId) {
     return { eligible: true, reason: null };
   }
-  const result = await executeQuery(
+  const result = await query(
     `SELECT status, start_at FROM appointments WHERE id = $1`,
     [email.appointmentId],
   );
