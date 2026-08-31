@@ -194,6 +194,7 @@
 }
 
 .videoElement,
+.photoElement,
 .threeCanvas {
   position: absolute !important;
   inset: 0;
@@ -207,10 +208,26 @@
   transform: scaleX(-1);
 }
 
-.videoElement[data-hidden="true"] {
+.photoElement {
+  z-index: 1;
+  object-fit: cover;
+}
+
+.videoElement[data-hidden="true"],
+.photoElement[data-hidden="true"] {
   width: 1px !important;
   height: 1px !important;
   opacity: 0;
+}
+
+.photoInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 .threeCanvas {
