@@ -37,6 +37,7 @@ source ~/.bashrc
 nvm install 22
 nvm use 22
 npm install --global pm2@latest
+npm install --global npm@11.6.2
 mkdir -p ~/apps/optica-stylo/releases
 ```
 
