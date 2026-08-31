@@ -22,6 +22,9 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
+  ...(process.env.DEPLOYMENT_VERSION?.trim()
+    ? { deploymentId: process.env.DEPLOYMENT_VERSION.trim() }
+    : {}),
   images: {
     remotePatterns: [
       { hostname: "res.cloudinary.com", pathname: "/**", protocol: "https" },
