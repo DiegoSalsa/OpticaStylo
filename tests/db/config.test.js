@@ -60,3 +60,28 @@ test("exige SSL para Neon y producción", () => {
     /DATABASE_SSL debe ser true/,
   );
 });
+
+test("permite PostgreSQL local sin SSL únicamente en la universidad", () => {
+  const config = getDatabaseConfig({
+    DATABASE_SSL: "false",
+    DATABASE_ALLOW_INSECURE_LOCAL: "true",
+    DATABASE_URL: "postgresql://postgres@127.0.0.1:5432/opticastylo",
+    DEPLOYMENT_ENVIRONMENT: "university",
+    NODE_ENV: "production",
+  });
+
+  assert.equal(config.ssl, false);
+});
+
+test("no permite habilitar conexiones inseguras contra un host remoto", () => {
+  assert.throws(
+    () => getDatabaseConfig({
+      DATABASE_SSL: "false",
+      DATABASE_ALLOW_INSECURE_LOCAL: "true",
+      DATABASE_URL: "postgresql://postgres@db.institucional.cl:5432/opticastylo",
+      DEPLOYMENT_ENVIRONMENT: "university",
+      NODE_ENV: "production",
+    }),
+    /DATABASE_SSL debe ser true/,
+  );
+});

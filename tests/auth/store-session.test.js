@@ -17,6 +17,13 @@ test("crea cookies de cuenta y carrito inaccesibles para JavaScript", () => {
   }
 });
 
+test("mantiene Secure para el comercio en producción", () => {
+  assert.match(
+    createStoreSessionCookie("token", 60, { NODE_ENV: "production" }),
+    /Secure/,
+  );
+});
+
 test("autentica la sesión de comprador sin mezclar la cookie interna", async () => {
   const request = new Request("http://localhost", {
     headers: { cookie: "opticastylo_customer_session=customer-token; opticastylo_session=staff-token" },
