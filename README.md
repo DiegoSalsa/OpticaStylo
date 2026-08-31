@@ -108,3 +108,9 @@ Headers: no requiere
 Body: no requiere
 Respuesta esperada: 200 OK con success=true y status="ok"
 ```
+
+## Despliegues
+
+- Producción continúa desplegándose en Vercel y utilizando la base configurada en Neon.
+- El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx.
+- La preparación, las variables privadas y la activación segura están documentadas en `docs/despliegue-universidad.md`.

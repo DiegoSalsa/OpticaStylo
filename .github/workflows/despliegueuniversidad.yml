@@ -1,0 +1,44 @@
+name: Despliegue automatizado universidad
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: despliegue-universidad
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    name: Validar y desplegar en la universidad
+    if: vars.DESPLIEGUE_UNIVERSIDAD_HABILITADO == 'true'
+    runs-on: [self-hosted, linux, x64, opticastylo-universidad]
+    timeout-minutes: 35
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # versión 4
+        with:
+          clean: true
+          persist-credentials: false
+
+      - name: Preparar Node.js
+        shell: bash
+        run: |
+          source "$HOME/.nvm/nvm.sh"
+          nvm use 22
+          node --version
+          npm --version
+
+      - name: Validar y desplegar la aplicación
+        shell: bash
+        env:
+          RUTA_ENTORNO_UNIVERSIDAD: ${{ vars.RUTA_ENTORNO_UNIVERSIDAD }}
+        run: |
+          source "$HOME/.nvm/nvm.sh"
+          nvm use 22
+          bash scripts/deploy-university.sh "${RUTA_ENTORNO_UNIVERSIDAD:-$HOME/optica-stylo.env}"

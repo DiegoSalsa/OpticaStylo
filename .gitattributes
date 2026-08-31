@@ -1,2 +1,4 @@
 # Los checksums de migraciones deben ser idénticos en todos los sistemas operativos.
 src/db/migrations/*.sql text eol=lf
+*.sh text eol=lf
+.github/workflows/*.yml text eol=lf
