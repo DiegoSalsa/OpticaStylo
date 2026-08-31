@@ -19,3 +19,11 @@ test("el despliegue universitario queda limitado al runner y a main", async () =
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(workflow, /schedule:/);
 });
+
+test("los correos transaccionales no tienen programación automática", async () => {
+  const workflow = await readWorkflow("procesarcorreos.yml");
+
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /schedule:/);
+  assert.doesNotMatch(workflow, /cron:/);
+});
