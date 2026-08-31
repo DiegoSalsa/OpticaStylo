@@ -59,6 +59,14 @@ function requiresSecureConnection(connectionString, environment) {
   return environment.NODE_ENV === "production" || hostname.endsWith(".neon.tech");
 }
 
+function allowsUniversityLocalConnection(connectionString, environment) {
+  const hostname = new URL(connectionString).hostname.toLowerCase();
+  const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(hostname);
+  return environment.DEPLOYMENT_ENVIRONMENT === "university"
+    && parseBoolean(environment.DATABASE_ALLOW_INSECURE_LOCAL, "DATABASE_ALLOW_INSECURE_LOCAL", false)
+    && isLocalhost;
+}
+
 function normalizeSecureConnectionString(connectionString, useSsl) {
   if (!useSsl) return connectionString;
   const databaseUrl = new URL(connectionString);
@@ -71,7 +79,9 @@ export function getDatabaseConfig(environment = process.env) {
   validateConnectionString(connectionString);
 
   const useSsl = parseBoolean(environment.DATABASE_SSL, "DATABASE_SSL", false);
-  if (requiresSecureConnection(connectionString, environment) && !useSsl) {
+  if (requiresSecureConnection(connectionString, environment)
+    && !useSsl
+    && !allowsUniversityLocalConnection(connectionString, environment)) {
     throw new Error("DATABASE_SSL debe ser true en producción y al conectar con Neon.");
   }
 

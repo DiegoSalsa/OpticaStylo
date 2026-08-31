@@ -1,6 +1,7 @@
 import { SESSION_COOKIE_NAME } from "./session-token.js";
+import { shouldUseSecureCookies } from "./cookie-security.js";
 
-export function createSessionCookie(token, maxAgeSeconds) {
+export function createSessionCookie(token, maxAgeSeconds, environment = process.env) {
   const attributes = [
     `${SESSION_COOKIE_NAME}=${token}`,
     "HttpOnly",
@@ -9,14 +10,14 @@ export function createSessionCookie(token, maxAgeSeconds) {
     `Max-Age=${maxAgeSeconds}`,
   ];
 
-  if (process.env.NODE_ENV === "production") {
+  if (shouldUseSecureCookies(environment)) {
     attributes.push("Secure");
   }
 
   return attributes.join("; ");
 }
 
-export function createExpiredSessionCookie() {
+export function createExpiredSessionCookie(environment = process.env) {
   const attributes = [
     `${SESSION_COOKIE_NAME}=`,
     "HttpOnly",
@@ -25,7 +26,7 @@ export function createExpiredSessionCookie() {
     "Max-Age=0",
   ];
 
-  if (process.env.NODE_ENV === "production") {
+  if (shouldUseSecureCookies(environment)) {
     attributes.push("Secure");
   }
 

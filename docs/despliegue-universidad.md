@@ -10,13 +10,13 @@ Este despliegue convive con producción sin compartir infraestructura:
 
 La aplicación requiere:
 
-- Ubuntu 20.04 o Debian 11.
+- Ubuntu Noble 24.04 o Debian 11.
 - PostgreSQL 13.7 o una versión posterior compatible.
-- Puertos 22, 80 y 443 habilitados.
+- El contenedor publica SSH en 1997, web en 1998 y PostgreSQL en 2000.
 - Acceso SSH con un usuario sin privilegios permanentes de root.
 - Al menos 2 GB de memoria; 4 GB son recomendables para compilar Next.js en el mismo servidor.
 
-No se puede completar la activación hasta recibir del laboratorio la IP, el usuario SSH, el host y las credenciales de PostgreSQL, además de confirmar si la base ofrece TLS con un certificado verificable.
+El entorno entregado es un contenedor Ubuntu Noble. PostgreSQL está dentro del mismo contenedor y se conecta localmente; la excepción sin TLS solo aplica a `127.0.0.1` mediante las variables explícitas del ejemplo.
 
 ## Preparar el servidor
 
@@ -31,7 +31,7 @@ Actualizar el sistema e instalar las herramientas necesarias:
 ```bash
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y ca-certificates curl nginx rsync
+sudo apt install -y ca-certificates curl nginx rsync git
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 source ~/.bashrc
 nvm install 22
@@ -40,13 +40,14 @@ npm install --global pm2@latest
 mkdir -p ~/apps/optica-stylo/releases
 ```
 
-Configurar PM2 para recuperar los procesos guardados después de reiniciar el servidor:
+El contenedor no ejecuta `systemd`, por lo que no se debe usar `pm2 startup` ni `svc.sh`. Iniciar PM2 con el usuario de despliegue y guardar el estado:
 
 ```bash
-pm2 startup
+pm2 startOrReload ~/apps/optica-stylo/current/ecosystem.config.cjs --update-env
+pm2 save
 ```
 
-El comando mostrará una instrucción con `sudo`. Ejecutar exactamente esa instrucción una sola vez. El pipeline ejecutará `pm2 save` después de cada despliegue correcto.
+Si el laboratorio configura una política de reinicio del contenedor, debe volver a ejecutar este arranque; mientras no exista esa política, una recreación requiere intervención manual.
 
 ## Crear el archivo de entorno
 
@@ -56,21 +57,21 @@ Copiar `config/universidad.env.example` al servidor como `~/optica-stylo.env`, c
 chmod 600 ~/optica-stylo.env
 ```
 
-El archivo no se copia al repositorio ni se guarda en GitHub. `DATABASE_SSL=true` es obligatorio. Si PostgreSQL universitario no ofrece TLS verificable, se debe solicitarlo al laboratorio o utilizar temporalmente una base de pruebas compatible; no se deshabilitará la verificación para ocultar el problema.
+El archivo no se copia al repositorio ni se guarda en GitHub. En Vercel/Neon `DATABASE_SSL=true` sigue siendo obligatorio; la excepción sin TLS solo es válida para la base local universitaria.
 
 ## Configurar Nginx
 
-La aplicación escucha solo en `127.0.0.1:3000`. Nginx recibe el tráfico público en el puerto 80:
+La aplicación escucha solo en `127.0.0.1:3000`. Nginx recibe el tráfico interno en el puerto 80, publicado externamente por el laboratorio en el puerto 1998:
 
 ```bash
 sudo cp deploy/nginx-optica-stylo.conf /etc/nginx/sites-available/optica-stylo
 if [ -L /etc/nginx/sites-enabled/default ]; then sudo unlink /etc/nginx/sites-enabled/default; fi
 sudo ln -s /etc/nginx/sites-available/optica-stylo /etc/nginx/sites-enabled/optica-stylo
 sudo nginx -t
-sudo systemctl reload nginx
+sudo nginx -s reload
 ```
 
-El inicio por HTTP permite corroborar la instalación, pero las sesiones usan cookies seguras en producción. Antes de probar autenticación, recuperación de contraseñas, pagos o datos clínicos se necesita HTTPS. Cuando se conozca la IP se puede utilizar un subdominio institucional o un nombre gratuito basado en IP, y emitir un certificado gratuito. No se debe desactivar la seguridad de las cookies.
+El inicio por HTTP permite corroborar la instalación. En este entorno de pruebas se habilita explícitamente la cookie sin `Secure`, pero esa excepción no existe en Vercel/Neon. La cámara del probador requiere HTTPS; hasta disponer de un certificado se debe probar con carga de archivos o mediante un túnel local seguro.
 
 ## Instalar el runner de GitHub
 
@@ -82,16 +83,15 @@ Durante `config.sh`, agregar la etiqueta personalizada:
 opticastylo-universidad
 ```
 
-Instalar el runner como servicio del sistema en lugar de dejarlo ligado a una terminal:
+El contenedor no ejecuta `systemd`, así que el runner se mantiene con un proceso en segundo plano del usuario de despliegue:
 
 ```bash
 cd ~/actions-runner
-sudo ./svc.sh install
-sudo ./svc.sh start
-sudo ./svc.sh status
+nohup ./run.sh > ~/actions-runner/runner.log 2>&1 &
+echo $! > ~/actions-runner/runner.pid
 ```
 
-El runner debe pertenecer al usuario de despliegue y nunca ejecutarse como root.
+El runner debe pertenecer al usuario de despliegue y nunca ejecutarse como root. Si el contenedor se recrea, hay que iniciar nuevamente este proceso.
 
 ## Activar el pipeline
 
@@ -139,7 +139,7 @@ En GitHub, la ejecución debe finalizar correctamente. En el servidor:
 pm2 list
 pm2 logs optica-stylo --lines 100
 curl --fail http://127.0.0.1:3000/api/health
-systemctl status nginx
+nginx -t
 ```
 
 La respuesta de salud debe informar `success=true` y `status=ok`. Las credenciales reales, imágenes de recetas y datos clínicos no deben utilizarse en esta comprobación.

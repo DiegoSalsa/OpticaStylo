@@ -1,6 +1,7 @@
 import { findActiveCustomerSession } from "../repositories/store-account-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { hashSessionToken } from "./session-token.js";
+import { shouldUseSecureCookies } from "./cookie-security.js";
 
 export const STORE_SESSION_COOKIE_NAME = "opticastylo_customer_session";
 export const STORE_CART_COOKIE_NAME = "opticastylo_store_cart";
@@ -17,7 +18,7 @@ function cookieValue(header, name) {
   return null;
 }
 
-function cookie(name, value, maxAgeSeconds) {
+function cookie(name, value, maxAgeSeconds, environment = process.env) {
   const attributes = [
     `${name}=${value}`,
     "HttpOnly",
@@ -25,20 +26,20 @@ function cookie(name, value, maxAgeSeconds) {
     "SameSite=Lax",
     `Max-Age=${maxAgeSeconds}`,
   ];
-  if (process.env.NODE_ENV === "production") attributes.push("Secure");
+  if (shouldUseSecureCookies(environment)) attributes.push("Secure");
   return attributes.join("; ");
 }
 
-export function createStoreSessionCookie(token, maxAgeSeconds) {
-  return cookie(STORE_SESSION_COOKIE_NAME, token, maxAgeSeconds);
+export function createStoreSessionCookie(token, maxAgeSeconds, environment = process.env) {
+  return cookie(STORE_SESSION_COOKIE_NAME, token, maxAgeSeconds, environment);
 }
 
-export function createStoreCartCookie(token, maxAgeSeconds) {
-  return cookie(STORE_CART_COOKIE_NAME, token, maxAgeSeconds);
+export function createStoreCartCookie(token, maxAgeSeconds, environment = process.env) {
+  return cookie(STORE_CART_COOKIE_NAME, token, maxAgeSeconds, environment);
 }
 
-export function expireStoreSessionCookie() {
-  return cookie(STORE_SESSION_COOKIE_NAME, "", 0);
+export function expireStoreSessionCookie(environment = process.env) {
+  return cookie(STORE_SESSION_COOKIE_NAME, "", 0, environment);
 }
 
 export function getStoreCartToken(request) {

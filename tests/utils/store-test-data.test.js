@@ -11,6 +11,12 @@ test("requiere habilitación explícita para datos de prueba en producción", ()
   assert.equal(canUseStoreTestData({ NODE_ENV: "production" }), false);
   assert.equal(canUseStoreTestData({
     NODE_ENV: "production",
+    DEPLOYMENT_ENVIRONMENT: "university",
     STORE_INCLUDE_TEST_DATA: "true",
   }), true);
+  assert.equal(canUseStoreTestData({
+    NODE_ENV: "production",
+    DEPLOYMENT_ENVIRONMENT: "vercel",
+    STORE_INCLUDE_TEST_DATA: "true",
+  }), false);
 });
