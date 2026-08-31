@@ -63,20 +63,6 @@ src/
 
 Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servicios deben acceder a PostgreSQL mediante repositorios.
 
-## Documentación de la API
-
-- `docs/authentication-api.md`: sesiones y administración de usuarios.
-- `docs/authorization.md`: roles y permisos efectivos.
-- `docs/patients-api.md`: datos básicos de pacientes y responsables.
-- `docs/scheduling-api.md`: profesionales, disponibilidad y reservas.
-- `docs/clinical-api.md`: ficha clínica, atenciones, adendas y recetas ópticas.
-- `docs/commercial-api.md`: clientes, catálogo, cotizaciones, ventas y abonos.
-- `docs/mercado-pago.md`: Checkout Pro, intentos de pago y webhooks.
-- `docs/ecommerce-decisions.md`: decisiones provisionales para la tienda en línea.
-- `docs/ecommerce-api.md`: cuentas, catálogo público, carritos, recetas y pedidos.
-
-- `docs/virtual-try-on.md`: prueba virtual, recursos por marco y criterios de viabilidad.
-
 ## Migraciones
 
 Las migraciones se almacenan en `src/db/migrations` y utilizan nombres como `001_crear_usuarios.sql`. Una migración aplicada es inmutable: cualquier modificación posterior será detectada mediante su checksum.
@@ -113,4 +99,4 @@ Respuesta esperada: 200 OK con success=true y status="ok"
 
 - Producción continúa desplegándose en Vercel y utilizando la base configurada en Neon.
 - El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx.
-- La preparación, las variables privadas y la activación segura están documentadas en `docs/despliegue-universidad.md`.
+- Las variables privadas se conservan fuera del repositorio y cada entorno utiliza su propia base de datos.

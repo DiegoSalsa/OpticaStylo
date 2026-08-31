@@ -45,7 +45,7 @@ function cameraErrorMessage(error) {
   return "No pudimos iniciar la cámara. Inténtalo otra vez o prueba en otro dispositivo.";
 }
 
-async function createFaceTrackingInternal() {
+async function createFaceTrackingInternal(runningMode = "VIDEO") {
   const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
   const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
   const commonOptions = {
@@ -53,7 +53,7 @@ async function createFaceTrackingInternal() {
     minFacePresenceConfidence: 0.5,
     minTrackingConfidence: 0.5,
     numFaces: 1,
-    runningMode: "VIDEO",
+    runningMode,
   };
 
   let tracking = null;
@@ -88,12 +88,14 @@ async function createFaceTrackingInternal() {
   return { faceMeshTriangleIndices, ...tracking };
 }
 
-async function createFaceTracking() {
-  return withMediaPipeConsoleFilter(createFaceTrackingInternal);
+async function createFaceTracking(runningMode = "VIDEO") {
+  return withMediaPipeConsoleFilter(() => createFaceTrackingInternal(runningMode));
 }
 
 export default function Glasses3DOverlay() {
   const videoRef = useRef(null);
+  const photoImageRef = useRef(null);
+  const photoInputRef = useRef(null);
   const streamRef = useRef(null);
   const faceLandmarkerRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -112,6 +114,8 @@ export default function Glasses3DOverlay() {
     "Te pediremos permiso para usar la cámara de este dispositivo.",
   );
   const [cameraAspectRatio, setCameraAspectRatio] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoLoaded, setPhotoLoaded] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [trackingReady, setTrackingReady] = useState(false);
   const [modelReady, setModelReady] = useState(false);
@@ -151,6 +155,10 @@ export default function Glasses3DOverlay() {
   }, []);
 
   useEffect(() => releaseResources, [releaseResources]);
+
+  useEffect(() => () => {
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+  }, [photoUrl]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -205,8 +213,104 @@ export default function Glasses3DOverlay() {
     setFaceDetected(false);
     setTrackingReady(false);
     setCaptureMessage("");
+    setPhotoLoaded(false);
+    setPhotoUrl("");
     setStatusMessage("Cámara apagada. No guardamos ningún fotograma.");
   }, [releaseResources]);
+
+  const openPhotoCapture = useCallback(() => {
+    releaseResources();
+    setCameraStatus("idle");
+    setCameraAspectRatio(null);
+    setFaceDetected(false);
+    setTrackingReady(false);
+    setModelReady(false);
+    setPhotoLoaded(false);
+    setStatusMessage("Selecciona una foto o toma una con la cámara de tu dispositivo.");
+    photoInputRef.current?.click();
+  }, [releaseResources]);
+
+  const handlePhotoSelected = useCallback(async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setCameraStatus("error");
+      setStatusMessage("Selecciona una imagen válida para probarte el marco.");
+      return;
+    }
+    releaseResources();
+    setPhotoLoaded(false);
+    setPhotoUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+    setCameraAspectRatio(null);
+    setCameraStatus("photo");
+    setFaceDetected(false);
+    setTrackingReady(false);
+    setModelReady(false);
+    setCaptureMessage("");
+    setStatusMessage("Analizando la foto para ajustar el marco 3D…");
+    const tracking = await createFaceTracking("IMAGE").catch(() => null);
+    if (!tracking || !photoImageRef.current) {
+      setCameraStatus("error");
+      setStatusMessage("No pudimos preparar el seguimiento facial para esta foto.");
+      tracking?.landmarker.close?.();
+      return;
+    }
+    faceLandmarkerRef.current = tracking.landmarker;
+    setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
+    setTrackingReady(true);
+  }, [releaseResources]);
+
+  useEffect(() => {
+    if (
+      cameraStatus !== "photo"
+      || !photoUrl
+      || !photoLoaded
+      || !trackingReady
+      || !modelMetadata
+      || !faceLandmarkerRef.current
+      || !photoImageRef.current
+    ) return;
+    const image = photoImageRef.current;
+    const width = image.naturalWidth;
+    const height = image.naturalHeight;
+    if (!width || !height) return;
+    setCameraAspectRatio(width / height);
+    setVideoDimensions({ width, height });
+    let landmarks = null;
+    let faceTransform = null;
+    try {
+      const result = faceLandmarkerRef.current.detect(image);
+      landmarks = result.faceLandmarks?.[0] ?? null;
+      faceTransform = result.facialTransformationMatrixes?.[0] ?? null;
+    } catch {
+      landmarks = null;
+    }
+    let nextPose = null;
+    if (landmarks) {
+      try {
+        nextPose = landmarksToGlassesPose(
+          landmarks,
+          width,
+          height,
+          modelMetadataRef.current,
+          faceTransform,
+          fitAdjustmentRef.current,
+        );
+      } catch {
+        nextPose = null;
+      }
+    }
+    poseRef.current = nextPose;
+    smoothedPoseRef.current = nextPose;
+    setFaceDetected(Boolean(nextPose));
+    setStatusMessage(nextPose
+      ? "Foto lista. Puedes ajustar el marco y guardar la simulación."
+      : "No encontramos un rostro de frente. Prueba con otra foto.");
+  }, [cameraStatus, modelMetadata, photoLoaded, photoUrl, trackingReady]);
 
   const startCamera = useCallback(async (requestedFacingMode = facingMode) => {
     if (!window.isSecureContext) {
@@ -374,18 +478,24 @@ export default function Glasses3DOverlay() {
 
   const captureTryOn = useCallback(() => {
     const video = videoRef.current;
+    const photo = photoImageRef.current;
     const overlay = rendererCanvasRef.current;
-    if (!video || !overlay || !faceDetected || !modelReady) return;
+    const media = cameraStatus === "photo" ? photo : video;
+    if (!media || !overlay || !faceDetected || !modelReady) return;
 
     const output = document.createElement("canvas");
-    output.width = video.videoWidth;
-    output.height = video.videoHeight;
+    output.width = cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
+    output.height = cameraStatus === "photo" ? photo.naturalHeight : video.videoHeight;
     const context = output.getContext("2d");
-    context.save();
-    context.translate(output.width, 0);
-    context.scale(-1, 1);
-    context.drawImage(video, 0, 0, output.width, output.height);
-    context.restore();
+    if (cameraStatus === "photo") {
+      context.drawImage(photo, 0, 0, output.width, output.height);
+    } else {
+      context.save();
+      context.translate(output.width, 0);
+      context.scale(-1, 1);
+      context.drawImage(video, 0, 0, output.width, output.height);
+      context.restore();
+    }
     context.drawImage(overlay, 0, 0, output.width, output.height);
     output.toBlob((blob) => {
       if (!blob) return;
@@ -398,7 +508,7 @@ export default function Glasses3DOverlay() {
       setCaptureMessage("Captura guardada en tu dispositivo.");
       window.setTimeout(() => setCaptureMessage(""), 3200);
     }, "image/png");
-  }, [faceDetected, modelReady, selectedModel.sku]);
+  }, [cameraStatus, faceDetected, modelReady, selectedModel.sku]);
 
   const changeCamera = useCallback(() => {
     const nextFacingMode = facingMode === "user" ? "environment" : "user";
@@ -444,7 +554,8 @@ export default function Glasses3DOverlay() {
   );
   const halfWidth = videoDimensions.width / 2;
   const halfHeight = videoDimensions.height / 2;
-  const viewerState = cameraStatus === "ready"
+  const cameraActive = cameraStatus === "ready" || cameraStatus === "photo";
+  const viewerState = cameraActive
     ? (faceDetected ? "tracking" : "searching")
     : cameraStatus;
   const filteredModels = useMemo(() => {
@@ -458,9 +569,9 @@ export default function Glasses3DOverlay() {
   return (
     <section className={styles.experience} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
-        <div className={styles.cameraState} data-active={cameraStatus === "ready"}>
+        <div className={styles.cameraState} data-active={cameraActive}>
           <span aria-hidden="true" />
-          <div><strong>{cameraStatus === "ready" ? "Cámara activa" : "Cámara inactiva"}</strong><small>Conexión segura y local</small></div>
+          <div><strong>{cameraStatus === "ready" ? "Cámara activa" : cameraStatus === "photo" ? "Foto cargada" : "Cámara inactiva"}</strong><small>{cameraStatus === "photo" ? "Procesada en este dispositivo" : "Conexión segura y local"}</small></div>
         </div>
         <section className={styles.guideCard} aria-labelledby="quick-guide-title">
           <p className={styles.panelTitle} id="quick-guide-title">Guía rápida</p>
@@ -495,7 +606,17 @@ export default function Glasses3DOverlay() {
             style={{ filter: `brightness(${cameraVisual.brightness}%) contrast(${cameraVisual.contrast}%)` }}
           />
 
-          {cameraStatus === "ready" && (
+          <img
+            ref={photoImageRef}
+            className={styles.photoElement}
+            src={photoUrl || undefined}
+            alt="Foto para probar el marco 3D"
+            data-hidden={cameraStatus !== "photo"}
+            onLoad={() => setPhotoLoaded(true)}
+            style={{ filter: `brightness(${cameraVisual.brightness}%) contrast(${cameraVisual.contrast}%)` }}
+          />
+
+          {cameraActive && (
             <Canvas
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
@@ -578,7 +699,7 @@ export default function Glasses3DOverlay() {
           </div>
           <div className={styles.faceOval} aria-hidden="true" />
 
-          {cameraStatus !== "ready" && (
+          {cameraStatus !== "ready" && cameraStatus !== "photo" && (
             <div className={styles.viewerPlaceholder}>
               <span className={styles.placeholderIcon} aria-hidden="true">
                 <span />
@@ -595,30 +716,30 @@ export default function Glasses3DOverlay() {
                 <button
                   className={styles.viewerCta}
                   type="button"
-                  onClick={() => startCamera()}
+                  onClick={() => (typeof window !== "undefined" && !window.isSecureContext ? openPhotoCapture() : startCamera())}
                 >
-                  Probarme este marco
+                  {typeof window !== "undefined" && !window.isSecureContext ? "Tomar o subir una foto" : "Probarme este marco"}
                 </button>
               )}
             </div>
           )}
 
-          {cameraStatus === "ready" && !faceDetected && (
+          {cameraActive && !faceDetected && (
             <div className={styles.faceHint}>
               <span aria-hidden="true" />
               Centra tu rostro y mira de frente
             </div>
           )}
 
-          {cameraStatus === "ready" && (!modelReady || modelError) && (
+          {cameraActive && (!modelReady || modelError) && (
             <div className={styles.modelLoading}>
               {modelError ? "El marco 3D necesita revisión." : "Preparando el marco 3D…"}
             </div>
           )}
 
-          <div className={styles.liveBadge} data-active={cameraStatus === "ready"}>
+          <div className={styles.liveBadge} data-active={cameraActive}>
             <span aria-hidden="true" />
-            {cameraStatus === "ready" ? "Cámara activa" : "Cámara apagada"}
+            {cameraStatus === "ready" ? "Cámara activa" : cameraStatus === "photo" ? "Foto cargada" : "Cámara apagada"}
           </div>
           <div className={styles.trackingBadge} data-active={faceDetected}>
             <span aria-hidden="true">{faceDetected ? "✓" : "⌁"}</span>
@@ -629,9 +750,9 @@ export default function Glasses3DOverlay() {
         <div className={styles.cameraControls}>
           <p>Controles de cámara</p>
           <div className={styles.viewerDock}>
-            <button className={styles.dockButton} disabled={cameraStatus === "loading"} onClick={() => (cameraStatus === "ready" ? changeCamera() : startCamera())} type="button"><span aria-hidden="true">↻</span>{cameraStatus === "ready" ? "Cambiar cámara" : "Activar cámara"}</button>
+            <button className={styles.dockButton} disabled={cameraStatus === "loading"} onClick={() => (cameraStatus === "ready" ? changeCamera() : (cameraStatus === "photo" || (typeof window !== "undefined" && !window.isSecureContext) ? openPhotoCapture() : startCamera()))} type="button"><span aria-hidden="true">↻</span>{cameraStatus === "ready" ? "Cambiar cámara" : cameraStatus === "photo" ? "Tomar otra foto" : "Activar cámara"}</button>
             <button className={styles.captureButton} disabled={!faceDetected || !modelReady} onClick={captureTryOn} type="button"><span aria-hidden="true">▣</span>Guardar foto</button>
-            <button aria-pressed={!showOverlay} className={styles.dockButton} disabled={cameraStatus !== "ready"} onClick={() => setShowOverlay((current) => !current)} type="button"><span aria-hidden="true">◐</span>{showOverlay ? "Ver sin marco" : "Ver con marco"}</button>
+            <button aria-pressed={!showOverlay} className={styles.dockButton} disabled={!cameraActive} onClick={() => setShowOverlay((current) => !current)} type="button"><span aria-hidden="true">◐</span>{showOverlay ? "Ver sin marco" : "Ver con marco"}</button>
           </div>
         </div>
         <p className={styles.status} aria-live="polite">{displayedStatusMessage}</p>
@@ -642,6 +763,15 @@ export default function Glasses3DOverlay() {
           {cartMessage && <p className={styles.cartMessage} role="status">{cartMessage}</p>}
         </article>
       </div>
+
+      <input
+        ref={photoInputRef}
+        className={styles.photoInput}
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoSelected}
+        type="file"
+      />
 
       <aside className={styles.controlsPanel}>
         <div className={styles.catalogHeader}><p className={styles.panelTitle}>Catálogo virtual</p><p>Selecciona un modelo para probártelo en vivo.</p></div>
