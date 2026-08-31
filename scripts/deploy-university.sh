@@ -39,6 +39,12 @@ for comando in node npm pm2 curl flock rsync stat realpath install; do
   validar_comando "$comando"
 done
 
+version_npm="$(npm --version)"
+version_npm_mayor="${version_npm%%.*}"
+if (( version_npm_mayor < 11 )); then
+  fallar "Se requiere npm 11.6.2 o posterior para respetar el archivo de bloqueo."
+fi
+
 if [[ ! "$version_despliegue" =~ ^[0-9a-f]{40}$ ]]; then
   fallar "GITHUB_SHA no contiene una revisión válida para desplegar."
 fi
