@@ -2,8 +2,8 @@
 
 import { motion, useReducedMotion } from "motion/react";
 
-// SVG artwork and the hover interactions are adapted from Its Hover's MIT-licensed
-// animated icon collection: https://github.com/itshover/itshover
+// Los SVG y sus interacciones se adaptaron de la colección Its Hover con licencia MIT:
+// https://github.com/itshover/itshover
 const transition = { duration: 0.32, ease: "easeOut" };
 const pulse = { rest: { scale: 1 }, hover: { scale: [1, 1.08, 1], transition } };
 const draw = { rest: { pathLength: 1, opacity: 1 }, hover: { pathLength: [1, 0.2, 1], opacity: [1, 0.45, 1], transition } };

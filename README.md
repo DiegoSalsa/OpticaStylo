@@ -1,6 +1,18 @@
 # Óptica Stylo
 
-Plataforma web para centralizar los procesos comerciales y clínicos de una óptica. El proyecto se desarrolla con una estrategia backend primero y utiliza Next.js, JavaScript y PostgreSQL.
+Plataforma web para centralizar los procesos comerciales, clínicos y de comercio electrónico de una óptica. Utiliza Next.js, JavaScript y PostgreSQL, con despliegues independientes para producción y el entorno académico.
+
+## Alcance funcional
+
+- Tienda pública con catálogo, carrito invitado o autenticado, pedidos y retiro en tienda.
+- Reserva pública de horas y gestión interna de agenda profesional.
+- Administración de pacientes, clientes, usuarios y profesionales.
+- Ficha clínica, atenciones, recetas ópticas y conservación del historial.
+- Punto de venta con cotizaciones, descuentos autorizados, abonos y comprobantes.
+- Catálogo administrativo, imágenes en Cloudinary e inventario simulado.
+- Pago mediante Mercado Pago y conciliación segura por webhook.
+- Lectura asistida de recetas externas con revisión humana obligatoria.
+- Probador virtual 3D con seguimiento facial y alternativa mediante fotografía.
 
 ## Requisitos
 
@@ -49,19 +61,37 @@ Plataforma web para centralizar los procesos comerciales y clínicos de una ópt
 ## Estructura principal
 
 ```text
+.github/workflows/  Despliegue automatizado del entorno académico
+config/             Plantillas de configuración y calibración 3D
+deploy/             Configuración del proxy Nginx
+postman/            Colección reproducible de pruebas manuales de la API
+public/             Recursos de marca, productos y modelo 3D
+scripts/            Migraciones, usuarios, despliegue y publicación 3D
 src/
 ├── app/api/       Route Handlers y contratos HTTP
+├── app/           Interfaces públicas e internas
 ├── auth/          Autenticación, sesiones y autorización
 ├── components/    Componentes reutilizables del frontend
+├── config/        Lectura y validación de variables de entorno
 ├── constants/     Constantes compartidas
 ├── db/            Conexión, transacciones y migraciones
+├── integrations/  Adaptadores de servicios externos
 ├── repositories/  Acceso a PostgreSQL
 ├── services/      Reglas y coordinación de negocio
 ├── utils/         Utilidades comunes
 └── validations/   Validación de entradas
+tests/              Pruebas unitarias, integración, seguridad e infraestructura
 ```
 
 Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servicios deben acceder a PostgreSQL mediante repositorios.
+
+## Roles y separación de datos
+
+- `ADMIN`: administración global, usuarios, catálogo, reportes y agendas.
+- `SALES`: clientes, POS, pagos, pedidos y lectura comercial de recetas emitidas.
+- `CLINICAL_PROFESSIONAL`: agenda propia, pacientes asignados, atenciones y recetas clínicas.
+
+Paciente y cliente se modelan como conceptos distintos. Los datos clínicos no se exponen a administración ni ventas, salvo la proyección mínima de una receta finalizada necesaria para preparar una venta.
 
 ## Migraciones
 
@@ -95,8 +125,34 @@ Body: no requiere
 Respuesta esperada: 200 OK con success=true y status="ok"
 ```
 
+La colección `postman/OpticaStylo.postman_collection.json` permite recorrer los contratos de la API. Sus contraseñas y cookies se dejan vacías deliberadamente y deben configurarse solo en el entorno local de Postman.
+
+## Calidad y seguridad
+
+Antes de integrar cambios a `main` se deben ejecutar:
+
+```bash
+npm run lint
+npm test
+npm run build
+npm audit --omit=dev
+```
+
+El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y migraciones con checksum. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia.
+
 ## Despliegues
 
 - Producción continúa desplegándose en Vercel y utilizando la base configurada en Neon.
 - El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx.
 - Las variables privadas se conservan fuera del repositorio y cada entorno utiliza su propia base de datos.
+- El workflow `.github/workflows/despliegueuniversidad.yml` valida y despliega exclusivamente los cambios de `main` mediante el runner propio.
+- Los correos transaccionales permanecen deshabilitados hasta disponer de proveedor, remitente y dominio verificados; no se utiliza programación cron.
+
+## Decisiones pendientes del negocio
+
+- Proveedor, tarifas y reglas de despacho.
+- Precios definitivos de cristales y adicionales ópticos.
+- Datos reales del catálogo, existencias y sucursales de retiro.
+- Software externo de inventario, versión, API, autenticación y documentación.
+
+La integración definitiva de inventario permanece aplazada hasta recibir esa información. Mientras tanto, la disponibilidad mostrada por el sistema es explícitamente simulada.
