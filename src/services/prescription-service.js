@@ -43,6 +43,13 @@ function toSalesView(prescription) {
   };
 }
 
+function toClinicalView(prescription) {
+  const result = { ...prescription };
+  delete result.encounterStatus;
+  delete result.professionalId;
+  return result;
+}
+
 function convertRepositoryError(reason) {
   const errors = {
     ENCOUNTER_NOT_FOUND: [
@@ -114,8 +121,7 @@ export async function createPrescription(
     convertRepositoryError(result.reason);
   }
 
-  const { encounterStatus, professionalId, ...prescription } = result.prescription;
-  return prescription;
+  return toClinicalView(result.prescription);
 }
 
 export async function updatePrescription(
@@ -136,8 +142,7 @@ export async function updatePrescription(
     convertRepositoryError(result.reason);
   }
 
-  const { encounterStatus, professionalId, ...prescription } = result.prescription;
-  return prescription;
+  return toClinicalView(result.prescription);
 }
 
 export async function getPrescription(
@@ -181,8 +186,7 @@ export async function getPrescription(
       throwPrescriptionNotFound();
     }
 
-    const { encounterStatus, professionalId, ...fullPrescription } = prescription;
-    return fullPrescription;
+    return toClinicalView(prescription);
   }
 
   if (canReadForSale) {
@@ -264,7 +268,6 @@ export async function getPrescriptionList(
         return toSalesView(prescription);
       }
 
-      const { encounterStatus, professionalId, ...fullPrescription } = prescription;
-      return fullPrescription;
+      return toClinicalView(prescription);
     });
 }

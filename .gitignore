@@ -24,13 +24,20 @@
 
 # Archivos del sistema
 .DS_Store
+Thumbs.db
 *.pem
+
+# Configuración local de editores
+/.idea/
+/.vscode/
+*.swp
 
 # Registros de depuración
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .next-dev.*.log
+.eslintcache
 
 # Variables de entorno locales
 .env*

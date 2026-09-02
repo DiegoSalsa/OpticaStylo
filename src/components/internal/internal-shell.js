@@ -45,7 +45,11 @@ export default function InternalShell({ children }) {
     item.permissions.every((permission) => actor?.permissions.includes(permission))), [actor]);
 
   async function logout() {
-    try { await readResponse(await fetch("/api/auth/logout", { method: "POST" })); } catch { /* cookie is still invalidated on success only */ }
+    try {
+      await readResponse(await fetch("/api/auth/logout", { method: "POST" }));
+    } catch {
+      // La cookie solo se invalida cuando el servidor confirma el cierre.
+    }
     router.replace("/ingresar");
     router.refresh();
   }
