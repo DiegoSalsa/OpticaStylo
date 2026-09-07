@@ -97,11 +97,11 @@ fi
 ln -sfn "$ruta_version" "$ruta_aplicacion/current.new"
 mv -Tf "$ruta_aplicacion/current.new" "$ruta_actual"
 
-if ! pm2 startOrReload "$ruta_actual/ecosystem.config.cjs" --update-env; then
+if ! pm2 startOrReload "$ruta_actual/deploy/ecosystem.config.cjs" --update-env; then
   if [[ -n "$ruta_anterior" && -d "$ruta_anterior" ]]; then
     ln -sfn "$ruta_anterior" "$ruta_aplicacion/current.new"
     mv -Tf "$ruta_aplicacion/current.new" "$ruta_actual"
-    pm2 startOrReload "$ruta_actual/ecosystem.config.cjs" --update-env || true
+    pm2 startOrReload "$ruta_actual/deploy/ecosystem.config.cjs" --update-env || true
   fi
   fallar "PM2 no pudo iniciar la nueva versión."
 fi
@@ -114,7 +114,7 @@ if ! curl --fail --silent --show-error \
   if [[ -n "$ruta_anterior" && -d "$ruta_anterior" ]]; then
     ln -sfn "$ruta_anterior" "$ruta_aplicacion/current.new"
     mv -Tf "$ruta_aplicacion/current.new" "$ruta_actual"
-    pm2 startOrReload "$ruta_actual/ecosystem.config.cjs" --update-env || true
+    pm2 startOrReload "$ruta_actual/deploy/ecosystem.config.cjs" --update-env || true
   else
     pm2 stop optica-stylo || true
   fi

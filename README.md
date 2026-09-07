@@ -1,6 +1,6 @@
 # Óptica Stylo
 
-Plataforma web para centralizar los procesos comerciales, clínicos y de comercio electrónico de una óptica. Utiliza Next.js, JavaScript y PostgreSQL, con despliegues independientes para producción y el entorno académico.
+Plataforma web full-stack para centralizar los procesos comerciales, clínicos y de comercio electrónico de una óptica. Reúne la atención de pacientes, la operación interna, el punto de venta y la tienda pública en una sola aplicación.
 
 ## Alcance funcional
 
@@ -14,18 +14,40 @@ Plataforma web para centralizar los procesos comerciales, clínicos y de comerci
 - Lectura asistida de recetas externas con revisión humana obligatoria.
 - Probador virtual 3D con seguimiento facial y alternativa mediante fotografía.
 
+## Tecnologías y herramientas utilizadas
+
+| Área | Tecnología o herramienta | Uso en el proyecto |
+| --- | --- | --- |
+| Aplicación web | Next.js 16 con App Router | Páginas, interfaces internas, renderizado y API HTTP |
+| Lenguaje y ejecución | JavaScript con módulos ES y Node.js | Lógica del cliente, servidor y scripts operativos |
+| Interfaz | React, CSS Modules y Motion | Componentes, estilos y transiciones de la experiencia de usuario |
+| Base de datos | PostgreSQL y `pg` | Persistencia de usuarios, pacientes, agenda, ventas y catálogo |
+| Fechas | `date-fns` y `date-fns-tz` | Manejo de agenda y zona horaria `America/Santiago` |
+| Recursos multimedia | Cloudinary | Almacenamiento de imágenes públicas y recetas privadas |
+| Pagos | Mercado Pago | Checkout, webhooks y conciliación de pagos |
+| Inteligencia artificial | API de OpenAI | Lectura asistida de recetas; el resultado siempre requiere revisión humana |
+| Correo | Resend y Svix | Envío transaccional y verificación de webhooks |
+| Experiencia 3D | Three.js, React Three Fiber, Drei y MediaPipe | Visualización de marcos y seguimiento facial |
+| Calidad | ESLint y el módulo de pruebas de Node.js | Análisis estático y pruebas automatizadas |
+| Infraestructura | GitHub Actions, Vercel, Neon, PM2 y Nginx | Integración, compilación y despliegues independientes |
+| Control de versiones | Git y GitHub | Historial, ramas y automatización del repositorio |
+
+Las integraciones externas se habilitan mediante variables de entorno. El proyecto puede ejecutarse localmente con sus funciones básicas sin activar pagos, correo ni lectura automática de recetas.
+
 ## Requisitos
 
 - Node.js 20.9.0 o posterior.
-- npm 11 o una versión compatible.
-- PostgreSQL, necesario a partir de la etapa de conexión con la base de datos.
+- npm 11.6.2 o una versión compatible.
+- Una instancia de PostgreSQL accesible desde el equipo.
+- Un navegador moderno con soporte para cámara y WebGL si se utilizará el probador virtual.
+- Credenciales de los proveedores externos únicamente para las integraciones que se deseen habilitar.
 
 ## Configuración local
 
-1. Instalar las dependencias:
+1. Instalar las dependencias respetando las versiones de `package-lock.json`:
 
    ```bash
-   npm install
+   npm ci
    ```
 
 2. Copiar `.env.example` como `.env.local` y completar los valores locales.
@@ -45,26 +67,51 @@ Plataforma web para centralizar los procesos comerciales, clínicos y de comerci
 
 ## Comandos disponibles
 
-- `npm run dev`: inicia el servidor de desarrollo.
-- `npm run build`: genera la compilación de producción.
-- `npm run start`: inicia una compilación de producción.
-- `npm run lint`: comprueba la calidad estática del código.
-- `npm test`: ejecuta las pruebas automatizadas.
-- `npm run db:check`: comprueba la conexión configurada con PostgreSQL.
-- `npm run db:migrate`: aplica las migraciones SQL pendientes.
-- `npm run db:migrate:status`: muestra el estado de las migraciones.
-- `npm run users:bootstrap-admin`: crea interactivamente el primer administrador cuando la base no contiene usuarios.
-- `npm run users:create-sales`: crea o renueva la cuenta operativa `SALES` del
-  POS usando `POS_SALES_EMAIL` y `POS_SALES_PASSWORD`; si la contraseña está
-  vacía, genera una aleatoria fuerte y la muestra al terminar.
+| Comando | Descripción |
+| --- | --- |
+| `npm run dev` | Inicia el servidor de desarrollo |
+| `npm run build` | Genera la compilación optimizada de producción |
+| `npm run start` | Inicia una compilación de producción |
+| `npm run lint` | Comprueba la calidad estática del código |
+| `npm test` | Ejecuta todas las pruebas automatizadas |
+| `npm run test:watch` | Repite las pruebas afectadas durante el desarrollo |
+| `npm run db:check` | Comprueba la conexión con PostgreSQL |
+| `npm run db:migrate` | Aplica las migraciones SQL pendientes |
+| `npm run db:migrate:status` | Muestra el estado y checksum de las migraciones |
+| `npm run users:bootstrap-admin` | Crea interactivamente el primer administrador |
+| `npm run users:create-sales` | Crea o renueva la cuenta limitada utilizada por el POS |
+| `npm run payments:preflight` | Valida la configuración de Mercado Pago antes de habilitar pagos |
+| `npm run emails:dispatch` | Procesa manualmente un lote de correos transaccionales pendientes |
+| `npm run frames:import-3d` | Analiza e importa un modelo de marco 3D |
+| `npm run frames:publish-3d` | Publica un modelo 3D previamente validado |
+
+`users:create-sales` utiliza `POS_SALES_EMAIL` y `POS_SALES_PASSWORD`. Si no se proporciona una contraseña, genera una aleatoria fuerte y la muestra una sola vez.
+
+## Arquitectura
+
+El proyecto utiliza un monolito modular: frontend y backend comparten la aplicación Next.js, pero la lógica se mantiene separada por responsabilidades.
+
+```mermaid
+flowchart LR
+    UI[Interfaz y páginas] --> API[Route Handlers]
+    API --> S[Servicios de negocio]
+    S --> R[Repositorios]
+    R --> DB[(PostgreSQL)]
+    S --> I[Integraciones externas]
+```
+
+- Las páginas y componentes se encargan de la interacción con el usuario.
+- Los Route Handlers autentican, validan y traducen las solicitudes HTTP.
+- Los servicios implementan las reglas y coordinan los casos de uso.
+- Los repositorios concentran el acceso a PostgreSQL.
+- Las integraciones aíslan a Cloudinary, Mercado Pago, OpenAI y Resend del dominio.
 
 ## Estructura principal
 
 ```text
 .github/workflows/  Despliegue automatizado del entorno académico
 config/             Plantillas de configuración y calibración 3D
-deploy/             Configuración del proxy Nginx
-postman/            Colección reproducible de pruebas manuales de la API
+deploy/             Configuración de PM2 y del proxy Nginx
 public/             Recursos de marca, productos y modelo 3D
 scripts/            Migraciones, usuarios, despliegue y publicación 3D
 src/
@@ -83,7 +130,7 @@ src/
 tests/              Pruebas unitarias, integración, seguridad e infraestructura
 ```
 
-Las rutas HTTP deben delegar la lógica de negocio a los servicios, y los servicios deben acceder a PostgreSQL mediante repositorios.
+Esta separación evita que las rutas HTTP contengan reglas de negocio o consultas SQL directamente.
 
 ## Roles y separación de datos
 
@@ -125,8 +172,6 @@ Body: no requiere
 Respuesta esperada: 200 OK con success=true y status="ok"
 ```
 
-La colección `postman/OpticaStylo.postman_collection.json` permite recorrer los contratos de la API. Sus contraseñas y cookies se dejan vacías deliberadamente y deben configurarse solo en el entorno local de Postman.
-
 ## Calidad y seguridad
 
 Antes de integrar cambios a `main` se deben ejecutar:
@@ -140,10 +185,12 @@ npm audit --omit=dev
 
 El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y migraciones con checksum. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia.
 
+Las pruebas se organizan por ámbito: aplicación, autenticación, configuración, base de datos, infraestructura, integraciones, repositorios, seguridad, servicios, interfaz, utilidades y validaciones.
+
 ## Despliegues
 
 - Producción continúa desplegándose en Vercel y utilizando la base configurada en Neon.
-- El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx.
+- El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx. Sus archivos operativos se encuentran en `deploy/`.
 - Las variables privadas se conservan fuera del repositorio y cada entorno utiliza su propia base de datos.
 - El workflow `.github/workflows/despliegueuniversidad.yml` valida y despliega exclusivamente los cambios de `main` mediante el runner propio.
 - Los correos transaccionales permanecen deshabilitados hasta disponer de proveedor, remitente y dominio verificados; no se utiliza programación cron.
@@ -156,3 +203,9 @@ El proyecto incluye controles de acceso por permisos, sesiones revocables, cooki
 - Software externo de inventario, versión, API, autenticación y documentación.
 
 La integración definitiva de inventario permanece aplazada hasta recibir esa información. Mientras tanto, la disponibilidad mostrada por el sistema es explícitamente simulada.
+
+## Licencia
+
+El código fuente de este proyecto se distribuye bajo la [licencia MIT](LICENSE), Copyright (c) 2026 DiegoSalsa.
+
+La licencia del código no concede derechos sobre nombres comerciales, logotipos, fotografías, modelos 3D ni otros recursos de terceros incluidos únicamente con fines demostrativos. Esos recursos pertenecen a sus respectivos titulares.

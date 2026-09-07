@@ -1,5 +1,8 @@
+const path = require("node:path");
+
 const port = "3000";
 const host = "127.0.0.1";
+const projectRoot = path.resolve(__dirname, "..");
 
 module.exports = {
   apps: [
@@ -7,7 +10,7 @@ module.exports = {
       name: "optica-stylo",
       script: "node_modules/next/dist/bin/next",
       args: `start --hostname ${host} --port ${port}`,
-      cwd: __dirname,
+      cwd: projectRoot,
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
