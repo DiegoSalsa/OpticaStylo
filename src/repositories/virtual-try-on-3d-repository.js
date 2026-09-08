@@ -1,59 +1,60 @@
-import { executeQuery } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
-function publicModel(row) {
+function publicModel(asset) {
   return {
-    assetId: row.id,
-    attribution: row.attribution_text,
-    licenseCode: row.license_code,
-    metadataUrl: `/api/store/virtual-try-on/models/${row.id}/metadata`,
-    modelUrl: `/api/store/virtual-try-on/models/${row.id}/model`,
-    name: row.product_name,
-    productId: row.product_id,
-    sku: row.product_sku,
-    unitPriceCents: Number(row.unit_price_cents),
-    version: Number(row.version),
+    assetId: asset.id,
+    attribution: asset.attribution_text,
+    licenseCode: asset.license_code,
+    metadataUrl: `/api/store/virtual-try-on/models/${asset.id}/metadata`,
+    modelUrl: `/api/store/virtual-try-on/models/${asset.id}/model`,
+    name: asset.products.name,
+    productId: asset.product_id,
+    sku: asset.products.sku,
+    unitPriceCents: Number(asset.products.unit_price_cents),
+    version: Number(asset.version),
   };
 }
 
-const PUBLIC_MODEL_FROM = `
-  FROM virtual_try_on_3d_assets AS assets
-  JOIN products ON products.id = assets.product_id
-  WHERE assets.status = 'ACTIVE'
-    AND products.is_active = TRUE
-    AND products.category = 'FRAME'
-`;
+const publicModelWhere = {
+  status: "ACTIVE",
+  products: { category: "FRAME", is_active: true },
+};
 
 export async function listActive3dModels() {
-  const result = await executeQuery(
-    `SELECT assets.id, assets.product_id, assets.version, assets.license_code,
-            assets.attribution_text, products.name AS product_name,
-            products.sku AS product_sku, products.unit_price_cents
-     ${PUBLIC_MODEL_FROM}
-     ORDER BY products.name, products.id`,
-  );
-  return result.rows.map(publicModel);
+  const assets = await prisma.virtual_try_on_3d_assets.findMany({
+    include: { products: true },
+    orderBy: [{ products: { name: "asc" } }, { product_id: "asc" }],
+    where: publicModelWhere,
+  });
+  return assets.map(publicModel);
 }
 
 export async function findPublic3dModelFile(assetId) {
-  const result = await executeQuery(
-    `SELECT assets.model_data, assets.file_sha256, assets.original_filename
-     ${PUBLIC_MODEL_FROM} AND assets.id = $1`, [assetId],
-  );
-  const row = result.rows[0];
-  return row ? { data: row.model_data, filename: row.original_filename, sha256: row.file_sha256 } : null;
+  const asset = await prisma.virtual_try_on_3d_assets.findFirst({
+    select: { file_sha256: true, model_data: true, original_filename: true },
+    where: { id: assetId, ...publicModelWhere },
+  });
+  return asset ? {
+    data: asset.model_data,
+    filename: asset.original_filename,
+    sha256: asset.file_sha256,
+  } : null;
 }
 
 export async function findPublic3dModelMetadata(assetId) {
-  const result = await executeQuery(
-    `SELECT assets.model_metadata, assets.file_sha256, assets.license_code,
-            assets.attribution_text
-     ${PUBLIC_MODEL_FROM} AND assets.id = $1`, [assetId],
-  );
-  const row = result.rows[0];
-  return row ? {
-    attribution: row.attribution_text,
-    licenseCode: row.license_code,
-    metadata: row.model_metadata,
-    modelSha256: row.file_sha256,
+  const asset = await prisma.virtual_try_on_3d_assets.findFirst({
+    select: {
+      attribution_text: true,
+      file_sha256: true,
+      license_code: true,
+      model_metadata: true,
+    },
+    where: { id: assetId, ...publicModelWhere },
+  });
+  return asset ? {
+    attribution: asset.attribution_text,
+    licenseCode: asset.license_code,
+    metadata: asset.model_metadata,
+    modelSha256: asset.file_sha256,
   } : null;
 }
