@@ -1,50 +1,32 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import {
-  calculateMigrationChecksum,
-  loadMigrations,
-  parseMigrationFileName,
-} from "../../src/db/migration-runner.js";
+const baselineUrl = new URL(
+  "../../prisma/migrations/20260908000000_baseline/migration.sql",
+  import.meta.url,
+);
 
-test("interpreta nombres válidos de migraciones", () => {
-  assert.deepEqual(parseMigrationFileName("001_crear_usuarios.sql"), {
-    name: "crear_usuarios",
-    version: 1,
-  });
+test("consolida las 32 migraciones históricas en un baseline", async () => {
+  const baseline = await readFile(baselineUrl, "utf8");
+  for (let version = 1; version <= 32; version += 1) {
+    assert.match(baseline, new RegExp(`Fuente histórica: ${String(version).padStart(3, "0")}_`));
+  }
 });
 
-test("rechaza nombres de migración inválidos", () => {
-  assert.throws(
-    () => parseMigrationFileName("crear_usuarios.sql"),
-    /debe seguir el formato/,
-  );
+test("el baseline crea las 49 tablas del esquema", async () => {
+  const baseline = await readFile(baselineUrl, "utf8");
+  assert.equal((baseline.match(/^CREATE TABLE/gm) ?? []).length, 49);
 });
 
-test("calcula un checksum estable para el contenido SQL", () => {
-  const sql = "CREATE TABLE ejemplo (id INTEGER PRIMARY KEY);";
-
-  assert.equal(calculateMigrationChecksum(sql), calculateMigrationChecksum(sql));
-  assert.notEqual(
-    calculateMigrationChecksum(sql),
-    calculateMigrationChecksum(`${sql}\n`),
-  );
+test("conserva las restricciones y funciones históricas", async () => {
+  const baseline = await readFile(baselineUrl, "utf8");
+  assert.match(baseline, /CREATE FUNCTION set_updated_at_timestamp/);
+  assert.match(baseline, /products_prescription_only_for_lenses/);
 });
 
-test("carga las migraciones en orden numérico", async (context) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "opticastylo-migrations-"));
-  context.after(() => rm(directory, { force: true, recursive: true }));
-
-  await writeFile(path.join(directory, "002_segunda.sql"), "SELECT 2;", "utf8");
-  await writeFile(path.join(directory, "001_primera.sql"), "SELECT 1;", "utf8");
-
-  const migrations = await loadMigrations(directory);
-
-  assert.deepEqual(
-    migrations.map((migration) => migration.version),
-    [1, 2],
-  );
+test("usa Prisma Migrate para estado y despliegue", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8"));
+  assert.match(manifest.scripts["db:migrate"], /db-migrate\.mjs/);
+  assert.match(manifest.scripts["db:migrate:status"], /db-migration-status\.mjs/);
 });

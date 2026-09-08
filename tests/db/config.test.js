@@ -1,87 +1,46 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { getDatabaseConfig } from "../../src/db/config.js";
+const schemaUrl = new URL("../../prisma/schema.prisma", import.meta.url);
+const clientUrl = new URL("../../src/db/prisma.js", import.meta.url);
+const packageUrl = new URL("../../package.json", import.meta.url);
+const environmentUrl = new URL("../../.env.example", import.meta.url);
 
-test("permite PostgreSQL local sin SSL fuera de producción", () => {
-  const config = getDatabaseConfig({
-    DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
-  });
-
-  assert.equal(config.application_name, "optica-stylo");
-  assert.equal(config.connectionTimeoutMillis, 5_000);
-  assert.equal(config.idleTimeoutMillis, 10_000);
-  assert.equal(config.max, 10);
-  assert.equal(config.ssl, false);
+test("configura PostgreSQL exclusivamente mediante DATABASE_URL", async () => {
+  const schema = await readFile(schemaUrl, "utf8");
+  assert.match(schema, /provider\s*=\s*"postgresql"/);
+  assert.match(schema, /url\s*=\s*env\("DATABASE_URL"\)/);
 });
 
-test("rechaza una configuración sin DATABASE_URL", () => {
-  assert.throws(
-    () => getDatabaseConfig({}),
-    /La variable DATABASE_URL es obligatoria/,
-  );
+test("centraliza Prisma Client en una única instancia", async () => {
+  const source = await readFile(clientUrl, "utf8");
+  assert.match(source, /new PrismaClient/);
+  assert.match(source, /globalThis/);
 });
 
-test("rechaza valores inválidos del pool", () => {
-  assert.throws(
-    () =>
-      getDatabaseConfig({
-        DATABASE_POOL_MAX: "0",
-        DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
-      }),
-    /DATABASE_POOL_MAX debe ser un número entero positivo/,
-  );
+test("elimina la configuración del pool pg", async () => {
+  const environment = await readFile(environmentUrl, "utf8");
+  assert.doesNotMatch(environment, /DATABASE_POOL_MAX|DATABASE_IDLE_TIMEOUT_MS/);
 });
 
-test("activa SSL con verificación de certificados", () => {
-  const config = getDatabaseConfig({
-    DATABASE_SSL: "true",
-    DATABASE_URL: "postgresql://postgres@example.com:5432/opticastylo",
-  });
-
-  assert.deepEqual(config.ssl, { rejectUnauthorized: true });
-  assert.equal(new URL(config.connectionString).searchParams.get("sslmode"), "verify-full");
+test("deja TLS bajo control de la URL PostgreSQL", async () => {
+  const environment = await readFile(environmentUrl, "utf8");
+  assert.match(environment, /DATABASE_URL=postgresql:\/\//);
+  assert.doesNotMatch(environment, /DATABASE_SSL=/);
 });
 
-test("exige SSL para Neon y producción", () => {
-  assert.throws(
-    () => getDatabaseConfig({
-      DATABASE_SSL: "false",
-      DATABASE_URL: "postgresql://postgres@example.neon.tech:5432/opticastylo",
-    }),
-    /DATABASE_SSL debe ser true/,
-  );
-  assert.throws(
-    () => getDatabaseConfig({
-      DATABASE_SSL: "false",
-      DATABASE_URL: "postgresql://postgres@localhost:5432/opticastylo",
-      NODE_ENV: "production",
-    }),
-    /DATABASE_SSL debe ser true/,
-  );
+test("no declara pg como dependencia", async () => {
+  const manifest = JSON.parse(await readFile(packageUrl, "utf8"));
+  assert.equal(manifest.dependencies.pg, undefined);
 });
 
-test("permite PostgreSQL local sin SSL únicamente en la universidad", () => {
-  const config = getDatabaseConfig({
-    DATABASE_SSL: "false",
-    DATABASE_ALLOW_INSECURE_LOCAL: "true",
-    DATABASE_URL: "postgresql://postgres@127.0.0.1:5432/opticastylo",
-    DEPLOYMENT_ENVIRONMENT: "university",
-    NODE_ENV: "production",
-  });
-
-  assert.equal(config.ssl, false);
+test("genera Prisma Client durante la instalación", async () => {
+  const manifest = JSON.parse(await readFile(packageUrl, "utf8"));
+  assert.equal(manifest.scripts.postinstall, "prisma generate");
 });
 
-test("no permite habilitar conexiones inseguras contra un host remoto", () => {
-  assert.throws(
-    () => getDatabaseConfig({
-      DATABASE_SSL: "false",
-      DATABASE_ALLOW_INSECURE_LOCAL: "true",
-      DATABASE_URL: "postgresql://postgres@db.institucional.cl:5432/opticastylo",
-      DEPLOYMENT_ENVIRONMENT: "university",
-      NODE_ENV: "production",
-    }),
-    /DATABASE_SSL debe ser true/,
-  );
+test("no habilita APIs raw de Prisma", async () => {
+  const source = await readFile(clientUrl, "utf8");
+  assert.doesNotMatch(source, /\$(?:query|execute)Raw/);
 });

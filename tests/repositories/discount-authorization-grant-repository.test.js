@@ -12,43 +12,37 @@ const authorizedBy = "00000000-0000-4000-8000-000000000003";
 const saleId = "00000000-0000-4000-8000-000000000004";
 
 test("bloquea una autorización temporal de descuento antes de consumirla", async () => {
-  const queries = [];
+  let query;
   const client = {
-    query: async (query, parameters) => {
-      queries.push({ parameters, query });
-      return { rows: [{ authorized_by: authorizedBy }] };
+    discount_authorization_grants: {
+      async findFirst(options) {
+        query = options;
+        return { authorized_by: authorizedBy };
+      },
     },
   };
   const result = await lockDiscountAuthorizationWithClient(client, {
-    amountCents: 5000,
-    authorizationId,
-    reason: "Convenio de prueba",
-    requestedBy,
+    amountCents: 5000, authorizationId, reason: "Convenio de prueba", requestedBy,
   });
-
   assert.equal(result, authorizedBy);
-  assert.deepEqual(queries[0].parameters, [
-    authorizationId,
-    requestedBy,
-    5000,
-    "Convenio de prueba",
-  ]);
-  assert.match(queries[0].query, /consumed_at IS NULL/);
-  assert.match(queries[0].query, /expires_at > CURRENT_TIMESTAMP/);
-  assert.match(queries[0].query, /FOR UPDATE/);
+  assert.deepEqual(query.where, {
+    amount_cents: 5000, consumed_at: null, expires_at: { gt: query.where.expires_at.gt },
+    id: authorizationId, reason: "Convenio de prueba", requested_by: requestedBy,
+  });
+  assert.ok(query.where.expires_at.gt instanceof Date);
 });
 
 test("asocia la autorización consumida a una única venta", async () => {
-  const queries = [];
+  let query;
   const client = {
-    query: async (query, parameters) => {
-      queries.push({ parameters, query });
-      return { rows: [] };
+    discount_authorization_grants: {
+      async update(options) {
+        query = options;
+      },
     },
   };
-
   await consumeDiscountAuthorizationWithClient(client, authorizationId, saleId);
-
-  assert.deepEqual(queries[0].parameters, [authorizationId, saleId]);
-  assert.match(queries[0].query, /SET consumed_at = CURRENT_TIMESTAMP, sale_id = \$2/);
+  assert.equal(query.where.id, authorizationId);
+  assert.equal(query.data.sale_id, saleId);
+  assert.ok(query.data.consumed_at instanceof Date);
 });
