@@ -9,12 +9,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "node scripts/prisma-validate.mjs",
     "lint": "eslint .",
     "test": "node --test",
     "test:watch": "node --test --watch",
     "frames:import-3d": "node scripts/import-3d-frames.mjs",
     "frames:publish-3d": "node scripts/publish-3d-model.mjs",
     "db:check": "node scripts/db-check.mjs",
+    "db:baseline": "node scripts/db-baseline.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:migrate:status": "node scripts/db-migration-status.mjs",
     "emails:dispatch": "node scripts/dispatch-payment-emails.mjs",
@@ -28,6 +32,7 @@
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.0.1",
     "@next/env": "^16.3.0",
+    "@prisma/client": "^6.19.3",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "cloudinary": "^2.10.1",
@@ -36,12 +41,12 @@
     "mercadopago": "^3.4.0",
     "motion": "^12.43.0",
     "next": "16.3.0",
-    "pg": "^8.23.0",
     "svix": "^2.0.0",
     "three": "^0.185.1"
   },
   "devDependencies": {
     "eslint": "^9",
-    "eslint-config-next": "16.3.0"
+    "eslint-config-next": "16.3.0",
+    "prisma": "^6.19.3"
   }
 }
