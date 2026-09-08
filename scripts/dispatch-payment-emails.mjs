@@ -5,7 +5,7 @@ loadProjectEnvironment();
 const { processTransactionalEmailBatch } = await import(
   "../src/services/transactional-email-service.js"
 );
-const { closeDatabasePool } = await import("../src/db/pool.js");
+const { disconnectPrisma } = await import("../src/db/prisma.js");
 
 try {
   const summary = await processTransactionalEmailBatch({ triggerSource: "script" });
@@ -21,5 +21,5 @@ try {
   }));
   if (["FAILED", "PARTIAL"].includes(summary.status)) process.exitCode = 1;
 } finally {
-  await closeDatabasePool();
+  await disconnectPrisma();
 }
