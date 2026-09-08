@@ -1,4 +1,4 @@
-import { executeQuery } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
 function mapCustomer(row) {
   if (!row) return null;
@@ -17,85 +17,59 @@ function mapCustomer(row) {
 }
 
 export async function createCustomer(customer, actorUserId) {
-  const result = await executeQuery(
-    `
-      INSERT INTO customers (
-        patient_id, rut, first_names, last_names, phone, email, address,
-        created_by, updated_by
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
-      RETURNING *
-    `,
-    [
-      customer.patientId,
-      customer.rut,
-      customer.firstNames,
-      customer.lastNames,
-      customer.phone,
-      customer.email,
-      customer.address,
-      actorUserId,
-    ],
-  );
-  return mapCustomer(result.rows[0]);
+  return mapCustomer(await prisma.customers.create({ data: {
+    address: customer.address,
+    created_by: actorUserId,
+    email: customer.email,
+    first_names: customer.firstNames,
+    last_names: customer.lastNames,
+    patient_id: customer.patientId,
+    phone: customer.phone,
+    rut: customer.rut,
+    updated_by: actorUserId,
+  } }));
 }
 
 export async function findCustomerById(customerId) {
-  const result = await executeQuery("SELECT * FROM customers WHERE id = $1", [customerId]);
-  return mapCustomer(result.rows[0]);
+  return mapCustomer(await prisma.customers.findUnique({ where: { id: customerId } }));
 }
 
 export async function listCustomers({ page, pageSize, search }) {
-  const offset = (page - 1) * pageSize;
-  const pattern = `%${search}%`;
-  const compactPattern = `%${search.replace(/[.\s-]/g, "")}%`;
-  const filters = `
-    $1 = ''
-    OR first_names ILIKE $2
-    OR last_names ILIKE $2
-    OR concat_ws(' ', first_names, last_names) ILIKE $2
-    OR email ILIKE $2
-    OR phone ILIKE $2
-    OR replace(rut, '-', '') ILIKE $3
-  `;
-  const parameters = [search, pattern, compactPattern];
-  const [itemsResult, countResult] = await Promise.all([
-    executeQuery(
-      `SELECT * FROM customers WHERE ${filters}
-       ORDER BY last_names, first_names, id LIMIT $4 OFFSET $5`,
-      [...parameters, pageSize, offset],
-    ),
-    executeQuery(`SELECT COUNT(*) AS total FROM customers WHERE ${filters}`, parameters),
+  const where = search ? { OR: [
+    { first_names: { contains: search, mode: "insensitive" } },
+    { last_names: { contains: search, mode: "insensitive" } },
+    { email: { contains: search, mode: "insensitive" } },
+    { phone: { contains: search, mode: "insensitive" } },
+    { rut: { contains: search.replace(/[.\s-]/g, ""), mode: "insensitive" } },
+  ] } : {};
+  const [items, total] = await prisma.$transaction([
+    prisma.customers.findMany({
+      orderBy: [{ last_names: "asc" }, { first_names: "asc" }, { id: "asc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      where,
+    }),
+    prisma.customers.count({ where }),
   ]);
-  const total = Number(countResult.rows[0].total);
   return {
-    items: itemsResult.rows.map(mapCustomer),
-    page,
-    pageSize,
-    total,
+    items: items.map(mapCustomer), page, pageSize, total,
     totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
   };
 }
 
 export async function updateCustomer(customerId, customer, actorUserId) {
-  const result = await executeQuery(
-    `
-      UPDATE customers
-      SET rut = $2, first_names = $3, last_names = $4, phone = $5,
-          email = $6, address = $7, updated_by = $8
-      WHERE id = $1
-      RETURNING *
-    `,
-    [
-      customerId,
-      customer.rut,
-      customer.firstNames,
-      customer.lastNames,
-      customer.phone,
-      customer.email,
-      customer.address,
-      actorUserId,
-    ],
-  );
-  return mapCustomer(result.rows[0]);
+  const existing = await prisma.customers.findUnique({ select: { id: true }, where: { id: customerId } });
+  if (!existing) return null;
+  return mapCustomer(await prisma.customers.update({
+    data: {
+      address: customer.address,
+      email: customer.email,
+      first_names: customer.firstNames,
+      last_names: customer.lastNames,
+      phone: customer.phone,
+      rut: customer.rut,
+      updated_by: actorUserId,
+    },
+    where: { id: customerId },
+  }));
 }
