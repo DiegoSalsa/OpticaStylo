@@ -1,40 +1,25 @@
-import { executeQuery } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
-export async function reservePublicRequestQuota({
-  bucket,
-  subjectHash,
-  windowSeconds,
-}) {
-  const result = await executeQuery(
-    `
-      INSERT INTO public_request_rate_limits (
-        bucket, subject_hash, window_started_at, expires_at, request_count
-      ) VALUES (
-        $1, $2, CURRENT_TIMESTAMP,
-        CURRENT_TIMESTAMP + make_interval(secs => $3), 1
-      )
-      ON CONFLICT (bucket, subject_hash) DO UPDATE
-      SET
-        request_count = CASE
-          WHEN public_request_rate_limits.expires_at <= CURRENT_TIMESTAMP THEN 1
-          ELSE public_request_rate_limits.request_count + 1
-        END,
-        window_started_at = CASE
-          WHEN public_request_rate_limits.expires_at <= CURRENT_TIMESTAMP
-            THEN CURRENT_TIMESTAMP
-          ELSE public_request_rate_limits.window_started_at
-        END,
-        expires_at = CASE
-          WHEN public_request_rate_limits.expires_at <= CURRENT_TIMESTAMP
-            THEN CURRENT_TIMESTAMP + make_interval(secs => $3)
-          ELSE public_request_rate_limits.expires_at
-        END
-      RETURNING request_count, expires_at
-    `,
-    [bucket, subjectHash, windowSeconds],
-  );
-  return {
-    attempts: Number(result.rows[0].request_count),
-    expiresAt: result.rows[0].expires_at,
-  };
+export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }) {
+  return prisma.$transaction(async (client) => {
+    const now = new Date();
+    const current = await client.public_request_rate_limits.findUnique({
+      where: { bucket_subject_hash: { bucket, subject_hash: subjectHash } },
+    });
+    const expired = !current || current.expires_at <= now;
+    const expiresAt = expired
+      ? new Date(now.getTime() + windowSeconds * 1000)
+      : current.expires_at;
+    const row = await client.public_request_rate_limits.upsert({
+      create: {
+        bucket, expires_at: expiresAt, request_count: 1,
+        subject_hash: subjectHash, window_started_at: now,
+      },
+      update: expired
+        ? { expires_at: expiresAt, request_count: 1, window_started_at: now }
+        : { request_count: { increment: 1 } },
+      where: { bucket_subject_hash: { bucket, subject_hash: subjectHash } },
+    });
+    return { attempts: row.request_count, expiresAt: row.expires_at };
+  }, { isolationLevel: "Serializable" });
 }
