@@ -72,6 +72,7 @@ rsync -a \
   --exclude ".git" \
   --exclude ".next" \
   --exclude "node_modules" \
+  --include ".env.example" \
   --exclude ".env*" \
   --exclude "*.log" \
   --exclude "tmp" \
@@ -79,15 +80,30 @@ rsync -a \
 
 cd "$ruta_version"
 npm ci
-npm run lint
-npm test
+npm run prisma:generate
 install -m 600 "$ruta_entorno" "$ruta_version/.env.production.local"
 printf "\nDEPLOYMENT_VERSION=%s\n" "$version_despliegue" >> "$ruta_version/.env.production.local"
 export NODE_ENV=production
+export DEPLOYMENT_ENVIRONMENT=university
 export DEPLOYMENT_VERSION="$version_despliegue"
+npm run prisma:validate
+npm run lint
+npm test
 npm run db:check
 npm run build
-npm run db:migrate
+
+ruta_log_migracion="$(mktemp)"
+if ! npm run db:migrate 2>&1 | tee "$ruta_log_migracion"; then
+  if grep -q "P3005" "$ruta_log_migracion"; then
+    echo "Base existente detectada; validando y registrando el baseline de Prisma."
+    npm run db:baseline
+    npm run db:migrate
+  else
+    rm -f "$ruta_log_migracion"
+    fallar "Prisma Migrate no pudo actualizar la base de datos."
+  fi
+fi
+rm -f "$ruta_log_migracion"
 
 ruta_anterior=""
 if [[ -L "$ruta_actual" ]]; then
