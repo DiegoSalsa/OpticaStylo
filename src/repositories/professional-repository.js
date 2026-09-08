@@ -1,135 +1,77 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
+
+const userRelation = "users_professional_profiles_user_idTousers";
 
 function mapProfessional(row) {
-  if (!row) {
-    return null;
-  }
-
+  if (!row) return null;
+  const user = row[userRelation];
   return {
     appointmentDurationMinutes: row.appointment_duration_minutes,
     createdAt: row.created_at,
-    email: row.email,
-    firstName: row.first_name,
+    email: user.email,
+    firstName: user.first_name,
     id: row.user_id,
     isBookable: row.is_bookable,
-    lastName: row.last_name,
+    lastName: user.last_name,
     slotIntervalMinutes: row.slot_interval_minutes,
     updatedAt: row.updated_at,
   };
 }
 
-const PROFESSIONAL_SELECT = `
-  SELECT
-    professional_profiles.user_id,
-    professional_profiles.appointment_duration_minutes,
-    professional_profiles.slot_interval_minutes,
-    professional_profiles.is_bookable,
-    professional_profiles.created_at,
-    professional_profiles.updated_at,
-    users.email,
-    users.first_name,
-    users.last_name
-  FROM professional_profiles
-  JOIN users ON users.id = professional_profiles.user_id
-`;
+const includeUser = { [userRelation]: true };
 
 export async function createProfessionalProfile(profileData, actorUserId) {
-  return executeTransaction(async (client) => {
-    const clinicalUser = await client.query(
-      `
-        SELECT users.id
-        FROM users
-        JOIN user_roles ON user_roles.user_id = users.id
-        JOIN roles ON roles.id = user_roles.role_id
-        WHERE
-          users.id = $1
-          AND users.is_active = TRUE
-          AND roles.code = 'CLINICAL_PROFESSIONAL'
-        LIMIT 1
-      `,
-      [profileData.userId],
-    );
-
-    if (clinicalUser.rowCount === 0) {
-      return null;
-    }
-
-    await client.query(
-      `
-        INSERT INTO professional_profiles (
-          user_id,
-          appointment_duration_minutes,
-          slot_interval_minutes,
-          is_bookable,
-          created_by,
-          updated_by
-        )
-        VALUES ($1, $2, $3, $4, $5, $5)
-      `,
-      [
-        profileData.userId,
-        profileData.appointmentDurationMinutes,
-        profileData.slotIntervalMinutes,
-        profileData.isBookable,
-        actorUserId,
-      ],
-    );
-
-    const result = await client.query(
-      `${PROFESSIONAL_SELECT} WHERE professional_profiles.user_id = $1`,
-      [profileData.userId],
-    );
-
-    return mapProfessional(result.rows[0]);
+  return prisma.$transaction(async (client) => {
+    const clinicalUser = await client.users.findFirst({
+      select: { id: true },
+      where: {
+        id: profileData.userId,
+        is_active: true,
+        user_roles_user_roles_user_idTousers: { some: { roles: { code: "CLINICAL_PROFESSIONAL" } } },
+      },
+    });
+    if (!clinicalUser) return null;
+    return mapProfessional(await client.professional_profiles.create({
+      data: {
+        appointment_duration_minutes: profileData.appointmentDurationMinutes,
+        created_by: actorUserId,
+        is_bookable: profileData.isBookable,
+        slot_interval_minutes: profileData.slotIntervalMinutes,
+        updated_by: actorUserId,
+        user_id: profileData.userId,
+      },
+      include: includeUser,
+    }));
   });
 }
 
 export async function findProfessionalById(professionalId) {
-  const result = await executeQuery(
-    `${PROFESSIONAL_SELECT} WHERE professional_profiles.user_id = $1`,
-    [professionalId],
-  );
-
-  return mapProfessional(result.rows[0]);
+  return mapProfessional(await prisma.professional_profiles.findUnique({
+    include: includeUser, where: { user_id: professionalId },
+  }));
 }
 
 export async function listProfessionalProfiles() {
-  const result = await executeQuery(`
-    ${PROFESSIONAL_SELECT}
-    ORDER BY users.last_name, users.first_name, users.id
-  `);
-
-  return result.rows.map(mapProfessional);
+  const rows = await prisma.professional_profiles.findMany({
+    include: includeUser,
+    orderBy: [
+      { [userRelation]: { last_name: "asc" } },
+      { [userRelation]: { first_name: "asc" } },
+      { user_id: "asc" },
+    ],
+  });
+  return rows.map(mapProfessional);
 }
 
-export async function updateProfessionalProfile(
-  professionalId,
-  profileData,
-  actorUserId,
-) {
-  const result = await executeQuery(
-    `
-      UPDATE professional_profiles
-      SET
-        appointment_duration_minutes = $2,
-        slot_interval_minutes = $3,
-        is_bookable = $4,
-        updated_by = $5
-      WHERE user_id = $1
-      RETURNING user_id
-    `,
-    [
-      professionalId,
-      profileData.appointmentDurationMinutes,
-      profileData.slotIntervalMinutes,
-      profileData.isBookable,
-      actorUserId,
-    ],
-  );
-
-  if (result.rowCount === 0) {
-    return null;
-  }
-
-  return findProfessionalById(professionalId);
+export async function updateProfessionalProfile(professionalId, profileData, actorUserId) {
+  const result = await prisma.professional_profiles.updateMany({
+    data: {
+      appointment_duration_minutes: profileData.appointmentDurationMinutes,
+      is_bookable: profileData.isBookable,
+      slot_interval_minutes: profileData.slotIntervalMinutes,
+      updated_by: actorUserId,
+    },
+    where: { user_id: professionalId },
+  });
+  return result.count ? findProfessionalById(professionalId) : null;
 }
