@@ -1,7 +1,17 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
 function formatTime(value) {
-  return value?.slice(0, 5) ?? null;
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString().slice(11, 16);
+  return value.slice(0, 5);
+}
+
+function time(value) {
+  return value ? new Date(`1970-01-01T${value}:00.000Z`) : null;
+}
+
+function dateOnly(value) {
+  return value instanceof Date ? value : new Date(`${value}T00:00:00.000Z`);
 }
 
 function formatDate(value) {
@@ -10,257 +20,109 @@ function formatDate(value) {
 
 function mapSchedule(row) {
   return {
-    breakEnd: formatTime(row.break_end),
-    breakStart: formatTime(row.break_start),
-    dayOfWeek: row.day_of_week,
-    endTime: formatTime(row.end_time),
-    isWorking: row.is_working,
-    startTime: formatTime(row.start_time),
+    breakEnd: formatTime(row.break_end), breakStart: formatTime(row.break_start),
+    dayOfWeek: row.day_of_week, endTime: formatTime(row.end_time),
+    isWorking: row.is_working, startTime: formatTime(row.start_time),
   };
 }
 
 function mapOverride(row) {
-  if (!row) {
-    return null;
-  }
-
+  if (!row) return null;
   return {
-    breakEnd: formatTime(row.break_end),
-    breakStart: formatTime(row.break_start),
-    date: formatDate(row.date),
-    endTime: formatTime(row.end_time),
-    isWorking: row.is_working,
-    startTime: formatTime(row.start_time),
+    breakEnd: formatTime(row.break_end), breakStart: formatTime(row.break_start),
+    date: formatDate(row.date), endTime: formatTime(row.end_time),
+    isWorking: row.is_working, startTime: formatTime(row.start_time),
   };
 }
 
 function mapBlock(row) {
-  return {
-    createdAt: row.created_at,
-    endAt: row.end_at,
-    id: row.id,
-    reason: row.reason,
-    startAt: row.start_at,
-  };
+  return row ? { createdAt: row.created_at, endAt: row.end_at, id: row.id, reason: row.reason, startAt: row.start_at } : null;
 }
 
 export async function getWeeklySchedule(professionalId) {
-  const result = await executeQuery(
-    `
-      SELECT day_of_week, start_time, end_time, is_working, break_start, break_end
-      FROM professional_weekly_schedules
-      WHERE professional_id = $1
-      ORDER BY day_of_week
-    `,
-    [professionalId],
-  );
-
-  return result.rows.map(mapSchedule);
+  return (await prisma.professional_weekly_schedules.findMany({
+    orderBy: { day_of_week: "asc" }, where: { professional_id: professionalId },
+  })).map(mapSchedule);
 }
 
 export async function saveWeeklySchedule(professionalId, days) {
-  return executeTransaction(async (client) => {
+  return prisma.$transaction(async (client) => {
     for (const day of days) {
-      await client.query(
-        `
-          INSERT INTO professional_weekly_schedules (
-            professional_id,
-            day_of_week,
-            start_time,
-            end_time,
-            is_working,
-            break_start,
-            break_end
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          ON CONFLICT (professional_id, day_of_week) DO UPDATE
-          SET
-            start_time = EXCLUDED.start_time,
-            end_time = EXCLUDED.end_time,
-            is_working = EXCLUDED.is_working,
-            break_start = EXCLUDED.break_start,
-            break_end = EXCLUDED.break_end
-        `,
-        [
-          professionalId,
-          day.dayOfWeek,
-          day.startTime,
-          day.endTime,
-          day.isWorking,
-          day.breakStart,
-          day.breakEnd,
-        ],
-      );
+      const data = {
+        break_end: time(day.breakEnd), break_start: time(day.breakStart),
+        end_time: time(day.endTime), is_working: day.isWorking, start_time: time(day.startTime),
+      };
+      await client.professional_weekly_schedules.upsert({
+        create: { ...data, day_of_week: day.dayOfWeek, professional_id: professionalId },
+        update: data,
+        where: { professional_id_day_of_week: { day_of_week: day.dayOfWeek, professional_id: professionalId } },
+      });
     }
-
-    const result = await client.query(
-      `
-        SELECT day_of_week, start_time, end_time, is_working, break_start, break_end
-        FROM professional_weekly_schedules
-        WHERE professional_id = $1
-        ORDER BY day_of_week
-      `,
-      [professionalId],
-    );
-
-    return result.rows.map(mapSchedule);
+    return (await client.professional_weekly_schedules.findMany({
+      orderBy: { day_of_week: "asc" }, where: { professional_id: professionalId },
+    })).map(mapSchedule);
   });
 }
 
 export async function getScheduleOverrides(professionalId, from, to) {
-  const result = await executeQuery(
-    `
-      SELECT date, start_time, end_time, is_working, break_start, break_end
-      FROM professional_schedule_overrides
-      WHERE professional_id = $1 AND date BETWEEN $2 AND $3
-      ORDER BY date
-    `,
-    [professionalId, from, to],
-  );
-
-  return result.rows.map(mapOverride);
+  return (await prisma.professional_schedule_overrides.findMany({
+    orderBy: { date: "asc" },
+    where: { date: { gte: dateOnly(from), lte: dateOnly(to) }, professional_id: professionalId },
+  })).map(mapOverride);
 }
 
 export async function findScheduleOverride(professionalId, date) {
-  const result = await executeQuery(
-    `
-      SELECT date, start_time, end_time, is_working, break_start, break_end
-      FROM professional_schedule_overrides
-      WHERE professional_id = $1 AND date = $2
-    `,
-    [professionalId, date],
-  );
-
-  return mapOverride(result.rows[0]);
+  return mapOverride(await prisma.professional_schedule_overrides.findUnique({
+    where: { professional_id_date: { date: dateOnly(date), professional_id: professionalId } },
+  }));
 }
 
-export async function upsertScheduleOverride(
-  professionalId,
-  date,
-  override,
-  actorUserId,
-) {
-  const result = await executeQuery(
-    `
-      INSERT INTO professional_schedule_overrides (
-        professional_id,
-        date,
-        start_time,
-        end_time,
-        is_working,
-        break_start,
-        break_end,
-        created_by
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      ON CONFLICT (professional_id, date) DO UPDATE
-      SET
-        start_time = EXCLUDED.start_time,
-        end_time = EXCLUDED.end_time,
-        is_working = EXCLUDED.is_working,
-        break_start = EXCLUDED.break_start,
-        break_end = EXCLUDED.break_end
-      RETURNING date, start_time, end_time, is_working, break_start, break_end
-    `,
-    [
-      professionalId,
-      date,
-      override.startTime,
-      override.endTime,
-      override.isWorking,
-      override.breakStart,
-      override.breakEnd,
-      actorUserId,
-    ],
-  );
-
-  return mapOverride(result.rows[0]);
+export async function upsertScheduleOverride(professionalId, date, override, actorUserId) {
+  const data = {
+    break_end: time(override.breakEnd), break_start: time(override.breakStart),
+    end_time: time(override.endTime), is_working: override.isWorking, start_time: time(override.startTime),
+  };
+  return mapOverride(await prisma.professional_schedule_overrides.upsert({
+    create: { ...data, created_by: actorUserId, date: dateOnly(date), professional_id: professionalId },
+    update: data,
+    where: { professional_id_date: { date: dateOnly(date), professional_id: professionalId } },
+  }));
 }
 
 export async function removeScheduleOverride(professionalId, date) {
-  const result = await executeQuery(
-    `
-      DELETE FROM professional_schedule_overrides
-      WHERE professional_id = $1 AND date = $2
-    `,
-    [professionalId, date],
-  );
-
-  return result.rowCount > 0;
+  const result = await prisma.professional_schedule_overrides.deleteMany({
+    where: { date: dateOnly(date), professional_id: professionalId },
+  });
+  return result.count > 0;
 }
 
-export async function createScheduleBlock(
-  professionalId,
-  block,
-  actorUserId,
-) {
-  return executeTransaction(async (client) => {
-    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
-      professionalId,
-    ]);
-
-    const appointmentResult = await client.query(
-      `
-        SELECT id
-        FROM appointments
-        WHERE
-          professional_id = $1
-          AND status <> 'CANCELLED'
-          AND start_at < $3
-          AND end_at > $2
-        LIMIT 1
-      `,
-      [professionalId, block.startAt, block.endAt],
-    );
-
-    if (appointmentResult.rowCount > 0) {
-      return { block: null, conflict: "APPOINTMENT" };
-    }
-
-    const result = await client.query(
-      `
-        INSERT INTO professional_schedule_blocks (
-          professional_id,
-          start_at,
-          end_at,
-          reason,
-          created_by
-        )
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, start_at, end_at, reason, created_at
-      `,
-      [professionalId, block.startAt, block.endAt, block.reason, actorUserId],
-    );
-
-    return { block: mapBlock(result.rows[0]), conflict: null };
-  });
+export async function createScheduleBlock(professionalId, block, actorUserId) {
+  return prisma.$transaction(async (client) => {
+    const conflict = await client.appointments.findFirst({
+      select: { id: true },
+      where: {
+        end_at: { gt: block.startAt }, professional_id: professionalId,
+        start_at: { lt: block.endAt }, status: { not: "CANCELLED" },
+      },
+    });
+    if (conflict) return { block: null, conflict: "APPOINTMENT" };
+    const created = await client.professional_schedule_blocks.create({ data: {
+      created_by: actorUserId, end_at: block.endAt, professional_id: professionalId,
+      reason: block.reason, start_at: block.startAt,
+    } });
+    return { block: mapBlock(created), conflict: null };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function getScheduleBlocks(professionalId, from, to) {
-  const result = await executeQuery(
-    `
-      SELECT id, start_at, end_at, reason, created_at
-      FROM professional_schedule_blocks
-      WHERE
-        professional_id = $1
-        AND start_at < $3
-        AND end_at > $2
-      ORDER BY start_at, id
-    `,
-    [professionalId, from, to],
-  );
-
-  return result.rows.map(mapBlock);
+  return (await prisma.professional_schedule_blocks.findMany({
+    orderBy: [{ start_at: "asc" }, { id: "asc" }],
+    where: { end_at: { gt: from }, professional_id: professionalId, start_at: { lt: to } },
+  })).map(mapBlock);
 }
 
 export async function removeScheduleBlock(professionalId, blockId) {
-  const result = await executeQuery(
-    `
-      DELETE FROM professional_schedule_blocks
-      WHERE professional_id = $1 AND id = $2
-    `,
-    [professionalId, blockId],
-  );
-
-  return result.rowCount > 0;
+  return (await prisma.professional_schedule_blocks.deleteMany({
+    where: { id: blockId, professional_id: professionalId },
+  })).count > 0;
 }

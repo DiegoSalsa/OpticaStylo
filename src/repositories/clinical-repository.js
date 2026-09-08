@@ -1,675 +1,241 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
+const profileUser = "users_professional_profiles_user_idTousers";
 const MEDICAL_RECORD_COLUMNS = Object.freeze({
-  allergies: "allergies",
-  currentMedications: "current_medications",
+  allergies: "allergies", currentMedications: "current_medications",
   familyOcularHistory: "family_ocular_history",
-  generalMedicalHistory: "general_medical_history",
-  ocularHistory: "ocular_history",
+  generalMedicalHistory: "general_medical_history", ocularHistory: "ocular_history",
 });
 const ENCOUNTER_COLUMNS = Object.freeze({
-  anamnesis: "anamnesis",
-  diagnosis: "diagnosis",
-  examination: "examination",
-  indications: "indications",
-  reasonForVisit: "reason_for_visit",
+  anamnesis: "anamnesis", diagnosis: "diagnosis", examination: "examination",
+  indications: "indications", reasonForVisit: "reason_for_visit",
 });
 
 function mapMedicalRecord(row) {
-  if (!row) {
-    return null;
-  }
-
-  return {
-    allergies: row.allergies,
-    createdAt: row.created_at,
+  return row ? {
+    allergies: row.allergies, createdAt: row.created_at,
     currentMedications: row.current_medications,
     familyOcularHistory: row.family_ocular_history,
-    generalMedicalHistory: row.general_medical_history,
-    id: row.id,
-    ocularHistory: row.ocular_history,
-    patientId: row.patient_id,
-    updatedAt: row.updated_at,
-  };
+    generalMedicalHistory: row.general_medical_history, id: row.id,
+    ocularHistory: row.ocular_history, patientId: row.patient_id, updatedAt: row.updated_at,
+  } : null;
 }
 
-function mapMedicalRecordRevision(row) {
+function mapRevision(row) {
+  const user = row.professional_profiles[profileUser];
   return {
-    allergies: row.allergies,
-    changedFields: row.changed_fields,
+    allergies: row.allergies, changedFields: row.changed_fields,
     currentMedications: row.current_medications,
     familyOcularHistory: row.family_ocular_history,
-    generalMedicalHistory: row.general_medical_history,
-    id: row.id,
-    ocularHistory: row.ocular_history,
-    recordedAt: row.recorded_at,
-    recordedBy: {
-      firstName: row.recorder_first_name,
-      id: row.recorded_by,
-      lastName: row.recorder_last_name,
-    },
+    generalMedicalHistory: row.general_medical_history, id: row.id,
+    ocularHistory: row.ocular_history, recordedAt: row.recorded_at,
+    recordedBy: { firstName: user.first_name, id: row.recorded_by, lastName: user.last_name },
     revision: row.revision,
   };
 }
 
 function mapAddendum(row) {
+  const user = row.professional_profiles[profileUser];
   return {
-    authoredBy: {
-      firstName: row.author_first_name,
-      id: row.authored_by,
-      lastName: row.author_last_name,
-    },
-    content: row.content,
-    createdAt: row.created_at,
-    encounterId: row.encounter_id,
-    id: row.id,
-    reason: row.reason,
+    authoredBy: { firstName: user.first_name, id: row.authored_by, lastName: user.last_name },
+    content: row.content, createdAt: row.created_at, encounterId: row.encounter_id,
+    id: row.id, reason: row.reason,
   };
 }
 
 function mapEncounter(row, additions = {}) {
-  if (!row) {
-    return null;
-  }
-
+  if (!row) return null;
+  const professional = row.professional_profiles_clinical_encounters_professional_idToprofessional_profiles[profileUser];
   return {
-    anamnesis: row.anamnesis,
-    appointmentId: row.appointment_id,
-    createdAt: row.created_at,
-    diagnosis: row.diagnosis,
-    examination: row.examination,
-    finalizedAt: row.finalized_at,
-    id: row.id,
-    indications: row.indications,
+    anamnesis: row.anamnesis, appointmentId: row.appointment_id, createdAt: row.created_at,
+    diagnosis: row.diagnosis, examination: row.examination, finalizedAt: row.finalized_at,
+    id: row.id, indications: row.indications,
     patient: {
-      firstNames: row.patient_first_names,
-      id: row.patient_id,
-      lastNames: row.patient_last_names,
-      rut: row.patient_rut,
+      firstNames: row.patients.first_names, id: row.patient_id,
+      lastNames: row.patients.last_names, rut: row.patients.rut,
     },
     professional: {
-      firstName: row.professional_first_name,
-      id: row.professional_id,
-      lastName: row.professional_last_name,
+      firstName: professional.first_name, id: row.professional_id, lastName: professional.last_name,
     },
-    reasonForVisit: row.reason_for_visit,
-    status: row.status,
-    updatedAt: row.updated_at,
+    reasonForVisit: row.reason_for_visit, status: row.status, updatedAt: row.updated_at,
     ...additions,
   };
 }
 
-const ENCOUNTER_SELECT = `
-  SELECT
-    clinical_encounters.*,
-    patients.rut AS patient_rut,
-    patients.first_names AS patient_first_names,
-    patients.last_names AS patient_last_names,
-    professional_users.first_name AS professional_first_name,
-    professional_users.last_name AS professional_last_name
-  FROM clinical_encounters
-  JOIN patients ON patients.id = clinical_encounters.patient_id
-  JOIN users AS professional_users
-    ON professional_users.id = clinical_encounters.professional_id
-`;
+const encounterInclude = {
+  patients: true,
+  professional_profiles_clinical_encounters_professional_idToprofessional_profiles: {
+    include: { [profileUser]: true },
+  },
+};
 
 async function findEncounterWithClient(client, encounterId) {
-  const result = await client.query(
-    `${ENCOUNTER_SELECT} WHERE clinical_encounters.id = $1`,
-    [encounterId],
-  );
-
-  return mapEncounter(result.rows[0]);
+  return mapEncounter(await client.clinical_encounters.findUnique({
+    include: encounterInclude, where: { id: encounterId },
+  }));
 }
 
-export async function hasClinicalAssignment(
-  patientId,
-  professionalId,
-  statuses = ["CONFIRMED", "CHECKED_IN", "COMPLETED"],
-) {
-  const result = await executeQuery(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM appointments
-        WHERE
-          patient_id = $1
-          AND professional_id = $2
-          AND status = ANY($3::varchar[])
-      ) AS assigned
-    `,
-    [patientId, professionalId, statuses],
-  );
-
-  return result.rows[0].assigned;
+export async function hasClinicalAssignment(patientId, professionalId, statuses = ["CONFIRMED", "CHECKED_IN", "COMPLETED"]) {
+  return (await prisma.appointments.count({
+    where: { patient_id: patientId, professional_id: professionalId, status: { in: statuses } },
+  })) > 0;
 }
 
 export async function findMedicalRecordByPatientId(patientId) {
-  const result = await executeQuery(
-    `
-      SELECT *
-      FROM medical_records
-      WHERE patient_id = $1
-    `,
-    [patientId],
-  );
-
-  return mapMedicalRecord(result.rows[0]);
+  return mapMedicalRecord(await prisma.medical_records.findUnique({ where: { patient_id: patientId } }));
 }
 
 export async function listMedicalRecordRevisions(patientId) {
-  const result = await executeQuery(
-    `
-      SELECT
-        medical_record_revisions.*,
-        users.first_name AS recorder_first_name,
-        users.last_name AS recorder_last_name
-      FROM medical_record_revisions
-      JOIN medical_records
-        ON medical_records.id = medical_record_revisions.medical_record_id
-      JOIN users ON users.id = medical_record_revisions.recorded_by
-      WHERE medical_records.patient_id = $1
-      ORDER BY medical_record_revisions.revision DESC
-    `,
-    [patientId],
-  );
-
-  return result.rows.map(mapMedicalRecordRevision);
+  const rows = await prisma.medical_record_revisions.findMany({
+    include: { professional_profiles: { include: { [profileUser]: true } } },
+    orderBy: { revision: "desc" }, where: { medical_records: { patient_id: patientId } },
+  });
+  return rows.map(mapRevision);
 }
 
 export async function upsertMedicalRecord(patientId, changes, actorUserId) {
-  return executeTransaction(async (client) => {
-    await client.query("SELECT id FROM patients WHERE id = $1 FOR UPDATE", [
-      patientId,
-    ]);
-    const currentResult = await client.query(
-      "SELECT * FROM medical_records WHERE patient_id = $1 FOR UPDATE",
-      [patientId],
-    );
-    const current = currentResult.rows[0];
-    let medicalRecordId;
-
-    if (!current) {
-      const values = Object.fromEntries(
-        Object.keys(MEDICAL_RECORD_COLUMNS).map((field) => [
-          field,
-          changes[field] ?? null,
-        ]),
-      );
-      const result = await client.query(
-        `
-          INSERT INTO medical_records (
-            patient_id,
-            general_medical_history,
-            ocular_history,
-            family_ocular_history,
-            allergies,
-            current_medications,
-            created_by,
-            updated_by
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
-          RETURNING id
-        `,
-        [
-          patientId,
-          values.generalMedicalHistory,
-          values.ocularHistory,
-          values.familyOcularHistory,
-          values.allergies,
-          values.currentMedications,
-          actorUserId,
-        ],
-      );
-      medicalRecordId = result.rows[0].id;
-    } else {
-      medicalRecordId = current.id;
-      const entries = Object.entries(changes).filter(
-        ([field, value]) => current[MEDICAL_RECORD_COLUMNS[field]] !== value,
-      );
-
-      if (entries.length === 0) {
-        return mapMedicalRecord(current);
-      }
-      const assignments = entries.map(
-        ([field], index) => `${MEDICAL_RECORD_COLUMNS[field]} = $${index + 2}`,
-      );
-
-      await client.query(
-        `
-          UPDATE medical_records
-          SET ${assignments.join(", ")}, updated_by = $${entries.length + 2}
-          WHERE id = $1
-        `,
-        [medicalRecordId, ...entries.map(([, value]) => value), actorUserId],
-      );
+  return prisma.$transaction(async (client) => {
+    const patient = await client.patients.findUnique({ select: { id: true }, where: { id: patientId } });
+    if (!patient) return null;
+    const current = await client.medical_records.findUnique({ where: { patient_id: patientId } });
+    const data = Object.fromEntries(Object.entries(changes).map(([field, value]) => [MEDICAL_RECORD_COLUMNS[field], value]));
+    if (current && Object.entries(data).every(([field, value]) => current[field] === value)) {
+      return mapMedicalRecord(current);
     }
-
-    await client.query(
-      `
-        INSERT INTO medical_record_events (
-          medical_record_id,
-          event_type,
-          changed_fields,
-          performed_by
-        )
-        VALUES ($1, $2, $3, $4)
-      `,
-      [
-        medicalRecordId,
-        current ? "UPDATED" : "CREATED",
-        Object.keys(changes),
-        actorUserId,
-      ],
-    );
-
-    const result = await client.query(
-      "SELECT * FROM medical_records WHERE id = $1",
-      [medicalRecordId],
-    );
-
-    return mapMedicalRecord(result.rows[0]);
-  });
+    const record = current
+      ? await client.medical_records.update({ data: { ...data, updated_by: actorUserId }, where: { id: current.id } })
+      : await client.medical_records.create({ data: {
+        allergies: changes.allergies ?? null, created_by: actorUserId,
+        current_medications: changes.currentMedications ?? null,
+        family_ocular_history: changes.familyOcularHistory ?? null,
+        general_medical_history: changes.generalMedicalHistory ?? null,
+        ocular_history: changes.ocularHistory ?? null, patient_id: patientId, updated_by: actorUserId,
+      } });
+    await client.medical_record_events.create({ data: {
+      changed_fields: Object.keys(changes), event_type: current ? "UPDATED" : "CREATED",
+      medical_record_id: record.id, performed_by: actorUserId,
+    } });
+    return mapMedicalRecord(record);
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function createClinicalEncounter(encounterData, actorUserId) {
-  return executeTransaction(async (client) => {
-    const appointmentResult = await client.query(
-      `
-        SELECT id, patient_id, professional_id, status
-        FROM appointments
-        WHERE id = $1
-        FOR UPDATE
-      `,
-      [encounterData.appointmentId],
-    );
-    const appointment = appointmentResult.rows[0];
-
-    if (!appointment) {
-      return { encounter: null, reason: "APPOINTMENT_NOT_FOUND" };
-    }
-
-    if (appointment.professional_id !== actorUserId) {
-      return { encounter: null, reason: "NOT_ASSIGNED" };
-    }
-
-    if (appointment.status !== "CHECKED_IN") {
-      return { encounter: null, reason: "INVALID_APPOINTMENT_STATUS" };
-    }
-
-    const existingResult = await client.query(
-      "SELECT id FROM clinical_encounters WHERE appointment_id = $1",
-      [appointment.id],
-    );
-
-    if (existingResult.rowCount > 0) {
+  return prisma.$transaction(async (client) => {
+    const appointment = await client.appointments.findUnique({ where: { id: encounterData.appointmentId } });
+    if (!appointment) return { encounter: null, reason: "APPOINTMENT_NOT_FOUND" };
+    if (appointment.professional_id !== actorUserId) return { encounter: null, reason: "NOT_ASSIGNED" };
+    if (appointment.status !== "CHECKED_IN") return { encounter: null, reason: "INVALID_APPOINTMENT_STATUS" };
+    if (await client.clinical_encounters.findUnique({ where: { appointment_id: appointment.id } })) {
       return { encounter: null, reason: "ENCOUNTER_ALREADY_EXISTS" };
     }
+    const created = await client.clinical_encounters.create({ data: {
+      anamnesis: encounterData.anamnesis, appointment_id: appointment.id,
+      created_by: appointment.professional_id, diagnosis: encounterData.diagnosis,
+      examination: encounterData.examination, indications: encounterData.indications,
+      patient_id: appointment.patient_id, professional_id: appointment.professional_id,
+      reason_for_visit: encounterData.reasonForVisit, updated_by: appointment.professional_id,
+    } });
+    await client.clinical_encounter_events.create({ data: {
+      changed_fields: Object.keys(encounterData).filter((field) => field !== "appointmentId"),
+      encounter_id: created.id, event_type: "CREATED", performed_by: actorUserId,
+    } });
+    return { encounter: await findEncounterWithClient(client, created.id), reason: null };
+  }, { isolationLevel: "Serializable" });
+}
 
-    const result = await client.query(
-      `
-        INSERT INTO clinical_encounters (
-          appointment_id,
-          patient_id,
-          professional_id,
-          reason_for_visit,
-          anamnesis,
-          examination,
-          diagnosis,
-          indications,
-          created_by,
-          updated_by
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $3, $3)
-        RETURNING id
-      `,
-      [
-        appointment.id,
-        appointment.patient_id,
-        appointment.professional_id,
-        encounterData.reasonForVisit,
-        encounterData.anamnesis,
-        encounterData.examination,
-        encounterData.diagnosis,
-        encounterData.indications,
-      ],
-    );
-    const encounterId = result.rows[0].id;
-
-    await client.query(
-      `
-        INSERT INTO clinical_encounter_events (
-          encounter_id,
-          event_type,
-          changed_fields,
-          performed_by
-        )
-        VALUES ($1, 'CREATED', $2, $3)
-      `,
-      [encounterId, Object.keys(encounterData).filter((field) => field !== "appointmentId"), actorUserId],
-    );
-
-    return {
-      encounter: await findEncounterWithClient(client, encounterId),
-      reason: null,
-    };
-  });
+async function loadAddenda(client, encounterId) {
+  return (await client.clinical_encounter_addenda.findMany({
+    include: { professional_profiles: { include: { [profileUser]: true } } },
+    orderBy: [{ created_at: "asc" }, { id: "asc" }], where: { encounter_id: encounterId },
+  })).map(mapAddendum);
 }
 
 export async function findClinicalEncounterById(encounterId) {
-  const [encounterResult, addendaResult] = await Promise.all([
-    executeQuery(`${ENCOUNTER_SELECT} WHERE clinical_encounters.id = $1`, [
-      encounterId,
-    ]),
-    executeQuery(
-      `
-        SELECT
-          clinical_encounter_addenda.*,
-          users.first_name AS author_first_name,
-          users.last_name AS author_last_name
-        FROM clinical_encounter_addenda
-        JOIN users ON users.id = clinical_encounter_addenda.authored_by
-        WHERE encounter_id = $1
-        ORDER BY created_at, id
-      `,
-      [encounterId],
-    ),
+  const [row, addenda] = await Promise.all([
+    prisma.clinical_encounters.findUnique({ include: encounterInclude, where: { id: encounterId } }),
+    loadAddenda(prisma, encounterId),
   ]);
-
-  if (!encounterResult.rows[0]) {
-    return null;
-  }
-
-  return mapEncounter(encounterResult.rows[0], {
-    addenda: addendaResult.rows.map(mapAddendum),
-  });
+  return row ? mapEncounter(row, { addenda }) : null;
 }
 
 export async function findClinicalEncounterByAppointmentId(appointmentId) {
-  const result = await executeQuery(
-    "SELECT id FROM clinical_encounters WHERE appointment_id = $1",
-    [appointmentId],
-  );
-  return result.rows[0] ? findClinicalEncounterById(result.rows[0].id) : null;
+  const row = await prisma.clinical_encounters.findUnique({
+    select: { id: true }, where: { appointment_id: appointmentId },
+  });
+  return row ? findClinicalEncounterById(row.id) : null;
 }
 
-export async function updateClinicalEncounter(
-  encounterId,
-  changes,
-  actorUserId,
-) {
-  return executeTransaction(async (client) => {
-    const currentResult = await client.query(
-      `
-        SELECT id, professional_id, status
-        FROM clinical_encounters
-        WHERE id = $1
-        FOR UPDATE
-      `,
-      [encounterId],
-    );
-    const current = currentResult.rows[0];
-
-    if (!current) {
-      return { encounter: null, reason: "NOT_FOUND" };
-    }
-
-    if (current.professional_id !== actorUserId) {
-      return { encounter: null, reason: "NOT_ASSIGNED" };
-    }
-
-    if (current.status !== "DRAFT") {
-      return { encounter: null, reason: "FINALIZED" };
-    }
-
-    const entries = Object.entries(changes);
-    const assignments = entries.map(
-      ([field], index) => `${ENCOUNTER_COLUMNS[field]} = $${index + 2}`,
-    );
-
-    await client.query(
-      `
-        UPDATE clinical_encounters
-        SET ${assignments.join(", ")}, updated_by = $${entries.length + 2}
-        WHERE id = $1
-      `,
-      [encounterId, ...entries.map(([, value]) => value), actorUserId],
-    );
-    await client.query(
-      `
-        INSERT INTO clinical_encounter_events (
-          encounter_id,
-          event_type,
-          changed_fields,
-          performed_by
-        )
-        VALUES ($1, 'UPDATED', $2, $3)
-      `,
-      [encounterId, Object.keys(changes), actorUserId],
-    );
-
-    return {
-      encounter: await findEncounterWithClient(client, encounterId),
-      reason: null,
-    };
-  });
+export async function updateClinicalEncounter(encounterId, changes, actorUserId) {
+  return prisma.$transaction(async (client) => {
+    const current = await client.clinical_encounters.findUnique({ where: { id: encounterId } });
+    if (!current) return { encounter: null, reason: "NOT_FOUND" };
+    if (current.professional_id !== actorUserId) return { encounter: null, reason: "NOT_ASSIGNED" };
+    if (current.status !== "DRAFT") return { encounter: null, reason: "FINALIZED" };
+    const data = Object.fromEntries(Object.entries(changes).map(([field, value]) => [ENCOUNTER_COLUMNS[field], value]));
+    await client.clinical_encounters.update({ data: { ...data, updated_by: actorUserId }, where: { id: encounterId } });
+    await client.clinical_encounter_events.create({ data: {
+      changed_fields: Object.keys(changes), encounter_id: encounterId,
+      event_type: "UPDATED", performed_by: actorUserId,
+    } });
+    return { encounter: await findEncounterWithClient(client, encounterId), reason: null };
+  }, { isolationLevel: "Serializable" });
 }
 
-export async function finalizeClinicalEncounter(
-  encounterId,
-  actorUserId,
-  finalizedAt,
-) {
-  return executeTransaction(async (client) => {
-    const currentResult = await client.query(
-      `
-        SELECT
-          clinical_encounters.id,
-          clinical_encounters.appointment_id,
-          clinical_encounters.professional_id,
-          clinical_encounters.status,
-          clinical_encounters.examination,
-          clinical_encounters.diagnosis,
-          appointments.status AS appointment_status
-        FROM clinical_encounters
-        JOIN appointments ON appointments.id = clinical_encounters.appointment_id
-        WHERE clinical_encounters.id = $1
-        FOR UPDATE OF clinical_encounters, appointments
-      `,
-      [encounterId],
-    );
-    const current = currentResult.rows[0];
-
-    if (!current) {
-      return { encounter: null, reason: "NOT_FOUND" };
-    }
-
-    if (current.professional_id !== actorUserId) {
-      return { encounter: null, reason: "NOT_ASSIGNED" };
-    }
-
-    if (current.status !== "DRAFT") {
-      return { encounter: null, reason: "ALREADY_FINALIZED" };
-    }
-
-    if (current.appointment_status !== "CHECKED_IN") {
-      return { encounter: null, reason: "INVALID_APPOINTMENT_STATUS" };
-    }
-
-    if (!current.examination || !current.diagnosis) {
-      return { encounter: null, reason: "INCOMPLETE" };
-    }
-
-    await client.query(
-      `
-        UPDATE clinical_encounters
-        SET status = 'FINALIZED', finalized_at = $2, updated_by = $3
-        WHERE id = $1
-      `,
-      [encounterId, finalizedAt, actorUserId],
-    );
-    await client.query(
-      `
-        UPDATE appointments
-        SET status = 'COMPLETED', updated_by = $2
-        WHERE id = $1
-      `,
-      [current.appointment_id, actorUserId],
-    );
-    await client.query(
-      `
-        INSERT INTO appointment_events (
-          appointment_id,
-          event_type,
-          previous_status,
-          new_status,
-          details,
-          performed_by
-        )
-        VALUES ($1, 'STATUS_CHANGED', 'CHECKED_IN', 'COMPLETED', $2, $3)
-      `,
-      [
-        current.appointment_id,
-        "Atención completada al finalizar el registro clínico.",
-        actorUserId,
-      ],
-    );
-    await client.query(
-      `
-        INSERT INTO clinical_encounter_events (
-          encounter_id,
-          event_type,
-          performed_by
-        )
-        VALUES ($1, 'FINALIZED', $2)
-      `,
-      [encounterId, actorUserId],
-    );
-
-    return {
-      encounter: await findEncounterWithClient(client, encounterId),
-      reason: null,
-    };
-  });
+export async function finalizeClinicalEncounter(encounterId, actorUserId, finalizedAt) {
+  return prisma.$transaction(async (client) => {
+    const current = await client.clinical_encounters.findUnique({
+      include: { appointments: true }, where: { id: encounterId },
+    });
+    if (!current) return { encounter: null, reason: "NOT_FOUND" };
+    if (current.professional_id !== actorUserId) return { encounter: null, reason: "NOT_ASSIGNED" };
+    if (current.status !== "DRAFT") return { encounter: null, reason: "ALREADY_FINALIZED" };
+    if (current.appointments.status !== "CHECKED_IN") return { encounter: null, reason: "INVALID_APPOINTMENT_STATUS" };
+    if (!current.examination || !current.diagnosis) return { encounter: null, reason: "INCOMPLETE" };
+    await client.clinical_encounters.update({ data: {
+      finalized_at: finalizedAt, status: "FINALIZED", updated_by: actorUserId,
+    }, where: { id: encounterId } });
+    await client.appointments.update({ data: { status: "COMPLETED", updated_by: actorUserId }, where: { id: current.appointment_id } });
+    await client.appointment_events.create({ data: {
+      appointment_id: current.appointment_id,
+      details: "Atención completada al finalizar el registro clínico.",
+      event_type: "STATUS_CHANGED", new_status: "COMPLETED",
+      performed_by: actorUserId, previous_status: "CHECKED_IN",
+    } });
+    await client.clinical_encounter_events.create({ data: {
+      encounter_id: encounterId, event_type: "FINALIZED", performed_by: actorUserId,
+    } });
+    return { encounter: await findEncounterWithClient(client, encounterId), reason: null };
+  }, { isolationLevel: "Serializable" });
 }
 
-export async function addClinicalEncounterAddendum(
-  encounterId,
-  addendumData,
-  actorUserId,
-) {
-  return executeTransaction(async (client) => {
-    const currentResult = await client.query(
-      `
-        SELECT id, patient_id, professional_id, status
-        FROM clinical_encounters
-        WHERE id = $1
-        FOR UPDATE
-      `,
-      [encounterId],
-    );
-    const current = currentResult.rows[0];
-
-    if (!current) {
-      return { addendum: null, patientId: null, reason: "NOT_FOUND" };
-    }
-
-    if (current.professional_id !== actorUserId) {
-      return {
-        addendum: null,
-        patientId: current.patient_id,
-        reason: "NOT_ASSIGNED",
-      };
-    }
-
-    if (current.status !== "FINALIZED") {
-      return {
-        addendum: null,
-        patientId: current.patient_id,
-        reason: "NOT_FINALIZED",
-      };
-    }
-
-    const result = await client.query(
-      `
-        INSERT INTO clinical_encounter_addenda (
-          encounter_id,
-          reason,
-          content,
-          authored_by
-        )
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
-      `,
-      [encounterId, addendumData.reason, addendumData.content, actorUserId],
-    );
-    await client.query(
-      `
-        INSERT INTO clinical_encounter_events (
-          encounter_id,
-          event_type,
-          performed_by
-        )
-        VALUES ($1, 'ADDENDUM_ADDED', $2)
-      `,
-      [encounterId, actorUserId],
-    );
-    const userResult = await client.query(
-      "SELECT first_name, last_name FROM users WHERE id = $1",
-      [actorUserId],
-    );
-
-    return {
-      addendum: mapAddendum({
-        ...result.rows[0],
-        author_first_name: userResult.rows[0].first_name,
-        author_last_name: userResult.rows[0].last_name,
-      }),
-      patientId: current.patient_id,
-      reason: null,
-    };
-  });
+export async function addClinicalEncounterAddendum(encounterId, addendumData, actorUserId) {
+  return prisma.$transaction(async (client) => {
+    const current = await client.clinical_encounters.findUnique({ where: { id: encounterId } });
+    if (!current) return { addendum: null, patientId: null, reason: "NOT_FOUND" };
+    if (current.professional_id !== actorUserId) return { addendum: null, patientId: current.patient_id, reason: "NOT_ASSIGNED" };
+    if (current.status !== "FINALIZED") return { addendum: null, patientId: current.patient_id, reason: "NOT_FINALIZED" };
+    const created = await client.clinical_encounter_addenda.create({
+      data: { authored_by: actorUserId, content: addendumData.content, encounter_id: encounterId, reason: addendumData.reason },
+      include: { professional_profiles: { include: { [profileUser]: true } } },
+    });
+    await client.clinical_encounter_events.create({ data: {
+      encounter_id: encounterId, event_type: "ADDENDUM_ADDED", performed_by: actorUserId,
+    } });
+    return { addendum: mapAddendum(created), patientId: current.patient_id, reason: null };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function listPatientClinicalHistory(patientId) {
-  const encounterResult = await executeQuery(
-    `
-      ${ENCOUNTER_SELECT}
-      WHERE
-        clinical_encounters.patient_id = $1
-        AND clinical_encounters.status = 'FINALIZED'
-      ORDER BY clinical_encounters.finalized_at DESC, clinical_encounters.id
-    `,
-    [patientId],
-  );
-  const encounterIds = encounterResult.rows.map((row) => row.id);
-
-  if (encounterIds.length === 0) {
-    return [];
-  }
-
-  const addendaResult = await executeQuery(
-    `
-      SELECT
-        clinical_encounter_addenda.*,
-        users.first_name AS author_first_name,
-        users.last_name AS author_last_name
-      FROM clinical_encounter_addenda
-      JOIN users ON users.id = clinical_encounter_addenda.authored_by
-      WHERE encounter_id = ANY($1::uuid[])
-      ORDER BY created_at, id
-    `,
-    [encounterIds],
-  );
-  const addendaByEncounter = new Map();
-  for (const row of addendaResult.rows) {
-    const addendum = mapAddendum(row);
-    const current = addendaByEncounter.get(addendum.encounterId) ?? [];
-    current.push(addendum);
-    addendaByEncounter.set(addendum.encounterId, current);
-  }
-
-  return encounterResult.rows.map((row) =>
-    mapEncounter(row, { addenda: addendaByEncounter.get(row.id) ?? [] }),
-  );
+  const rows = await prisma.clinical_encounters.findMany({
+    include: {
+      ...encounterInclude,
+      clinical_encounter_addenda: {
+        include: { professional_profiles: { include: { [profileUser]: true } } },
+        orderBy: [{ created_at: "asc" }, { id: "asc" }],
+      },
+    },
+    orderBy: [{ finalized_at: "desc" }, { id: "asc" }],
+    where: { patient_id: patientId, status: "FINALIZED" },
+  });
+  return rows.map((row) => mapEncounter(row, { addenda: row.clinical_encounter_addenda.map(mapAddendum) }));
 }

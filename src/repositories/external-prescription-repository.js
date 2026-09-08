@@ -1,113 +1,75 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
 function mapPrescription(row) {
   if (!row) return null;
   return {
-    confirmedAt: row.confirmed_at,
-    confirmedData: row.confirmed_data,
-    createdAt: row.created_at,
-    customerId: row.customer_id,
-    cloudinaryAssetId: row.cloudinary_asset_id,
-    fileSha256: row.file_sha256,
-    fileSizeBytes: row.file_size_bytes,
-    hasImage: row.source === "IMAGE",
-    id: row.id,
-    mediaType: row.media_type,
-    originalFilename: row.original_filename,
-    patient: row.patient_id ? {
-      firstNames: row.patient_first_names,
-      id: row.patient_id,
-      lastNames: row.patient_last_names,
-      rut: row.patient_rut,
+    confirmedAt: row.confirmed_at, confirmedData: row.confirmed_data,
+    createdAt: row.created_at, customerId: row.customer_id,
+    cloudinaryAssetId: row.cloudinary_asset_id, fileSha256: row.file_sha256,
+    fileSizeBytes: row.file_size_bytes, hasImage: row.source === "IMAGE", id: row.id,
+    mediaType: row.media_type, originalFilename: row.original_filename,
+    patient: row.patients ? {
+      firstNames: row.patients.first_names, id: row.patients.id,
+      lastNames: row.patients.last_names, rut: row.patients.rut,
     } : null,
-    source: row.source,
-    status: row.status,
-    updatedAt: row.updated_at,
+    source: row.source, status: row.status, updatedAt: row.updated_at,
   };
 }
 
-const SELECT = `
-  SELECT external_prescriptions.*,
-         patients.rut AS patient_rut,
-         patients.first_names AS patient_first_names,
-         patients.last_names AS patient_last_names
-  FROM external_prescriptions
-  LEFT JOIN patients ON patients.id = external_prescriptions.patient_id
-`;
+async function findExternalPrescriptionWithClient(client, id) {
+  return mapPrescription(await client.external_prescriptions.findUnique({
+    include: { patients: true }, where: { id },
+  }));
+}
 
 export async function createPointOfSaleExternalPrescription(input, actorUserId) {
-  return executeTransaction(async (client) => {
+  return prisma.$transaction(async (client) => {
     const [customer, patient] = await Promise.all([
-      client.query("SELECT id FROM customers WHERE id = $1 FOR SHARE", [input.customerId]),
-      client.query("SELECT id FROM patients WHERE id = $1 FOR SHARE", [input.patientId]),
+      client.customers.findUnique({ select: { id: true }, where: { id: input.customerId } }),
+      client.patients.findUnique({ select: { id: true }, where: { id: input.patientId } }),
     ]);
-    if (customer.rowCount === 0) return { prescription: null, reason: "CUSTOMER_NOT_FOUND" };
-    if (patient.rowCount === 0) return { prescription: null, reason: "PATIENT_NOT_FOUND" };
-    const result = await client.query(
-      `INSERT INTO external_prescriptions (
-         customer_id, patient_id, source, status, original_filename, media_type,
-         file_size_bytes, file_sha256, file_data, cloudinary_asset_id,
-         cloudinary_public_id, cloudinary_version, cloudinary_format, extraction_status,
-         confirmed_data, confirmed_at, created_by
-       ) VALUES (
-         $1, $2, $3, 'READY', $4, $5, $6, $7, $8,
-         $9, $10, $11, $12, $13, $14, $15::JSONB, $16
-       ) RETURNING id`,
-      [input.customerId, input.patientId, input.source, input.filename,
-        input.mediaType, input.size, input.sha256, input.data,
-        input.cloudinary?.assetId ?? null, input.cloudinary?.publicId ?? null,
-        input.cloudinary?.version ?? null, input.cloudinary?.format ?? null,
-        input.source === "IMAGE" ? "NOT_CONFIGURED" : "NOT_REQUESTED",
-        JSON.stringify(input.confirmedData), input.confirmedAt, actorUserId],
-    );
-    return {
-      prescription: await findExternalPrescriptionWithClient(client, result.rows[0].id),
-      reason: null,
-    };
+    if (!customer) return { prescription: null, reason: "CUSTOMER_NOT_FOUND" };
+    if (!patient) return { prescription: null, reason: "PATIENT_NOT_FOUND" };
+    const created = await client.external_prescriptions.create({ data: {
+      cloudinary_asset_id: input.cloudinary?.assetId ?? null,
+      cloudinary_format: input.cloudinary?.format ?? null,
+      cloudinary_public_id: input.cloudinary?.publicId ?? null,
+      cloudinary_version: input.cloudinary?.version ?? null,
+      confirmed_at: input.confirmedAt, confirmed_data: input.confirmedData,
+      created_by: actorUserId, customer_id: input.customerId,
+      extraction_status: input.source === "IMAGE" ? "NOT_CONFIGURED" : "NOT_REQUESTED",
+      file_data: input.data, file_sha256: input.sha256, file_size_bytes: input.size,
+      media_type: input.mediaType, original_filename: input.filename,
+      patient_id: input.patientId, source: input.source, status: "READY",
+    } });
+    return { prescription: await findExternalPrescriptionWithClient(client, created.id), reason: null };
   });
 }
 
-async function findExternalPrescriptionWithClient(client, id) {
-  const result = await client.query(`${SELECT} WHERE external_prescriptions.id = $1`, [id]);
-  return mapPrescription(result.rows[0]);
-}
-
 export async function findExternalPrescriptionById(id) {
-  return findExternalPrescriptionWithClient(
-    { query: (text, parameters) => executeQuery(text, parameters) },
-    id,
-  );
+  return findExternalPrescriptionWithClient(prisma, id);
 }
 
 export async function listExternalPrescriptionsByPatient(patientId) {
-  const result = await executeQuery(
-    `${SELECT}
-     WHERE external_prescriptions.patient_id = $1
-       AND external_prescriptions.status = 'READY'
-     ORDER BY external_prescriptions.created_at DESC`,
-    [patientId],
-  );
-  return result.rows.map(mapPrescription);
+  return (await prisma.external_prescriptions.findMany({
+    include: { patients: true }, orderBy: { created_at: "desc" },
+    where: { patient_id: patientId, status: "READY" },
+  })).map(mapPrescription);
 }
 
 export async function findExternalPrescriptionFileById(id) {
-  const result = await executeQuery(
-    `SELECT original_filename, media_type, file_data, cloudinary_asset_id,
-            cloudinary_public_id, cloudinary_version, cloudinary_format
-     FROM external_prescriptions
-     WHERE id = $1 AND source = 'IMAGE'`,
-    [id],
-  );
-  const row = result.rows[0];
+  const row = await prisma.external_prescriptions.findFirst({
+    select: {
+      cloudinary_asset_id: true, cloudinary_format: true, cloudinary_public_id: true,
+      cloudinary_version: true, file_data: true, media_type: true, original_filename: true,
+    },
+    where: { id, source: "IMAGE" },
+  });
   return row ? {
     cloudinary: row.cloudinary_asset_id ? {
-      assetId: row.cloudinary_asset_id,
-      format: row.cloudinary_format,
-      publicId: row.cloudinary_public_id,
-      version: Number(row.cloudinary_version),
+      assetId: row.cloudinary_asset_id, format: row.cloudinary_format,
+      publicId: row.cloudinary_public_id, version: Number(row.cloudinary_version),
     } : null,
-    data: row.file_data,
-    filename: row.original_filename,
-    mediaType: row.media_type,
+    data: row.file_data, filename: row.original_filename, mediaType: row.media_type,
   } : null;
 }
