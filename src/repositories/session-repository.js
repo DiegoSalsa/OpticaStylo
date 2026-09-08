@@ -1,116 +1,52 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
 
 export async function findActiveSessionByTokenHash(tokenHash) {
-  const result = await executeQuery(
-    `
-      WITH active_session AS (
-        UPDATE user_sessions
-        SET last_used_at = CURRENT_TIMESTAMP
-        WHERE token_hash = $1
-          AND revoked_at IS NULL
-          AND expires_at > CURRENT_TIMESTAMP
-        RETURNING id, user_id, expires_at
-      )
-      SELECT
-        active_session.id AS session_id,
-        active_session.user_id,
-        active_session.expires_at,
-        users.email,
-        COALESCE(
-          array_agg(DISTINCT roles.code)
-            FILTER (WHERE roles.code IS NOT NULL),
-          ARRAY[]::varchar[]
-        ) AS roles,
-        COALESCE(
-          array_agg(DISTINCT permissions.code)
-            FILTER (WHERE permissions.code IS NOT NULL),
-          ARRAY[]::varchar[]
-        ) AS permissions
-      FROM active_session
-      JOIN users ON users.id = active_session.user_id
-      LEFT JOIN user_roles ON user_roles.user_id = users.id
-      LEFT JOIN roles ON roles.id = user_roles.role_id
-      LEFT JOIN role_permissions ON role_permissions.role_id = roles.id
-      LEFT JOIN permissions ON permissions.id = role_permissions.permission_id
-      WHERE users.is_active = TRUE
-        AND (users.locked_until IS NULL OR users.locked_until <= CURRENT_TIMESTAMP)
-      GROUP BY
-        active_session.id,
-        active_session.user_id,
-        active_session.expires_at,
-        users.email
-    `,
-    [tokenHash],
-  );
-
-  const session = result.rows[0];
-
-  if (!session) {
-    return null;
-  }
-
-  return {
-    email: session.email,
-    expiresAt: session.expires_at,
-    permissions: session.permissions,
-    roles: session.roles,
-    sessionId: session.session_id,
-    userId: session.user_id,
-  };
-}
-
-export async function createSessionForSuccessfulLogin({
-  expiresAt,
-  ipAddress,
-  tokenHash,
-  userAgent,
-  userId,
-}) {
-  return executeTransaction(async (client) => {
-    await client.query(
-      `
-        UPDATE users
-        SET
-          failed_login_attempts = 0,
-          locked_until = NULL,
-          last_login_at = CURRENT_TIMESTAMP
-        WHERE id = $1
-      `,
-      [userId],
-    );
-
-    const result = await client.query(
-      `
-        INSERT INTO user_sessions (
-          user_id,
-          token_hash,
-          expires_at,
-          created_ip,
-          user_agent
-        )
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, expires_at
-      `,
-      [userId, tokenHash, expiresAt, ipAddress, userAgent],
-    );
-
+  return prisma.$transaction(async (client) => {
+    const now = new Date();
+    const session = await client.user_sessions.findFirst({
+      include: {
+        users: {
+          include: {
+            user_roles_user_roles_user_idTousers: {
+              include: { roles: { include: { role_permissions: { include: { permissions: true } } } } },
+            },
+          },
+        },
+      },
+      where: {
+        expires_at: { gt: now }, revoked_at: null, token_hash: tokenHash,
+        users: { is_active: true, OR: [{ locked_until: null }, { locked_until: { lte: now } }] },
+      },
+    });
+    if (!session) return null;
+    await client.user_sessions.update({ data: { last_used_at: now }, where: { id: session.id } });
+    const roles = session.users.user_roles_user_roles_user_idTousers.map((item) => item.roles.code);
+    const permissions = [...new Set(session.users.user_roles_user_roles_user_idTousers
+      .flatMap((item) => item.roles.role_permissions.map((entry) => entry.permissions.code)))];
     return {
-      expiresAt: result.rows[0].expires_at,
-      id: result.rows[0].id,
+      email: session.users.email, expiresAt: session.expires_at, permissions, roles,
+      sessionId: session.id, userId: session.user_id,
     };
   });
 }
 
-export async function revokeSession(sessionId, userId) {
-  const result = await executeQuery(
-    `
-      UPDATE user_sessions
-      SET revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP)
-      WHERE id = $1 AND user_id = $2
-      RETURNING id
-    `,
-    [sessionId, userId],
-  );
+export async function createSessionForSuccessfulLogin({ expiresAt, ipAddress, tokenHash, userAgent, userId }) {
+  return prisma.$transaction(async (client) => {
+    await client.users.update({ data: {
+      failed_login_attempts: 0, last_login_at: new Date(), locked_until: null,
+    }, where: { id: userId } });
+    const session = await client.user_sessions.create({ data: {
+      created_ip: ipAddress, expires_at: expiresAt, token_hash: tokenHash,
+      user_agent: userAgent, user_id: userId,
+    } });
+    return { expiresAt: session.expires_at, id: session.id };
+  });
+}
 
-  return result.rowCount > 0;
+export async function revokeSession(sessionId, userId) {
+  const result = await prisma.user_sessions.updateMany({
+    data: { revoked_at: new Date() }, where: { id: sessionId, revoked_at: null, user_id: userId },
+  });
+  if (result.count) return true;
+  return (await prisma.user_sessions.count({ where: { id: sessionId, user_id: userId } })) > 0;
 }
