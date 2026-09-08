@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - testgeneral
   workflow_dispatch:
 
 permissions:
@@ -32,8 +33,31 @@ jobs:
           source "$HOME/.nvm/nvm.sh"
           nvm use 22
           npm install --global npm@11.6.2
+          echo "$(dirname "$(command -v node)")" >> "$GITHUB_PATH"
           node --version
           npm --version
+
+      - name: Instalar dependencias
+        shell: bash
+        run: npm ci
+
+      - name: Generar Prisma Client
+        shell: bash
+        run: npm run prisma:generate
+
+      - name: Validar schema Prisma
+        shell: bash
+        env:
+          DATABASE_URL: postgresql://prisma:prisma@localhost:5432/opticastylo
+        run: npm run prisma:validate
+
+      - name: Ejecutar lint
+        shell: bash
+        run: npm run lint
+
+      - name: Ejecutar tests
+        shell: bash
+        run: npm test
 
       - name: Validar y desplegar la aplicación
         shell: bash
