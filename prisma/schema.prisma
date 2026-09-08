@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model appointment_events {
   id                BigInt       @id @default(autoincrement()) @map("id")
   appointment_id    String       @map("appointment_id") @db.Uuid
@@ -28,7 +28,7 @@ model appointment_events {
   @@map("appointment_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model appointments {
   id                                   String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                           String                       @map("patient_id") @db.Uuid
@@ -59,7 +59,7 @@ model appointments {
   @@map("appointments")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model cash_register_movements {
   id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   session_id             String                 @map("session_id") @db.Uuid
@@ -75,7 +75,7 @@ model cash_register_movements {
   @@map("cash_register_movements")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model cash_register_sessions {
   id                                            String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   status                                        String                    @default("OPEN") @map("status") @db.VarChar(10)
@@ -97,7 +97,7 @@ model cash_register_sessions {
   @@map("cash_register_sessions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model clinical_encounter_addenda {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   encounter_id          String                @map("encounter_id") @db.Uuid
@@ -112,7 +112,7 @@ model clinical_encounter_addenda {
   @@map("clinical_encounter_addenda")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model clinical_encounter_events {
   id                    BigInt                @id @default(autoincrement()) @map("id")
   encounter_id          String                @map("encounter_id") @db.Uuid
@@ -127,7 +127,7 @@ model clinical_encounter_events {
   @@map("clinical_encounter_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model clinical_encounters {
   id                                                                               String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   appointment_id                                                                   String                       @unique @map("appointment_id") @db.Uuid
@@ -158,7 +158,7 @@ model clinical_encounters {
   @@map("clinical_encounters")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model customer_account_sessions {
   id                String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   account_id        String            @map("account_id") @db.Uuid
@@ -176,8 +176,8 @@ model customer_account_sessions {
   @@map("customer_account_sessions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 model customer_accounts {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   customer_id                String                       @unique @map("customer_id") @db.Uuid
@@ -198,7 +198,7 @@ model customer_accounts {
   @@map("customer_accounts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model customers {
   id                                String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                        String?                  @unique @map("patient_id") @db.Uuid
@@ -224,7 +224,7 @@ model customers {
   @@map("customers")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model discount_authorization_attempts {
   id                                                              String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   attempted_by                                                    String    @map("attempted_by") @db.Uuid
@@ -241,7 +241,7 @@ model discount_authorization_attempts {
   @@map("discount_authorization_attempts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model discount_authorization_grants {
   id                                                       String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   requested_by                                             String    @map("requested_by") @db.Uuid
@@ -260,8 +260,8 @@ model discount_authorization_grants {
   @@map("discount_authorization_grants")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 model external_prescriptions {
   id                   String       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   cart_id              String?      @unique @map("cart_id") @db.Uuid
@@ -296,7 +296,7 @@ model external_prescriptions {
   @@map("external_prescriptions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model medical_record_events {
   id                    BigInt                @id @default(autoincrement()) @map("id")
   medical_record_id     String                @map("medical_record_id") @db.Uuid
@@ -311,7 +311,7 @@ model medical_record_events {
   @@map("medical_record_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model medical_record_revisions {
   id                      BigInt                @id @default(autoincrement()) @map("id")
   medical_record_id       String                @map("medical_record_id") @db.Uuid
@@ -332,7 +332,7 @@ model medical_record_revisions {
   @@map("medical_record_revisions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model medical_records {
   id                                                                      String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                                                              String                     @unique @map("patient_id") @db.Uuid
@@ -354,7 +354,7 @@ model medical_records {
   @@map("medical_records")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model optical_prescriptions {
   id                          String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   encounter_id                String                  @map("encounter_id") @db.Uuid
@@ -388,7 +388,7 @@ model optical_prescriptions {
   @@map("optical_prescriptions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model patient_guardians {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id   String   @unique @map("patient_id") @db.Uuid
@@ -406,7 +406,7 @@ model patient_guardians {
   @@map("patient_guardians")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model patients {
   id                               String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   rut                              String                   @unique @map("rut") @db.VarChar(10)
@@ -435,7 +435,7 @@ model patients {
   @@map("patients")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model payment_attempts {
   id                     String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                String         @map("sale_id") @db.Uuid
@@ -463,7 +463,7 @@ model payment_attempts {
   @@map("payment_attempts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model payment_provider_events {
   id                 BigInt    @id @default(autoincrement()) @map("id")
   provider           String    @map("provider") @db.VarChar(30)
@@ -481,7 +481,7 @@ model payment_provider_events {
   @@map("payment_provider_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model permissions {
   id               Int                @id @default(autoincrement()) @map("id") @db.SmallInt
   code             String             @unique @map("code") @db.VarChar(100)
@@ -492,7 +492,7 @@ model permissions {
   @@map("permissions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model product_events {
   id             BigInt   @id @default(autoincrement()) @map("id")
   product_id     String   @map("product_id") @db.Uuid
@@ -507,8 +507,8 @@ model product_events {
   @@map("product_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 model product_images {
   id                                     String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   product_id                             String    @map("product_id") @db.Uuid
@@ -537,7 +537,7 @@ model product_images {
   @@map("product_images")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model products {
   id                                                                String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sku                                                               String                     @unique @map("sku") @db.VarChar(80)
@@ -566,7 +566,7 @@ model products {
   @@map("products")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model professional_profiles {
   user_id                                                                        String                            @id @map("user_id") @db.Uuid
   appointment_duration_minutes                                                   Int                               @map("appointment_duration_minutes") @db.SmallInt
@@ -598,7 +598,7 @@ model professional_profiles {
   @@map("professional_profiles")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model professional_schedule_blocks {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
@@ -614,7 +614,7 @@ model professional_schedule_blocks {
   @@map("professional_schedule_blocks")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model professional_schedule_overrides {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
@@ -635,7 +635,7 @@ model professional_schedule_overrides {
   @@map("professional_schedule_overrides")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model professional_weekly_schedules {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
@@ -654,7 +654,7 @@ model professional_weekly_schedules {
   @@map("professional_weekly_schedules")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model public_request_rate_limits {
   bucket            String   @map("bucket") @db.VarChar(80)
   subject_hash      String   @map("subject_hash") @db.Char(64)
@@ -678,7 +678,7 @@ model role_permissions {
   @@map("role_permissions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model roles {
   id               Int                @id @default(autoincrement()) @map("id") @db.SmallInt
   code             String             @unique @map("code") @db.VarChar(50)
@@ -692,7 +692,7 @@ model roles {
   @@map("roles")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model sale_events {
   id              BigInt   @id @default(autoincrement()) @map("id")
   sale_id         String   @map("sale_id") @db.Uuid
@@ -709,7 +709,7 @@ model sale_events {
   @@map("sale_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model sale_items {
   id                                                  String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                                             String    @map("sale_id") @db.Uuid
@@ -735,7 +735,7 @@ model sale_items {
   @@map("sale_items")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model sale_optical_additions {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id          String   @map("sale_id") @db.Uuid
@@ -753,7 +753,7 @@ model sale_optical_additions {
   @@map("sale_optical_additions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model sale_payments {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                    String                       @map("sale_id") @db.Uuid
@@ -778,7 +778,7 @@ model sale_payments {
   @@map("sale_payments")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model sale_receipts {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   receipt_number             BigInt                       @unique @default(autoincrement()) @map("receipt_number")
@@ -803,8 +803,8 @@ model sale_receipts {
   @@map("sale_receipts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 model sales {
   id                                        String                          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_number                               BigInt                          @unique @default(autoincrement()) @map("sale_number")
@@ -859,7 +859,7 @@ model sales {
   @@map("sales")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model schema_migrations {
   version     Int      @id @map("version")
   name        String   @map("name")
@@ -869,7 +869,7 @@ model schema_migrations {
   @@map("schema_migrations")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model store_cart_items {
   id                                                        String      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   cart_id                                                   String      @map("cart_id") @db.Uuid
@@ -887,7 +887,7 @@ model store_cart_items {
   @@map("store_cart_items")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model store_carts {
   id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   token_hash               String                  @unique @map("token_hash") @db.Char(64)
@@ -922,8 +922,8 @@ model store_carts {
   @@map("store_carts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 model transactional_email_outbox {
   id                                  String                                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   template_code                       String                                @map("template_code") @db.VarChar(60)
@@ -965,8 +965,8 @@ model transactional_email_outbox {
   @@map("transactional_email_outbox")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 model transactional_email_provider_events {
   id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   provider                   String                      @map("provider") @db.VarChar(30)
@@ -985,7 +985,7 @@ model transactional_email_provider_events {
   @@map("transactional_email_provider_events")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model transactional_email_transitions {
   id                         BigInt                     @id @default(autoincrement()) @map("id")
   email_id                   String                     @map("email_id") @db.Uuid
@@ -1003,7 +1003,7 @@ model transactional_email_transitions {
   @@map("transactional_email_transitions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model transactional_email_worker_runs {
   id                String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   worker_id         String    @map("worker_id") @db.Uuid
@@ -1037,7 +1037,7 @@ model user_roles {
   @@map("user_roles")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 model user_sessions {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   user_id      String    @map("user_id") @db.Uuid
@@ -1055,8 +1055,8 @@ model user_sessions {
   @@map("user_sessions")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 model users {
   id                                                                                        String                            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   email                                                                                     String                            @map("email") @db.VarChar(254)
@@ -1113,8 +1113,8 @@ model users {
   @@map("users")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 model virtual_try_on_3d_assets {
   id                                               String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   product_id                                       String    @map("product_id") @db.Uuid

@@ -209,7 +209,7 @@ Las pruebas se organizan por ámbito: aplicación, autenticación, configuració
 - El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx. Sus archivos operativos se encuentran en `deploy/`.
 - Las variables privadas se conservan fuera del repositorio y cada entorno utiliza su propia base de datos.
 - Vercel valida el schema, ejecuta `prisma migrate deploy`, genera Prisma Client durante la instalación y compila Next.js.
-- El workflow `.github/workflows/despliegueuniversidad.yml` valida `main` y `testgeneral` mediante el runner propio. El script comprueba Prisma, lint, 429 tests, base, build, migraciones, PM2 y `/api/health`; si el health check falla restaura la versión anterior.
+- El workflow `.github/workflows/despliegueuniversidad.yml` valida `main` y `testgeneral` mediante el runner propio. El script comprueba Prisma, lint, 430 tests, base, build, migraciones, PM2 y `/api/health`; si el health check falla restaura la versión anterior.
 - Los correos transaccionales permanecen deshabilitados hasta disponer de proveedor, remitente y dominio verificados; no se utiliza programación cron.
 
 ## Decisiones pendientes del negocio
