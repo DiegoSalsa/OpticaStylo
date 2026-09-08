@@ -53,7 +53,7 @@ loadProjectEnvironment();
 const { bootstrapInitialAdmin } = await import(
   "../src/services/bootstrap-admin-service.js"
 );
-const { closeDatabasePool } = await import("../src/db/pool.js");
+const { disconnectPrisma } = await import("../src/db/prisma.js");
 const terminal = createInterface({ input: process.stdin, output: process.stdout });
 
 try {
@@ -79,5 +79,5 @@ try {
   console.log(`Administrador creado: ${user.email}`);
 } finally {
   terminal.close();
-  await closeDatabasePool();
+  await disconnectPrisma();
 }
