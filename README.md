@@ -21,7 +21,7 @@ Plataforma web full-stack para centralizar los procesos comerciales, clínicos y
 | Aplicación web | Next.js 16 con App Router | Páginas, interfaces internas, renderizado y API HTTP |
 | Lenguaje y ejecución | JavaScript con módulos ES y Node.js | Lógica del cliente, servidor y scripts operativos |
 | Interfaz | React, CSS Modules y Motion | Componentes, estilos y transiciones de la experiencia de usuario |
-| Base de datos | PostgreSQL y `pg` | Persistencia de usuarios, pacientes, agenda, ventas y catálogo |
+| Base de datos | PostgreSQL y Prisma ORM 6.19 | Persistencia tipada de usuarios, pacientes, agenda, ventas y catálogo |
 | Fechas | `date-fns` y `date-fns-tz` | Manejo de agenda y zona horaria `America/Santiago` |
 | Recursos multimedia | Cloudinary | Almacenamiento de imágenes públicas y recetas privadas |
 | Pagos | Mercado Pago | Checkout, webhooks y conciliación de pagos |
@@ -50,6 +50,8 @@ Las integraciones externas se habilitan mediante variables de entorno. El proyec
    npm ci
    ```
 
+   `postinstall` genera Prisma Client automáticamente.
+
 2. Copiar `.env.example` como `.env.local` y completar los valores locales.
 
 3. Iniciar el servidor de desarrollo:
@@ -76,8 +78,11 @@ Las integraciones externas se habilitan mediante variables de entorno. El proyec
 | `npm test` | Ejecuta todas las pruebas automatizadas |
 | `npm run test:watch` | Repite las pruebas afectadas durante el desarrollo |
 | `npm run db:check` | Comprueba la conexión con PostgreSQL |
-| `npm run db:migrate` | Aplica las migraciones SQL pendientes |
-| `npm run db:migrate:status` | Muestra el estado y checksum de las migraciones |
+| `npm run prisma:generate` | Genera Prisma Client |
+| `npm run prisma:validate` | Valida `prisma/schema.prisma` |
+| `npm run db:migrate` | Ejecuta `prisma migrate deploy` sin interacción |
+| `npm run db:migrate:status` | Muestra el estado de Prisma Migrate |
+| `npm run db:baseline` | Registra el baseline solo en una base histórica completa |
 | `npm run users:bootstrap-admin` | Crea interactivamente el primer administrador |
 | `npm run users:create-sales` | Crea o renueva la cuenta limitada utilizada por el POS |
 | `npm run payments:preflight` | Valida la configuración de Mercado Pago antes de habilitar pagos |
@@ -96,14 +101,15 @@ flowchart LR
     UI[Interfaz y páginas] --> API[Route Handlers]
     API --> S[Servicios de negocio]
     S --> R[Repositorios]
-    R --> DB[(PostgreSQL)]
+    R --> P[Prisma ORM]
+    P --> DB[(PostgreSQL)]
     S --> I[Integraciones externas]
 ```
 
 - Las páginas y componentes se encargan de la interacción con el usuario.
 - Los Route Handlers autentican, validan y traducen las solicitudes HTTP.
 - Los servicios implementan las reglas y coordinan los casos de uso.
-- Los repositorios concentran el acceso a PostgreSQL.
+- Los repositorios concentran toda la persistencia mediante Prisma; Route Handlers y servicios no importan Prisma.
 - Las integraciones aíslan a Cloudinary, Mercado Pago, OpenAI y Resend del dominio.
 
 ## Estructura principal
@@ -113,7 +119,8 @@ flowchart LR
 config/             Plantillas de configuración y calibración 3D
 deploy/             Configuración de PM2 y del proxy Nginx
 public/             Recursos de marca, productos y modelo 3D
-scripts/            Migraciones, usuarios, despliegue y publicación 3D
+prisma/             Schema, baseline y migraciones Prisma
+scripts/            Usuarios, despliegue, Prisma y publicación 3D
 src/
 ├── app/api/       Route Handlers y contratos HTTP
 ├── app/           Interfaces públicas e internas
@@ -121,16 +128,16 @@ src/
 ├── components/    Componentes reutilizables del frontend
 ├── config/        Lectura y validación de variables de entorno
 ├── constants/     Constantes compartidas
-├── db/            Conexión, transacciones y migraciones
+├── db/            Instancia centralizada de Prisma Client
 ├── integrations/  Adaptadores de servicios externos
-├── repositories/  Acceso a PostgreSQL
+├── repositories/  Persistencia exclusiva mediante Prisma ORM
 ├── services/      Reglas y coordinación de negocio
 ├── utils/         Utilidades comunes
 └── validations/   Validación de entradas
 tests/              Pruebas unitarias, integración, seguridad e infraestructura
 ```
 
-Esta separación evita que las rutas HTTP contengan reglas de negocio o consultas SQL directamente.
+La arquitectura de persistencia es `Route Handler → Service → Repository → Prisma ORM → PostgreSQL`. No se admite SQL raw ni acceso directo con `pg`.
 
 ## Roles y separación de datos
 
@@ -142,7 +149,16 @@ Paciente y cliente se modelan como conceptos distintos. Los datos clínicos no s
 
 ## Migraciones
 
-Las migraciones se almacenan en `src/db/migrations` y utilizan nombres como `001_crear_usuarios.sql`. Una migración aplicada es inmutable: cualquier modificación posterior será detectada mediante su checksum.
+Las migraciones se almacenan exclusivamente en `prisma/migrations`. El baseline `20260908000000_baseline` consolida las 32 migraciones históricas y permite instalar las 49 tablas en una base vacía. Las bases existentes se validan y se marcan con `npm run db:baseline` una sola vez, sin resetear ni destruir datos.
+
+Para crear un cambio futuro durante desarrollo:
+
+```bash
+npx prisma migrate dev --name descripcion_del_cambio
+npm run prisma:generate
+```
+
+En CI y producción solo se ejecuta `npm run db:migrate` (`prisma migrate deploy`). Consulta la estrategia completa en [`docs/prisma-migration.md`](docs/prisma-migration.md).
 
 Después de aplicar las migraciones en una base nueva, ejecutar una sola vez:
 
@@ -183,7 +199,7 @@ npm run build
 npm audit --omit=dev
 ```
 
-El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y migraciones con checksum. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia.
+El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y Prisma Migrate. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia.
 
 Las pruebas se organizan por ámbito: aplicación, autenticación, configuración, base de datos, infraestructura, integraciones, repositorios, seguridad, servicios, interfaz, utilidades y validaciones.
 
@@ -192,7 +208,8 @@ Las pruebas se organizan por ámbito: aplicación, autenticación, configuració
 - Producción continúa desplegándose en Vercel y utilizando la base configurada en Neon.
 - El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx. Sus archivos operativos se encuentran en `deploy/`.
 - Las variables privadas se conservan fuera del repositorio y cada entorno utiliza su propia base de datos.
-- El workflow `.github/workflows/despliegueuniversidad.yml` valida y despliega exclusivamente los cambios de `main` mediante el runner propio.
+- Vercel valida el schema, ejecuta `prisma migrate deploy`, genera Prisma Client durante la instalación y compila Next.js.
+- El workflow `.github/workflows/despliegueuniversidad.yml` valida `main` y `testgeneral` mediante el runner propio. El script comprueba Prisma, lint, 429 tests, base, build, migraciones, PM2 y `/api/health`; si el health check falla restaura la versión anterior.
 - Los correos transaccionales permanecen deshabilitados hasta disponer de proveedor, remitente y dominio verificados; no se utiliza programación cron.
 
 ## Decisiones pendientes del negocio
