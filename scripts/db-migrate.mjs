@@ -1,22 +1,12 @@
+import { spawnSync } from "node:child_process";
+
 import { loadProjectEnvironment } from "./load-environment.mjs";
 
 loadProjectEnvironment();
 
-const { runPendingMigrations } = await import(
-  "../src/db/migration-runner.js"
+const result = spawnSync(
+  process.execPath,
+  ["node_modules/prisma/build/index.js", "migrate", "deploy"],
+  { env: process.env, stdio: "inherit" },
 );
-const { closeDatabasePool } = await import("../src/db/pool.js");
-
-try {
-  const executedMigrations = await runPendingMigrations();
-
-  if (executedMigrations.length === 0) {
-    console.log("No existen migraciones pendientes.");
-  } else {
-    for (const migration of executedMigrations) {
-      console.log(`Migración aplicada: ${migration}`);
-    }
-  }
-} finally {
-  await closeDatabasePool();
-}
+process.exit(result.status ?? 1);

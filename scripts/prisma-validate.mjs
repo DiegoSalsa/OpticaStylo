@@ -6,7 +6,7 @@ loadProjectEnvironment();
 
 const result = spawnSync(
   process.execPath,
-  ["node_modules/prisma/build/index.js", "migrate", "status"],
+  ["node_modules/prisma/build/index.js", "validate"],
   { env: process.env, stdio: "inherit" },
 );
 process.exit(result.status ?? 1);

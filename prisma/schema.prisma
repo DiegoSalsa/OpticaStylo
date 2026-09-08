@@ -1,0 +1,1143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model appointment_events {
+  id                BigInt       @id @default(autoincrement()) @map("id")
+  appointment_id    String       @map("appointment_id") @db.Uuid
+  event_type        String       @map("event_type") @db.VarChar(30)
+  previous_start_at DateTime?    @map("previous_start_at") @db.Timestamptz(6)
+  new_start_at      DateTime?    @map("new_start_at") @db.Timestamptz(6)
+  previous_end_at   DateTime?    @map("previous_end_at") @db.Timestamptz(6)
+  new_end_at        DateTime?    @map("new_end_at") @db.Timestamptz(6)
+  previous_status   String?      @map("previous_status") @db.VarChar(30)
+  new_status        String?      @map("new_status") @db.VarChar(30)
+  details           String?      @map("details")
+  performed_by      String?      @map("performed_by") @db.Uuid
+  created_at        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  appointments      appointments @relation(fields: [appointment_id], references: [id], onUpdate: NoAction)
+  users             users?       @relation(fields: [performed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([appointment_id, created_at, id], map: "appointment_events_appointment_index")
+  @@map("appointment_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model appointments {
+  id                                   String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  patient_id                           String                       @map("patient_id") @db.Uuid
+  professional_id                      String                       @map("professional_id") @db.Uuid
+  start_at                             DateTime                     @map("start_at") @db.Timestamptz(6)
+  end_at                               DateTime                     @map("end_at") @db.Timestamptz(6)
+  status                               String                       @default("CONFIRMED") @map("status") @db.VarChar(30)
+  internal_notes                       String?                      @map("internal_notes") @db.VarChar(1000)
+  cancellation_reason                  String?                      @map("cancellation_reason") @db.VarChar(500)
+  cancelled_at                         DateTime?                    @map("cancelled_at") @db.Timestamptz(6)
+  created_by                           String?                      @map("created_by") @db.Uuid
+  updated_by                           String?                      @map("updated_by") @db.Uuid
+  created_at                           DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                           DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  source                               String                       @default("INTERNAL") @map("source") @db.VarChar(20)
+  public_manage_token_hash             String?                      @unique(map: "appointments_public_token_unique") @map("public_manage_token_hash") @db.Char(64)
+  appointment_events                   appointment_events[]
+  users_appointments_created_byTousers users?                       @relation("appointments_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  patients                             patients                     @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
+  professional_profiles                professional_profiles        @relation(fields: [professional_id], references: [user_id], onUpdate: NoAction)
+  users_appointments_updated_byTousers users?                       @relation("appointments_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  clinical_encounters                  clinical_encounters?
+  transactional_email_outbox           transactional_email_outbox[]
+
+  @@index([patient_id, start_at(sort: Desc)], map: "appointments_patient_date_index")
+  @@index([professional_id, start_at, end_at], map: "appointments_professional_range_index")
+  @@index([status, start_at], map: "appointments_status_date_index")
+  @@map("appointments")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cash_register_movements {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  session_id             String                 @map("session_id") @db.Uuid
+  movement_type          String                 @map("movement_type") @db.VarChar(20)
+  amount_cents           BigInt                 @map("amount_cents")
+  reason                 String                 @map("reason") @db.VarChar(500)
+  created_by             String                 @map("created_by") @db.Uuid
+  created_at             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  users                  users                  @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  cash_register_sessions cash_register_sessions @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+
+  @@index([session_id, created_at, id], map: "cash_register_movements_session_date_index")
+  @@map("cash_register_movements")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cash_register_sessions {
+  id                                            String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  status                                        String                    @default("OPEN") @map("status") @db.VarChar(10)
+  opening_amount_cents                          BigInt                    @map("opening_amount_cents")
+  closing_counted_cents                         BigInt?                   @map("closing_counted_cents")
+  expected_amount_cents                         BigInt?                   @map("expected_amount_cents")
+  difference_cents                              BigInt?                   @map("difference_cents")
+  opening_notes                                 String?                   @map("opening_notes") @db.VarChar(500)
+  closing_notes                                 String?                   @map("closing_notes") @db.VarChar(500)
+  opened_by                                     String                    @map("opened_by") @db.Uuid
+  opened_at                                     DateTime                  @default(now()) @map("opened_at") @db.Timestamptz(6)
+  closed_by                                     String?                   @map("closed_by") @db.Uuid
+  closed_at                                     DateTime?                 @map("closed_at") @db.Timestamptz(6)
+  is_test_configuration                         Boolean                   @default(true) @map("is_test_configuration")
+  cash_register_movements                       cash_register_movements[]
+  users_cash_register_sessions_closed_byTousers users?                    @relation("cash_register_sessions_closed_byTousers", fields: [closed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_cash_register_sessions_opened_byTousers users                     @relation("cash_register_sessions_opened_byTousers", fields: [opened_by], references: [id], onUpdate: NoAction)
+
+  @@map("cash_register_sessions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model clinical_encounter_addenda {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  encounter_id          String                @map("encounter_id") @db.Uuid
+  reason                String                @map("reason") @db.VarChar(500)
+  content               String                @map("content")
+  authored_by           String                @map("authored_by") @db.Uuid
+  created_at            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  professional_profiles professional_profiles @relation(fields: [authored_by], references: [user_id], onUpdate: NoAction)
+  clinical_encounters   clinical_encounters   @relation(fields: [encounter_id], references: [id], onUpdate: NoAction)
+
+  @@index([encounter_id, created_at, id], map: "clinical_encounter_addenda_encounter_index")
+  @@map("clinical_encounter_addenda")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model clinical_encounter_events {
+  id                    BigInt                @id @default(autoincrement()) @map("id")
+  encounter_id          String                @map("encounter_id") @db.Uuid
+  event_type            String                @map("event_type") @db.VarChar(30)
+  changed_fields        String[]              @default([]) @map("changed_fields")
+  performed_by          String                @map("performed_by") @db.Uuid
+  created_at            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  clinical_encounters   clinical_encounters   @relation(fields: [encounter_id], references: [id], onUpdate: NoAction)
+  professional_profiles professional_profiles @relation(fields: [performed_by], references: [user_id], onUpdate: NoAction)
+
+  @@index([encounter_id, created_at, id], map: "clinical_encounter_events_encounter_index")
+  @@map("clinical_encounter_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model clinical_encounters {
+  id                                                                               String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  appointment_id                                                                   String                       @unique @map("appointment_id") @db.Uuid
+  patient_id                                                                       String                       @map("patient_id") @db.Uuid
+  professional_id                                                                  String                       @map("professional_id") @db.Uuid
+  status                                                                           String                       @default("DRAFT") @map("status") @db.VarChar(20)
+  reason_for_visit                                                                 String                       @map("reason_for_visit") @db.VarChar(1000)
+  anamnesis                                                                        String?                      @map("anamnesis")
+  examination                                                                      String?                      @map("examination")
+  diagnosis                                                                        String?                      @map("diagnosis")
+  indications                                                                      String?                      @map("indications")
+  finalized_at                                                                     DateTime?                    @map("finalized_at") @db.Timestamptz(6)
+  created_by                                                                       String                       @map("created_by") @db.Uuid
+  updated_by                                                                       String                       @map("updated_by") @db.Uuid
+  created_at                                                                       DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                                                       DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  clinical_encounter_addenda                                                       clinical_encounter_addenda[]
+  clinical_encounter_events                                                        clinical_encounter_events[]
+  appointments                                                                     appointments                 @relation(fields: [appointment_id], references: [id], onUpdate: NoAction)
+  professional_profiles_clinical_encounters_created_byToprofessional_profiles      professional_profiles        @relation("clinical_encounters_created_byToprofessional_profiles", fields: [created_by], references: [user_id], onUpdate: NoAction)
+  patients                                                                         patients                     @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
+  professional_profiles_clinical_encounters_professional_idToprofessional_profiles professional_profiles        @relation("clinical_encounters_professional_idToprofessional_profiles", fields: [professional_id], references: [user_id], onUpdate: NoAction)
+  professional_profiles_clinical_encounters_updated_byToprofessional_profiles      professional_profiles        @relation("clinical_encounters_updated_byToprofessional_profiles", fields: [updated_by], references: [user_id], onUpdate: NoAction)
+  optical_prescriptions                                                            optical_prescriptions[]
+
+  @@index([patient_id, created_at(sort: Desc), id], map: "clinical_encounters_patient_history_index")
+  @@index([professional_id, created_at(sort: Desc)], map: "clinical_encounters_professional_index")
+  @@map("clinical_encounters")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model customer_account_sessions {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  account_id        String            @map("account_id") @db.Uuid
+  token_hash        String            @unique @map("token_hash") @db.Char(64)
+  expires_at        DateTime          @map("expires_at") @db.Timestamptz(6)
+  last_used_at      DateTime          @default(now()) @map("last_used_at") @db.Timestamptz(6)
+  revoked_at        DateTime?         @map("revoked_at") @db.Timestamptz(6)
+  created_ip        String?           @map("created_ip") @db.Inet
+  user_agent        String?           @map("user_agent") @db.VarChar(512)
+  created_at        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  customer_accounts customer_accounts @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([account_id], map: "customer_account_sessions_account_index")
+  @@index([expires_at], map: "customer_account_sessions_expiration_index")
+  @@map("customer_account_sessions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model customer_accounts {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  customer_id                String                       @unique @map("customer_id") @db.Uuid
+  email                      String                       @map("email") @db.VarChar(254)
+  password_hash              String                       @map("password_hash")
+  is_active                  Boolean                      @default(true) @map("is_active")
+  failed_login_attempts      Int                          @default(0) @map("failed_login_attempts") @db.SmallInt
+  locked_until               DateTime?                    @map("locked_until") @db.Timestamptz(6)
+  last_login_at              DateTime?                    @map("last_login_at") @db.Timestamptz(6)
+  password_changed_at        DateTime                     @default(now()) @map("password_changed_at") @db.Timestamptz(6)
+  created_at                 DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  customer_account_sessions  customer_account_sessions[]
+  customers                  customers                    @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
+  store_carts                store_carts[]
+  transactional_email_outbox transactional_email_outbox[]
+
+  @@map("customer_accounts")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model customers {
+  id                                String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  patient_id                        String?                  @unique @map("patient_id") @db.Uuid
+  rut                               String?                  @unique @map("rut") @db.VarChar(10)
+  first_names                       String                   @map("first_names") @db.VarChar(150)
+  last_names                        String?                  @map("last_names") @db.VarChar(150)
+  phone                             String?                  @map("phone") @db.VarChar(16)
+  email                             String?                  @map("email") @db.VarChar(254)
+  address                           String?                  @map("address") @db.VarChar(500)
+  created_by                        String?                  @map("created_by") @db.Uuid
+  updated_by                        String?                  @map("updated_by") @db.Uuid
+  created_at                        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                        DateTime                 @default(now()) @map("updated_at") @db.Timestamptz(6)
+  customer_accounts                 customer_accounts?
+  users_customers_created_byTousers users?                   @relation("customers_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  patients                          patients?                @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_customers_updated_byTousers users?                   @relation("customers_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  external_prescriptions            external_prescriptions[]
+  sales                             sales[]
+
+  @@index([email], map: "customers_email_index")
+  @@index([last_names, first_names], map: "customers_name_index")
+  @@map("customers")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model discount_authorization_attempts {
+  id                                                              String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  attempted_by                                                    String    @map("attempted_by") @db.Uuid
+  authorizer_user_id                                              String?   @map("authorizer_user_id") @db.Uuid
+  authorizer_email                                                String    @map("authorizer_email") @db.VarChar(254)
+  status                                                          String    @default("PENDING") @map("status") @db.VarChar(20)
+  attempted_at                                                    DateTime  @default(now()) @map("attempted_at") @db.Timestamptz(6)
+  completed_at                                                    DateTime? @map("completed_at") @db.Timestamptz(6)
+  users_discount_authorization_attempts_attempted_byTousers       users     @relation("discount_authorization_attempts_attempted_byTousers", fields: [attempted_by], references: [id], onUpdate: NoAction)
+  users_discount_authorization_attempts_authorizer_user_idTousers users?    @relation("discount_authorization_attempts_authorizer_user_idTousers", fields: [authorizer_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([attempted_by, attempted_at(sort: Desc)], map: "discount_authorization_attempts_actor_date_index")
+  @@index([authorizer_email, attempted_at(sort: Desc)], map: "discount_authorization_attempts_email_date_index")
+  @@map("discount_authorization_attempts")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model discount_authorization_grants {
+  id                                                       String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  requested_by                                             String    @map("requested_by") @db.Uuid
+  authorized_by                                            String    @map("authorized_by") @db.Uuid
+  amount_cents                                             BigInt    @map("amount_cents")
+  reason                                                   String    @map("reason") @db.VarChar(300)
+  expires_at                                               DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumed_at                                              DateTime? @map("consumed_at") @db.Timestamptz(6)
+  sale_id                                                  String?   @map("sale_id") @db.Uuid
+  created_at                                               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  users_discount_authorization_grants_authorized_byTousers users     @relation("discount_authorization_grants_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: NoAction)
+  users_discount_authorization_grants_requested_byTousers  users     @relation("discount_authorization_grants_requested_byTousers", fields: [requested_by], references: [id], onUpdate: NoAction)
+  sales                                                    sales?    @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([requested_by, expires_at(sort: Desc)], map: "discount_authorization_grants_requested_index")
+  @@map("discount_authorization_grants")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model external_prescriptions {
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  cart_id              String?      @unique @map("cart_id") @db.Uuid
+  source               String       @map("source") @db.VarChar(20)
+  status               String       @default("DRAFT") @map("status") @db.VarChar(20)
+  original_filename    String?      @map("original_filename") @db.VarChar(255)
+  media_type           String?      @map("media_type") @db.VarChar(100)
+  file_size_bytes      Int?         @map("file_size_bytes")
+  file_sha256          String?      @map("file_sha256") @db.Char(64)
+  file_data            Bytes?       @map("file_data")
+  extraction_status    String       @default("NOT_REQUESTED") @map("extraction_status") @db.VarChar(30)
+  extraction_provider  String?      @map("extraction_provider") @db.VarChar(50)
+  extracted_data       Json?        @map("extracted_data")
+  confirmed_data       Json?        @map("confirmed_data")
+  confirmed_at         DateTime?    @map("confirmed_at") @db.Timestamptz(6)
+  created_at           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at           DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  customer_id          String?      @map("customer_id") @db.Uuid
+  created_by           String?      @map("created_by") @db.Uuid
+  patient_id           String?      @map("patient_id") @db.Uuid
+  cloudinary_asset_id  String?      @map("cloudinary_asset_id") @db.VarChar(100)
+  cloudinary_public_id String?      @map("cloudinary_public_id") @db.VarChar(500)
+  cloudinary_version   BigInt?      @map("cloudinary_version")
+  cloudinary_format    String?      @map("cloudinary_format") @db.VarChar(30)
+  store_carts          store_carts? @relation(fields: [cart_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                users?       @relation(fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customers            customers?   @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  patients             patients?    @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                sales[]
+
+  @@index([status, created_at], map: "external_prescriptions_status_index")
+  @@map("external_prescriptions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model medical_record_events {
+  id                    BigInt                @id @default(autoincrement()) @map("id")
+  medical_record_id     String                @map("medical_record_id") @db.Uuid
+  event_type            String                @map("event_type") @db.VarChar(20)
+  changed_fields        String[]              @default([]) @map("changed_fields")
+  performed_by          String                @map("performed_by") @db.Uuid
+  created_at            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  medical_records       medical_records       @relation(fields: [medical_record_id], references: [id], onUpdate: NoAction)
+  professional_profiles professional_profiles @relation(fields: [performed_by], references: [user_id], onUpdate: NoAction)
+
+  @@index([medical_record_id, created_at, id], map: "medical_record_events_record_index")
+  @@map("medical_record_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model medical_record_revisions {
+  id                      BigInt                @id @default(autoincrement()) @map("id")
+  medical_record_id       String                @map("medical_record_id") @db.Uuid
+  revision                Int                   @map("revision")
+  general_medical_history String?               @map("general_medical_history")
+  ocular_history          String?               @map("ocular_history")
+  family_ocular_history   String?               @map("family_ocular_history")
+  allergies               String?               @map("allergies")
+  current_medications     String?               @map("current_medications")
+  changed_fields          String[]              @default([]) @map("changed_fields")
+  recorded_by             String                @map("recorded_by") @db.Uuid
+  recorded_at             DateTime              @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  medical_records         medical_records       @relation(fields: [medical_record_id], references: [id], onUpdate: NoAction)
+  professional_profiles   professional_profiles @relation(fields: [recorded_by], references: [user_id], onUpdate: NoAction)
+
+  @@unique([medical_record_id, revision], map: "medical_record_revisions_record_revision")
+  @@index([medical_record_id, revision(sort: Desc)], map: "medical_record_revisions_record_index")
+  @@map("medical_record_revisions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model medical_records {
+  id                                                                      String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  patient_id                                                              String                     @unique @map("patient_id") @db.Uuid
+  general_medical_history                                                 String?                    @map("general_medical_history")
+  ocular_history                                                          String?                    @map("ocular_history")
+  family_ocular_history                                                   String?                    @map("family_ocular_history")
+  allergies                                                               String?                    @map("allergies")
+  current_medications                                                     String?                    @map("current_medications")
+  created_by                                                              String                     @map("created_by") @db.Uuid
+  updated_by                                                              String                     @map("updated_by") @db.Uuid
+  created_at                                                              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                                              DateTime                   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  medical_record_events                                                   medical_record_events[]
+  medical_record_revisions                                                medical_record_revisions[]
+  professional_profiles_medical_records_created_byToprofessional_profiles professional_profiles      @relation("medical_records_created_byToprofessional_profiles", fields: [created_by], references: [user_id], onUpdate: NoAction)
+  patients                                                                patients                   @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
+  professional_profiles_medical_records_updated_byToprofessional_profiles professional_profiles      @relation("medical_records_updated_byToprofessional_profiles", fields: [updated_by], references: [user_id], onUpdate: NoAction)
+
+  @@map("medical_records")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model optical_prescriptions {
+  id                          String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  encounter_id                String                  @map("encounter_id") @db.Uuid
+  version                     Int                     @map("version")
+  status                      String                  @default("ACTIVE") @map("status") @db.VarChar(20)
+  right_sphere                Decimal                 @map("right_sphere") @db.Decimal(6, 2)
+  right_cylinder              Decimal                 @map("right_cylinder") @db.Decimal(6, 2)
+  right_axis                  Int?                    @map("right_axis") @db.SmallInt
+  right_addition              Decimal?                @map("right_addition") @db.Decimal(6, 2)
+  left_sphere                 Decimal                 @map("left_sphere") @db.Decimal(6, 2)
+  left_cylinder               Decimal                 @map("left_cylinder") @db.Decimal(6, 2)
+  left_axis                   Int?                    @map("left_axis") @db.SmallInt
+  left_addition               Decimal?                @map("left_addition") @db.Decimal(6, 2)
+  pupillary_distance          Decimal?                @map("pupillary_distance") @db.Decimal(6, 2)
+  fulfillment_notes           String?                 @map("fulfillment_notes") @db.VarChar(1000)
+  replaced_prescription_id    String?                 @map("replaced_prescription_id") @db.Uuid
+  replacement_reason          String?                 @map("replacement_reason") @db.VarChar(500)
+  issued_by                   String                  @map("issued_by") @db.Uuid
+  issued_at                   DateTime                @default(now()) @map("issued_at") @db.Timestamptz(6)
+  voided_at                   DateTime?               @map("voided_at") @db.Timestamptz(6)
+  updated_at                  DateTime                @default(now()) @map("updated_at") @db.Timestamptz(6)
+  clinical_encounters         clinical_encounters     @relation(fields: [encounter_id], references: [id], onUpdate: NoAction)
+  professional_profiles       professional_profiles   @relation(fields: [issued_by], references: [user_id], onUpdate: NoAction)
+  optical_prescriptions       optical_prescriptions?  @relation("optical_prescriptionsTooptical_prescriptions", fields: [replaced_prescription_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  other_optical_prescriptions optical_prescriptions[] @relation("optical_prescriptionsTooptical_prescriptions")
+  sales                       sales[]
+  store_carts                 store_carts[]
+
+  @@unique([encounter_id, version], map: "optical_prescriptions_encounter_version")
+  @@index([encounter_id, issued_at(sort: Desc)], map: "optical_prescriptions_patient_lookup_index")
+  @@map("optical_prescriptions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model patient_guardians {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  patient_id   String   @unique @map("patient_id") @db.Uuid
+  rut          String   @map("rut") @db.VarChar(10)
+  first_names  String   @map("first_names") @db.VarChar(150)
+  last_names   String   @map("last_names") @db.VarChar(150)
+  relationship String   @map("relationship") @db.VarChar(100)
+  phone        String   @map("phone") @db.VarChar(16)
+  email        String   @map("email") @db.VarChar(254)
+  created_at   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  patients     patients @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
+
+  @@index([rut], map: "patient_guardians_rut_index")
+  @@map("patient_guardians")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model patients {
+  id                               String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  rut                              String                   @unique @map("rut") @db.VarChar(10)
+  first_names                      String                   @map("first_names") @db.VarChar(150)
+  last_names                       String                   @map("last_names") @db.VarChar(150)
+  birth_date                       DateTime                 @map("birth_date") @db.Date
+  phone                            String                   @map("phone") @db.VarChar(16)
+  email                            String                   @map("email") @db.VarChar(254)
+  address                          String                   @map("address") @db.VarChar(500)
+  created_by                       String?                  @map("created_by") @db.Uuid
+  updated_by                       String?                  @map("updated_by") @db.Uuid
+  created_at                       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                       DateTime                 @default(now()) @map("updated_at") @db.Timestamptz(6)
+  appointments                     appointments[]
+  clinical_encounters              clinical_encounters[]
+  customers                        customers?
+  external_prescriptions           external_prescriptions[]
+  medical_records                  medical_records?
+  patient_guardians                patient_guardians?
+  users_patients_created_byTousers users?                   @relation("patients_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_patients_updated_byTousers users?                   @relation("patients_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                            sales[]
+
+  @@index([email], map: "patients_email_index")
+  @@index([last_names, first_names], map: "patients_name_index")
+  @@map("patients")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payment_attempts {
+  id                     String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  sale_id                String         @map("sale_id") @db.Uuid
+  provider               String         @map("provider") @db.VarChar(30)
+  status                 String         @default("CREATED") @map("status") @db.VarChar(30)
+  amount_cents           BigInt         @map("amount_cents")
+  currency               String         @default("CLP") @map("currency") @db.VarChar(3)
+  idempotency_key        String         @unique @default(dbgenerated("gen_random_uuid()")) @map("idempotency_key") @db.Uuid
+  external_preference_id String?        @unique @map("external_preference_id") @db.VarChar(200)
+  external_payment_id    String?        @unique @map("external_payment_id") @db.VarChar(200)
+  checkout_url           String?        @map("checkout_url")
+  sandbox_checkout_url   String?        @map("sandbox_checkout_url")
+  provider_status        String?        @map("provider_status") @db.VarChar(100)
+  provider_status_detail String?        @map("provider_status_detail") @db.VarChar(200)
+  failure_reason         String?        @map("failure_reason") @db.VarChar(500)
+  initiated_by           String?        @map("initiated_by") @db.Uuid
+  expires_at             DateTime       @map("expires_at") @db.Timestamptz(6)
+  created_at             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at             DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users                  users?         @relation(fields: [initiated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                  sales          @relation(fields: [sale_id], references: [id], onUpdate: NoAction)
+  sale_payments          sale_payments?
+
+  @@index([sale_id, created_at(sort: Desc)], map: "payment_attempts_sale_date_index")
+  @@map("payment_attempts")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payment_provider_events {
+  id                 BigInt    @id @default(autoincrement()) @map("id")
+  provider           String    @map("provider") @db.VarChar(30)
+  request_id         String    @map("request_id") @db.VarChar(200)
+  event_type         String    @map("event_type") @db.VarChar(100)
+  external_object_id String    @map("external_object_id") @db.VarChar(200)
+  payload            Json      @map("payload")
+  processing_status  String    @default("RECEIVED") @map("processing_status") @db.VarChar(20)
+  processing_error   String?   @map("processing_error") @db.VarChar(500)
+  received_at        DateTime  @default(now()) @map("received_at") @db.Timestamptz(6)
+  processed_at       DateTime? @map("processed_at") @db.Timestamptz(6)
+
+  @@unique([provider, request_id], map: "payment_provider_events_request_unique")
+  @@index([provider, external_object_id, received_at(sort: Desc)], map: "payment_provider_events_object_index")
+  @@map("payment_provider_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model permissions {
+  id               Int                @id @default(autoincrement()) @map("id") @db.SmallInt
+  code             String             @unique @map("code") @db.VarChar(100)
+  description      String             @map("description")
+  created_at       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  role_permissions role_permissions[]
+
+  @@map("permissions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model product_events {
+  id             BigInt   @id @default(autoincrement()) @map("id")
+  product_id     String   @map("product_id") @db.Uuid
+  event_type     String   @map("event_type") @db.VarChar(20)
+  changed_fields String[] @default([]) @map("changed_fields")
+  performed_by   String   @map("performed_by") @db.Uuid
+  created_at     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  users          users    @relation(fields: [performed_by], references: [id], onUpdate: NoAction)
+  products       products @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+
+  @@index([product_id, created_at, id], map: "product_events_product_index")
+  @@map("product_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model product_images {
+  id                                     String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  product_id                             String    @map("product_id") @db.Uuid
+  position                               Int       @map("position") @db.SmallInt
+  alt_text                               String    @map("alt_text") @db.VarChar(300)
+  original_filename                      String    @map("original_filename") @db.VarChar(255)
+  media_type                             String    @map("media_type") @db.VarChar(100)
+  file_size_bytes                        Int       @map("file_size_bytes")
+  file_sha256                            String    @map("file_sha256") @db.Char(64)
+  cloudinary_asset_id                    String    @unique @map("cloudinary_asset_id") @db.VarChar(100)
+  cloudinary_public_id                   String    @unique @map("cloudinary_public_id") @db.VarChar(500)
+  cloudinary_version                     BigInt    @map("cloudinary_version")
+  cloudinary_url                         String    @map("cloudinary_url") @db.VarChar(2000)
+  cloudinary_format                      String    @map("cloudinary_format") @db.VarChar(30)
+  width                                  Int?      @map("width")
+  height                                 Int?      @map("height")
+  status                                 String    @default("ACTIVE") @map("status") @db.VarChar(20)
+  created_by                             String    @map("created_by") @db.Uuid
+  retired_by                             String?   @map("retired_by") @db.Uuid
+  created_at                             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  retired_at                             DateTime? @map("retired_at") @db.Timestamptz(6)
+  users_product_images_created_byTousers users     @relation("product_images_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  products                               products  @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+  users_product_images_retired_byTousers users?    @relation("product_images_retired_byTousers", fields: [retired_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@map("product_images")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model products {
+  id                                                                String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  sku                                                               String                     @unique @map("sku") @db.VarChar(80)
+  name                                                              String                     @map("name") @db.VarChar(200)
+  category                                                          String                     @map("category") @db.VarChar(30)
+  requires_prescription                                             Boolean                    @default(false) @map("requires_prescription")
+  unit_price_cents                                                  BigInt                     @map("unit_price_cents")
+  is_active                                                         Boolean                    @default(true) @map("is_active")
+  created_by                                                        String                     @map("created_by") @db.Uuid
+  updated_by                                                        String                     @map("updated_by") @db.Uuid
+  created_at                                                        DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                                        DateTime                   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  is_test_data                                                      Boolean                    @default(false) @map("is_test_data")
+  product_events                                                    product_events[]
+  product_images                                                    product_images[]
+  users_products_created_byTousers                                  users                      @relation("products_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_products_updated_byTousers                                  users                      @relation("products_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  sale_items_sale_items_mounted_on_product_idToproducts             sale_items[]               @relation("sale_items_mounted_on_product_idToproducts")
+  sale_items_sale_items_product_idToproducts                        sale_items[]               @relation("sale_items_product_idToproducts")
+  store_cart_items_store_cart_items_mounted_on_product_idToproducts store_cart_items[]         @relation("store_cart_items_mounted_on_product_idToproducts")
+  store_cart_items_store_cart_items_product_idToproducts            store_cart_items[]         @relation("store_cart_items_product_idToproducts")
+  virtual_try_on_3d_assets                                          virtual_try_on_3d_assets[]
+
+  @@index([is_active, category, name], map: "products_active_category_index")
+  @@index([is_active, is_test_data, category, name], map: "products_public_catalog_index")
+  @@map("products")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model professional_profiles {
+  user_id                                                                        String                            @id @map("user_id") @db.Uuid
+  appointment_duration_minutes                                                   Int                               @map("appointment_duration_minutes") @db.SmallInt
+  slot_interval_minutes                                                          Int                               @map("slot_interval_minutes") @db.SmallInt
+  is_bookable                                                                    Boolean                           @default(true) @map("is_bookable")
+  created_by                                                                     String                            @map("created_by") @db.Uuid
+  updated_by                                                                     String                            @map("updated_by") @db.Uuid
+  created_at                                                                     DateTime                          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                                                     DateTime                          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  appointments                                                                   appointments[]
+  clinical_encounter_addenda                                                     clinical_encounter_addenda[]
+  clinical_encounter_events                                                      clinical_encounter_events[]
+  clinical_encounters_clinical_encounters_created_byToprofessional_profiles      clinical_encounters[]             @relation("clinical_encounters_created_byToprofessional_profiles")
+  clinical_encounters_clinical_encounters_professional_idToprofessional_profiles clinical_encounters[]             @relation("clinical_encounters_professional_idToprofessional_profiles")
+  clinical_encounters_clinical_encounters_updated_byToprofessional_profiles      clinical_encounters[]             @relation("clinical_encounters_updated_byToprofessional_profiles")
+  medical_record_events                                                          medical_record_events[]
+  medical_record_revisions                                                       medical_record_revisions[]
+  medical_records_medical_records_created_byToprofessional_profiles              medical_records[]                 @relation("medical_records_created_byToprofessional_profiles")
+  medical_records_medical_records_updated_byToprofessional_profiles              medical_records[]                 @relation("medical_records_updated_byToprofessional_profiles")
+  optical_prescriptions                                                          optical_prescriptions[]
+  users_professional_profiles_created_byTousers                                  users                             @relation("professional_profiles_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_professional_profiles_updated_byTousers                                  users                             @relation("professional_profiles_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  users_professional_profiles_user_idTousers                                     users                             @relation("professional_profiles_user_idTousers", fields: [user_id], references: [id], onUpdate: NoAction)
+  professional_schedule_blocks                                                   professional_schedule_blocks[]
+  professional_schedule_overrides                                                professional_schedule_overrides[]
+  professional_weekly_schedules                                                  professional_weekly_schedules[]
+
+  @@index([is_bookable], map: "professional_profiles_bookable_index")
+  @@map("professional_profiles")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model professional_schedule_blocks {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  professional_id       String                @map("professional_id") @db.Uuid
+  start_at              DateTime              @map("start_at") @db.Timestamptz(6)
+  end_at                DateTime              @map("end_at") @db.Timestamptz(6)
+  reason                String?               @map("reason") @db.VarChar(500)
+  created_by            String                @map("created_by") @db.Uuid
+  created_at            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  users                 users                 @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onUpdate: NoAction)
+
+  @@index([professional_id, start_at, end_at], map: "professional_schedule_blocks_range_index")
+  @@map("professional_schedule_blocks")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model professional_schedule_overrides {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  professional_id       String                @map("professional_id") @db.Uuid
+  date                  DateTime              @map("date") @db.Date
+  is_working            Boolean               @default(true) @map("is_working")
+  start_time            DateTime?             @map("start_time") @db.Time(6)
+  end_time              DateTime?             @map("end_time") @db.Time(6)
+  break_start           DateTime?             @map("break_start") @db.Time(6)
+  break_end             DateTime?             @map("break_end") @db.Time(6)
+  created_by            String                @map("created_by") @db.Uuid
+  created_at            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at            DateTime              @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users                 users                 @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onUpdate: NoAction)
+
+  @@unique([professional_id, date])
+  @@index([professional_id, date], map: "professional_schedule_overrides_lookup_index")
+  @@map("professional_schedule_overrides")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model professional_weekly_schedules {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  professional_id       String                @map("professional_id") @db.Uuid
+  day_of_week           Int                   @map("day_of_week") @db.SmallInt
+  start_time            DateTime              @map("start_time") @db.Time(6)
+  end_time              DateTime              @map("end_time") @db.Time(6)
+  is_working            Boolean               @default(true) @map("is_working")
+  break_start           DateTime?             @map("break_start") @db.Time(6)
+  break_end             DateTime?             @map("break_end") @db.Time(6)
+  created_at            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at            DateTime              @default(now()) @map("updated_at") @db.Timestamptz(6)
+  professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onUpdate: NoAction)
+
+  @@unique([professional_id, day_of_week])
+  @@index([professional_id], map: "professional_weekly_schedules_professional_index")
+  @@map("professional_weekly_schedules")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model public_request_rate_limits {
+  bucket            String   @map("bucket") @db.VarChar(80)
+  subject_hash      String   @map("subject_hash") @db.Char(64)
+  window_started_at DateTime @map("window_started_at") @db.Timestamptz(6)
+  expires_at        DateTime @map("expires_at") @db.Timestamptz(6)
+  request_count     Int      @map("request_count")
+
+  @@id([bucket, subject_hash])
+  @@index([expires_at], map: "public_request_rate_limits_expiration_index")
+  @@map("public_request_rate_limits")
+}
+
+model role_permissions {
+  role_id       Int         @map("role_id") @db.SmallInt
+  permission_id Int         @map("permission_id") @db.SmallInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([role_id, permission_id])
+  @@index([permission_id], map: "role_permissions_permission_index")
+  @@map("role_permissions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model roles {
+  id               Int                @id @default(autoincrement()) @map("id") @db.SmallInt
+  code             String             @unique @map("code") @db.VarChar(50)
+  name             String             @map("name") @db.VarChar(100)
+  description      String             @map("description")
+  is_system        Boolean            @default(true) @map("is_system")
+  created_at       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+
+  @@map("roles")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sale_events {
+  id              BigInt   @id @default(autoincrement()) @map("id")
+  sale_id         String   @map("sale_id") @db.Uuid
+  event_type      String   @map("event_type") @db.VarChar(30)
+  previous_status String?  @map("previous_status") @db.VarChar(30)
+  new_status      String?  @map("new_status") @db.VarChar(30)
+  details         String?  @map("details")
+  performed_by    String?  @map("performed_by") @db.Uuid
+  created_at      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  users           users?   @relation(fields: [performed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales           sales    @relation(fields: [sale_id], references: [id], onUpdate: NoAction)
+
+  @@index([sale_id, created_at, id], map: "sale_events_sale_index")
+  @@map("sale_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sale_items {
+  id                                                  String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  sale_id                                             String    @map("sale_id") @db.Uuid
+  product_id                                          String    @map("product_id") @db.Uuid
+  product_sku                                         String    @map("product_sku") @db.VarChar(80)
+  product_name                                        String    @map("product_name") @db.VarChar(200)
+  product_category                                    String    @map("product_category") @db.VarChar(30)
+  requires_prescription                               Boolean   @map("requires_prescription")
+  position                                            Int       @map("position")
+  quantity                                            Int       @map("quantity")
+  unit_price_cents                                    BigInt    @map("unit_price_cents")
+  line_total_cents                                    BigInt?   @default(dbgenerated("(quantity * unit_price_cents)")) @map("line_total_cents")
+  created_at                                          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  mount_source                                        String?   @map("mount_source") @db.VarChar(20)
+  mounted_on_product_id                               String?   @map("mounted_on_product_id") @db.Uuid
+  products_sale_items_mounted_on_product_idToproducts products? @relation("sale_items_mounted_on_product_idToproducts", fields: [mounted_on_product_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  products_sale_items_product_idToproducts            products  @relation("sale_items_product_idToproducts", fields: [product_id], references: [id], onUpdate: NoAction)
+  sales                                               sales     @relation(fields: [sale_id], references: [id], onUpdate: NoAction)
+
+  @@unique([sale_id, position], map: "sale_items_position_unique")
+  @@unique([sale_id, product_id], map: "sale_items_product_unique")
+  @@index([sale_id, position], map: "sale_items_sale_index")
+  @@map("sale_items")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sale_optical_additions {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  sale_id          String   @map("sale_id") @db.Uuid
+  name             String   @map("name") @db.VarChar(160)
+  description      String?  @map("description") @db.VarChar(500)
+  position         Int      @map("position")
+  quantity         Int      @map("quantity")
+  unit_price_cents BigInt   @map("unit_price_cents")
+  line_total_cents BigInt?  @default(dbgenerated("(quantity * unit_price_cents)")) @map("line_total_cents")
+  created_at       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  sales            sales    @relation(fields: [sale_id], references: [id], onUpdate: NoAction)
+
+  @@unique([sale_id, position], map: "sale_optical_additions_position_unique")
+  @@index([sale_id, position], map: "sale_optical_additions_sale_index")
+  @@map("sale_optical_additions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sale_payments {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  sale_id                    String                       @map("sale_id") @db.Uuid
+  amount_cents               BigInt                       @map("amount_cents")
+  payment_method             String                       @map("payment_method") @db.VarChar(30)
+  reference                  String?                      @map("reference") @db.VarChar(200)
+  received_by                String?                      @map("received_by") @db.Uuid
+  paid_at                    DateTime                     @default(now()) @map("paid_at") @db.Timestamptz(6)
+  created_at                 DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  source                     String                       @default("MANUAL") @map("source") @db.VarChar(20)
+  provider_attempt_id        String?                      @unique @map("provider_attempt_id") @db.Uuid
+  request_key                String?                      @map("request_key") @db.VarChar(80)
+  cash_received_cents        BigInt?                      @map("cash_received_cents")
+  change_cents               BigInt?                      @map("change_cents")
+  payment_attempts           payment_attempts?            @relation(fields: [provider_attempt_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users                      users?                       @relation(fields: [received_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                      sales                        @relation(fields: [sale_id], references: [id], onUpdate: NoAction)
+  sale_receipts              sale_receipts[]
+  transactional_email_outbox transactional_email_outbox[]
+
+  @@index([sale_id, paid_at, id], map: "sale_payments_sale_index")
+  @@map("sale_payments")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sale_receipts {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  receipt_number             BigInt                       @unique @default(autoincrement()) @map("receipt_number")
+  sale_id                    String                       @map("sale_id") @db.Uuid
+  payload                    Json                         @map("payload")
+  emailed_to                 String?                      @map("emailed_to") @db.VarChar(254)
+  email_status               String                       @default("PENDING") @map("email_status") @db.VarChar(20)
+  email_provider_id          String?                      @map("email_provider_id") @db.VarChar(200)
+  email_error                String?                      @map("email_error") @db.VarChar(500)
+  generated_by               String                       @map("generated_by") @db.Uuid
+  issued_at                  DateTime                     @default(now()) @map("issued_at") @db.Timestamptz(6)
+  email_updated_at           DateTime?                    @map("email_updated_at") @db.Timestamptz(6)
+  payment_id                 String?                      @map("payment_id") @db.Uuid
+  receipt_type               String                       @map("receipt_type") @db.VarChar(20)
+  users                      users                        @relation(fields: [generated_by], references: [id], onUpdate: NoAction)
+  sale_payments              sale_payments?               @relation(fields: [payment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                      sales                        @relation(fields: [sale_id], references: [id], onUpdate: NoAction)
+  transactional_email_outbox transactional_email_outbox[]
+
+  @@index([issued_at(sort: Desc)], map: "sale_receipts_issued_at_index")
+  @@index([sale_id, issued_at(sort: Desc), receipt_number(sort: Desc)], map: "sale_receipts_sale_date_index")
+  @@map("sale_receipts")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sales {
+  id                                        String                          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  sale_number                               BigInt                          @unique @default(autoincrement()) @map("sale_number")
+  customer_id                               String?                         @map("customer_id") @db.Uuid
+  prescription_id                           String?                         @map("prescription_id") @db.Uuid
+  status                                    String                          @default("QUOTATION") @map("status") @db.VarChar(30)
+  payment_method                            String?                         @map("payment_method") @db.VarChar(30)
+  subtotal_cents                            BigInt                          @map("subtotal_cents")
+  total_cents                               BigInt                          @map("total_cents")
+  cancellation_reason                       String?                         @map("cancellation_reason") @db.VarChar(500)
+  cancelled_at                              DateTime?                       @map("cancelled_at") @db.Timestamptz(6)
+  created_by                                String?                         @map("created_by") @db.Uuid
+  updated_by                                String?                         @map("updated_by") @db.Uuid
+  created_at                                DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                DateTime                        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  origin                                    String                          @default("IN_STORE") @map("origin") @db.VarChar(20)
+  external_prescription_id                  String?                         @map("external_prescription_id") @db.Uuid
+  fulfillment_method                        String?                         @map("fulfillment_method") @db.VarChar(20)
+  delivery_address                          String?                         @map("delivery_address") @db.VarChar(500)
+  delivery_city                             String?                         @map("delivery_city") @db.VarChar(120)
+  delivery_region                           String?                         @map("delivery_region") @db.VarChar(120)
+  delivery_notes                            String?                         @map("delivery_notes") @db.VarChar(500)
+  shipping_fee_cents                        BigInt                          @default(0) @map("shipping_fee_cents")
+  shipping_quote_source                     String?                         @map("shipping_quote_source") @db.VarChar(20)
+  discount_cents                            BigInt                          @default(0) @map("discount_cents")
+  discount_reason                           String?                         @map("discount_reason") @db.VarChar(300)
+  patient_id                                String?                         @map("patient_id") @db.Uuid
+  discount_authorized_by                    String?                         @map("discount_authorized_by") @db.Uuid
+  discount_authorized_at                    DateTime?                       @map("discount_authorized_at") @db.Timestamptz(6)
+  quotation_valid_until                     DateTime?                       @map("quotation_valid_until") @db.Timestamptz(6)
+  request_key                               String?                         @map("request_key") @db.VarChar(80)
+  discount_authorization_grants             discount_authorization_grants[]
+  payment_attempts                          payment_attempts[]
+  sale_events                               sale_events[]
+  sale_items                                sale_items[]
+  sale_optical_additions                    sale_optical_additions[]
+  sale_payments                             sale_payments[]
+  sale_receipts                             sale_receipts[]
+  users_sales_created_byTousers             users?                          @relation("sales_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customers                                 customers?                      @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_sales_discount_authorized_byTousers users?                          @relation("sales_discount_authorized_byTousers", fields: [discount_authorized_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  external_prescriptions                    external_prescriptions?         @relation(fields: [external_prescription_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  patients                                  patients?                       @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  optical_prescriptions                     optical_prescriptions?          @relation(fields: [prescription_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_sales_updated_byTousers             users?                          @relation("sales_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  store_carts                               store_carts?
+  transactional_email_outbox                transactional_email_outbox[]
+
+  @@index([customer_id, created_at(sort: Desc)], map: "sales_customer_date_index")
+  @@index([origin, created_at(sort: Desc)], map: "sales_origin_date_index")
+  @@index([status, created_at(sort: Desc)], map: "sales_status_date_index")
+  @@map("sales")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model schema_migrations {
+  version     Int      @id @map("version")
+  name        String   @map("name")
+  checksum    String   @map("checksum") @db.Char(64)
+  executed_at DateTime @default(now()) @map("executed_at") @db.Timestamptz(6)
+
+  @@map("schema_migrations")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model store_cart_items {
+  id                                                        String      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  cart_id                                                   String      @map("cart_id") @db.Uuid
+  product_id                                                String      @map("product_id") @db.Uuid
+  quantity                                                  Int         @map("quantity")
+  created_at                                                DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                                DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+  mounted_on_product_id                                     String?     @map("mounted_on_product_id") @db.Uuid
+  store_carts                                               store_carts @relation(fields: [cart_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products_store_cart_items_mounted_on_product_idToproducts products?   @relation("store_cart_items_mounted_on_product_idToproducts", fields: [mounted_on_product_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  products_store_cart_items_product_idToproducts            products    @relation("store_cart_items_product_idToproducts", fields: [product_id], references: [id], onUpdate: NoAction)
+
+  @@unique([cart_id, product_id], map: "store_cart_items_product_unique")
+  @@index([cart_id, created_at, id], map: "store_cart_items_cart_index")
+  @@map("store_cart_items")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model store_carts {
+  id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  token_hash               String                  @unique @map("token_hash") @db.Char(64)
+  customer_account_id      String?                 @map("customer_account_id") @db.Uuid
+  status                   String                  @default("ACTIVE") @map("status") @db.VarChar(20)
+  buyer_rut                String?                 @map("buyer_rut") @db.VarChar(10)
+  buyer_first_names        String?                 @map("buyer_first_names") @db.VarChar(150)
+  buyer_last_names         String?                 @map("buyer_last_names") @db.VarChar(150)
+  buyer_phone              String?                 @map("buyer_phone") @db.VarChar(16)
+  buyer_email              String?                 @map("buyer_email") @db.VarChar(254)
+  buyer_address            String?                 @map("buyer_address") @db.VarChar(500)
+  fulfillment_method       String?                 @map("fulfillment_method") @db.VarChar(20)
+  delivery_address         String?                 @map("delivery_address") @db.VarChar(500)
+  delivery_city            String?                 @map("delivery_city") @db.VarChar(120)
+  delivery_region          String?                 @map("delivery_region") @db.VarChar(120)
+  delivery_notes           String?                 @map("delivery_notes") @db.VarChar(500)
+  shipping_fee_cents       BigInt                  @default(0) @map("shipping_fee_cents")
+  shipping_quote_source    String?                 @map("shipping_quote_source") @db.VarChar(20)
+  clinical_prescription_id String?                 @map("clinical_prescription_id") @db.Uuid
+  sale_id                  String?                 @unique @map("sale_id") @db.Uuid
+  expires_at               DateTime                @map("expires_at") @db.Timestamptz(6)
+  checked_out_at           DateTime?               @map("checked_out_at") @db.Timestamptz(6)
+  created_at               DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at               DateTime                @default(now()) @map("updated_at") @db.Timestamptz(6)
+  external_prescriptions   external_prescriptions?
+  store_cart_items         store_cart_items[]
+  optical_prescriptions    optical_prescriptions?  @relation(fields: [clinical_prescription_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts        customer_accounts?      @relation(fields: [customer_account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                    sales?                  @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([status, expires_at], map: "store_carts_expiration_index")
+  @@map("store_carts")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model transactional_email_outbox {
+  id                                  String                                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  template_code                       String                                @map("template_code") @db.VarChar(60)
+  recipient_email                     String                                @map("recipient_email") @db.VarChar(254)
+  payload                             Json                                  @default("{}") @map("payload")
+  deduplication_key                   String                                @unique @map("deduplication_key") @db.VarChar(200)
+  status                              String                                @default("PENDING") @map("status") @db.VarChar(20)
+  scheduled_at                        DateTime                              @default(now()) @map("scheduled_at") @db.Timestamptz(6)
+  attempt_count                       Int                                   @default(0) @map("attempt_count") @db.SmallInt
+  last_error                          String?                               @map("last_error") @db.VarChar(1000)
+  sent_at                             DateTime?                             @map("sent_at") @db.Timestamptz(6)
+  created_at                          DateTime                              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                          DateTime                              @default(now()) @map("updated_at") @db.Timestamptz(6)
+  next_attempt_at                     DateTime                              @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  processing_started_at               DateTime?                             @map("processing_started_at") @db.Timestamptz(6)
+  processing_finished_at              DateTime?                             @map("processing_finished_at") @db.Timestamptz(6)
+  locked_at                           DateTime?                             @map("locked_at") @db.Timestamptz(6)
+  lock_expires_at                     DateTime?                             @map("lock_expires_at") @db.Timestamptz(6)
+  locked_by                           String?                               @map("locked_by") @db.Uuid
+  provider                            String?                               @map("provider") @db.VarChar(30)
+  provider_message_id                 String?                               @map("provider_message_id") @db.VarChar(200)
+  effective_recipient_email           String?                               @map("effective_recipient_email") @db.VarChar(254)
+  delivery_mode                       String?                               @map("delivery_mode") @db.VarChar(20)
+  last_error_code                     String?                               @map("last_error_code") @db.VarChar(80)
+  skip_reason                         String?                               @map("skip_reason") @db.VarChar(200)
+  sale_id                             String?                               @map("sale_id") @db.Uuid
+  payment_id                          String?                               @map("payment_id") @db.Uuid
+  receipt_id                          String?                               @map("receipt_id") @db.Uuid
+  appointment_id                      String?                               @map("appointment_id") @db.Uuid
+  account_id                          String?                               @map("account_id") @db.Uuid
+  customer_accounts                   customer_accounts?                    @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  appointments                        appointments?                         @relation(fields: [appointment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sale_payments                       sale_payments?                        @relation(fields: [payment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sale_receipts                       sale_receipts?                        @relation(fields: [receipt_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                               sales?                                @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  transactional_email_provider_events transactional_email_provider_events[]
+  transactional_email_transitions     transactional_email_transitions[]
+
+  @@map("transactional_email_outbox")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model transactional_email_provider_events {
+  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  provider                   String                      @map("provider") @db.VarChar(30)
+  provider_event_id          String                      @map("provider_event_id") @db.VarChar(200)
+  event_type                 String                      @map("event_type") @db.VarChar(80)
+  provider_message_id        String?                     @map("provider_message_id") @db.VarChar(200)
+  email_id                   String?                     @map("email_id") @db.Uuid
+  occurred_at                DateTime?                   @map("occurred_at") @db.Timestamptz(6)
+  payload_sha256             String                      @map("payload_sha256") @db.Char(64)
+  event_data                 Json                        @default("{}") @map("event_data")
+  received_at                DateTime                    @default(now()) @map("received_at") @db.Timestamptz(6)
+  transactional_email_outbox transactional_email_outbox? @relation(fields: [email_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([provider, provider_event_id], map: "transactional_email_provider_event_unique")
+  @@index([provider, provider_message_id, received_at(sort: Desc)], map: "transactional_email_provider_events_message_index")
+  @@map("transactional_email_provider_events")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactional_email_transitions {
+  id                         BigInt                     @id @default(autoincrement()) @map("id")
+  email_id                   String                     @map("email_id") @db.Uuid
+  from_status                String?                    @map("from_status") @db.VarChar(20)
+  to_status                  String                     @map("to_status") @db.VarChar(20)
+  reason_code                String                     @map("reason_code") @db.VarChar(80)
+  error_code                 String?                    @map("error_code") @db.VarChar(80)
+  attempt_count              Int                        @map("attempt_count") @db.SmallInt
+  actor_id                   String?                    @map("actor_id") @db.Uuid
+  occurred_at                DateTime                   @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  users                      users?                     @relation(fields: [actor_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  transactional_email_outbox transactional_email_outbox @relation(fields: [email_id], references: [id], onUpdate: NoAction)
+
+  @@index([email_id, occurred_at, id], map: "transactional_email_transitions_email_index")
+  @@map("transactional_email_transitions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactional_email_worker_runs {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  worker_id         String    @map("worker_id") @db.Uuid
+  trigger_source    String    @map("trigger_source") @db.VarChar(20)
+  delivery_mode     String?   @map("delivery_mode") @db.VarChar(20)
+  status            String    @default("RUNNING") @map("status") @db.VarChar(20)
+  claimed_count     Int       @default(0) @map("claimed_count")
+  sent_count        Int       @default(0) @map("sent_count")
+  simulated_count   Int       @default(0) @map("simulated_count")
+  failed_count      Int       @default(0) @map("failed_count")
+  dead_letter_count Int       @default(0) @map("dead_letter_count")
+  recovered_count   Int       @default(0) @map("recovered_count")
+  started_at        DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  finished_at       DateTime? @map("finished_at") @db.Timestamptz(6)
+
+  @@index([started_at(sort: Desc)], map: "transactional_email_worker_runs_date_index")
+  @@map("transactional_email_worker_runs")
+}
+
+model user_roles {
+  user_id                             String   @map("user_id") @db.Uuid
+  role_id                             Int      @map("role_id") @db.SmallInt
+  assigned_by                         String?  @map("assigned_by") @db.Uuid
+  assigned_at                         DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  users_user_roles_assigned_byTousers users?   @relation("user_roles_assigned_byTousers", fields: [assigned_by], references: [id], onUpdate: NoAction)
+  roles                               roles    @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+  users_user_roles_user_idTousers     users    @relation("user_roles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, role_id])
+  @@index([role_id], map: "user_roles_role_index")
+  @@map("user_roles")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model user_sessions {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  user_id      String    @map("user_id") @db.Uuid
+  token_hash   String    @unique @map("token_hash") @db.Char(64)
+  expires_at   DateTime  @map("expires_at") @db.Timestamptz(6)
+  last_used_at DateTime  @default(now()) @map("last_used_at") @db.Timestamptz(6)
+  revoked_at   DateTime? @map("revoked_at") @db.Timestamptz(6)
+  created_ip   String?   @map("created_ip") @db.Inet
+  user_agent   String?   @map("user_agent") @db.VarChar(512)
+  created_at   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([expires_at], map: "user_sessions_expiration_index")
+  @@index([user_id], map: "user_sessions_user_index")
+  @@map("user_sessions")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model users {
+  id                                                                                        String                            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  email                                                                                     String                            @map("email") @db.VarChar(254)
+  password_hash                                                                             String                            @map("password_hash")
+  first_name                                                                                String                            @map("first_name") @db.VarChar(100)
+  last_name                                                                                 String                            @map("last_name") @db.VarChar(100)
+  is_active                                                                                 Boolean                           @default(true) @map("is_active")
+  failed_login_attempts                                                                     Int                               @default(0) @map("failed_login_attempts") @db.SmallInt
+  locked_until                                                                              DateTime?                         @map("locked_until") @db.Timestamptz(6)
+  last_login_at                                                                             DateTime?                         @map("last_login_at") @db.Timestamptz(6)
+  password_changed_at                                                                       DateTime                          @default(now()) @map("password_changed_at") @db.Timestamptz(6)
+  created_at                                                                                DateTime                          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                                                                                DateTime                          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  appointment_events                                                                        appointment_events[]
+  appointments_appointments_created_byTousers                                               appointments[]                    @relation("appointments_created_byTousers")
+  appointments_appointments_updated_byTousers                                               appointments[]                    @relation("appointments_updated_byTousers")
+  cash_register_movements                                                                   cash_register_movements[]
+  cash_register_sessions_cash_register_sessions_closed_byTousers                            cash_register_sessions[]          @relation("cash_register_sessions_closed_byTousers")
+  cash_register_sessions_cash_register_sessions_opened_byTousers                            cash_register_sessions[]          @relation("cash_register_sessions_opened_byTousers")
+  customers_customers_created_byTousers                                                     customers[]                       @relation("customers_created_byTousers")
+  customers_customers_updated_byTousers                                                     customers[]                       @relation("customers_updated_byTousers")
+  discount_authorization_attempts_discount_authorization_attempts_attempted_byTousers       discount_authorization_attempts[] @relation("discount_authorization_attempts_attempted_byTousers")
+  discount_authorization_attempts_discount_authorization_attempts_authorizer_user_idTousers discount_authorization_attempts[] @relation("discount_authorization_attempts_authorizer_user_idTousers")
+  discount_authorization_grants_discount_authorization_grants_authorized_byTousers          discount_authorization_grants[]   @relation("discount_authorization_grants_authorized_byTousers")
+  discount_authorization_grants_discount_authorization_grants_requested_byTousers           discount_authorization_grants[]   @relation("discount_authorization_grants_requested_byTousers")
+  external_prescriptions                                                                    external_prescriptions[]
+  patients_patients_created_byTousers                                                       patients[]                        @relation("patients_created_byTousers")
+  patients_patients_updated_byTousers                                                       patients[]                        @relation("patients_updated_byTousers")
+  payment_attempts                                                                          payment_attempts[]
+  product_events                                                                            product_events[]
+  product_images_product_images_created_byTousers                                           product_images[]                  @relation("product_images_created_byTousers")
+  product_images_product_images_retired_byTousers                                           product_images[]                  @relation("product_images_retired_byTousers")
+  products_products_created_byTousers                                                       products[]                        @relation("products_created_byTousers")
+  products_products_updated_byTousers                                                       products[]                        @relation("products_updated_byTousers")
+  professional_profiles_professional_profiles_created_byTousers                             professional_profiles[]           @relation("professional_profiles_created_byTousers")
+  professional_profiles_professional_profiles_updated_byTousers                             professional_profiles[]           @relation("professional_profiles_updated_byTousers")
+  professional_profiles_professional_profiles_user_idTousers                                professional_profiles?            @relation("professional_profiles_user_idTousers")
+  professional_schedule_blocks                                                              professional_schedule_blocks[]
+  professional_schedule_overrides                                                           professional_schedule_overrides[]
+  sale_events                                                                               sale_events[]
+  sale_payments                                                                             sale_payments[]
+  sale_receipts                                                                             sale_receipts[]
+  sales_sales_created_byTousers                                                             sales[]                           @relation("sales_created_byTousers")
+  sales_sales_discount_authorized_byTousers                                                 sales[]                           @relation("sales_discount_authorized_byTousers")
+  sales_sales_updated_byTousers                                                             sales[]                           @relation("sales_updated_byTousers")
+  transactional_email_transitions                                                           transactional_email_transitions[]
+  user_roles_user_roles_assigned_byTousers                                                  user_roles[]                      @relation("user_roles_assigned_byTousers")
+  user_roles_user_roles_user_idTousers                                                      user_roles[]                      @relation("user_roles_user_idTousers")
+  user_sessions                                                                             user_sessions[]
+  virtual_try_on_3d_assets_virtual_try_on_3d_assets_created_byTousers                       virtual_try_on_3d_assets[]        @relation("virtual_try_on_3d_assets_created_byTousers")
+  virtual_try_on_3d_assets_virtual_try_on_3d_assets_retired_byTousers                       virtual_try_on_3d_assets[]        @relation("virtual_try_on_3d_assets_retired_byTousers")
+
+  @@index([is_active], map: "users_active_index")
+  @@map("users")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model virtual_try_on_3d_assets {
+  id                                               String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  product_id                                       String    @map("product_id") @db.Uuid
+  version                                          Int       @map("version")
+  status                                           String    @default("ACTIVE") @map("status") @db.VarChar(20)
+  original_filename                                String    @map("original_filename") @db.VarChar(255)
+  media_type                                       String    @default("model/gltf-binary") @map("media_type") @db.VarChar(100)
+  file_size_bytes                                  BigInt    @map("file_size_bytes")
+  file_sha256                                      String    @map("file_sha256") @db.Char(64)
+  model_data                                       Bytes     @map("model_data")
+  model_metadata                                   Json      @map("model_metadata")
+  license_code                                     String    @map("license_code") @db.VarChar(40)
+  attribution_text                                 String?   @map("attribution_text") @db.VarChar(500)
+  source_url                                       String?   @map("source_url") @db.VarChar(1000)
+  created_by                                       String    @map("created_by") @db.Uuid
+  retired_by                                       String?   @map("retired_by") @db.Uuid
+  created_at                                       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  retired_at                                       DateTime? @map("retired_at") @db.Timestamptz(6)
+  users_virtual_try_on_3d_assets_created_byTousers users     @relation("virtual_try_on_3d_assets_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  products                                         products  @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+  users_virtual_try_on_3d_assets_retired_byTousers users?    @relation("virtual_try_on_3d_assets_retired_byTousers", fields: [retired_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([product_id, version])
+  @@index([product_id, version(sort: Desc)], map: "virtual_try_on_3d_product_history")
+  @@map("virtual_try_on_3d_assets")
+}
