@@ -1,1046 +1,498 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { prisma } from "../db/prisma.js";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import {
   consumeDiscountAuthorizationWithClient,
   lockDiscountAuthorizationWithClient,
 } from "./discount-authorization-grant-repository.js";
-import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
-function mapSaleBase(row) {
+const saleInclude = {
+  customers: true,
+  external_prescriptions: true,
+  optical_prescriptions: { include: { clinical_encounters: { include: { patients: true } } } },
+  patients: true,
+  sale_items: { orderBy: { position: "asc" } },
+  sale_optical_additions: { orderBy: { position: "asc" } },
+  sale_payments: {
+    include: { sale_receipts: { orderBy: [{ issued_at: "desc" }, { receipt_number: "desc" }] } },
+    orderBy: [{ paid_at: "asc" }, { id: "asc" }],
+  },
+  sale_receipts: { orderBy: [{ issued_at: "desc" }, { receipt_number: "desc" }] },
+  store_carts: true,
+  users_sales_discount_authorized_byTousers: true,
+};
+
+function mapReceipt(row) {
+  return row ? {
+    emailError: row.email_error, emailProviderId: row.email_provider_id,
+    emailStatus: row.email_status, emailedTo: row.emailed_to, id: row.id,
+    issuedAt: row.issued_at, paymentId: row.payment_id, payload: row.payload,
+    receiptNumber: Number(row.receipt_number), saleId: row.sale_id, type: row.receipt_type,
+  } : null;
+}
+
+function mapSale(row, details = true) {
   if (!row) return null;
-  const paidCents = Number(row.paid_cents ?? 0);
+  const cart = row.store_carts;
+  const customer = row.customers;
+  const authorizer = row.users_sales_discount_authorized_byTousers;
+  const paidCents = row.sale_payments.reduce((sum, payment) => sum + Number(payment.amount_cents), 0);
   const totalCents = Number(row.total_cents);
-  return {
-    balanceCents: totalCents - paidCents,
-    cancellationReason: row.cancellation_reason,
-    cancelledAt: row.cancelled_at,
-    createdAt: row.created_at,
+  const latestReceipt = row.sale_receipts[0];
+  const prescription = row.optical_prescriptions;
+  const base = {
+    balanceCents: totalCents - paidCents, cancellationReason: row.cancellation_reason,
+    cancelledAt: row.cancelled_at, createdAt: row.created_at,
     customer: row.customer_id ? {
-      email: row.customer_email,
-      firstNames: row.customer_first_names,
-      id: row.customer_id,
-      lastNames: row.customer_last_names,
-      phone: row.customer_phone,
-      rut: row.customer_rut,
+      email: cart?.buyer_email ?? customer?.email,
+      firstNames: cart?.buyer_first_names ?? customer?.first_names,
+      id: row.customer_id, lastNames: cart?.buyer_last_names ?? customer?.last_names,
+      phone: cart?.buyer_phone ?? customer?.phone, rut: cart?.buyer_rut ?? customer?.rut,
     } : null,
-    id: row.id,
-    discountCents: Number(row.discount_cents ?? 0),
-    discountReason: row.discount_reason,
+    discountCents: Number(row.discount_cents ?? 0), discountReason: row.discount_reason,
     discount: Number(row.discount_cents) > 0 ? {
-      amountCents: Number(row.discount_cents),
-      authorizedAt: row.discount_authorized_at,
-      authorizedBy: row.discount_authorized_by ? {
-        firstName: row.discount_authorizer_first_name,
-        id: row.discount_authorized_by,
-        lastName: row.discount_authorizer_last_name,
-      } : null,
+      amountCents: Number(row.discount_cents), authorizedAt: row.discount_authorized_at,
+      authorizedBy: authorizer ? { firstName: authorizer.first_name, id: authorizer.id, lastName: authorizer.last_name } : null,
       reason: row.discount_reason,
     } : null,
-    origin: row.origin,
-    paidCents,
-    paymentMethod: row.payment_method,
-    fulfillment: row.fulfillment_method ? {
-      address: row.delivery_address,
-      city: row.delivery_city,
-      method: row.fulfillment_method,
-      notes: row.delivery_notes,
-      region: row.delivery_region,
-    } : null,
     externalPrescription: row.external_prescription_id ? {
-      id: row.external_prescription_id,
-      source: row.external_prescription_source,
-      status: row.external_prescription_status,
+      id: row.external_prescription_id, source: row.external_prescriptions?.source,
+      status: row.external_prescriptions?.status,
     } : null,
-    patient: row.sale_patient_id ? {
-      firstNames: row.sale_patient_first_names,
-      id: row.sale_patient_id,
-      lastNames: row.sale_patient_last_names,
-      rut: row.sale_patient_rut,
+    fulfillment: row.fulfillment_method ? {
+      address: row.delivery_address, city: row.delivery_city,
+      method: row.fulfillment_method, notes: row.delivery_notes, region: row.delivery_region,
     } : null,
-    prescription: row.prescription_id
-      ? {
-          id: row.prescription_id,
-          patient: {
-            firstNames: row.patient_first_names,
-            id: row.patient_id,
-            lastNames: row.patient_last_names,
-            rut: row.patient_rut,
-          },
-          status: row.prescription_status,
-          version: row.prescription_version,
-        }
-      : null,
-    saleNumber: Number(row.sale_number),
+    id: row.id, origin: row.origin, paidCents, paymentMethod: row.payment_method,
+    patient: row.patients ? {
+      firstNames: row.patients.first_names, id: row.patients.id,
+      lastNames: row.patients.last_names, rut: row.patients.rut,
+    } : null,
+    prescription: prescription ? {
+      id: prescription.id,
+      patient: {
+        firstNames: prescription.clinical_encounters.patients.first_names,
+        id: prescription.clinical_encounters.patient_id,
+        lastNames: prescription.clinical_encounters.patients.last_names,
+        rut: prescription.clinical_encounters.patients.rut,
+      },
+      status: prescription.status, version: prescription.version,
+    } : null,
     quotationValidUntil: row.quotation_valid_until,
-    receipt: row.receipt_id ? {
-      emailStatus: row.receipt_email_status,
-      emailedTo: row.receipt_emailed_to,
-      id: row.receipt_id,
-      issuedAt: row.receipt_issued_at,
-      paymentId: row.receipt_payment_id,
-      receiptNumber: Number(row.receipt_number),
-      type: row.receipt_type,
+    receipt: latestReceipt ? {
+      emailStatus: latestReceipt.email_status, emailedTo: latestReceipt.emailed_to,
+      id: latestReceipt.id, issuedAt: latestReceipt.issued_at,
+      paymentId: latestReceipt.payment_id, receiptNumber: Number(latestReceipt.receipt_number),
+      type: latestReceipt.receipt_type,
     } : null,
-    status: row.status,
-    shippingFeeCents: Number(row.shipping_fee_cents),
-    shippingQuoteSource: row.shipping_quote_source,
-    subtotalCents: Number(row.subtotal_cents),
-    totalCents,
-    updatedAt: row.updated_at,
+    saleNumber: Number(row.sale_number), shippingFeeCents: Number(row.shipping_fee_cents),
+    shippingQuoteSource: row.shipping_quote_source, status: row.status,
+    subtotalCents: Number(row.subtotal_cents), totalCents, updatedAt: row.updated_at,
+  };
+  if (!details) return base;
+  return {
+    ...base,
+    items: row.sale_items.map((item) => ({
+      category: item.product_category, id: item.id,
+      lineTotalCents: Number(item.line_total_cents ?? Number(item.unit_price_cents) * item.quantity),
+      mount: item.mount_source ? { frameProductId: item.mounted_on_product_id, source: item.mount_source } : null,
+      name: item.product_name, position: item.position, productId: item.product_id,
+      quantity: item.quantity, requiresPrescription: item.requires_prescription,
+      sku: item.product_sku, unitPriceCents: Number(item.unit_price_cents),
+    })),
+    opticalAdditions: row.sale_optical_additions.map((addition) => ({
+      description: addition.description, id: addition.id,
+      lineTotalCents: Number(addition.line_total_cents ?? Number(addition.unit_price_cents) * addition.quantity),
+      name: addition.name, position: addition.position, quantity: addition.quantity,
+      unitPriceCents: Number(addition.unit_price_cents),
+    })),
+    payments: row.sale_payments.map((payment) => ({
+      amountCents: Number(payment.amount_cents),
+      cashReceivedCents: payment.cash_received_cents == null ? null : Number(payment.cash_received_cents),
+      changeCents: payment.change_cents == null ? null : Number(payment.change_cents),
+      id: payment.id, paidAt: payment.paid_at, paymentMethod: payment.payment_method,
+      providerAttemptId: payment.provider_attempt_id, receivedBy: payment.received_by,
+      receipt: payment.sale_receipts[0] ? {
+        emailStatus: payment.sale_receipts[0].email_status, id: payment.sale_receipts[0].id,
+        issuedAt: payment.sale_receipts[0].issued_at,
+        receiptNumber: Number(payment.sale_receipts[0].receipt_number),
+        type: payment.sale_receipts[0].receipt_type,
+      } : null,
+      reference: payment.reference, source: payment.source,
+    })),
   };
 }
 
-const SALE_SELECT = `
-  SELECT
-    sales.*,
-    COALESCE(store_carts.buyer_rut, customers.rut) AS customer_rut,
-    COALESCE(store_carts.buyer_email, customers.email) AS customer_email,
-    COALESCE(store_carts.buyer_first_names, customers.first_names) AS customer_first_names,
-    COALESCE(store_carts.buyer_last_names, customers.last_names) AS customer_last_names,
-    COALESCE(store_carts.buyer_phone, customers.phone) AS customer_phone,
-    optical_prescriptions.status AS prescription_status,
-    optical_prescriptions.version AS prescription_version,
-    clinical_encounters.patient_id,
-    patients.rut AS patient_rut,
-    patients.first_names AS patient_first_names,
-    patients.last_names AS patient_last_names,
-    sale_patients.id AS sale_patient_id,
-    sale_patients.rut AS sale_patient_rut,
-    sale_patients.first_names AS sale_patient_first_names,
-    sale_patients.last_names AS sale_patient_last_names,
-    discount_authorizer.first_name AS discount_authorizer_first_name,
-    discount_authorizer.last_name AS discount_authorizer_last_name,
-    external_prescriptions.source AS external_prescription_source,
-    external_prescriptions.status AS external_prescription_status,
-    sale_receipts.id AS receipt_id,
-    sale_receipts.receipt_number,
-    sale_receipts.emailed_to AS receipt_emailed_to,
-    sale_receipts.email_status AS receipt_email_status,
-    sale_receipts.issued_at AS receipt_issued_at,
-    sale_receipts.payment_id AS receipt_payment_id,
-    sale_receipts.receipt_type,
-    COALESCE((
-      SELECT SUM(sale_payments.amount_cents)
-      FROM sale_payments
-      WHERE sale_payments.sale_id = sales.id
-    ), 0) AS paid_cents
-  FROM sales
-  LEFT JOIN customers ON customers.id = sales.customer_id
-  LEFT JOIN store_carts ON store_carts.sale_id = sales.id
-  LEFT JOIN optical_prescriptions ON optical_prescriptions.id = sales.prescription_id
-  LEFT JOIN external_prescriptions
-    ON external_prescriptions.id = sales.external_prescription_id
-  LEFT JOIN clinical_encounters ON clinical_encounters.id = optical_prescriptions.encounter_id
-  LEFT JOIN patients ON patients.id = clinical_encounters.patient_id
-  LEFT JOIN patients AS sale_patients ON sale_patients.id = sales.patient_id
-  LEFT JOIN users AS discount_authorizer
-    ON discount_authorizer.id = sales.discount_authorized_by
-  LEFT JOIN LATERAL (
-    SELECT *
-    FROM sale_receipts
-    WHERE sale_receipts.sale_id = sales.id
-    ORDER BY sale_receipts.issued_at DESC, sale_receipts.receipt_number DESC
-    LIMIT 1
-  ) AS sale_receipts ON TRUE
-`;
-
 async function findSaleWithClient(client, saleId) {
-  const baseResult = await client.query(`${SALE_SELECT} WHERE sales.id = $1`, [
-    saleId,
-  ]);
-  const sale = mapSaleBase(baseResult.rows[0]);
-  if (!sale) return null;
-
-  const [itemsResult, paymentsResult, additionsResult] = await Promise.all([
-    client.query(
-      `SELECT * FROM sale_items WHERE sale_id = $1 ORDER BY position`,
-      [saleId],
-    ),
-    client.query(
-       `SELECT sale_payments.id, sale_payments.amount_cents,
-              sale_payments.payment_method, sale_payments.reference,
-              sale_payments.received_by, sale_payments.paid_at,
-              sale_payments.source, sale_payments.provider_attempt_id,
-              sale_payments.cash_received_cents, sale_payments.change_cents,
-              sale_receipts.id AS receipt_id,
-              sale_receipts.receipt_number,
-              sale_receipts.email_status AS receipt_email_status,
-              sale_receipts.issued_at AS receipt_issued_at,
-              sale_receipts.receipt_type
-       FROM sale_payments
-       LEFT JOIN sale_receipts ON sale_receipts.payment_id = sale_payments.id
-       WHERE sale_payments.sale_id = $1
-       ORDER BY sale_payments.paid_at, sale_payments.id`,
-      [saleId],
-    ),
-    client.query(
-      `SELECT id, name, description, position, quantity, unit_price_cents,
-              line_total_cents
-       FROM sale_optical_additions WHERE sale_id = $1 ORDER BY position`,
-      [saleId],
-    ),
-  ]);
-
-  return {
-    ...sale,
-    items: itemsResult.rows.map((row) => ({
-      category: row.product_category,
-      id: row.id,
-      lineTotalCents: Number(row.line_total_cents),
-      name: row.product_name,
-      position: row.position,
-      productId: row.product_id,
-      quantity: row.quantity,
-      requiresPrescription: row.requires_prescription,
-      mount: row.mount_source ? {
-        frameProductId: row.mounted_on_product_id,
-        source: row.mount_source,
-      } : null,
-      sku: row.product_sku,
-      unitPriceCents: Number(row.unit_price_cents),
-    })),
-    opticalAdditions: additionsResult.rows.map((row) => ({
-      description: row.description,
-      id: row.id,
-      lineTotalCents: Number(row.line_total_cents),
-      name: row.name,
-      position: row.position,
-      quantity: row.quantity,
-      unitPriceCents: Number(row.unit_price_cents),
-    })),
-    payments: paymentsResult.rows.map((row) => ({
-      amountCents: Number(row.amount_cents),
-      cashReceivedCents: row.cash_received_cents == null
-        ? null
-        : Number(row.cash_received_cents),
-      changeCents: row.change_cents == null ? null : Number(row.change_cents),
-      id: row.id,
-      paidAt: row.paid_at,
-      paymentMethod: row.payment_method,
-      providerAttemptId: row.provider_attempt_id,
-      receivedBy: row.received_by,
-      receipt: row.receipt_id ? {
-        emailStatus: row.receipt_email_status,
-        id: row.receipt_id,
-        issuedAt: row.receipt_issued_at,
-        receiptNumber: Number(row.receipt_number),
-        type: row.receipt_type,
-      } : null,
-      reference: row.reference,
-      source: row.source,
-    })),
-  };
+  return mapSale(await client.sales.findUnique({ include: saleInclude, where: { id: saleId } }));
 }
 
 export async function findSaleById(saleId) {
-  return findSaleWithClient(
-    { query: (text, parameters) => executeQuery(text, parameters) },
-    saleId,
-  );
+  return findSaleWithClient(prisma, saleId);
 }
 
 async function loadDraftReferences(client, draft) {
-  if (draft.customerId) {
-    const customerResult = await client.query(
-      "SELECT id FROM customers WHERE id = $1 FOR SHARE",
-      [draft.customerId],
-    );
-    if (customerResult.rowCount === 0) return { reason: "CUSTOMER_NOT_FOUND" };
+  if (draft.customerId && !(await client.customers.findUnique({ select: { id: true }, where: { id: draft.customerId } }))) {
+    return { reason: "CUSTOMER_NOT_FOUND" };
   }
-
-  if (draft.patientId) {
-    const patientResult = await client.query(
-      "SELECT id FROM patients WHERE id = $1 FOR SHARE",
-      [draft.patientId],
-    );
-    if (patientResult.rowCount === 0) return { reason: "PATIENT_NOT_FOUND" };
+  if (draft.patientId && !(await client.patients.findUnique({ select: { id: true }, where: { id: draft.patientId } }))) {
+    return { reason: "PATIENT_NOT_FOUND" };
   }
-
-  const productResult = await client.query(
-    `SELECT id, sku, name, category, requires_prescription, unit_price_cents, is_active
-     FROM products WHERE id = ANY($1::UUID[]) FOR SHARE`,
-    [draft.items.map((item) => item.productId)],
-  );
-  if (productResult.rowCount !== draft.items.length)
-    return { reason: "PRODUCT_NOT_FOUND" };
-  if (productResult.rows.some((product) => !product.is_active))
-    return { reason: "PRODUCT_INACTIVE" };
-
-  const productsById = new Map(
-    productResult.rows.map((product) => [product.id, product]),
-  );
+  const productIds = draft.items.map((item) => item.productId);
+  const products = await client.products.findMany({ where: { id: { in: productIds } } });
+  if (products.length !== productIds.length) return { reason: "PRODUCT_NOT_FOUND" };
+  if (products.some((product) => !product.is_active)) return { reason: "PRODUCT_INACTIVE" };
+  const byId = new Map(products.map((product) => [product.id, product]));
   for (const item of draft.items) {
-    const product = productsById.get(item.productId);
+    const product = byId.get(item.productId);
     if (product.category !== "PRESCRIPTION_LENS") {
       if (item.mount) return { reason: "UNEXPECTED_LENS_MOUNT" };
-      continue;
-    }
-    if (!item.mount) return { reason: "LENS_MOUNT_REQUIRED" };
-    if (item.mount.source === "CUSTOMER_FRAME") continue;
-    const frame = productsById.get(item.mount.frameProductId);
-    if (!frame || frame.category !== "FRAME") {
-      return { reason: "INVALID_LENS_MOUNT" };
-    }
+    } else if (!item.mount) return { reason: "LENS_MOUNT_REQUIRED" };
+    else if (item.mount.source !== "CUSTOMER_FRAME"
+      && byId.get(item.mount.frameProductId)?.category !== "FRAME") return { reason: "INVALID_LENS_MOUNT" };
   }
-
-  let prescription = null;
-  let externalPrescription = null;
   if (draft.prescriptionId) {
-    const prescriptionResult = await client.query(
-      `SELECT optical_prescriptions.id, optical_prescriptions.status,
-              clinical_encounters.status AS encounter_status,
-              clinical_encounters.patient_id
-       FROM optical_prescriptions
-       JOIN clinical_encounters ON clinical_encounters.id = optical_prescriptions.encounter_id
-       WHERE optical_prescriptions.id = $1 FOR SHARE OF optical_prescriptions, clinical_encounters`,
-      [draft.prescriptionId],
-    );
-    prescription = prescriptionResult.rows[0];
+    const prescription = await client.optical_prescriptions.findUnique({
+      include: { clinical_encounters: true }, where: { id: draft.prescriptionId },
+    });
     if (!prescription) return { reason: "PRESCRIPTION_NOT_FOUND" };
-    if (
-      prescription.status !== "ACTIVE" ||
-      prescription.encounter_status !== "FINALIZED"
-    ) {
-      return { reason: "PRESCRIPTION_NOT_USABLE" };
-    }
-    if (prescription.patient_id !== draft.patientId) {
-      return { reason: "PRESCRIPTION_PATIENT_MISMATCH" };
-    }
+    if (prescription.status !== "ACTIVE" || prescription.clinical_encounters.status !== "FINALIZED") return { reason: "PRESCRIPTION_NOT_USABLE" };
+    if (prescription.clinical_encounters.patient_id !== draft.patientId) return { reason: "PRESCRIPTION_PATIENT_MISMATCH" };
   }
-
   if (draft.externalPrescriptionId) {
-    const result = await client.query(
-      `SELECT id, status, customer_id, patient_id
-       FROM external_prescriptions
-       WHERE id = $1 FOR SHARE`,
-      [draft.externalPrescriptionId],
-    );
-    externalPrescription = result.rows[0];
-    if (!externalPrescription)
-      return { reason: "EXTERNAL_PRESCRIPTION_NOT_FOUND" };
-    if (
-      externalPrescription.status !== "READY" ||
-      externalPrescription.customer_id !== draft.customerId ||
-      externalPrescription.patient_id !== draft.patientId
-    ) {
+    const external = await client.external_prescriptions.findUnique({ where: { id: draft.externalPrescriptionId } });
+    if (!external) return { reason: "EXTERNAL_PRESCRIPTION_NOT_FOUND" };
+    if (external.status !== "READY" || external.customer_id !== draft.customerId || external.patient_id !== draft.patientId) {
       return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE" };
     }
   }
-
-  const lines = draft.items.map((item, index) => ({
-    ...productsById.get(item.productId),
-    mount: item.mount,
-    position: index + 1,
-    quantity: item.quantity,
-  }));
-  const productSubtotalCents = lines.reduce(
-    (total, line) => total + Number(line.unit_price_cents) * line.quantity,
-    0,
-  );
-  const additionsSubtotalCents = draft.opticalAdditions.reduce(
-    (total, addition) => total + addition.unitPriceCents * addition.quantity,
-    0,
-  );
+  const lines = draft.items.map((item, index) => ({ ...byId.get(item.productId), mount: item.mount, position: index + 1, quantity: item.quantity }));
+  const productSubtotalCents = lines.reduce((sum, line) => sum + Number(line.unit_price_cents) * line.quantity, 0);
+  const additionsSubtotalCents = draft.opticalAdditions.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
   const subtotalCents = productSubtotalCents + additionsSubtotalCents;
   const discountCents = draft.discount?.amountCents ?? 0;
   if (discountCents >= subtotalCents) return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL" };
-  return {
-    additionsSubtotalCents,
-    discountCents,
-    lines,
-    productSubtotalCents,
-    reason: null,
-    subtotalCents,
-    totalCents: subtotalCents - discountCents,
-  };
+  return { additionsSubtotalCents, discountCents, lines, productSubtotalCents, reason: null, subtotalCents, totalCents: subtotalCents - discountCents };
 }
 
-async function insertItems(client, saleId, lines) {
-  for (const line of lines) {
-    await client.query(
-      `INSERT INTO sale_items (
-         sale_id, product_id, product_sku, product_name, product_category,
-         requires_prescription, mount_source, mounted_on_product_id,
-         position, quantity, unit_price_cents
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [
-        saleId,
-        line.id,
-        line.sku,
-        line.name,
-        line.category,
-        line.requires_prescription,
-        line.mount?.source ?? null,
-        line.mount?.frameProductId ?? null,
-        line.position,
-        line.quantity,
-        line.unit_price_cents,
-      ],
-    );
-  }
+function itemData(saleId, lines) {
+  return lines.map((line) => ({
+    mount_source: line.mount?.source ?? null, mounted_on_product_id: line.mount?.frameProductId ?? null,
+    position: line.position, product_category: line.category, product_id: line.id,
+    product_name: line.name, product_sku: line.sku, quantity: line.quantity,
+    requires_prescription: line.requires_prescription, sale_id: saleId,
+    unit_price_cents: line.unit_price_cents,
+  }));
 }
 
-async function insertOpticalAdditions(client, saleId, additions) {
-  for (const [index, addition] of additions.entries()) {
-    await client.query(
-      `INSERT INTO sale_optical_additions (
-         sale_id, name, description, position, quantity, unit_price_cents
-       ) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [saleId, addition.name, addition.description, index + 1,
-        addition.quantity, addition.unitPriceCents],
-    );
-  }
+function additionData(saleId, additions) {
+  return additions.map((item, index) => ({
+    description: item.description, name: item.name, position: index + 1,
+    quantity: item.quantity, sale_id: saleId, unit_price_cents: item.unitPriceCents,
+  }));
 }
 
-async function insertDiscountEvent(client, saleId, draft, actorUserId, status = "QUOTATION") {
+async function insertSaleEvent(client, saleId, eventType, actorUserId, { details = null, newStatus = null, previousStatus = null } = {}) {
+  await client.sale_events.create({ data: {
+    details: details == null ? null : JSON.stringify(details), event_type: eventType,
+    new_status: newStatus, performed_by: actorUserId, previous_status: previousStatus, sale_id: saleId,
+  } });
+}
+
+async function authorizeDiscount(client, draft, actorUserId) {
+  if (!draft.discount) return draft;
+  const authorizedBy = await lockDiscountAuthorizationWithClient(client, { ...draft.discount, requestedBy: actorUserId });
+  return authorizedBy ? { ...draft, discount: { ...draft.discount, authorizedAt: new Date(), authorizedBy } } : null;
+}
+
+async function recordDiscount(client, saleId, draft, actorUserId, status = "QUOTATION") {
   if (!draft.discount) return;
   await insertSaleEvent(client, saleId, "DISCOUNT_AUTHORIZED", actorUserId, {
-    details: {
-      amountCents: draft.discount.amountCents,
-      authorizedBy: draft.discount.authorizedBy,
-      reason: draft.discount.reason,
-    },
-    newStatus: status,
-    previousStatus: status,
+    details: { amountCents: draft.discount.amountCents, authorizedBy: draft.discount.authorizedBy, reason: draft.discount.reason },
+    newStatus: status, previousStatus: status,
   });
-}
-
-async function insertSaleEvent(
-  client,
-  saleId,
-  eventType,
-  actorUserId,
-  { details = null, newStatus = null, previousStatus = null } = {},
-) {
-  await client.query(
-    `INSERT INTO sale_events (
-       sale_id, event_type, previous_status, new_status, details, performed_by
-     ) VALUES ($1, $2, $3, $4, $5, $6)`,
-    [
-      saleId,
-      eventType,
-      previousStatus,
-      newStatus,
-      details == null ? null : JSON.stringify(details),
-      actorUserId,
-    ],
-  );
-}
-
-async function authorizeDiscountWithClient(client, draft, actorUserId) {
-  if (!draft.discount) return draft;
-  const authorizedBy = await lockDiscountAuthorizationWithClient(client, {
-    ...draft.discount,
-    requestedBy: actorUserId,
-  });
-  if (!authorizedBy) return null;
-  return {
-    ...draft,
-    discount: {
-      ...draft.discount,
-      authorizedAt: new Date(),
-      authorizedBy,
-    },
-  };
-}
-
-async function consumeDiscountWithClient(client, draft, saleId) {
-  if (!draft.discount) return;
-  await consumeDiscountAuthorizationWithClient(
-    client,
-    draft.discount.authorizationId,
-    saleId,
-  );
+  await consumeDiscountAuthorizationWithClient(client, draft.discount.authorizationId, saleId);
 }
 
 export async function createSale(draft, actorUserId, options = {}) {
-  return executeTransaction(async (client) => {
+  return prisma.$transaction(async (client) => {
     if (options.requestKey) {
-      const existing = await client.query(
-        `SELECT id FROM sales
-         WHERE created_by = $1 AND request_key = $2`,
-        [actorUserId, options.requestKey],
-      );
-      if (existing.rows[0]) {
-        return { reason: null, sale: await findSaleWithClient(client, existing.rows[0].id) };
-      }
+      const existing = await client.sales.findFirst({ where: { created_by: actorUserId, request_key: options.requestKey } });
+      if (existing) return { reason: null, sale: await findSaleWithClient(client, existing.id) };
     }
     const references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
-    const authorizedDraft = await authorizeDiscountWithClient(client, draft, actorUserId);
-    if (!authorizedDraft) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
+    const authorized = await authorizeDiscount(client, draft, actorUserId);
+    if (!authorized) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
     const status = options.status === "PENDING" ? "PENDING" : "QUOTATION";
-    const quotationValidUntil = status === "QUOTATION";
-
-    const saleResult = await client.query(
-      `INSERT INTO sales (
-         customer_id, patient_id, prescription_id, external_prescription_id,
-         subtotal_cents, discount_cents, discount_reason,
-         discount_authorized_by, discount_authorized_at, total_cents,
-          quotation_valid_until, status, request_key, created_by, updated_by
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-          CASE WHEN $11 THEN CURRENT_TIMESTAMP + INTERVAL '30 days' ELSE NULL END,
-          $12, $13, $14, $14
-        ) ON CONFLICT (created_by, request_key) WHERE request_key IS NOT NULL
-        DO NOTHING RETURNING id`,
-        [draft.customerId, draft.patientId, draft.prescriptionId,
-          draft.externalPrescriptionId, references.subtotalCents,
-          references.discountCents, authorizedDraft.discount?.reason ?? null,
-          authorizedDraft.discount?.authorizedBy ?? null,
-          authorizedDraft.discount?.authorizedAt ?? null,
-          references.totalCents, quotationValidUntil, status, options.requestKey ?? null,
-          actorUserId],
-      );
-    if (!saleResult.rows[0]) {
-      const existing = await client.query(
-        `SELECT id FROM sales WHERE created_by = $1 AND request_key = $2`,
-        [actorUserId, options.requestKey],
-      );
-      return { reason: null, sale: await findSaleWithClient(client, existing.rows[0].id) };
-    }
-    const saleId = saleResult.rows[0].id;
-    await insertItems(client, saleId, references.lines);
-    await insertOpticalAdditions(client, saleId, authorizedDraft.opticalAdditions);
-    await insertSaleEvent(client, saleId, "CREATED", actorUserId, {
+    const sale = await client.sales.create({ data: {
+      created_by: actorUserId, customer_id: draft.customerId,
+      discount_authorized_at: authorized.discount?.authorizedAt ?? null,
+      discount_authorized_by: authorized.discount?.authorizedBy ?? null,
+      discount_cents: references.discountCents,
+      discount_reason: authorized.discount?.reason ?? null,
+      external_prescription_id: draft.externalPrescriptionId, patient_id: draft.patientId,
+      prescription_id: draft.prescriptionId,
+      quotation_valid_until: status === "QUOTATION" ? new Date(Date.now() + 30 * 86_400_000) : null,
+      request_key: options.requestKey ?? null, status, subtotal_cents: references.subtotalCents,
+      total_cents: references.totalCents, updated_by: actorUserId,
+    } });
+    await client.sale_items.createMany({ data: itemData(sale.id, references.lines) });
+    if (authorized.opticalAdditions.length) await client.sale_optical_additions.createMany({ data: additionData(sale.id, authorized.opticalAdditions) });
+    await insertSaleEvent(client, sale.id, "CREATED", actorUserId, {
       details: {
         additionsSubtotalCents: references.additionsSubtotalCents,
-        discountCents: references.discountCents,
-        discountReason: authorizedDraft.discount?.reason ?? null,
+        discountCents: references.discountCents, discountReason: authorized.discount?.reason ?? null,
         productSubtotalCents: references.productSubtotalCents,
-        subtotalCents: references.subtotalCents,
-        totalCents: references.totalCents,
-      },
-      newStatus: status,
+        subtotalCents: references.subtotalCents, totalCents: references.totalCents,
+      }, newStatus: status,
     });
-    await insertDiscountEvent(client, saleId, authorizedDraft, actorUserId, status);
-    await consumeDiscountWithClient(client, authorizedDraft, saleId);
-    return { reason: null, sale: await findSaleWithClient(client, saleId) };
-  });
+    await recordDiscount(client, sale.id, authorized, actorUserId, status);
+    return { reason: null, sale: await findSaleWithClient(client, sale.id) };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function updateSaleDraft(saleId, draft, actorUserId) {
-  return executeTransaction(async (client) => {
-    const saleResult = await client.query(
-      "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
-      [saleId],
-    );
-    if (saleResult.rowCount === 0)
-      return { reason: "SALE_NOT_FOUND", sale: null };
-    if (saleResult.rows[0].status !== "QUOTATION")
-      return { reason: "SALE_NOT_EDITABLE", sale: null };
+  return prisma.$transaction(async (client) => {
+    const sale = await client.sales.findUnique({ where: { id: saleId } });
+    if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
+    if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_EDITABLE", sale: null };
     let references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
-    const preservedAdditions = await client.query(
-      `SELECT COALESCE(SUM(line_total_cents), 0) AS subtotal_cents
-       FROM sale_optical_additions WHERE sale_id = $1`,
-      [saleId],
-    );
-    const additionsSubtotalCents = Number(preservedAdditions.rows[0].subtotal_cents);
-    if (additionsSubtotalCents > 0) {
-      const subtotalCents = references.productSubtotalCents + additionsSubtotalCents;
-      const discountCents = references.discountCents;
-      if (discountCents >= subtotalCents) {
-        return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL", sale: null };
-      }
-      references = {
-        ...references,
-        additionsSubtotalCents,
-        subtotalCents,
-        totalCents: subtotalCents - discountCents,
-      };
+    const additions = await client.sale_optical_additions.findMany({ where: { sale_id: saleId } });
+    const preserved = additions.reduce((sum, item) => sum + Number(item.line_total_cents ?? Number(item.unit_price_cents) * item.quantity), 0);
+    if (preserved > 0) {
+      const subtotalCents = references.productSubtotalCents + preserved;
+      if (references.discountCents >= subtotalCents) return { reason: "DISCOUNT_EXCEEDS_SUBTOTAL", sale: null };
+      references = { ...references, additionsSubtotalCents: preserved, subtotalCents, totalCents: subtotalCents - references.discountCents };
     }
-    const authorizedDraft = await authorizeDiscountWithClient(client, draft, actorUserId);
-    if (!authorizedDraft) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
-
-    await client.query("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
-    await client.query(
-      `UPDATE sales SET customer_id = $2, patient_id = $3, prescription_id = $4,
-         external_prescription_id = $5, subtotal_cents = $6,
-         discount_cents = $7, discount_reason = $8,
-         discount_authorized_by = $9, discount_authorized_at = $10,
-         total_cents = $11, updated_by = $12 WHERE id = $1`,
-       [saleId, authorizedDraft.customerId, authorizedDraft.patientId,
-         authorizedDraft.prescriptionId, authorizedDraft.externalPrescriptionId,
-         references.subtotalCents, references.discountCents,
-         authorizedDraft.discount?.reason ?? null,
-         authorizedDraft.discount?.authorizedBy ?? null,
-         authorizedDraft.discount?.authorizedAt ?? null,
-         references.totalCents, actorUserId],
-    );
-    await insertItems(client, saleId, references.lines);
+    const authorized = await authorizeDiscount(client, draft, actorUserId);
+    if (!authorized) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
+    await client.sale_items.deleteMany({ where: { sale_id: saleId } });
+    await client.sales.update({ data: {
+      customer_id: authorized.customerId, discount_authorized_at: authorized.discount?.authorizedAt ?? null,
+      discount_authorized_by: authorized.discount?.authorizedBy ?? null,
+      discount_cents: references.discountCents, discount_reason: authorized.discount?.reason ?? null,
+      external_prescription_id: authorized.externalPrescriptionId, patient_id: authorized.patientId,
+      prescription_id: authorized.prescriptionId, subtotal_cents: references.subtotalCents,
+      total_cents: references.totalCents, updated_by: actorUserId,
+    }, where: { id: saleId } });
+    await client.sale_items.createMany({ data: itemData(saleId, references.lines) });
     await insertSaleEvent(client, saleId, "UPDATED", actorUserId, {
-      details: {
-        discountCents: references.discountCents,
-        discountReason: authorizedDraft.discount?.reason ?? null,
-        subtotalCents: references.subtotalCents,
-        totalCents: references.totalCents,
-      },
-      previousStatus: "QUOTATION",
-      newStatus: "QUOTATION",
+      details: { discountCents: references.discountCents, discountReason: authorized.discount?.reason ?? null, subtotalCents: references.subtotalCents, totalCents: references.totalCents },
+      newStatus: "QUOTATION", previousStatus: "QUOTATION",
     });
-    await insertDiscountEvent(client, saleId, authorizedDraft, actorUserId);
-    await consumeDiscountWithClient(client, authorizedDraft, saleId);
+    await recordDiscount(client, saleId, authorized, actorUserId);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
+  }, { isolationLevel: "Serializable" });
+}
+
+async function enqueueOrder(client, sale) {
+  if (!sale.customers?.email) return;
+  const key = transactionalEmailDeduplicationKey("ORDER_CONFIRMED", sale.id);
+  await client.transactional_email_outbox.upsert({
+    create: {
+      deduplication_key: key,
+      payload: { saleNumber: Number(sale.sale_number), totalCents: Number(sale.total_cents) },
+      recipient_email: sale.customers.email, sale_id: sale.id, template_code: "ORDER_CONFIRMED",
+    }, update: {}, where: { deduplication_key: key },
   });
 }
 
 export async function confirmSale(saleId, actorUserId) {
-  return executeTransaction(async (client) => {
-    const saleResult = await client.query(
-      `SELECT status, customer_id, patient_id, prescription_id, external_prescription_id,
-              quotation_valid_until
-       FROM sales WHERE id = $1 FOR UPDATE`,
-      [saleId],
-    );
-    const sale = saleResult.rows[0];
+  return prisma.$transaction(async (client) => {
+    const sale = await client.sales.findUnique({
+      include: {
+        customers: true, external_prescriptions: true,
+        optical_prescriptions: { include: { clinical_encounters: true } },
+        sale_items: { include: { products_sale_items_product_idToproducts: true } },
+      }, where: { id: saleId },
+    });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
     if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
-    if (sale.quotation_valid_until && sale.quotation_valid_until < new Date()) {
-      return { reason: "QUOTATION_EXPIRED", sale: null };
+    if (sale.quotation_valid_until && sale.quotation_valid_until < new Date()) return { reason: "QUOTATION_EXPIRED", sale: null };
+    if (sale.sale_items.some((item) => !item.products_sale_items_product_idToproducts.is_active)) return { reason: "PRODUCT_INACTIVE", sale: null };
+    if (sale.optical_prescriptions) {
+      if (sale.optical_prescriptions.status !== "ACTIVE" || sale.optical_prescriptions.clinical_encounters.status !== "FINALIZED") return { reason: "PRESCRIPTION_NOT_USABLE", sale: null };
+      if (sale.optical_prescriptions.clinical_encounters.patient_id !== sale.patient_id) return { reason: "PRESCRIPTION_PATIENT_MISMATCH", sale: null };
     }
-    const productsResult = await client.query(
-      `SELECT products.is_active
-       FROM sale_items JOIN products ON products.id = sale_items.product_id
-       WHERE sale_items.sale_id = $1 FOR SHARE OF products`,
-      [saleId],
-    );
-    if (productsResult.rows.some((product) => !product.is_active)) {
-      return { reason: "PRODUCT_INACTIVE", sale: null };
-    }
-    if (sale.prescription_id) {
-      const prescriptionResult = await client.query(
-        `SELECT optical_prescriptions.status, clinical_encounters.status AS encounter_status,
-                clinical_encounters.patient_id
-         FROM optical_prescriptions JOIN clinical_encounters
-           ON clinical_encounters.id = optical_prescriptions.encounter_id
-         WHERE optical_prescriptions.id = $1 FOR SHARE OF optical_prescriptions, clinical_encounters`,
-        [sale.prescription_id],
-      );
-      const prescription = prescriptionResult.rows[0];
-      if (
-        !prescription ||
-        prescription.status !== "ACTIVE" ||
-        prescription.encounter_status !== "FINALIZED"
-      ) {
-        return { reason: "PRESCRIPTION_NOT_USABLE", sale: null };
-      }
-      if (prescription.patient_id !== sale.patient_id) {
-        return { reason: "PRESCRIPTION_PATIENT_MISMATCH", sale: null };
-      }
-    }
-    if (sale.external_prescription_id) {
-      const result = await client.query(
-        `SELECT status, customer_id, patient_id FROM external_prescriptions
-         WHERE id = $1 FOR SHARE`,
-        [sale.external_prescription_id],
-      );
-      const prescription = result.rows[0];
-      if (
-        !prescription ||
-        prescription.status !== "READY" ||
-        prescription.customer_id !== sale.customer_id ||
-        prescription.patient_id !== sale.patient_id
-      ) {
-        return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE", sale: null };
-      }
-    }
-
-    await client.query(
-      "UPDATE sales SET status = 'PENDING', updated_by = $2 WHERE id = $1",
-      [saleId, actorUserId],
-    );
-    await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, {
-      previousStatus: "QUOTATION",
-      newStatus: "PENDING",
-    });
-    const emailResult = await client.query(
-      `SELECT sales.sale_number, sales.total_cents, customers.email
-       FROM sales LEFT JOIN customers ON customers.id = sales.customer_id
-       WHERE sales.id = $1`,
-      [saleId],
-    );
-    if (emailResult.rows[0]?.email) {
-      await client.query(
-        `INSERT INTO transactional_email_outbox (
-           template_code, recipient_email, payload, deduplication_key, sale_id
-         ) VALUES ('ORDER_CONFIRMED', $1, $2::JSONB, $3, $4)
-         ON CONFLICT (deduplication_key) DO NOTHING`,
-        [emailResult.rows[0].email, JSON.stringify({
-          saleNumber: Number(emailResult.rows[0].sale_number),
-          totalCents: Number(emailResult.rows[0].total_cents),
-        }), transactionalEmailDeduplicationKey("ORDER_CONFIRMED", saleId), saleId],
-      );
-    }
+    if (sale.external_prescriptions && (sale.external_prescriptions.status !== "READY"
+      || sale.external_prescriptions.customer_id !== sale.customer_id
+      || sale.external_prescriptions.patient_id !== sale.patient_id)) return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE", sale: null };
+    await client.sales.update({ data: { status: "PENDING", updated_by: actorUserId }, where: { id: saleId } });
+    await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: "PENDING", previousStatus: "QUOTATION" });
+    await enqueueOrder(client, sale);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
-  });
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function registerSalePayment(saleId, payment, actorUserId, options = {}) {
-  return executeTransaction(async (client) => {
-    const result = await client.query(
-      `SELECT sales.status, sales.payment_method, sales.total_cents,
-              sales.sale_number, customers.email AS customer_email
-       FROM sales LEFT JOIN customers ON customers.id = sales.customer_id
-       WHERE sales.id = $1 FOR UPDATE OF sales`,
-      [saleId],
-    );
-    const sale = result.rows[0];
+  return prisma.$transaction(async (client) => {
+    const sale = await client.sales.findUnique({ include: { customers: true, sale_payments: true }, where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
-    if (options.requestKey) {
-      const existing = await client.query(
-        `SELECT id FROM sale_payments
-         WHERE sale_id = $1 AND request_key = $2`,
-        [saleId, options.requestKey],
-      );
-      if (existing.rows[0]) {
-        return { reason: null, sale: await findSaleWithClient(client, saleId) };
-      }
-    }
-    if (sale.status !== "PENDING")
-      return { reason: "SALE_NOT_PAYABLE", sale: null };
-    if (sale.payment_method && sale.payment_method !== payment.paymentMethod) {
-      return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
-    }
-    if (payment.paymentMethod === "CASH") {
-      const openCashRegister = await client.query(
-        "SELECT id FROM cash_register_sessions WHERE status = 'OPEN' FOR SHARE",
-      );
-      if (!openCashRegister.rows[0]) {
-        return { reason: "CASH_REGISTER_CLOSED", sale: null };
-      }
-    }
-    const activeAttemptResult = await client.query(
-      `SELECT id FROM payment_attempts
-       WHERE sale_id = $1 AND status IN ('CREATED', 'PENDING')
-         AND expires_at > CURRENT_TIMESTAMP
-       LIMIT 1`,
-      [saleId],
-    );
-    if (activeAttemptResult.rowCount > 0) {
-      return { reason: "PAYMENT_ATTEMPT_ACTIVE", sale: null };
-    }
-    const paidResult = await client.query(
-      "SELECT COALESCE(SUM(amount_cents), 0) AS paid_cents FROM sale_payments WHERE sale_id = $1",
-      [saleId],
-    );
-    const paidCents = Number(paidResult.rows[0].paid_cents);
+    if (options.requestKey && sale.sale_payments.some((item) => item.request_key === options.requestKey)) return { reason: null, sale: await findSaleWithClient(client, saleId) };
+    if (sale.status !== "PENDING") return { reason: "SALE_NOT_PAYABLE", sale: null };
+    if (sale.payment_method && sale.payment_method !== payment.paymentMethod) return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
+    if (payment.paymentMethod === "CASH" && !(await client.cash_register_sessions.findFirst({ where: { status: "OPEN" } }))) return { reason: "CASH_REGISTER_CLOSED", sale: null };
+    if (await client.payment_attempts.findFirst({ where: {
+      expires_at: { gt: new Date() }, sale_id: saleId, status: { in: ["CREATED", "PENDING"] },
+    } })) return { reason: "PAYMENT_ATTEMPT_ACTIVE", sale: null };
+    const paidCents = sale.sale_payments.reduce((sum, item) => sum + Number(item.amount_cents), 0);
     const totalCents = Number(sale.total_cents);
-    if (payment.amountCents > totalCents - paidCents) {
-      return { reason: "PAYMENT_EXCEEDS_BALANCE", sale: null };
-    }
-
-    const paymentResult = await client.query(
-      `INSERT INTO sale_payments (
-         sale_id, amount_cents, payment_method, reference, received_by,
-         request_key, cash_received_cents, change_cents
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [
-        saleId,
-        payment.amountCents,
-        payment.paymentMethod,
-        payment.reference,
-        actorUserId,
-        options.requestKey ?? null,
-        payment.cashReceivedCents,
-        payment.changeCents,
-      ],
-    );
-    const newStatus =
-      paidCents + payment.amountCents === totalCents ? "PAID" : "PENDING";
-    await client.query(
-      `UPDATE sales SET payment_method = $2, status = $3, updated_by = $4 WHERE id = $1`,
-      [saleId, payment.paymentMethod, newStatus, actorUserId],
-    );
+    if (payment.amountCents > totalCents - paidCents) return { reason: "PAYMENT_EXCEEDS_BALANCE", sale: null };
+    const created = await client.sale_payments.create({ data: {
+      amount_cents: payment.amountCents, cash_received_cents: payment.cashReceivedCents,
+      change_cents: payment.changeCents, payment_method: payment.paymentMethod,
+      received_by: actorUserId, reference: payment.reference,
+      request_key: options.requestKey ?? null, sale_id: saleId,
+    } });
+    const newStatus = paidCents + payment.amountCents === totalCents ? "PAID" : "PENDING";
+    await client.sales.update({ data: { payment_method: payment.paymentMethod, status: newStatus, updated_by: actorUserId }, where: { id: saleId } });
     await insertSaleEvent(client, saleId, "PAYMENT_REGISTERED", actorUserId, {
-      details: {
-        amountCents: payment.amountCents,
-        cashReceivedCents: payment.cashReceivedCents,
-        changeCents: payment.changeCents,
-        paymentMethod: payment.paymentMethod,
-      },
-      previousStatus: "PENDING",
-      newStatus,
+      details: { amountCents: payment.amountCents, cashReceivedCents: payment.cashReceivedCents, changeCents: payment.changeCents, paymentMethod: payment.paymentMethod },
+      newStatus, previousStatus: "PENDING",
     });
-    const paymentId = paymentResult.rows[0].id;
-    if (sale.customer_email) {
-      await client.query(
-        `INSERT INTO transactional_email_outbox (
-           template_code, recipient_email, payload, deduplication_key,
-           sale_id, payment_id
-         ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
-         ON CONFLICT (deduplication_key) DO NOTHING`,
-        [sale.customer_email, JSON.stringify({
-          amountCents: payment.amountCents,
-          saleNumber: Number(sale.sale_number),
-        }), transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", paymentId),
-        saleId, paymentId],
-      );
+    if (sale.customers?.email) {
+      const key = transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", created.id);
+      await client.transactional_email_outbox.upsert({
+        create: {
+          deduplication_key: key,
+          payload: { amountCents: payment.amountCents, saleNumber: Number(sale.sale_number) },
+          payment_id: created.id, recipient_email: sale.customers.email,
+          sale_id: saleId, template_code: "PAYMENT_CONFIRMED",
+        }, update: {}, where: { deduplication_key: key },
+      });
     }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
-  });
+  }, { isolationLevel: "Serializable" });
 }
 
-const ALLOWED_TRANSITIONS = Object.freeze({
-  PAID: ["IN_PREPARATION"],
-  IN_PREPARATION: ["READY"],
-  READY: ["DELIVERED"],
-});
+const ALLOWED_TRANSITIONS = Object.freeze({ PAID: ["IN_PREPARATION"], IN_PREPARATION: ["READY"], READY: ["DELIVERED"] });
 
 export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
-  return executeTransaction(async (client) => {
-    const result = await client.query(
-      "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
-      [saleId],
-    );
-    const current = result.rows[0];
+  return prisma.$transaction(async (client) => {
+    const current = await client.sales.findUnique({ include: { sale_payments: true }, where: { id: saleId } });
     if (!current) return { reason: "SALE_NOT_FOUND", sale: null };
-
     if (change.status === "CANCELLED") {
-      if (!["QUOTATION", "PENDING"].includes(current.status)) {
-        return { reason: "SALE_NOT_CANCELLABLE", sale: null };
-      }
-      const payments = await client.query(
-        "SELECT COUNT(*) AS count FROM sale_payments WHERE sale_id = $1",
-        [saleId],
-      );
-      if (Number(payments.rows[0].count) > 0) {
-        return { reason: "SALE_HAS_PAYMENTS", sale: null };
-      }
-      await client.query(
-        `UPDATE sales SET status = 'CANCELLED', cancellation_reason = $2,
-           cancelled_at = $3, updated_by = $4 WHERE id = $1`,
-        [saleId, change.cancellationReason, changedAt, actorUserId],
-      );
+      if (!["QUOTATION", "PENDING"].includes(current.status)) return { reason: "SALE_NOT_CANCELLABLE", sale: null };
+      if (current.sale_payments.length) return { reason: "SALE_HAS_PAYMENTS", sale: null };
+      await client.sales.update({ data: {
+        cancellation_reason: change.cancellationReason, cancelled_at: changedAt,
+        status: "CANCELLED", updated_by: actorUserId,
+      }, where: { id: saleId } });
       await insertSaleEvent(client, saleId, "CANCELLED", actorUserId, {
-        details: { reason: change.cancellationReason },
-        previousStatus: current.status,
-        newStatus: "CANCELLED",
+        details: { reason: change.cancellationReason }, newStatus: "CANCELLED", previousStatus: current.status,
       });
     } else {
-      if (
-        !(ALLOWED_TRANSITIONS[current.status] ?? []).includes(change.status)
-      ) {
-        return { reason: "INVALID_STATUS_TRANSITION", sale: null };
-      }
-      await client.query(
-        "UPDATE sales SET status = $2, updated_by = $3 WHERE id = $1",
-        [saleId, change.status, actorUserId],
-      );
-      await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, {
-        previousStatus: current.status,
-        newStatus: change.status,
-      });
+      if (!(ALLOWED_TRANSITIONS[current.status] ?? []).includes(change.status)) return { reason: "INVALID_STATUS_TRANSITION", sale: null };
+      await client.sales.update({ data: { status: change.status, updated_by: actorUserId }, where: { id: saleId } });
+      await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: change.status, previousStatus: current.status });
     }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
-  });
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function listSales({ customerId, page, pageSize, status }) {
-  const offset = (page - 1) * pageSize;
-  const filters = `
-    ($1::UUID IS NULL OR sales.customer_id = $1)
-    AND ($2::VARCHAR IS NULL OR sales.status = $2)
-  `;
-  const parameters = [customerId, status];
-  const [itemsResult, countResult] = await Promise.all([
-    executeQuery(
-      `${SALE_SELECT} WHERE ${filters}
-       ORDER BY sales.created_at DESC, sales.sale_number DESC LIMIT $3 OFFSET $4`,
-      [...parameters, pageSize, offset],
-    ),
-    executeQuery(
-      `SELECT COUNT(*) AS total FROM sales WHERE ${filters}`,
-      parameters,
-    ),
+  const where = { ...(customerId ? { customer_id: customerId } : {}), ...(status ? { status } : {}) };
+  const [items, total] = await prisma.$transaction([
+    prisma.sales.findMany({
+      include: saleInclude, orderBy: [{ created_at: "desc" }, { sale_number: "desc" }],
+      skip: (page - 1) * pageSize, take: pageSize, where,
+    }),
+    prisma.sales.count({ where }),
   ]);
-  const total = Number(countResult.rows[0].total);
-  return {
-    items: itemsResult.rows.map(mapSaleBase),
-    page,
-    pageSize,
-    total,
-    totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
-  };
+  return { items: items.map((row) => mapSale(row, false)), page, pageSize, total, totalPages: total ? Math.ceil(total / pageSize) : 0 };
 }
 
 export async function listSaleEvents(saleId) {
-  const result = await executeQuery(
-    `SELECT id, event_type, previous_status, new_status, details, performed_by, created_at
-     FROM sale_events WHERE sale_id = $1 ORDER BY created_at, id`,
-    [saleId],
-  );
-  return result.rows.map((row) => ({
+  return (await prisma.sale_events.findMany({
+    orderBy: [{ created_at: "asc" }, { id: "asc" }], where: { sale_id: saleId },
+  })).map((row) => ({
     createdAt: row.created_at,
     details: typeof row.details === "string" ? JSON.parse(row.details) : row.details,
-    eventType: row.event_type,
-    id: Number(row.id),
-    newStatus: row.new_status,
-    performedBy: row.performed_by,
-    previousStatus: row.previous_status,
+    eventType: row.event_type, id: Number(row.id), newStatus: row.new_status,
+    performedBy: row.performed_by, previousStatus: row.previous_status,
   }));
-}
-
-function mapReceipt(row) {
-  if (!row) return null;
-  return {
-    emailError: row.email_error,
-    emailProviderId: row.email_provider_id,
-    emailStatus: row.email_status,
-    emailedTo: row.emailed_to,
-    id: row.id,
-    issuedAt: row.issued_at,
-    paymentId: row.payment_id,
-    payload: row.payload,
-    receiptNumber: Number(row.receipt_number),
-    saleId: row.sale_id,
-    type: row.receipt_type,
-  };
 }
 
 export function buildPaymentReceiptSnapshot(sale, paymentId) {
   if (!paymentId) return null;
-  const paymentIndex = sale.payments.findIndex((payment) => payment.id === paymentId);
-  if (paymentIndex === -1) return null;
-  const payments = sale.payments.slice(0, paymentIndex + 1);
-  const paidCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
-  return {
-    balanceCents: sale.totalCents - paidCents,
-    paidCents,
-    payment: payments.at(-1),
-    payments,
-    type: "PAYMENT",
-  };
+  const index = sale.payments.findIndex((payment) => payment.id === paymentId);
+  if (index === -1) return null;
+  const payments = sale.payments.slice(0, index + 1);
+  const paidCents = payments.reduce((sum, payment) => sum + payment.amountCents, 0);
+  return { balanceCents: sale.totalCents - paidCents, paidCents, payment: payments.at(-1), payments, type: "PAYMENT" };
+}
+
+async function enqueueReceipt(client, receipt, emailedTo, saleId, paymentId, templateCode) {
+  if (!emailedTo) return;
+  const key = transactionalEmailDeduplicationKey(templateCode, receipt.id);
+  await client.transactional_email_outbox.upsert({
+    create: {
+      deduplication_key: key, payload: {}, payment_id: paymentId,
+      receipt_id: receipt.id, recipient_email: emailedTo, sale_id: saleId,
+      template_code: templateCode,
+    }, update: {}, where: { deduplication_key: key },
+  });
 }
 
 export async function issueSaleReceipt(saleId, request, actorUserId) {
-  return executeTransaction(async (client) => {
-    const lockedResult = await client.query(
-      "SELECT status FROM sales WHERE id = $1 FOR UPDATE",
-      [saleId],
-    );
-    const locked = lockedResult.rows[0];
+  return prisma.$transaction(async (client) => {
+    const locked = await client.sales.findUnique({ where: { id: saleId } });
     if (!locked) return { reason: "SALE_NOT_FOUND", receipt: null };
-    if (["QUOTATION", "CANCELLED"].includes(locked.status)) {
-      return { reason: "RECEIPT_NOT_AVAILABLE", receipt: null };
-    }
-
+    if (["QUOTATION", "CANCELLED"].includes(locked.status)) return { reason: "RECEIPT_NOT_AVAILABLE", receipt: null };
     const sale = await findSaleWithClient(client, saleId);
     const snapshot = buildPaymentReceiptSnapshot(sale, request.paymentId);
-    if (request.paymentId && !snapshot) {
-      return { reason: "PAYMENT_NOT_FOUND", receipt: null };
-    }
-    if (!snapshot && sale.status === "PENDING") {
-      return { reason: "RECEIPT_PAYMENT_REQUIRED", receipt: null };
-    }
+    if (request.paymentId && !snapshot) return { reason: "PAYMENT_NOT_FOUND", receipt: null };
+    if (!snapshot && sale.status === "PENDING") return { reason: "RECEIPT_PAYMENT_REQUIRED", receipt: null };
     const receiptType = snapshot?.type ?? "FINAL";
-    const existingResult = await client.query(
-      `SELECT * FROM sale_receipts
-       WHERE sale_id = $1
-         AND (
-           ($2::UUID IS NOT NULL AND payment_id = $2)
-           OR ($3 = 'FINAL' AND receipt_type = 'FINAL')
-         )
-       ORDER BY issued_at DESC, receipt_number DESC
-       LIMIT 1`,
-      [saleId, request.paymentId, receiptType],
-    );
-    if (existingResult.rows[0]) {
-      return { reason: null, receipt: mapReceipt(existingResult.rows[0]) };
-    }
-
+    const existing = await client.sale_receipts.findFirst({
+      orderBy: [{ issued_at: "desc" }, { receipt_number: "desc" }],
+      where: { sale_id: saleId, ...(request.paymentId ? { payment_id: request.paymentId } : { receipt_type: "FINAL" }) },
+    });
+    if (existing) return { reason: null, receipt: mapReceipt(existing) };
     const emailedTo = request.email ?? sale.customer?.email ?? null;
     const paidCents = snapshot?.paidCents ?? sale.paidCents;
     const balanceCents = snapshot?.balanceCents ?? sale.balanceCents;
     const payload = {
-      additions: sale.opticalAdditions,
-      balanceCents,
-      customer: sale.customer,
-      discount: sale.discount,
-      items: sale.items,
-      paidCents,
-      patient: sale.patient,
+      additions: sale.opticalAdditions, balanceCents, customer: sale.customer,
+      discount: sale.discount, items: sale.items, paidCents, patient: sale.patient,
       payment: snapshot?.payment ?? sale.payments.at(-1) ?? null,
       paymentMethod: snapshot?.payment.paymentMethod ?? sale.paymentMethod,
-      payments: snapshot?.payments ?? sale.payments,
-      saleNumber: sale.saleNumber,
-      status: balanceCents === 0 ? "PAID" : "PENDING",
-      subtotalCents: sale.subtotalCents,
+      payments: snapshot?.payments ?? sale.payments, saleNumber: sale.saleNumber,
+      status: balanceCents === 0 ? "PAID" : "PENDING", subtotalCents: sale.subtotalCents,
       totalCents: sale.totalCents,
     };
-    const result = await client.query(
-      `INSERT INTO sale_receipts (
-         sale_id, payment_id, receipt_type, payload, emailed_to, generated_by
-       ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [saleId, request.paymentId, receiptType, payload, emailedTo, actorUserId],
-    );
-    if (emailedTo) {
-      await client.query(
-        `INSERT INTO transactional_email_outbox (
-           template_code, recipient_email, payload, deduplication_key,
-           sale_id, payment_id, receipt_id
-         ) VALUES ($1, $2, '{}'::JSONB, $3, $4, $5, $6)
-         ON CONFLICT (deduplication_key) DO NOTHING`,
-        [receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
-          emailedTo, transactionalEmailDeduplicationKey(
-            receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT",
-            result.rows[0].id,
-          ), saleId, request.paymentId, result.rows[0].id],
-      );
-    }
+    const receipt = await client.sale_receipts.create({ data: {
+      emailed_to: emailedTo, generated_by: actorUserId, payload,
+      payment_id: request.paymentId, receipt_type: receiptType, sale_id: saleId,
+    } });
+    const template = receiptType === "PAYMENT" ? "POS_PAYMENT_RECEIPT" : "POS_FINAL_RECEIPT";
+    await enqueueReceipt(client, receipt, emailedTo, saleId, request.paymentId, template);
     await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
-      details: {
-        paymentId: request.paymentId,
-        receiptNumber: Number(result.rows[0].receipt_number),
-        receiptType,
-      },
-      newStatus: sale.status,
-      previousStatus: sale.status,
+      details: { paymentId: request.paymentId, receiptNumber: Number(receipt.receipt_number), receiptType },
+      newStatus: sale.status, previousStatus: sale.status,
     });
     if (request.paymentId && balanceCents === 0) {
-      const finalResult = await client.query(
-        `INSERT INTO sale_receipts (
-           sale_id, payment_id, receipt_type, payload, emailed_to, generated_by
-         ) VALUES ($1, NULL, 'FINAL', $2, $3, $4)
-         ON CONFLICT (sale_id) WHERE receipt_type = 'FINAL' DO NOTHING
-         RETURNING *`,
-        [saleId, payload, emailedTo, actorUserId],
-      );
-      if (finalResult.rows[0]) {
-        if (emailedTo) {
-          await client.query(
-            `INSERT INTO transactional_email_outbox (
-               template_code, recipient_email, payload, deduplication_key,
-               sale_id, receipt_id
-             ) VALUES ('POS_FINAL_RECEIPT', $1, '{}'::JSONB, $2, $3, $4)
-             ON CONFLICT (deduplication_key) DO NOTHING`,
-            [emailedTo, transactionalEmailDeduplicationKey(
-              "POS_FINAL_RECEIPT",
-              finalResult.rows[0].id,
-            ), saleId, finalResult.rows[0].id],
-          );
-        }
+      const existingFinal = await client.sale_receipts.findFirst({ where: { receipt_type: "FINAL", sale_id: saleId } });
+      if (!existingFinal) {
+        const finalReceipt = await client.sale_receipts.create({ data: {
+          emailed_to: emailedTo, generated_by: actorUserId, payload,
+          payment_id: null, receipt_type: "FINAL", sale_id: saleId,
+        } });
+        await enqueueReceipt(client, finalReceipt, emailedTo, saleId, null, "POS_FINAL_RECEIPT");
         await insertSaleEvent(client, saleId, "RECEIPT_ISSUED", actorUserId, {
-          details: {
-            paymentId: null,
-            receiptNumber: Number(finalResult.rows[0].receipt_number),
-            receiptType: "FINAL",
-          },
-          newStatus: sale.status,
-          previousStatus: sale.status,
+          details: { paymentId: null, receiptNumber: Number(finalReceipt.receipt_number), receiptType: "FINAL" },
+          newStatus: sale.status, previousStatus: sale.status,
         });
       }
     }
-    return { reason: null, receipt: mapReceipt(result.rows[0]) };
-  });
+    return { reason: null, receipt: mapReceipt(receipt) };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function findReceiptBySaleId(saleId, receiptId = null) {
-  const result = await executeQuery(
-    `SELECT * FROM sale_receipts
-     WHERE sale_id = $1 AND ($2::UUID IS NULL OR id = $2)
-     ORDER BY issued_at DESC, receipt_number DESC
-     LIMIT 1`,
-    [saleId, receiptId],
-  );
-  return mapReceipt(result.rows[0]);
+  return mapReceipt(await prisma.sale_receipts.findFirst({
+    orderBy: [{ issued_at: "desc" }, { receipt_number: "desc" }],
+    where: { sale_id: saleId, ...(receiptId ? { id: receiptId } : {}) },
+  }));
 }

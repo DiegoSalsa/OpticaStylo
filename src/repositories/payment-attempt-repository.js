@@ -1,121 +1,84 @@
-import { executeQuery, executeTransaction } from "../db/query.js";
+import { Prisma } from "@prisma/client";
+
+import { prisma } from "../db/prisma.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 function mapAttempt(row) {
   if (!row) return null;
   return {
-    amountCents: Number(row.amount_cents),
-    checkoutUrl: row.checkout_url,
-    createdAt: row.created_at,
-    currency: row.currency,
-    expiresAt: row.expires_at,
+    amountCents: Number(row.amount_cents), checkoutUrl: row.checkout_url,
+    createdAt: row.created_at, currency: row.currency, expiresAt: row.expires_at,
     externalPaymentId: row.external_payment_id,
-    externalPreferenceId: row.external_preference_id,
-    failureReason: row.failure_reason,
-    id: row.id,
-    idempotencyKey: row.idempotency_key,
-    initiatedBy: row.initiated_by,
-    provider: row.provider,
-    providerStatus: row.provider_status,
-    providerStatusDetail: row.provider_status_detail,
-    saleId: row.sale_id,
-    sandboxCheckoutUrl: row.sandbox_checkout_url,
-    status: row.status,
-    updatedAt: row.updated_at,
+    externalPreferenceId: row.external_preference_id, failureReason: row.failure_reason,
+    id: row.id, idempotencyKey: row.idempotency_key, initiatedBy: row.initiated_by,
+    provider: row.provider, providerStatus: row.provider_status,
+    providerStatusDetail: row.provider_status_detail, saleId: row.sale_id,
+    sandboxCheckoutUrl: row.sandbox_checkout_url, status: row.status, updatedAt: row.updated_at,
   };
 }
+
 export async function reserveMercadoPagoAttempt(saleId, actorUserId, expiresAt) {
-  return executeTransaction(async (client) => {
-    const saleResult = await client.query(
-      `SELECT status, payment_method, total_cents
-       FROM sales WHERE id = $1 FOR UPDATE`,
-      [saleId],
-    );
-    const sale = saleResult.rows[0];
+  return prisma.$transaction(async (client) => {
+    const sale = await client.sales.findUnique({
+      include: { sale_payments: true }, where: { id: saleId },
+    });
     if (!sale) return { attempt: null, reason: "SALE_NOT_FOUND" };
     if (sale.status !== "PENDING") return { attempt: null, reason: "SALE_NOT_PAYABLE" };
     if (sale.payment_method && sale.payment_method !== "MERCADO_PAGO") {
       return { attempt: null, reason: "PAYMENT_METHOD_MISMATCH" };
     }
-
-    const paidResult = await client.query(
-      "SELECT COALESCE(SUM(amount_cents), 0) AS paid_cents FROM sale_payments WHERE sale_id = $1",
-      [saleId],
-    );
-    const balanceCents = Number(sale.total_cents) - Number(paidResult.rows[0].paid_cents);
+    const paid = sale.sale_payments.reduce((sum, item) => sum + Number(item.amount_cents), 0);
+    const balanceCents = Number(sale.total_cents) - paid;
     if (balanceCents <= 0) return { attempt: null, reason: "SALE_NOT_PAYABLE" };
-
-    await client.query(
-      `UPDATE payment_attempts
-       SET status = 'CANCELLED', provider_status = 'expired',
-           failure_reason = 'El intento de pago venció.'
-       WHERE sale_id = $1 AND provider = 'MERCADO_PAGO'
-         AND status IN ('CREATED', 'PENDING')
-         AND expires_at <= CURRENT_TIMESTAMP`,
-      [saleId],
-    );
-
-    const activeResult = await client.query(
-      `SELECT * FROM payment_attempts
-       WHERE sale_id = $1 AND provider = 'MERCADO_PAGO'
-         AND status IN ('CREATED', 'PENDING', 'APPROVED')
-       ORDER BY created_at DESC LIMIT 1`,
-      [saleId],
-    );
-    if (activeResult.rows[0]) {
-      const attempt = mapAttempt(activeResult.rows[0]);
-      if (attempt.amountCents !== balanceCents && attempt.status !== "APPROVED") {
-        await client.query(
-          `UPDATE payment_attempts
-           SET status = 'REQUIRES_REVIEW', failure_reason = $2
-           WHERE id = $1`,
-          [attempt.id, "El saldo de la venta cambió después de crear el cobro."],
-        );
+    await client.payment_attempts.updateMany({
+      data: { failure_reason: "El intento de pago venció.", provider_status: "expired", status: "CANCELLED" },
+      where: {
+        expires_at: { lte: new Date() }, provider: "MERCADO_PAGO", sale_id: saleId,
+        status: { in: ["CREATED", "PENDING"] },
+      },
+    });
+    const active = await client.payment_attempts.findFirst({
+      orderBy: { created_at: "desc" },
+      where: { provider: "MERCADO_PAGO", sale_id: saleId, status: { in: ["CREATED", "PENDING", "APPROVED"] } },
+    });
+    if (active) {
+      if (Number(active.amount_cents) !== balanceCents && active.status !== "APPROVED") {
+        await client.payment_attempts.update({ data: {
+          failure_reason: "El saldo de la venta cambió después de crear el cobro.",
+          status: "REQUIRES_REVIEW",
+        }, where: { id: active.id } });
         return { attempt: null, reason: "PAYMENT_ATTEMPT_REQUIRES_REVIEW" };
       }
-      return { attempt, reason: null };
+      return { attempt: mapAttempt(active), reason: null };
     }
-
-    const attemptResult = await client.query(
-      `INSERT INTO payment_attempts (
-         sale_id, provider, amount_cents, initiated_by, expires_at
-       ) VALUES ($1, 'MERCADO_PAGO', $2, $3, $4)
-       RETURNING *`,
-      [saleId, balanceCents, actorUserId, expiresAt],
-    );
-    return { attempt: mapAttempt(attemptResult.rows[0]), reason: null };
-  });
+    const created = await client.payment_attempts.create({ data: {
+      amount_cents: balanceCents, expires_at: expiresAt, initiated_by: actorUserId,
+      provider: "MERCADO_PAGO", sale_id: saleId,
+    } });
+    return { attempt: mapAttempt(created), reason: null };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function attachMercadoPagoPreference(attemptId, preference) {
-  const result = await executeQuery(
-    `UPDATE payment_attempts
-     SET status = 'PENDING', external_preference_id = $2, checkout_url = $3,
-         sandbox_checkout_url = $4, failure_reason = NULL
-     WHERE id = $1 AND status = 'CREATED'
-     RETURNING *`,
-    [attemptId, preference.externalPreferenceId, preference.checkoutUrl,
-      preference.sandboxCheckoutUrl],
-  );
-  return mapAttempt(result.rows[0]);
+  const result = await prisma.payment_attempts.updateMany({ data: {
+    checkout_url: preference.checkoutUrl, external_preference_id: preference.externalPreferenceId,
+    failure_reason: null, sandbox_checkout_url: preference.sandboxCheckoutUrl, status: "PENDING",
+  }, where: { id: attemptId, status: "CREATED" } });
+  return result.count ? mapAttempt(await prisma.payment_attempts.findUnique({ where: { id: attemptId } })) : null;
 }
 
 export async function markPaymentAttemptFailed(attemptId, reason) {
-  const result = await executeQuery(
-    `UPDATE payment_attempts SET status = 'FAILED', failure_reason = $2
-     WHERE id = $1 AND status = 'CREATED' RETURNING *`,
-    [attemptId, reason.slice(0, 500)],
-  );
-  return mapAttempt(result.rows[0]);
+  const result = await prisma.payment_attempts.updateMany({
+    data: { failure_reason: reason.slice(0, 500), status: "FAILED" },
+    where: { id: attemptId, status: "CREATED" },
+  });
+  return result.count ? mapAttempt(await prisma.payment_attempts.findUnique({ where: { id: attemptId } })) : null;
 }
 
 export async function listPaymentAttemptsBySaleId(saleId) {
-  const result = await executeQuery(
-    `SELECT * FROM payment_attempts WHERE sale_id = $1
-     ORDER BY created_at DESC, id DESC`,
-    [saleId],
-  );
-  return result.rows.map(mapAttempt);
+  return (await prisma.payment_attempts.findMany({
+    orderBy: [{ created_at: "desc" }, { id: "desc" }], where: { sale_id: saleId },
+  })).map(mapAttempt);
 }
 
 export function mapProviderStatus(status) {
@@ -127,229 +90,135 @@ export function mapProviderStatus(status) {
 }
 
 export function isValidPaymentExternalReference(value) {
-  return typeof value === "string"
-    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 export function paymentMatchesAttempt(attempt, payment, expectedLiveMode) {
   const amount = Number(payment.transactionAmount);
   const expectedAmount = Number(attempt.amount_cents);
-  const modeMatches = expectedLiveMode === undefined
-    || payment.liveMode === expectedLiveMode;
-  return Number.isSafeInteger(amount)
-    && Number.isSafeInteger(expectedAmount)
-    && amount > 0
-    && amount === expectedAmount
-    && payment.currency === attempt.currency
-    && modeMatches
-    && Boolean(
-      attempt.external_preference_id
-      && payment.externalPreferenceId
-      && payment.externalPreferenceId === attempt.external_preference_id,
-    );
+  return Number.isSafeInteger(amount) && Number.isSafeInteger(expectedAmount) && amount > 0
+    && amount === expectedAmount && payment.currency === attempt.currency
+    && (expectedLiveMode === undefined || payment.liveMode === expectedLiveMode)
+    && Boolean(attempt.external_preference_id && payment.externalPreferenceId
+      && payment.externalPreferenceId === attempt.external_preference_id);
 }
 
 async function finishProviderEvent(client, eventId, status, error = null) {
-  await client.query(
-    `UPDATE payment_provider_events
-     SET processing_status = $2, processing_error = $3, processed_at = CURRENT_TIMESTAMP
-     WHERE id = $1`,
-    [eventId, status, error],
+  await client.payment_provider_events.update({
+    data: { processed_at: new Date(), processing_error: error, processing_status: status },
+    where: { id: eventId },
+  });
+}
+
+export async function reconcileMercadoPagoPayment(notification, payment, options = {}) {
+  return prisma.$transaction(
+    (client) => reconcileMercadoPagoPaymentWithClient(client, notification, payment, options),
+    { isolationLevel: "Serializable" },
   );
 }
 
-export async function reconcileMercadoPagoPayment(
-  notification,
-  payment,
-  options = {},
-) {
-  return executeTransaction((client) => reconcileMercadoPagoPaymentWithClient(
-    client,
-    notification,
-    payment,
-    options,
-  ));
-}
-
-export async function reconcileMercadoPagoPaymentWithClient(
-  client,
-  notification,
-  payment,
-  options = {},
-) {
-    const eventResult = await client.query(
-      `INSERT INTO payment_provider_events (
-         provider, request_id, event_type, external_object_id, payload
-       ) VALUES ('MERCADO_PAGO', $1, $2, $3, $4::JSONB)
-       ON CONFLICT (provider, request_id) DO NOTHING
-       RETURNING id`,
-      [notification.requestId, notification.eventType, notification.dataId,
-        JSON.stringify(notification.payload)],
-    );
-    if (eventResult.rowCount === 0) return { duplicate: true, result: "ALREADY_PROCESSED" };
-    const eventId = eventResult.rows[0].id;
-
-    if (!isValidPaymentExternalReference(payment.externalReference)) {
-      await finishProviderEvent(client, eventId, "IGNORED", "La referencia externa no es válida.");
-      return { duplicate: false, result: "UNKNOWN_PAYMENT" };
+export async function reconcileMercadoPagoPaymentWithClient(client, notification, payment, options = {}) {
+  let event;
+  try {
+    event = await client.payment_provider_events.create({ data: {
+      event_type: notification.eventType, external_object_id: notification.dataId,
+      payload: notification.payload, provider: "MERCADO_PAGO", request_id: notification.requestId,
+    } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { duplicate: true, result: "ALREADY_PROCESSED" };
     }
-
-    const attemptResult = await client.query(
-      `SELECT * FROM payment_attempts
-       WHERE id = $1 AND provider = 'MERCADO_PAGO' FOR UPDATE`,
-      [payment.externalReference],
-    );
-    const attempt = attemptResult.rows[0];
-    if (!attempt) {
-      await finishProviderEvent(client, eventId, "IGNORED", "No corresponde a un intento conocido.");
-      return { duplicate: false, result: "UNKNOWN_PAYMENT" };
-    }
-
-    if (!paymentMatchesAttempt(attempt, payment, options.expectedLiveMode)) {
-      const reason = "Los datos confirmados por Mercado Pago no coinciden con el cobro reservado.";
-      await client.query(
-        `UPDATE payment_attempts SET status = 'REQUIRES_REVIEW',
-           external_payment_id = $2, provider_status = $3,
-           provider_status_detail = $4, failure_reason = $5 WHERE id = $1`,
-        [attempt.id, payment.externalPaymentId, payment.status,
-          payment.statusDetail, reason],
-      );
-      await finishProviderEvent(client, eventId, "FAILED", reason);
+    throw error;
+  }
+  if (!isValidPaymentExternalReference(payment.externalReference)) {
+    await finishProviderEvent(client, event.id, "IGNORED", "La referencia externa no es válida.");
+    return { duplicate: false, result: "UNKNOWN_PAYMENT" };
+  }
+  const attempt = await client.payment_attempts.findFirst({
+    where: { id: payment.externalReference, provider: "MERCADO_PAGO" },
+  });
+  if (!attempt) {
+    await finishProviderEvent(client, event.id, "IGNORED", "No corresponde a un intento conocido.");
+    return { duplicate: false, result: "UNKNOWN_PAYMENT" };
+  }
+  if (!paymentMatchesAttempt(attempt, payment, options.expectedLiveMode)) {
+    const reason = "Los datos confirmados por Mercado Pago no coinciden con el cobro reservado.";
+    await client.payment_attempts.update({ data: {
+      external_payment_id: payment.externalPaymentId, failure_reason: reason,
+      provider_status: payment.status, provider_status_detail: payment.statusDetail,
+      status: "REQUIRES_REVIEW",
+    }, where: { id: attempt.id } });
+    await finishProviderEvent(client, event.id, "FAILED", reason);
+    return { duplicate: false, result: "REQUIRES_REVIEW" };
+  }
+  const mappedStatus = mapProviderStatus(payment.status);
+  if (attempt.status === "REQUIRES_REVIEW") {
+    await finishProviderEvent(client, event.id, "FAILED", "El intento permanece bloqueado hasta completar su revision manual.");
+    return { duplicate: false, paymentAttemptId: attempt.id, result: "REQUIRES_REVIEW", saleId: attempt.sale_id };
+  }
+  if (attempt.status === "APPROVED" && mappedStatus !== "APPROVED") {
+    await client.payment_attempts.update({ data: {
+      failure_reason: "Un pago previamente aprobado cambió de estado y requiere revisión.",
+      provider_status: payment.status, provider_status_detail: payment.statusDetail,
+      status: "REQUIRES_REVIEW",
+    }, where: { id: attempt.id } });
+    await client.sale_events.create({ data: {
+      details: JSON.stringify({ externalPaymentId: payment.externalPaymentId, provider: "MERCADO_PAGO", status: payment.status }),
+      event_type: "PAYMENT_STATUS_CHANGED", performed_by: null, sale_id: attempt.sale_id,
+    } });
+    await finishProviderEvent(client, event.id, "PROCESSED");
+    return { duplicate: false, paymentAttemptId: attempt.id, result: "REQUIRES_REVIEW", saleId: attempt.sale_id };
+  }
+  if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
+    await client.payment_attempts.updateMany({ data: {
+      failure_reason: "Otro intento de la venta fue aprobado primero.", status: "REQUIRES_REVIEW",
+    }, where: {
+      id: { not: attempt.id }, provider: "MERCADO_PAGO", sale_id: attempt.sale_id,
+      status: { in: ["CREATED", "PENDING"] },
+    } });
+  }
+  await client.payment_attempts.update({ data: {
+    external_payment_id: payment.externalPaymentId, failure_reason: null,
+    provider_status: payment.status, provider_status_detail: payment.statusDetail,
+    status: mappedStatus,
+  }, where: { id: attempt.id } });
+  if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
+    const sale = await client.sales.findUnique({ include: { customers: true, sale_payments: true }, where: { id: attempt.sale_id } });
+    const paidCents = sale.sale_payments.reduce((sum, item) => sum + Number(item.amount_cents), 0);
+    const totalCents = Number(sale.total_cents);
+    if (sale.status !== "PENDING" || paidCents + Number(attempt.amount_cents) > totalCents) {
+      const reason = "La venta cambió y el pago aprobado requiere conciliación manual.";
+      await client.payment_attempts.update({ data: { failure_reason: reason, status: "REQUIRES_REVIEW" }, where: { id: attempt.id } });
+      await finishProviderEvent(client, event.id, "FAILED", reason);
       return { duplicate: false, result: "REQUIRES_REVIEW" };
     }
-
-    const mappedStatus = mapProviderStatus(payment.status);
-    if (attempt.status === "REQUIRES_REVIEW") {
-      const reason = "El intento permanece bloqueado hasta completar su revision manual.";
-      await finishProviderEvent(client, eventId, "FAILED", reason);
-      return {
-        duplicate: false,
-        paymentAttemptId: attempt.id,
-        result: "REQUIRES_REVIEW",
-        saleId: attempt.sale_id,
-      };
+    const createdPayment = await client.sale_payments.create({ data: {
+      amount_cents: attempt.amount_cents, payment_method: "MERCADO_PAGO",
+      provider_attempt_id: attempt.id, received_by: attempt.initiated_by,
+      reference: `MP:${payment.externalPaymentId}`, sale_id: attempt.sale_id, source: "PROVIDER",
+    } });
+    const newStatus = paidCents + Number(attempt.amount_cents) === totalCents ? "PAID" : "PENDING";
+    await client.sales.update({ data: {
+      payment_method: "MERCADO_PAGO", status: newStatus,
+      ...(attempt.initiated_by ? { updated_by: attempt.initiated_by } : {}),
+    }, where: { id: attempt.sale_id } });
+    await client.sale_events.create({ data: {
+      details: JSON.stringify({ amountCents: Number(attempt.amount_cents), externalPaymentId: payment.externalPaymentId, paymentMethod: "MERCADO_PAGO", source: "PROVIDER" }),
+      event_type: "PAYMENT_REGISTERED", new_status: newStatus,
+      performed_by: null, previous_status: "PENDING", sale_id: attempt.sale_id,
+    } });
+    if (sale.customers?.email) {
+      const key = transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", createdPayment.id);
+      await client.transactional_email_outbox.upsert({
+        create: {
+          deduplication_key: key,
+          payload: { amountCents: Number(attempt.amount_cents), saleNumber: Number(sale.sale_number) },
+          payment_id: createdPayment.id, recipient_email: sale.customers.email,
+          sale_id: attempt.sale_id, template_code: "PAYMENT_CONFIRMED",
+        }, update: {}, where: { deduplication_key: key },
+      });
     }
-    if (attempt.status === "APPROVED" && mappedStatus !== "APPROVED") {
-      const reason = "Un pago previamente aprobado cambió de estado y requiere revisión.";
-      await client.query(
-        `UPDATE payment_attempts SET status = 'REQUIRES_REVIEW',
-           provider_status = $2, provider_status_detail = $3,
-           failure_reason = $4 WHERE id = $1`,
-        [attempt.id, payment.status, payment.statusDetail, reason],
-      );
-      await client.query(
-        `INSERT INTO sale_events (
-           sale_id, event_type, details, performed_by
-         ) VALUES ($1, 'PAYMENT_STATUS_CHANGED', $2, NULL)`,
-        [attempt.sale_id, JSON.stringify({
-          externalPaymentId: payment.externalPaymentId,
-          provider: "MERCADO_PAGO",
-          status: payment.status,
-        })],
-      );
-      await finishProviderEvent(client, eventId, "PROCESSED");
-      return {
-        duplicate: false,
-        paymentAttemptId: attempt.id,
-        result: "REQUIRES_REVIEW",
-        saleId: attempt.sale_id,
-      };
-    }
-
-    if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
-      await client.query(
-        `UPDATE payment_attempts
-         SET status = 'REQUIRES_REVIEW',
-             failure_reason = 'Otro intento de la venta fue aprobado primero.'
-         WHERE sale_id = $1 AND provider = 'MERCADO_PAGO' AND id <> $2
-           AND status IN ('CREATED', 'PENDING')`,
-        [attempt.sale_id, attempt.id],
-      );
-    }
-
-    await client.query(
-      `UPDATE payment_attempts SET status = $2, external_payment_id = $3,
-         provider_status = $4, provider_status_detail = $5, failure_reason = NULL
-       WHERE id = $1`,
-      [attempt.id, mappedStatus, payment.externalPaymentId, payment.status,
-        payment.statusDetail],
-    );
-
-    if (mappedStatus === "APPROVED" && attempt.status !== "APPROVED") {
-      const saleResult = await client.query(
-        `SELECT sales.status, sales.total_cents, sales.sale_number,
-                customers.email AS customer_email
-         FROM sales LEFT JOIN customers ON customers.id = sales.customer_id
-         WHERE sales.id = $1 FOR UPDATE OF sales`,
-        [attempt.sale_id],
-      );
-      const sale = saleResult.rows[0];
-      const paidResult = await client.query(
-        "SELECT COALESCE(SUM(amount_cents), 0) AS paid_cents FROM sale_payments WHERE sale_id = $1",
-        [attempt.sale_id],
-      );
-      const paidCents = Number(paidResult.rows[0].paid_cents);
-      const totalCents = Number(sale.total_cents);
-      if (sale.status !== "PENDING" || paidCents + Number(attempt.amount_cents) > totalCents) {
-        const reason = "La venta cambió y el pago aprobado requiere conciliación manual.";
-        await client.query(
-          "UPDATE payment_attempts SET status = 'REQUIRES_REVIEW', failure_reason = $2 WHERE id = $1",
-          [attempt.id, reason],
-        );
-        await finishProviderEvent(client, eventId, "FAILED", reason);
-        return { duplicate: false, result: "REQUIRES_REVIEW" };
-      }
-
-      const paymentResult = await client.query(
-        `INSERT INTO sale_payments (
-           sale_id, amount_cents, payment_method, reference, received_by,
-           source, provider_attempt_id
-         ) VALUES ($1, $2, 'MERCADO_PAGO', $3, $4, 'PROVIDER', $5)
-         RETURNING id`,
-        [attempt.sale_id, attempt.amount_cents,
-          `MP:${payment.externalPaymentId}`, attempt.initiated_by, attempt.id],
-      );
-      const newStatus = paidCents + Number(attempt.amount_cents) === totalCents ? "PAID" : "PENDING";
-      await client.query(
-        `UPDATE sales SET payment_method = 'MERCADO_PAGO', status = $2,
-           updated_by = COALESCE($3, updated_by) WHERE id = $1`,
-        [attempt.sale_id, newStatus, attempt.initiated_by],
-      );
-      await client.query(
-        `INSERT INTO sale_events (
-           sale_id, event_type, previous_status, new_status, details, performed_by
-         ) VALUES ($1, 'PAYMENT_REGISTERED', 'PENDING', $2, $3, NULL)`,
-        [attempt.sale_id, newStatus, JSON.stringify({
-          amountCents: Number(attempt.amount_cents),
-          externalPaymentId: payment.externalPaymentId,
-          paymentMethod: "MERCADO_PAGO",
-          source: "PROVIDER",
-        })],
-      );
-      if (sale.customer_email) {
-        await client.query(
-          `INSERT INTO transactional_email_outbox (
-             template_code, recipient_email, payload, deduplication_key,
-             sale_id, payment_id
-           ) VALUES ('PAYMENT_CONFIRMED', $1, $2::JSONB, $3, $4, $5)
-           ON CONFLICT (deduplication_key) DO NOTHING`,
-          [sale.customer_email, JSON.stringify({
-            amountCents: Number(attempt.amount_cents),
-            saleNumber: Number(sale.sale_number),
-          }), transactionalEmailDeduplicationKey(
-            "PAYMENT_CONFIRMED",
-            paymentResult.rows[0].id,
-          ), attempt.sale_id,
-          paymentResult.rows[0].id],
-        );
-      }
-    }
-
-    await finishProviderEvent(client, eventId, "PROCESSED");
-    return {
-      duplicate: false,
-      paymentAttemptId: attempt.id,
-      result: mappedStatus,
-      saleId: attempt.sale_id,
-    };
+  }
+  await finishProviderEvent(client, event.id, "PROCESSED");
+  return { duplicate: false, paymentAttemptId: attempt.id, result: mappedStatus, saleId: attempt.sale_id };
 }
