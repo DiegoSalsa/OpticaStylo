@@ -236,10 +236,6 @@
   transition: opacity 180ms ease;
 }
 
-.threeCanvas[data-visible="false"] {
-  opacity: 0;
-}
-
 .threeCanvas[data-cropped="true"] {
   right: auto;
   left: 50%;

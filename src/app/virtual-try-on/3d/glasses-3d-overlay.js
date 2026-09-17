@@ -86,7 +86,6 @@ export default function Glasses3DOverlay() {
   });
   const [catalogSearch, setCatalogSearch] = useState("");
   const [facingMode, setFacingMode] = useState("user");
-  const [showOverlay, setShowOverlay] = useState(true);
   const [cartMessage, setCartMessage] = useState("");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -112,6 +111,18 @@ export default function Glasses3DOverlay() {
   }, []);
 
   useEffect(() => releaseResources, [releaseResources]);
+
+  const stopCamera = useCallback(() => {
+    releaseResources();
+    setCameraStatus("idle");
+    setCameraAspectRatio(null);
+    setFaceDetected(false);
+    setTrackingReady(false);
+    setModelReady(false);
+    setFaceMeshTriangleIndices(null);
+    setCaptureMessage("");
+    setStatusMessage("Cámara apagada. Enciéndela cuando quieras continuar.");
+  }, [releaseResources]);
 
   useEffect(
     () => () => {
@@ -607,9 +618,8 @@ export default function Glasses3DOverlay() {
         setCatalogSearch,
         setPhotoLoaded,
         setSelectedModel,
-        setShowOverlay,
-        showOverlay,
         startCamera,
+        stopCamera,
         updateFitAdjustment,
         videoDimensions,
         videoRef,
