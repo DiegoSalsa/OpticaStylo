@@ -102,7 +102,7 @@ export default function CashRegisterPanel({ onChange }) {
       {!cashRegister ? (
         <form className="cash-register-form" onSubmit={open}>
           <label className="field"><span>Fondo inicial de prueba</span><input min="0" name="openingAmountCents" required type="number" /></label>
-          <label className="field"><span>Observación</span><input maxLength="500" name="openingNotes" /></label>
+          <label className="field"><span>Observación</span><input maxLength="500" name="openingNotes" placeholder="Ej: Apertura de turno" /></label>
           <button className="app-button app-button--primary" disabled={pending} type="submit"><Icon name="plus" size={16} /> Abrir caja</button>
         </form>
       ) : (
@@ -125,12 +125,12 @@ export default function CashRegisterPanel({ onChange }) {
             <form className="cash-register-form" onSubmit={movement}>
               <label className="field"><span>Movimiento</span><select defaultValue="MANUAL_IN" name="movementType"><option value="MANUAL_IN">Ingreso manual</option><option value="MANUAL_OUT">Egreso manual</option></select></label>
               <label className="field"><span>Monto</span><input min="1" name="amountCents" required type="number" /></label>
-              <label className="field"><span>Motivo</span><input maxLength="500" name="reason" required /></label>
+              <label className="field"><span>Motivo</span><input maxLength="500" name="reason" placeholder="Motivo del movimiento" required /></label>
               <button className="app-button app-button--soft" disabled={pending} type="submit">Registrar movimiento</button>
             </form>
             <form className="cash-register-form cash-register-close" onSubmit={close}>
               <label className="field"><span>Arqueo contado</span><input min="0" name="closingCountedCents" required type="number" /></label>
-              <label className="field"><span>Observación de cierre</span><input maxLength="500" name="closingNotes" /></label>
+              <label className="field"><span>Observación de cierre</span><input maxLength="500" name="closingNotes" placeholder="Ej: Diferencia revisada" /></label>
               <button className="app-button app-button--primary" disabled={pending} type="submit">Cerrar caja</button>
             </form>
           </>}

@@ -160,6 +160,7 @@ export default function ProductCatalogInterface({ model }) {
                       setForm({ ...form, name: event.target.value })
                     }
                     required
+                    placeholder="Nombre del producto"
                     value={form.name}
                   />
                 </label>
@@ -175,6 +176,7 @@ export default function ProductCatalogInterface({ model }) {
                       })
                     }
                     required
+                    placeholder="Ej: MARCO-001"
                     value={form.sku}
                   />
                 </label>

@@ -278,7 +278,7 @@ export default function CartExperience() {
               <label className="field"><span>Eje</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.axis)} max="180" min="0" name="leftAxis" type="number" /></label>
               <label className="field"><span>Adición</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.addition)} name="leftAddition" step="0.25" type="number" /></label>
               <label className="field"><span>Distancia pupilar</span><input defaultValue={fieldValue(prescriptionDraft?.pupillaryDistance)} name="pupillaryDistance" step="0.5" type="number" /></label>
-              <label className="field field-wide"><span>Indicaciones</span><input defaultValue={fieldValue(prescriptionDraft?.fulfillmentNotes)} name="fulfillmentNotes" /></label>
+              <label className="field field-wide"><span>Indicaciones</span><input defaultValue={fieldValue(prescriptionDraft?.fulfillmentNotes)} name="fulfillmentNotes" placeholder="Ej: Tratamiento antirreflejo" /></label>
               <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">{prescriptionMode === "IMAGE" && (prescriptionDraft ?? cart.externalPrescription?.extractedData) ? "Confirmar valores revisados" : prescriptionMode === "IMAGE" && cart.externalPrescription?.hasImage ? "Leer receta guardada" : prescriptionMode === "IMAGE" ? "Subir y leer receta" : "Guardar receta obligatoria"}</button>
             </form>
           </>
@@ -288,14 +288,14 @@ export default function CartExperience() {
           <h2>Datos para la compra</h2>
           <p className="card-lead">Puedes continuar como invitado. Por ahora el flujo se mantiene en retiro en tienda mientras se define el despacho y las tres sucursales.</p>
           <form className="buyer-form" onSubmit={checkout}>
-            <label className="field"><span>RUT</span><input defaultValue={cart.buyer?.rut} name="rut" required /></label>
-            <label className="field"><span>Nombres</span><input defaultValue={cart.buyer?.firstNames} name="firstNames" required /></label>
-            <label className="field"><span>Apellidos</span><input defaultValue={cart.buyer?.lastNames} name="lastNames" required /></label>
-            <label className="field"><span>Teléfono</span><input defaultValue={cart.buyer?.phone} name="phone" required /></label>
-            <label className="field"><span>Correo</span><input defaultValue={cart.buyer?.email} name="email" required type="email" /></label>
-            <label className="field"><span>Dirección de contacto</span><input defaultValue={cart.buyer?.address} name="address" required /></label>
+            <label className="field"><span>RUT</span><input defaultValue={cart.buyer?.rut} name="rut" placeholder="12.345.678-5" required /></label>
+            <label className="field"><span>Nombres</span><input defaultValue={cart.buyer?.firstNames} name="firstNames" placeholder="Nombres" required /></label>
+            <label className="field"><span>Apellidos</span><input defaultValue={cart.buyer?.lastNames} name="lastNames" placeholder="Apellidos" required /></label>
+            <label className="field"><span>Teléfono</span><input defaultValue={cart.buyer?.phone} name="phone" placeholder="+56 9 1234 5678" required /></label>
+            <label className="field"><span>Correo</span><input defaultValue={cart.buyer?.email} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
+            <label className="field"><span>Dirección de contacto</span><input defaultValue={cart.buyer?.address} name="address" placeholder="Dirección" required /></label>
             <div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en tienda</strong><span>Sucursal por confirmar con el local después de la compra.</span></div></div>
-            <label className="field field-full"><span>Notas opcionales</span><textarea name="notes" rows="3" /></label>
+            <label className="field field-full"><span>Notas opcionales</span><textarea name="notes" placeholder="Ej: Entregar en horario de oficina" rows="3" /></label>
             <button className="button button--primary field-full" disabled={status === "saving"} type="submit">Continuar a Mercado Pago</button>
           </form>
         </article>

@@ -56,6 +56,15 @@ export default function ClinicalEncounterPanel({ model }) {
                       [field]: event.target.value,
                     })
                   }
+                  placeholder={
+                    {
+                      anamnesis: "Antecedentes relevantes...",
+                      diagnosis: "Diagnóstico clínico...",
+                      examination: "Hallazgos del examen...",
+                      indications: "Indicaciones para el paciente...",
+                      reasonForVisit: "Motivo de consulta...",
+                    }[field]
+                  }
                   required={field === "reasonForVisit"}
                   value={encounterForm[field]}
                 />
@@ -113,6 +122,7 @@ export default function ClinicalEncounterPanel({ model }) {
                         })
                       }
                       required
+                      placeholder="Motivo de la corrección"
                       value={addendum.reason}
                     />
                   </label>
@@ -128,6 +138,7 @@ export default function ClinicalEncounterPanel({ model }) {
                         })
                       }
                       required
+                      placeholder="Contenido de la adenda..."
                       value={addendum.content}
                     />
                   </label>

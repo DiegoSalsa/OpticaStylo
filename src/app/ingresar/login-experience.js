@@ -36,7 +36,7 @@ export default function LoginExperience() {
       <p className="login-lead">Ingresa con tu cuenta de Óptica Stylo. Las funciones se muestran según tu rol.</p>
       <form onSubmit={submit}>
         <label>Correo electrónico<input autoComplete="username" name="email" placeholder="nombre@opticastylo.cl" required type="email" /></label>
-        <label>Contraseña<input autoComplete="current-password" minLength="12" name="password" required type="password" /></label>
+        <label>Contraseña<input autoComplete="current-password" minLength="12" name="password" placeholder="Tu contraseña" required type="password" /></label>
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="button button--primary" disabled={pending} type="submit">{pending ? "Ingresando…" : "Ingresar de forma segura"}</button>
       </form>

@@ -49,6 +49,7 @@ export default function DiscountAuthorizationPanel({ amountCents, reason, onAuth
         <input
           autoComplete="username"
           onChange={(event) => setAuthorizerEmail(event.target.value)}
+          placeholder="supervisor@opticastylo.cl"
           required
           type="email"
           value={authorizerEmail}
@@ -59,6 +60,7 @@ export default function DiscountAuthorizationPanel({ amountCents, reason, onAuth
         <input
           autoComplete="current-password"
           onChange={(event) => setAuthorizerPassword(event.target.value)}
+          placeholder="Contraseña del supervisor"
           required
           type="password"
           value={authorizerPassword}

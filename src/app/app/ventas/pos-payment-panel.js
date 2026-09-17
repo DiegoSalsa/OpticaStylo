@@ -138,7 +138,7 @@ export default function PosPaymentPanel({ model }) {
             ) && (
               <label className="field">
                 <span>Referencia o folio obligatorio</span>
-                <input maxLength="200" name="reference" required />
+                <input maxLength="200" name="reference" placeholder="Folio o referencia" required />
               </label>
             )}
             <label className="field">
@@ -146,6 +146,7 @@ export default function PosPaymentPanel({ model }) {
               <input
                 defaultValue={customer?.email ?? ""}
                 name="email"
+                placeholder="nombre@correo.cl"
                 type="email"
               />
             </label>

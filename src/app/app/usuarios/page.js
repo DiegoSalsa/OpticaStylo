@@ -277,6 +277,7 @@ export default function UsersPage() {
                       setForm({ ...form, firstName: event.target.value })
                     }
                     required
+                    placeholder="Nombre"
                     value={form.firstName}
                   />
                 </label>
@@ -289,6 +290,7 @@ export default function UsersPage() {
                       setForm({ ...form, lastName: event.target.value })
                     }
                     required
+                    placeholder="Apellido"
                     value={form.lastName}
                   />
                 </label>
@@ -300,6 +302,7 @@ export default function UsersPage() {
                       setForm({ ...form, email: event.target.value })
                     }
                     required
+                    placeholder="nombre@opticastylo.cl"
                     type="email"
                     value={form.email}
                   />

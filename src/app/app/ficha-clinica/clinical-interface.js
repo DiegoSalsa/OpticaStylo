@@ -151,6 +151,7 @@ export default function ClinicalInterface({ model }) {
                           })
                         }
                         required
+                        placeholder="Motivo de consulta..."
                         value={encounterForm.reasonForVisit}
                       />
                     </label>

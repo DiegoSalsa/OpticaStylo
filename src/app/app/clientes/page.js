@@ -248,6 +248,7 @@ export default function CustomersPage() {
                       setForm({ ...form, firstNames: event.target.value })
                     }
                     required
+                    placeholder="Nombres del cliente"
                     value={form.firstNames}
                   />
                 </label>
@@ -260,6 +261,7 @@ export default function CustomersPage() {
                       setForm({ ...form, lastNames: event.target.value })
                     }
                     required
+                    placeholder="Apellidos del cliente"
                     value={form.lastNames}
                   />
                 </label>
@@ -295,6 +297,7 @@ export default function CustomersPage() {
                       setForm({ ...form, email: event.target.value })
                     }
                     required
+                    placeholder="nombre@correo.cl"
                     type="email"
                     value={form.email}
                   />
@@ -308,6 +311,7 @@ export default function CustomersPage() {
                       setForm({ ...form, address: event.target.value })
                     }
                     required
+                    placeholder="Dirección"
                     value={form.address}
                   />
                 </label>

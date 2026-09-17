@@ -168,7 +168,7 @@ export default function PosCatalogPanel({ model }) {
             <form className="quick-patient" onSubmit={createPatient}>
               <label className="field">
                 <span>RUT</span>
-                <input name="rut" required />
+                <input name="rut" placeholder="12.345.678-5" required />
               </label>
               <label className="field">
                 <span>Fecha de nacimiento</span>
@@ -182,23 +182,23 @@ export default function PosCatalogPanel({ model }) {
               </label>
               <label className="field">
                 <span>Nombres</span>
-                <input name="firstNames" required />
+                <input name="firstNames" placeholder="Nombres del paciente" required />
               </label>
               <label className="field">
                 <span>Apellidos</span>
-                <input name="lastNames" required />
+                <input name="lastNames" placeholder="Apellidos del paciente" required />
               </label>
               <label className="field">
                 <span>Teléfono</span>
-                <input name="phone" required />
+                <input name="phone" placeholder="+56 9 1234 5678" required />
               </label>
               <label className="field">
                 <span>Correo</span>
-                <input name="email" required type="email" />
+                <input name="email" placeholder="nombre@correo.cl" required type="email" />
               </label>
               <label className="field field-wide">
                 <span>Dirección</span>
-                <input name="address" required />
+                <input name="address" placeholder="Dirección" required />
               </label>
               {patientBirthDate &&
                 patientBirthDate > ADULT_BIRTH_DATE_CUTOFF && (
@@ -206,27 +206,27 @@ export default function PosCatalogPanel({ model }) {
                     <legend>Responsable del paciente menor de edad</legend>
                     <label className="field">
                       <span>RUT responsable</span>
-                      <input name="guardianRut" required />
+                      <input name="guardianRut" placeholder="12.345.678-5" required />
                     </label>
                     <label className="field">
                       <span>Parentesco</span>
-                      <input name="guardianRelationship" required />
+                      <input name="guardianRelationship" placeholder="Madre, padre o tutor" required />
                     </label>
                     <label className="field">
                       <span>Nombres</span>
-                      <input name="guardianFirstNames" required />
+                      <input name="guardianFirstNames" placeholder="Nombres del responsable" required />
                     </label>
                     <label className="field">
                       <span>Apellidos</span>
-                      <input name="guardianLastNames" required />
+                      <input name="guardianLastNames" placeholder="Apellidos del responsable" required />
                     </label>
                     <label className="field">
                       <span>Teléfono</span>
-                      <input name="guardianPhone" required />
+                      <input name="guardianPhone" placeholder="+56 9 1234 5678" required />
                     </label>
                     <label className="field">
                       <span>Correo</span>
-                      <input name="guardianEmail" required type="email" />
+                      <input name="guardianEmail" placeholder="nombre@correo.cl" required type="email" />
                     </label>
                   </fieldset>
                 )}
