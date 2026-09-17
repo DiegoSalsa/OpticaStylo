@@ -31,6 +31,7 @@ export default function MedicalRecordPanel({ model }) {
                 onChange={(event) =>
                   setRecord({ ...record, [field]: event.target.value })
                 }
+                placeholder={`Antecedentes de ${label.toLocaleLowerCase("es-CL")}...`}
                 value={record[field] ?? ""}
               />
             </label>

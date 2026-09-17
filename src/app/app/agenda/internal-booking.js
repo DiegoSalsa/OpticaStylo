@@ -65,7 +65,7 @@ export default function InternalBooking({ onCreated, professionals }) {
       <label className="field"><span>Profesional</span><select onChange={(event)=>loadSlots(event.target.value,date)} required value={professionalId}><option value="">Selecciona</option>{professionals.filter((item)=>item.isBookable).map((item)=><option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></label>
       <label className="field"><span>Fecha</span><input min={chileDate()} onChange={(event)=>loadSlots(professionalId,event.target.value)} required type="date" value={date} /></label>
       <label className="field"><span>Hora disponible</span><select onChange={(event)=>setStartAt(event.target.value)} required value={startAt}><option value="">Selecciona</option>{slots.map((slot)=><option key={slot.startAt} value={slot.startAt}>{time(slot.startAt)}</option>)}</select></label>
-      <label className="field booking-notes"><span>Notas internas opcionales</span><input maxLength="1000" name="internalNotes" /></label>
+      <label className="field booking-notes"><span>Notas internas opcionales</span><input maxLength="1000" name="internalNotes" placeholder="Ej: Observación del paciente" /></label>
     </div>
     {message&&<p aria-live="polite" className={message.includes("correctamente")?"inline-success":"inline-error"}>{message}</p>}
     <div className="schedule-actions"><button className="app-button app-button--primary" disabled={status!=="idle"||!startAt||!patientId} type="submit">{status==="saving"?"Guardando…":"Crear reserva"}</button></div>

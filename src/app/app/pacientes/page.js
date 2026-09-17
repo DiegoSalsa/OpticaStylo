@@ -282,6 +282,7 @@ export default function PatientsPage() {
                       setForm({ ...form, firstNames: event.target.value })
                     }
                     required
+                    placeholder="Nombres del paciente"
                     value={form.firstNames}
                   />
                 </label>
@@ -294,6 +295,7 @@ export default function PatientsPage() {
                       setForm({ ...form, lastNames: event.target.value })
                     }
                     required
+                    placeholder="Apellidos del paciente"
                     value={form.lastNames}
                   />
                 </label>
@@ -342,6 +344,7 @@ export default function PatientsPage() {
                       setForm({ ...form, email: event.target.value })
                     }
                     required
+                    placeholder="nombre@correo.cl"
                     type="email"
                     value={form.email}
                   />
@@ -355,6 +358,7 @@ export default function PatientsPage() {
                       setForm({ ...form, address: event.target.value })
                     }
                     required
+                    placeholder="Dirección"
                     value={form.address}
                   />
                 </label>
@@ -371,6 +375,7 @@ export default function PatientsPage() {
                           setGuardian("firstNames", event.target.value)
                         }
                         required
+                        placeholder="Nombres del responsable"
                         value={form.guardian?.firstNames ?? ""}
                       />
                     </label>
@@ -382,6 +387,7 @@ export default function PatientsPage() {
                           setGuardian("lastNames", event.target.value)
                         }
                         required
+                        placeholder="Apellidos del responsable"
                         value={form.guardian?.lastNames ?? ""}
                       />
                     </label>
@@ -393,6 +399,7 @@ export default function PatientsPage() {
                           setGuardian("rut", event.target.value)
                         }
                         required
+                        placeholder="12.345.678-5"
                         value={form.guardian?.rut ?? ""}
                       />
                     </label>
@@ -404,6 +411,7 @@ export default function PatientsPage() {
                           setGuardian("relationship", event.target.value)
                         }
                         required
+                        placeholder="Madre, padre o tutor"
                         value={form.guardian?.relationship ?? ""}
                       />
                     </label>
@@ -415,6 +423,7 @@ export default function PatientsPage() {
                           setGuardian("phone", event.target.value)
                         }
                         required
+                        placeholder="+56 9 1234 5678"
                         value={form.guardian?.phone ?? ""}
                       />
                     </label>
@@ -426,6 +435,7 @@ export default function PatientsPage() {
                           setGuardian("email", event.target.value)
                         }
                         required
+                        placeholder="nombre@correo.cl"
                         type="email"
                         value={form.guardian?.email ?? ""}
                       />

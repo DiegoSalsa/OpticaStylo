@@ -319,6 +319,7 @@ export default function AgendaInterface({ model }) {
                   disabled={!canManageSelected}
                   maxLength="500"
                   name="reason"
+                  placeholder="Ej: Vacaciones o trámite"
                 />
               </label>
             </div>

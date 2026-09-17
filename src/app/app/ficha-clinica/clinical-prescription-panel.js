@@ -101,6 +101,7 @@ export default function ClinicalPrescriptionPanel({ model }) {
                     fulfillmentNotes: event.target.value,
                   })
                 }
+                placeholder="Ej: Material, tratamiento o montaje"
                 value={prescription.fulfillmentNotes}
               />
             </label>
@@ -117,6 +118,7 @@ export default function ClinicalPrescriptionPanel({ model }) {
                     })
                   }
                   required
+                  placeholder="Motivo del reemplazo"
                   value={prescription.replacementReason}
                 />
               </label>

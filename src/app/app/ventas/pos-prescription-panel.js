@@ -249,6 +249,7 @@ export default function PosPrescriptionPanel({ model }) {
                             fulfillmentNotes: event.target.value,
                           });
                         }}
+                        placeholder="Ej: Material, tratamiento o montaje"
                         value={externalPrescription.fulfillmentNotes}
                       />
                     </label>

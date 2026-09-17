@@ -215,6 +215,7 @@ export default function PosTicketPanel({ model }) {
             <input
               maxLength="500"
               onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="Motivo de cancelación"
               value={cancelReason}
             />
           </label>
