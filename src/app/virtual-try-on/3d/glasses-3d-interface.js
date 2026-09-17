@@ -49,9 +49,8 @@ export default function Glasses3DInterface({ model }) {
     setCatalogSearch,
     setPhotoLoaded,
     setSelectedModel,
-    setShowOverlay,
-    showOverlay,
     startCamera,
+    stopCamera,
     updateFitAdjustment,
     videoDimensions,
     videoRef,
@@ -191,7 +190,6 @@ export default function Glasses3DInterface({ model }) {
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
               data-cropped={Boolean(cameraAspectRatio)}
-              data-visible={showOverlay}
               dpr={[1, 1.5]}
               gl={{
                 alpha: true,
@@ -363,14 +361,15 @@ export default function Glasses3DInterface({ model }) {
               <span aria-hidden="true">▣</span>Guardar foto
             </button>
             <button
-              aria-pressed={!showOverlay}
               className={styles.dockButton}
-              disabled={!cameraActive}
-              onClick={() => setShowOverlay((current) => !current)}
+              disabled={cameraStatus === "loading"}
+              onClick={() =>
+                cameraStatus === "ready" ? stopCamera() : startCamera()
+              }
               type="button"
             >
-              <span aria-hidden="true">◐</span>
-              {showOverlay ? "Ver sin marco" : "Ver con marco"}
+              <span aria-hidden="true">{cameraStatus === "ready" ? "◉" : "○"}</span>
+              {cameraStatus === "ready" ? "Apagar cámara" : "Encender cámara"}
             </button>
           </div>
         </div>
