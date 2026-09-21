@@ -46,8 +46,9 @@ jobs:
           source "$HOME/.nvm/nvm.sh"
           nvm use 22
           cd "$HOME/apps/optica-stylo"
+          unset NODE_ENV
+          npm ci --include=dev
           export NODE_ENV=production
-          npm ci
           npm run prisma:generate
           npm run db:migrate
           npm run lint
