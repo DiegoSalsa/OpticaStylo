@@ -1,0 +1,78 @@
+name: Despliegue Taller
+
+on:
+  push:
+    branches: [main, testgeneral]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: vars.DESPLIEGUE_TALLER_HABILITADO == 'true'
+    runs-on: [self-hosted, linux, x64, opticastylo-taller]
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        shell: bash
+        run: |
+          set -euo pipefail
+          source "$HOME/.nvm/nvm.sh"
+          nvm use 22
+          node --version
+          npm --version
+
+      - name: Sincronizar código al entorno Taller
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_dir="$HOME/apps/optica-stylo"
+          mkdir -p "$app_dir"
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='.env*' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='logs' \
+            --exclude='tmp' \
+            ./ "$app_dir/"
+
+      - name: Instalar y validar
+        shell: bash
+        run: |
+          set -euo pipefail
+          source "$HOME/.nvm/nvm.sh"
+          nvm use 22
+          cd "$HOME/apps/optica-stylo"
+          export NODE_ENV=production
+          npm ci
+          npm run prisma:generate
+          npm run db:migrate
+          npm run lint
+          npm test
+          npm run build
+
+      - name: Reiniciar servicio Taller
+        shell: bash
+        run: |
+          set -euo pipefail
+          source "$HOME/.nvm/nvm.sh"
+          nvm use 22
+          cd "$HOME/apps/optica-stylo"
+          pm2 reload optica-stylo --update-env || pm2 start deploy/ecosystem.config.cjs
+          pm2 save
+
+      - name: Healthcheck Taller
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          pm2 logs optica-stylo --lines 80 --nostream || true
+          exit 1
