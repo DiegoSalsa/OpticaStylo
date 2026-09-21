@@ -256,7 +256,7 @@
 }
 .lens-option:has(input:checked) {
   background: #e4f8f2;
-  border-color: var(--color-primary-container);
+  border-color: var(--color-primary);
 }
 .lens-option input {
   accent-color: var(--color-primary-dark);
