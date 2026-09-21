@@ -112,6 +112,12 @@ flowchart LR
 - Los repositorios concentran toda la persistencia mediante Prisma; Route Handlers y servicios no importan Prisma.
 - Las integraciones aíslan a Cloudinary, Mercado Pago, OpenAI y Resend del dominio.
 
+## Estrategia de control de versiones
+
+El repositorio utiliza una estrategia cercana a Trunk-Based Development. `main` es la rama estable e integrable; cada cambio se desarrolla en una rama corta creada desde `main`, se valida localmente y luego se integra conservando un historial claro. Una vez integrada y confirmada la estabilidad, la rama temporal se elimina para evitar referencias obsoletas.
+
+`testgeneral` se reserva para casos excepcionales, como migraciones o pruebas de infraestructura que necesitan una rama de integración temporal. No representa una línea de desarrollo permanente ni reemplaza a `main`.
+
 ## Estructura principal
 
 ```text
