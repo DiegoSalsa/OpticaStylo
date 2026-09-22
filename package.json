@@ -24,7 +24,8 @@
     "emails:dispatch": "node scripts/dispatch-payment-emails.mjs",
     "payments:preflight": "node scripts/mercado-pago-preflight.mjs",
     "users:bootstrap-admin": "node scripts/bootstrap-admin.mjs",
-    "users:create-sales": "node scripts/create-sales-user.mjs"
+    "users:create-sales": "node scripts/create-sales-user.mjs",
+    "demo:prepare": "node scripts/prepare-demo-data.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

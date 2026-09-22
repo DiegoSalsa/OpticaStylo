@@ -1,0 +1,18 @@
+RECETA ÓPTICA — MATERIAL FICTICIO PARA DEMOSTRACIÓN
+
+Este archivo no corresponde a una persona real y no debe usarse para fabricar
+lentes. Sirve para mostrar el recorrido de carga, lectura asistida y revisión
+humana en Optica Stylo.
+
+Paciente: Juan Pérez Soto
+RUT: 17.234.568-9
+Fecha de emisión: 15-09-2026
+
+Ojo derecho (OD): esfera -1,00 · cilindro -0,25 · eje 85
+Ojo izquierdo (OI): esfera -0,75 · cilindro -0,50 · eje 95
+Distancia pupilar: 63 mm
+
+Observación: control visual de demostración. Confirmar todos los valores con
+un profesional antes de asociar una receta a una venta.
+
+Correo de persistencia demo: jperez@demo.opticastylo.invalid
