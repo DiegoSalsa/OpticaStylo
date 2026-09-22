@@ -1,24 +1,29 @@
 "use client";
+// Código de la aplicación para booking-experience.
 
 import { useEffect, useMemo, useState } from "react";
 import Icon from "@/components/ui/icon";
 import { PUBLIC_BOOKING_CONFIRMATION_NOTE } from "./booking-copy";
 import styles from "./booking.module.css";
 
+// Centralizar la lógica de chile date para mantener consistente el comportamiento de la aplicación
 function chileDate(offsetDays = 0) {
   const date = new Date();
   date.setDate(date.getDate() + offsetDays);
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(date);
 }
 
+// Transformar format time al formato utilizado por el resto de la aplicación
 function formatTime(value) {
   return new Intl.DateTimeFormat("es-CL", { hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" }).format(new Date(value));
 }
 
+// Transformar format long date al formato utilizado por el resto de la aplicación
 function formatLongDate(value) {
   return new Intl.DateTimeFormat("es-CL", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
 }
 
+// Determinar si is minor cumple la condición requerida por la aplicación
 function isMinor(birthDate) {
   if (!birthDate) return false;
   const birth = new Date(`${birthDate}T00:00:00Z`);
@@ -27,6 +32,7 @@ function isMinor(birthDate) {
   return adultDate > new Date();
 }
 
+// Consultar read api y devolver los datos en el formato esperado por la capa llamadora
 async function readApi(response) {
   const payload = await response.json();
   if (!response.ok || !payload.success) throw new Error(payload.error?.message || "No fue posible completar la solicitud.");
@@ -55,6 +61,7 @@ export default function BookingExperience() {
     return () => controller.abort();
   }, []);
 
+  // Consultar load slots y devolver los datos en el formato esperado por la capa llamadora
   async function loadSlots(nextProfessionalId, nextDate) {
     if (!nextProfessionalId || !nextDate) return;
     setStatus("loading-slots"); setMessage(""); setSelectedSlot(null); setSlots([]);
@@ -64,9 +71,12 @@ export default function BookingExperience() {
     } catch (error) { setMessage(error.message); setStatus("error-slots"); }
   }
 
+  // Centralizar la lógica de choose profesional para mantener consistente el comportamiento de la aplicación
   function chooseProfessional(value) { setProfessionalId(value); loadSlots(value, selectedDate); }
+  // Centralizar la lógica de choose date para mantener consistente el comportamiento de la aplicación
   function chooseDate(value) { setSelectedDate(value); loadSlots(professionalId, value); }
 
+  // Centralizar la lógica de submit reserva para mantener consistente el comportamiento de la aplicación
   async function submitBooking(event) {
     event.preventDefault();
     if (!professionalId || !selectedSlot) { setMessage("Seleccione un profesional y una hora disponible."); return; }

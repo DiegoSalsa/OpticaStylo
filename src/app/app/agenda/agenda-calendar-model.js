@@ -1,19 +1,24 @@
+// Código de la aplicación para agenda-calendar-model.
 const CLINICAL_READ_PERMISSION = "medical_records.read_assigned";
 
+// Centralizar la lógica de date at noon para mantener consistente el comportamiento de la aplicación
 function dateAtNoon(value) {
   return new Date(`${value}T12:00:00Z`);
 }
 
+// Centralizar la lógica de date key para mantener consistente el comportamiento de la aplicación
 function dateKey(value, timeZone) {
   return new Intl.DateTimeFormat("sv-SE", { timeZone }).format(new Date(value));
 }
 
+// Crear o registrar add calendar days aplicando las reglas de negocio y persistencia correspondientes
 export function addCalendarDays(value, amount) {
   const date = dateAtNoon(value);
   date.setUTCDate(date.getUTCDate() + amount);
   return date.toISOString().slice(0, 10);
 }
 
+// Transformar build agenda days al formato utilizado por el resto de la aplicación
 export function buildAgendaDays({
   appointments = [],
   blocks = [],
@@ -48,6 +53,7 @@ export function buildAgendaDays({
   return days;
 }
 
+// Determinar si can open clínica record cumple la condición requerida por la aplicación
 export function canOpenClinicalRecord(actor, appointment) {
   return Boolean(
     actor?.permissions?.includes(CLINICAL_READ_PERMISSION) &&
@@ -55,6 +61,7 @@ export function canOpenClinicalRecord(actor, appointment) {
   );
 }
 
+// Centralizar la lógica de clínica record href para mantener consistente el comportamiento de la aplicación
 export function clinicalRecordHref(appointmentId) {
   return `/app/ficha-clinica?appointmentId=${encodeURIComponent(appointmentId)}`;
 }

@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para icon.
 
 import { motion, useReducedMotion } from "motion/react";
 
@@ -10,6 +11,7 @@ const draw = { rest: { pathLength: 1, opacity: 1 }, hover: { pathLength: [1, 0.2
 const nudgeRight = { rest: { x: 0 }, hover: { x: [0, 4, 0], transition: { duration: 0.45, ease: "easeInOut" } } };
 const nudgeLeft = { rest: { x: 0 }, hover: { x: [0, -3, 0], transition: { duration: 0.35, ease: "easeInOut" } } };
 
+// Determinar si canvas cumple la condición requerida por la aplicación
 function Canvas({ animated, children, className, label, size, strokeWidth, viewBox = "0 0 24 24" }) {
   const motionProps = animated ? { animate: "rest", initial: "rest", whileHover: "hover" } : {};
 
@@ -35,6 +37,7 @@ function Canvas({ animated, children, className, label, size, strokeWidth, viewB
   );
 }
 
+// Centralizar la lógica de glyph para mantener consistente el comportamiento de la aplicación
 function Glyph({ animated, name, ...props }) {
   switch (name) {
     case "account":

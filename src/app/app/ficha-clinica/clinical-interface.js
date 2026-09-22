@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para clinical-interface.
 
 import Icon from "@/components/ui/icon";
 import { APPOINTMENT_LABELS } from "./clinical-form-model";

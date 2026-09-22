@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para prescription-image-input.
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -12,6 +13,7 @@ import {
   PRESCRIPTION_IMAGE_ACCEPT,
 } from "@/utils/prescription-camera";
 
+// Crear o registrar create cámara archivo aplicando las reglas de negocio y persistencia correspondientes
 function createCameraFile(video) {
   const sourceWidth = video.videoWidth;
   const sourceHeight = video.videoHeight;
@@ -58,6 +60,7 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
+  // Centralizar la lógica de start cámara para mantener consistente el comportamiento de la aplicación
   async function startCamera(requestedFacingMode = facingMode) {
     setCameraMessage("");
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -84,6 +87,7 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
     }
   }
 
+  // Centralizar la lógica de capture imagen para mantener consistente el comportamiento de la aplicación
   async function captureImage() {
     setCameraMessage("");
     try {
@@ -95,18 +99,21 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
     }
   }
 
+  // Centralizar la lógica de switch cámara para mantener consistente el comportamiento de la aplicación
   async function switchCamera() {
     const nextMode = nextCameraFacingMode(facingMode);
     setFacingMode(nextMode);
     await startCamera(nextMode);
   }
 
+  // Centralizar la lógica de select imagen para mantener consistente el comportamiento de la aplicación
   function selectImage(event) {
     const file = event.target.files?.[0] ?? null;
     event.target.value = "";
     if (file) void onImageChange(file);
   }
 
+  // Centralizar la lógica de select source para mantener consistente el comportamiento de la aplicación
   function selectSource(nextSource) {
     setCameraMessage("");
     setSource(nextSource);

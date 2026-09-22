@@ -1,3 +1,4 @@
+// Código de la aplicación para layout.
 import InternalShell from "@/components/internal/internal-shell";
 import "./internal.css";
 import "./stitch-internal.css";

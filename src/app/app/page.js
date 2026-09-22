@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para page.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -13,7 +14,9 @@ const modules = [
   ["package", "Gestionar pedidos", "Avanza pedidos pagados hasta su entrega.", "/app/pedidos", "sales.read"],
 ];
 
+// Centralizar la lógica de local day para mantener consistente el comportamiento de la aplicación
 function localDay(value = new Date()) { return new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(value); }
+// Centralizar la lógica de cliente label para mantener consistente el comportamiento de la aplicación
 function customerLabel(sale) { return sale.customer ? `${sale.customer.firstNames} ${sale.customer.lastNames}` : "Sin cliente registrado"; }
 
 export default function InternalHomePage() {

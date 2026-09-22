@@ -1,3 +1,4 @@
+// Código de la aplicación para page.
 import PosExperience from "./pos-experience";
 import "./pos.css";
 

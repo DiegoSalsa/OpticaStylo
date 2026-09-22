@@ -1,3 +1,4 @@
+// Código de la aplicación para prescription-version.
 import { formatOpticalValue } from "./clinical-form-model";
 
 export default function PrescriptionVersion({ item }) {

@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para account-experience.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -16,6 +17,7 @@ export default function AccountExperience() {
 
   useEffect(() => {
     let active = true;
+    // Consultar load account y devolver los datos en el formato esperado por la capa llamadora
     async function loadAccount() {
       try {
         const profile = await readStoreResponse(await fetch("/api/store/accounts/me", { cache: "no-store" }));
@@ -28,6 +30,7 @@ export default function AccountExperience() {
     return () => { active = false; };
   }, []);
 
+  // Centralizar la lógica de authenticate para mantener consistente el comportamiento de la aplicación
   async function authenticate(event) {
     event.preventDefault(); setError(""); setStatus("saving");
     const values = Object.fromEntries(new FormData(event.currentTarget));
@@ -40,6 +43,7 @@ export default function AccountExperience() {
     } catch (requestError) { setError(requestError.message); setStatus("ready"); }
   }
 
+  // Centralizar la lógica de logout para mantener consistente el comportamiento de la aplicación
   async function logout() { try { await readStoreResponse(await fetch("/api/store/accounts/logout", { method: "POST" })); } finally { setAccount(null); setOrders([]); setMode("LOGIN"); } }
 
   if (status === "loading") return <main className="account-page"><div className="account-loading" aria-label="Cargando tu cuenta" /></main>;

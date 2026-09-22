@@ -1,3 +1,4 @@
+// Código de la aplicación para clinical-form-model.
 export const RECORD_FIELDS = [
   ["generalMedicalHistory", "Antecedentes médicos generales"],
   ["ocularHistory", "Antecedentes oculares"],
@@ -36,19 +37,24 @@ export const APPOINTMENT_LABELS = {
   CONFIRMED: "Confirmada",
 };
 
+// Centralizar la lógica de number para mantener consistente el comportamiento de la aplicación
 const number = (value, nullable = false) =>
   value === "" && nullable ? null : Number(value);
 
+// Centralizar la lógica de clone form para mantener consistente el comportamiento de la aplicación
 export const cloneForm = (value) => structuredClone(value);
+// Centralizar la lógica de forms match para mantener consistente el comportamiento de la aplicación
 export const formsMatch = (left, right) =>
   JSON.stringify(left) === JSON.stringify(right);
 
+// Centralizar la lógica de medical record form para mantener consistente el comportamiento de la aplicación
 export function medicalRecordForm(record) {
   return Object.fromEntries(
     RECORD_FIELDS.map(([field]) => [field, record?.[field] ?? ""]),
   );
 }
 
+// Centralizar la lógica de receta form para mantener consistente el comportamiento de la aplicación
 export function prescriptionForm(currentPrescription) {
   if (!currentPrescription) return cloneForm(EMPTY_PRESCRIPTION);
 
@@ -71,6 +77,7 @@ export function prescriptionForm(currentPrescription) {
   };
 }
 
+// Transformar format optical value al formato utilizado por el resto de la aplicación
 export function formatOpticalValue(value, { axis = false } = {}) {
   if (value === null || value === undefined || value === "") return "—";
   if (axis) return `${value}°`;
@@ -78,6 +85,7 @@ export function formatOpticalValue(value, { axis = false } = {}) {
   return `${numeric > 0 ? "+" : ""}${numeric.toFixed(2)}`;
 }
 
+// Centralizar la lógica de receta payload para mantener consistente el comportamiento de la aplicación
 export function prescriptionPayload(form, includeReason = false) {
   return {
     fulfillmentNotes: form.fulfillmentNotes || null,

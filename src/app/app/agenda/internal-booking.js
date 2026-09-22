@@ -1,14 +1,17 @@
 "use client";
+// Código de la aplicación para internal-booking.
 
 import { useState } from "react";
 import { readResponse } from "@/components/internal/internal-shell";
 
+// Centralizar la lógica de chile date para mantener consistente el comportamiento de la aplicación
 function chileDate(offsetDays = 1) {
   const value = new Date();
   value.setDate(value.getDate() + offsetDays);
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(value);
 }
 
+// Centralizar la lógica de time para mantener consistente el comportamiento de la aplicación
 function time(value) {
   return new Intl.DateTimeFormat("es-CL", { hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" }).format(new Date(value));
 }
@@ -24,6 +27,7 @@ export default function InternalBooking({ onCreated, professionals }) {
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
 
+  // Centralizar la lógica de search pacientes para mantener consistente el comportamiento de la aplicación
   async function searchPatients(event) {
     event.preventDefault();
     setStatus("searching"); setMessage("");
@@ -34,6 +38,7 @@ export default function InternalBooking({ onCreated, professionals }) {
     } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
   }
 
+  // Consultar load slots y devolver los datos en el formato esperado por la capa llamadora
   async function loadSlots(nextProfessionalId = professionalId, nextDate = date) {
     setProfessionalId(nextProfessionalId); setDate(nextDate); setStartAt(""); setSlots([]);
     if (!nextProfessionalId || !nextDate) return;
@@ -45,6 +50,7 @@ export default function InternalBooking({ onCreated, professionals }) {
     } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
   }
 
+  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     if (!patientId || !professionalId || !startAt) { setMessage("Selecciona paciente, profesional y hora."); return; }

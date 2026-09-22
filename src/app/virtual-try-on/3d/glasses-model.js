@@ -7,12 +7,14 @@ import { BufferAttribute, BufferGeometry, DoubleSide } from "three";
 
 const TEMPLE_DETAIL_PATTERN = /(?:temple|brand_(?:plaque|wordmark)|inner_model_marking)/i;
 
+// Centralizar la lógica de inject after para mantener consistente el comportamiento de la aplicación
 function injectAfter(source, marker, addition) {
   return source.includes(marker)
     ? source.replace(marker, `${marker}\n${addition}`)
     : source;
 }
 
+// Centralizar la lógica de prepare temple material para mantener consistente el comportamiento de la aplicación
 function prepareTempleMaterial(material, geometry) {
   const uniforms = {
     bendRadians: { value: 0 },
@@ -40,6 +42,7 @@ function prepareTempleMaterial(material, geometry) {
   return uniforms;
 }
 
+// Centralizar la lógica de prepare lente material para mantener consistente el comportamiento de la aplicación
 function prepareLensMaterial(material) {
   material.envMapIntensity = 1.9;
   material.opacity = Math.max(0.1, material.opacity ?? 1);
@@ -67,6 +70,7 @@ function prepareLensMaterial(material) {
   material.customProgramCacheKey = () => "optica-stylo-lens-v1";
   material.needsUpdate = true;
 }
+// Código de la aplicación para glasses-model.
 
 function actualizarCurvaturaPatillas(uniforms, bendRadians) {
   uniforms.bendRadians.value = bendRadians;

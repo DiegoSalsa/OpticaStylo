@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para internal-shell.
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -20,6 +21,7 @@ const NAVIGATION = [
 
 const ActorContext = createContext(null);
 
+// Consultar read respuesta y devolver los datos en el formato esperado por la capa llamadora
 async function readResponse(response) {
   const body = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.error?.message ?? "No fue posible completar la solicitud.");
@@ -44,6 +46,7 @@ export default function InternalShell({ children }) {
   const navigation = useMemo(() => NAVIGATION.filter((item) =>
     item.permissions.every((permission) => actor?.permissions.includes(permission))), [actor]);
 
+  // Centralizar la lógica de logout para mantener consistente el comportamiento de la aplicación
   async function logout() {
     try {
       await readResponse(await fetch("/api/auth/logout", { method: "POST" }));
@@ -88,4 +91,5 @@ export default function InternalShell({ children }) {
 }
 
 export { readResponse };
+// Centralizar la lógica de use interno actor para mantener consistente el comportamiento de la aplicación
 export function useInternalActor() { return useContext(ActorContext); }

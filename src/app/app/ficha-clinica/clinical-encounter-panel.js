@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para clinical-encounter-panel.
 
 export default function ClinicalEncounterPanel({ model }) {
   const {

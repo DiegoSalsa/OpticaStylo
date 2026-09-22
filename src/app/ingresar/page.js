@@ -1,3 +1,4 @@
+// Código de la aplicación para page.
 import { Suspense } from "react";
 
 import LoginExperience from "./login-experience";

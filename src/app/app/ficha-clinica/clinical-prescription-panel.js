@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para clinical-prescription-panel.
 
 import PrescriptionVersion from "./prescription-version";
 

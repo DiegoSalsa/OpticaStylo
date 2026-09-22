@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para pos-interface.
 
 import Link from "next/link";
 

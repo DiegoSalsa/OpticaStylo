@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para page.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { readResponse, useInternalActor } from "@/components/internal/internal-shell";
@@ -15,7 +16,9 @@ const columns = [
 ];
 const nextStatus = { PAID: "IN_PREPARATION", IN_PREPARATION: "READY", READY: "DELIVERED" };
 const nextLabel = { PAID: "Iniciar preparación", IN_PREPARATION: "Marcar listo", READY: "Marcar entregado" };
+// Centralizar la lógica de cliente label para mantener consistente el comportamiento de la aplicación
 function customerLabel(sale) { return sale.customer ? `${sale.customer.firstNames} ${sale.customer.lastNames}` : "Sin cliente registrado"; }
+// Centralizar la lógica de cliente rut para mantener consistente el comportamiento de la aplicación
 function customerRut(sale) { return sale.customer?.rut ?? "Sin RUT"; }
 
 export default function OrdersPage() {
@@ -49,6 +52,7 @@ export default function OrdersPage() {
     return text.includes(query.trim().toLowerCase());
   }), [origin, query, sales]);
 
+  // Centralizar la lógica de advance para mantener consistente el comportamiento de la aplicación
   async function advance(sale) {
     const target = nextStatus[sale.status];
     if (!target) return;

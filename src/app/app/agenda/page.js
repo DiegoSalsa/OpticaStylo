@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para page.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -25,6 +26,7 @@ const STATUS = {
   CONFIRMED: "Confirmada",
   NO_SHOW: "No asistió",
 };
+// Centralizar la lógica de default week para mantener consistente el comportamiento de la aplicación
 const defaultWeek = () =>
   DAYS.map((_, dayOfWeek) => ({
     breakEnd: "14:00",
@@ -34,6 +36,7 @@ const defaultWeek = () =>
     isWorking: false,
     startTime: "09:00",
   }));
+// Centralizar la lógica de date only para mantener consistente el comportamiento de la aplicación
 const dateOnly = (value) =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(
     value,
@@ -160,6 +163,7 @@ export default function AgendaPage() {
     return () => controller.abort();
   }, [actor, loadAppointments, loadSchedule, professionalId]);
 
+  // Centralizar la lógica de refresh para mantener consistente el comportamiento de la aplicación
   async function refresh() {
     setStatus("loading");
     setNotice(null);
@@ -177,6 +181,7 @@ export default function AgendaPage() {
       setStatus("error");
     }
   }
+  // Actualizar change reserva manteniendo las restricciones y estados permitidos del dominio
   async function changeAppointment(appointment, nextStatus) {
     let cancellationReason;
     if (nextStatus === "CANCELLED") {
@@ -205,14 +210,17 @@ export default function AgendaPage() {
       setStatus("ready");
     }
   }
+  // Actualizar update calendar start manteniendo las restricciones y estados permitidos del dominio
   function updateCalendarStart(nextFrom) {
     setFrom(nextFrom);
     setTo(addCalendarDays(nextFrom, calendarView === "day" ? 0 : 6));
   }
+  // Actualizar change calendar view manteniendo las restricciones y estados permitidos del dominio
   function changeCalendarView(nextView) {
     setCalendarView(nextView);
     setTo(addCalendarDays(from, nextView === "day" ? 0 : 6));
   }
+  // Actualizar update day manteniendo las restricciones y estados permitidos del dominio
   function updateDay(index, field, value) {
     setWeek((days) =>
       days.map((day, dayIndex) =>
@@ -220,6 +228,7 @@ export default function AgendaPage() {
       ),
     );
   }
+  // Crear o registrar save week aplicando las reglas de negocio y persistencia correspondientes
   async function saveWeek(event) {
     event.preventDefault();
     setStatus("saving");
@@ -239,6 +248,7 @@ export default function AgendaPage() {
       setStatus("ready");
     }
   }
+  // Crear o registrar create block aplicando las reglas de negocio y persistencia correspondientes
   async function createBlock(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -268,6 +278,7 @@ export default function AgendaPage() {
       setStatus("ready");
     }
   }
+  // Eliminar o cancelar remove block de forma controlada y consistente
   async function removeBlock(block) {
     if (!window.confirm("¿Eliminar este bloqueo de agenda?")) return;
     try {

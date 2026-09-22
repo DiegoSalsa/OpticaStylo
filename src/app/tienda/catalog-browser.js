@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para catalog-browser.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -13,13 +14,16 @@ const categories = [
 ];
 const categoryNames = Object.fromEntries(categories.map(({ label, value }) => [value, label]));
 
+// Transformar format price al formato utilizado por el resto de la aplicación
 function formatPrice(value) { return new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" }).format(value); }
+// Centralizar la lógica de producto visual para mantener consistente el comportamiento de la aplicación
 function ProductVisual({ product }) {
   const image = product.images?.[0];
   if (image) return <Image alt={image.alt} className={styles.productPhoto} fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" src={image.url} />;
   return product.category === "FRAME" ? <div className={styles.frameVisual} aria-hidden="true"><span /><i /><span /></div> : <div className={styles.categoryVisual} aria-hidden="true"><Icon name={product.category === "ACCESSORY" ? "sparkle" : "eye"} size={38} /></div>;
 }
 
+// Centralizar la lógica de solicitud productos para mantener consistente el comportamiento de la aplicación
 async function requestProducts(category, query, signal) {
   const search = new URLSearchParams({ page: "1", pageSize: "24", search: query });
   if (category) search.set("category", category);
@@ -63,9 +67,13 @@ export default function CatalogBrowser({ initialCategory = "" }) {
     return filtered;
   }, [availability, prescription, result.items, sort]);
 
+  // Actualizar change category manteniendo las restricciones y estados permitidos del dominio
   function changeCategory(value) { setStatus("loading"); setError(""); setCategory(value); }
+  // Centralizar la lógica de clear filters para mantener consistente el comportamiento de la aplicación
   function clearFilters() { setStatus("loading"); setError(""); setCategory(""); setQuery(""); setSubmittedQuery(""); setPrescription("all"); setAvailability("all"); setSort("featured"); }
+  // Centralizar la lógica de retry para mantener consistente el comportamiento de la aplicación
   function retry() { setStatus("loading"); setError(""); setReloadKey((value) => value + 1); }
+  // Centralizar la lógica de submit search para mantener consistente el comportamiento de la aplicación
   function submitSearch(event) { event.preventDefault(); setStatus("loading"); setError(""); setSubmittedQuery(query.trim()); }
 
   return <div className={styles.catalog}>

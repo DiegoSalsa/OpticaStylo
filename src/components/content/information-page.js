@@ -1,4 +1,5 @@
 import PublicFooter from "@/components/navigation/public-footer";
+// Código de la aplicación para information-page.
 import PublicHeader from "@/components/navigation/public-header";
 
 export default function InformationPage({ children, eyebrow, intro, title }) {

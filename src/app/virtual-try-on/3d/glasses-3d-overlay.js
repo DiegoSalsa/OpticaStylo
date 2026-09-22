@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para glasses-3d-overlay.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -20,6 +21,7 @@ const DEFAULT_FIT_ADJUSTMENT = Object.freeze({
   verticalOffsetMm: 2,
 });
 
+// Centralizar la lógica de cámara error message para mantener consistente el comportamiento de la aplicación
 function cameraErrorMessage(error) {
   if (error?.name === "NotAllowedError") {
     return "El permiso fue rechazado. Habilita la cámara para este sitio y vuelve a intentarlo.";
@@ -133,6 +135,7 @@ export default function Glasses3DOverlay() {
 
   useEffect(() => {
     const controller = new AbortController();
+    // Consultar load catálogo y devolver los datos en el formato esperado por la capa llamadora
     async function loadCatalog() {
       try {
         const response = await fetch("/api/store/virtual-try-on/models", {
@@ -155,6 +158,7 @@ export default function Glasses3DOverlay() {
 
   useEffect(() => {
     const controller = new AbortController();
+    // Consultar load modelo metadatos y devolver los datos en el formato esperado por la capa llamadora
     async function loadModelMetadata() {
       setModelError(false);
       setModelReady(false);
@@ -340,6 +344,7 @@ export default function Glasses3DOverlay() {
         streamRef.current = stream;
         const video = videoRef.current;
         video.srcObject = stream;
+        // Centralizar la lógica de sync dimensions para mantener consistente el comportamiento de la aplicación
         const syncDimensions = () => {
           if (video.videoWidth > 0 && video.videoHeight > 0) {
             setCameraAspectRatio(video.videoWidth / video.videoHeight);
@@ -357,6 +362,7 @@ export default function Glasses3DOverlay() {
         setStatusMessage("Cámara activa. Preparando el seguimiento facial…");
 
         let previousFaceState = false;
+        // Centralizar la lógica de render marco para mantener consistente el comportamiento de la aplicación
         const renderFrame = (timestamp) => {
           if (!runningRef.current) return;
 
