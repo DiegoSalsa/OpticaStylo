@@ -1,3 +1,4 @@
+// Código de la aplicación para page.
 import PublicFooter from "@/components/navigation/public-footer";
 import PublicHeader from "@/components/navigation/public-header";
 import BookingExperience from "./booking-experience";

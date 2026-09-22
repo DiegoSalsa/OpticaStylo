@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para page.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -27,6 +28,7 @@ const EMPTY = {
   phone: "",
   rut: "",
 };
+// Determinar si is minor cumple la condición requerida por la aplicación
 function isMinor(birthDate) {
   if (!birthDate) return false;
   const birth = new Date(`${birthDate}T00:00:00`);
@@ -74,6 +76,7 @@ export default function PatientsPage() {
     return () => controller.abort();
   }, [actor, requestPatients]);
 
+  // Centralizar la lógica de select para mantener consistente el comportamiento de la aplicación
   async function select(patient) {
     setSelectedId(patient.id);
     setStatus("loading-detail");
@@ -92,11 +95,13 @@ export default function PatientsPage() {
       setStatus("ready");
     }
   }
+  // Centralizar la lógica de reset para mantener consistente el comportamiento de la aplicación
   function reset() {
     setSelectedId(null);
     setForm(EMPTY);
     setNotice(null);
   }
+  // Centralizar la lógica de search para mantener consistente el comportamiento de la aplicación
   async function search(event) {
     event.preventDefault();
     const normalized = query.trim();
@@ -114,12 +119,14 @@ export default function PatientsPage() {
       setStatus("error");
     }
   }
+  // Actualizar set guardian manteniendo las restricciones y estados permitidos del dominio
   function setGuardian(field, value) {
     setForm((current) => ({
       ...current,
       guardian: { ...(current.guardian ?? EMPTY_GUARDIAN), [field]: value },
     }));
   }
+  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     setStatus("saving");

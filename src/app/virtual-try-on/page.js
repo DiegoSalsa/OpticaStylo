@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+// Código de la aplicación para page.
 
 export const metadata = {
   description: "Probador virtual 3D de Óptica Stylo.",

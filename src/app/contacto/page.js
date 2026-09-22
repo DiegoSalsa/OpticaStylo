@@ -1,3 +1,4 @@
+// Código de la aplicación para page.
 import Link from "next/link";
 import InformationPage from "@/components/content/information-page";
 

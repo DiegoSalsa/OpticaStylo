@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para cart-experience.
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -13,11 +14,14 @@ import { ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-cli
 
 import PrescriptionImageInput from "./prescription-image-input";
 
+// Centralizar la lógica de optical datos para mantener consistente el comportamiento de la aplicación
 function opticalData(form) {
+  // Centralizar la lógica de value para mantener consistente el comportamiento de la aplicación
   const value = (name, nullable = false) => {
     const raw = form.get(name);
     return nullable && raw === "" ? null : Number(raw);
   };
+  // Centralizar la lógica de eye para mantener consistente el comportamiento de la aplicación
   const eye = (prefix) => ({
     addition: value(`${prefix}Addition`, true),
     axis: value(`${prefix}Axis`, true),
@@ -41,10 +45,12 @@ const EMPTY_PRESCRIPTION_DRAFT = Object.freeze({
   warnings: Object.freeze([]),
 });
 
+// Centralizar la lógica de field value para mantener consistente el comportamiento de la aplicación
 function fieldValue(value) {
   return value ?? "";
 }
 
+// Centralizar la lógica de mount name para mantener consistente el comportamiento de la aplicación
 function mountName(item, items) {
   if (!item.mountFrameProductId) return null;
   return items.find((candidate) => candidate.productId === item.mountFrameProductId)?.name
@@ -78,6 +84,7 @@ export default function CartExperience() {
       });
   }, []);
 
+  // Actualizar update manteniendo las restricciones y estados permitidos del dominio
   async function update(item, quantity) {
     setError("");
     setStatus("saving");
@@ -100,6 +107,7 @@ export default function CartExperience() {
     }
   }
 
+  // Centralizar la lógica de upload and read receta imagen para mantener consistente el comportamiento de la aplicación
   async function uploadAndReadPrescriptionImage(image) {
     const upload = new FormData();
     upload.set("image", image);
@@ -118,6 +126,7 @@ export default function CartExperience() {
     setNotice("Completamos los valores sugeridos. Revisa cada uno antes de confirmar la receta.");
   }
 
+  // Gestionar handle receta imagen change y coordinar sus efectos secundarios
   async function handlePrescriptionImageChange(image) {
     if (!image) {
       setPrescriptionImage(null);
@@ -136,6 +145,7 @@ export default function CartExperience() {
     }
   }
 
+  // Crear o registrar save receta aplicando las reglas de negocio y persistencia correspondientes
   async function savePrescription(event) {
     event.preventDefault();
     setError("");
@@ -184,12 +194,14 @@ export default function CartExperience() {
     }
   }
 
+  // Centralizar la lógica de enable manual imagen review para mantener consistente el comportamiento de la aplicación
   function enableManualImageReview() {
     setError("");
     setNotice("Completa y confirma los valores manualmente. La imagen se conservará como respaldo privado.");
     setPrescriptionDraft(EMPTY_PRESCRIPTION_DRAFT);
   }
 
+  // Verificar checkout para impedir que la operación continúe en un estado inválido
   async function checkout(event) {
     event.preventDefault();
     setError("");

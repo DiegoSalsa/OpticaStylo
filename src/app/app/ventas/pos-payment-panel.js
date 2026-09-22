@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para pos-payment-panel.
 
 import Icon from "@/components/ui/icon";
 import { PAYMENT_METHODS } from "./pos-form-model";

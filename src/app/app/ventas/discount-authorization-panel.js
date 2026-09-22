@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para discount-authorization-panel.
 
 import { useState } from "react";
 
@@ -11,6 +12,7 @@ export default function DiscountAuthorizationPanel({ amountCents, reason, onAuth
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     setPending(true);

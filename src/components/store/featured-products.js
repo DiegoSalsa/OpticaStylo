@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para featured-products.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import styles from "./featured-products.module.css";
 
 const categoryNames = { ACCESSORY: "Accesorio", FRAME: "Marco", OTHER: "Producto", PRESCRIPTION_LENS: "Cristal óptico", TREATMENT: "Tratamiento" };
 
+// Transformar format price al formato utilizado por el resto de la aplicación
 function formatPrice(value) {
   return new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" }).format(value);
 }

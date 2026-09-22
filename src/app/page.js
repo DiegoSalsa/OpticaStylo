@@ -1,3 +1,4 @@
+// Código de la aplicación para page.
 import Link from "next/link";
 import Image from "next/image";
 import PublicFooter from "@/components/navigation/public-footer";

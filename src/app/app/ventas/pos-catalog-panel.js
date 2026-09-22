@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para pos-catalog-panel.
 
 import Icon from "@/components/ui/icon";
 import { ADULT_BIRTH_DATE_CUTOFF, customerDetails } from "./pos-form-model";

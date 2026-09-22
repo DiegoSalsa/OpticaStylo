@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para use-resource-search.
 
 import { useEffect, useState } from "react";
 

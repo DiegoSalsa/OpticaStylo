@@ -1,9 +1,11 @@
+// Código de la aplicación para face-tracking.
 import {
   FACE_LANDMARKER_MODEL_URL,
   MEDIAPIPE_WASM_URL,
 } from "@/constants/virtual-try-on";
 import { withMediaPipeConsoleFilter } from "@/utils/mediapipe-console";
 
+// Crear o registrar create rostro seguimiento interno aplicando las reglas de negocio y persistencia correspondientes
 async function createFaceTrackingInternal(runningMode) {
   const { FaceLandmarker, FilesetResolver } =
     await import("@mediapipe/tasks-vision");
@@ -49,6 +51,7 @@ async function createFaceTrackingInternal(runningMode) {
   return { faceMeshTriangleIndices, ...tracking };
 }
 
+// Crear o registrar create rostro seguimiento aplicando las reglas de negocio y persistencia correspondientes
 export async function createFaceTracking(runningMode = "VIDEO") {
   return withMediaPipeConsoleFilter(() =>
     createFaceTrackingInternal(runningMode),

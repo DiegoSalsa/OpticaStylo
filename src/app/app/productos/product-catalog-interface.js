@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para product-catalog-interface.
 
 import Image from "next/image";
 

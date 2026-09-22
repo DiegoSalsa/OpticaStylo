@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para agenda-calendar.
 
 import Link from "next/link";
 import Icon from "@/components/ui/icon";
@@ -15,6 +16,7 @@ const STATUS = {
   NO_SHOW: "No asistió",
 };
 
+// Transformar format date al formato utilizado por el resto de la aplicación
 function formatDate(value) {
   return new Intl.DateTimeFormat("es-CL", {
     day: "numeric",
@@ -24,6 +26,7 @@ function formatDate(value) {
   }).format(new Date(`${value}T12:00:00Z`));
 }
 
+// Transformar format time al formato utilizado por el resto de la aplicación
 function formatTime(value) {
   return new Intl.DateTimeFormat("es-CL", {
     hour: "2-digit",

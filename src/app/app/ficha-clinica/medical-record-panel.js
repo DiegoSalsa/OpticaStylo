@@ -1,4 +1,5 @@
 "use client";
+// Código de la aplicación para medical-record-panel.
 
 import { FIELD_LABELS, RECORD_FIELDS } from "./clinical-form-model";
 

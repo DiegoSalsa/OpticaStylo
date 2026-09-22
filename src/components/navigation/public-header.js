@@ -1,4 +1,5 @@
 import Link from "next/link";
+// Código de la aplicación para public-header.
 import BrandLogo from "@/components/brand/brand-logo";
 import Icon from "@/components/ui/icon";
 
