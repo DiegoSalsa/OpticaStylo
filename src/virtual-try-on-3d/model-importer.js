@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+// Lógica del probador virtual 3D y sus contratos de datos.
 
 import { Box3, Vector3 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -21,6 +22,7 @@ const ROLE_PATTERNS = Object.freeze({
   templeRight: [/temple.*(?:_r(?:_|$)|right)/i],
 });
 
+// Validar y normalizar parse glb antes de continuar con la operación
 function parseGlb(data) {
   if (typeof globalThis.ProgressEvent === "undefined") {
     globalThis.ProgressEvent = class ProgressEvent {};
@@ -32,6 +34,7 @@ function parseGlb(data) {
   });
 }
 
+// Centralizar la lógica de union bounds para mantener consistente el comportamiento de la aplicación
 function unionBounds(items) {
   const bounds = new Box3();
   bounds.makeEmpty();
@@ -39,18 +42,22 @@ function unionBounds(items) {
   return bounds;
 }
 
+// Centralizar la lógica de box center para mantener consistente el comportamiento de la aplicación
 function boxCenter(bounds) {
   return bounds.getCenter(new Vector3()).toArray();
 }
 
+// Centralizar la lógica de box size para mantener consistente el comportamiento de la aplicación
 function boxSize(bounds) {
   return bounds.getSize(new Vector3()).toArray();
 }
 
+// Centralizar la lógica de matches rol para mantener consistente el comportamiento de la aplicación
 function matchesRole(name, role) {
   return ROLE_PATTERNS[role].some((pattern) => pattern.test(name));
 }
 
+// Centralizar la lógica de classify meshes para mantener consistente el comportamiento de la aplicación
 function classifyMeshes(scene) {
   scene.updateMatrixWorld(true);
   const meshes = [];
@@ -68,16 +75,19 @@ function classifyMeshes(scene) {
   return { meshes, roles };
 }
 
+// Centralizar la lógica de infer millimeters per unit para mantener consistente el comportamiento de la aplicación
 function inferMillimetersPerUnit(rawWidth) {
   if (rawWidth >= 0.03 && rawWidth <= 0.5) return 1000;
   if (rawWidth >= 30 && rawWidth <= 500) return 1;
   return null;
 }
 
+// Centralizar la lógica de average para mantener consistente el comportamiento de la aplicación
 function average(values) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+// Centralizar la lógica de measured lente width para mantener consistente el comportamiento de la aplicación
 function measuredLensWidth(roles, millimetersPerUnit) {
   const widths = [...roles.lensLeft, ...roles.lensRight]
     .map((mesh) => boxSize(mesh.bounds)[0] * millimetersPerUnit)
@@ -85,6 +95,7 @@ function measuredLensWidth(roles, millimetersPerUnit) {
   return widths.length > 0 ? average(widths) : null;
 }
 
+// Centralizar la lógica de measured bridge width para mantener consistente el comportamiento de la aplicación
 function measuredBridgeWidth(roles, millimetersPerUnit) {
   if (roles.lensLeft.length === 0 || roles.lensRight.length === 0) return null;
   const first = unionBounds(roles.lensLeft);
@@ -97,6 +108,7 @@ function measuredBridgeWidth(roles, millimetersPerUnit) {
   return gap > 0 ? gap : null;
 }
 
+// Centralizar la lógica de measured temple length para mantener consistente el comportamiento de la aplicación
 function measuredTempleLength(roles, millimetersPerUnit) {
   const lengths = [...roles.templeLeft, ...roles.templeRight]
     .map((mesh) => boxSize(mesh.bounds)[2] * millimetersPerUnit)
@@ -104,21 +116,25 @@ function measuredTempleLength(roles, millimetersPerUnit) {
   return lengths.length > 0 ? average(lengths) : null;
 }
 
+// Centralizar la lógica de rol names para mantener consistente el comportamiento de la aplicación
 function roleNames(roles, role) {
   return roles[role].map((item) => item.name);
 }
 
+// Centralizar la lógica de projected depth para mantener consistente el comportamiento de la aplicación
 function projectedDepth(bounds, originDepth, direction) {
   const first = direction * (bounds.min.z - originDepth);
   const second = direction * (bounds.max.z - originDepth);
   return [Math.min(first, second), Math.max(first, second)];
 }
 
+// Centralizar la lógica de rounded para mantener consistente el comportamiento de la aplicación
 function rounded(value, precision = 6) {
   const factor = 10 ** precision;
   return Math.round(value * factor) / factor;
 }
 
+// Centralizar la lógica de rounded vector para mantener consistente el comportamiento de la aplicación
 function roundedVector(values) {
   return values.map((value) => rounded(value));
 }

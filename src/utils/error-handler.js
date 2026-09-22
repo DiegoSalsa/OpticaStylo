@@ -1,6 +1,8 @@
 import { AppError } from "./app-error.js";
+// Utilidades compartidas para error-handler.
 import { createErrorResponse } from "./api-response.js";
 
+// Gestionar handle api error y coordinar sus efectos secundarios
 export function handleApiError(error) {
   if (error instanceof AppError) {
     return createErrorResponse(
@@ -24,6 +26,7 @@ export function handleApiError(error) {
   );
 }
 
+// Centralizar la lógica de execute api handler para mantener consistente el comportamiento de la aplicación
 export async function executeApiHandler(handler) {
   try {
     return await handler();

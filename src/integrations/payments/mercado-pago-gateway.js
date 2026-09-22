@@ -1,3 +1,4 @@
+// Código de la aplicación para mercado-pago-gateway.
 import {
   InvalidWebhookSignatureError,
   MerchantOrder,
@@ -7,6 +8,7 @@ import {
   WebhookSignatureValidator,
 } from "mercadopago";
 
+// Crear o registrar create client aplicando las reglas de negocio y persistencia correspondientes
 function createClient(accessToken) {
   return new MercadoPagoConfig({
     accessToken,
@@ -14,6 +16,7 @@ function createClient(accessToken) {
   });
 }
 
+// Verificar checkout urls para impedir que la operación continúe en un estado inválido
 function checkoutUrls(publicUrl) {
   if (!publicUrl) return {};
   return {
@@ -27,6 +30,7 @@ function checkoutUrls(publicUrl) {
   };
 }
 
+// Crear o registrar create mercado pago preference aplicando las reglas de negocio y persistencia correspondientes
 export async function createMercadoPagoPreference({ attempt, config, sale }) {
   const preference = new Preference(createClient(config.accessToken));
   const response = await preference.create({
@@ -41,10 +45,12 @@ export async function createMercadoPagoPreference({ attempt, config, sale }) {
   };
 }
 
+// Centralizar la lógica de select mercado pago checkout url para mantener consistente el comportamiento de la aplicación
 export function selectMercadoPagoCheckoutUrl(preference) {
   return preference.init_point ?? preference.sandbox_init_point ?? null;
 }
 
+// Crear o registrar create mercado pago preference body aplicando las reglas de negocio y persistencia correspondientes
 export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
   const payer = sale.customer ? {
     email: sale.customer.email,
@@ -73,6 +79,7 @@ export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
   };
 }
 
+// Consultar get mercado pago pago y devolver los datos en el formato esperado por la capa llamadora
 export async function getMercadoPagoPayment(paymentId, config) {
   const client = createClient(config.accessToken);
   const payment = new Payment(client);
@@ -98,10 +105,12 @@ export async function getMercadoPagoPayment(paymentId, config) {
   };
 }
 
+// Centralizar la lógica de resolve externo preference id para mantener consistente el comportamiento de la aplicación
 export function resolveExternalPreferenceId(payment, merchantOrder) {
   return payment.preference_id ?? merchantOrder?.preference_id ?? null;
 }
 
+// Validar y normalizar validate mercado pago signature antes de continuar con la operación
 export function validateMercadoPagoSignature({
   dataId,
   secret,

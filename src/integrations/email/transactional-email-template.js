@@ -1,3 +1,4 @@
+// Código de la aplicación para transactional-email-template.
 const BRAND_NAME = "Stylo Vivo";
 const TEMPLATE_VERSION = "2026-08-22.v1";
 
@@ -11,6 +12,7 @@ export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
   "POS_FINAL_RECEIPT",
 ]);
 
+// Centralizar la lógica de escape correo html para mantener consistente el comportamiento de la aplicación
 export function escapeEmailHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -20,6 +22,7 @@ export function escapeEmailHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+// Centralizar la lógica de clp para mantener consistente el comportamiento de la aplicación
 function clp(value) {
   const amount = Number(value);
   if (!Number.isSafeInteger(amount) || amount < 0) return null;
@@ -30,6 +33,7 @@ function clp(value) {
   }).format(amount);
 }
 
+// Centralizar la lógica de local date para mantener consistente el comportamiento de la aplicación
 function localDate(value, timeZone) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
@@ -40,16 +44,19 @@ function localDate(value, timeZone) {
   }).format(date);
 }
 
+// Centralizar la lógica de venta reference para mantener consistente el comportamiento de la aplicación
 function saleReference(payload) {
   const value = Number(payload.saleNumber);
   return Number.isSafeInteger(value) && value > 0 ? `N.º ${value}` : null;
 }
 
+// Centralizar la lógica de comprobante reference para mantener consistente el comportamiento de la aplicación
 function receiptReference(payload) {
   const value = Number(payload.receiptNumber);
   return Number.isSafeInteger(value) && value > 0 ? `N.º ${value}` : null;
 }
 
+// Centralizar la lógica de content for para mantener consistente el comportamiento de la aplicación
 function contentFor(email, timeZone) {
   const payload = email.payload ?? {};
   switch (email.templateCode) {
@@ -112,10 +119,12 @@ function contentFor(email, timeZone) {
   }
 }
 
+// Centralizar la lógica de visible facts para mantener consistente el comportamiento de la aplicación
 function visibleFacts(facts) {
   return facts.filter(([, value]) => value != null && value !== "");
 }
 
+// Centralizar la lógica de render transaccional correo para mantener consistente el comportamiento de la aplicación
 export function renderTransactionalEmail(email, { mode, timeZone = "America/Santiago" }) {
   const content = contentFor(email, timeZone);
   const facts = visibleFacts(content.facts);

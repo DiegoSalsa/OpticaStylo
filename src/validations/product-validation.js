@@ -1,4 +1,5 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para product-validation.
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -12,10 +13,12 @@ export const PRODUCT_CATEGORIES = Object.freeze([
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new AppError({ code: "INVALID_PRODUCT_DATA", message, status: 400 });
 }
 
+// Verificar required text para impedir que la operación continúe en un estado inválido
 function requiredText(value, label, maximumLength) {
   if (typeof value !== "string") fail(`${label} es obligatorio.`);
   const normalized = value.trim().replace(/\s+/g, " ");
@@ -26,6 +29,7 @@ function requiredText(value, label, maximumLength) {
   return normalized;
 }
 
+// Centralizar la lógica de price para mantener consistente el comportamiento de la aplicación
 function price(value) {
   if (!Number.isSafeInteger(value) || value <= 0) {
     fail("El precio debe ser un entero positivo expresado en pesos chilenos.");
@@ -33,6 +37,7 @@ function price(value) {
   return value;
 }
 
+// Validar y normalizar validate producto id antes de continuar con la operación
 export function validateProductId(value) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     fail("El identificador del producto no es válido.");
@@ -40,6 +45,7 @@ export function validateProductId(value) {
   return value.toLowerCase();
 }
 
+// Validar y normalizar validate create producto entrada antes de continuar con la operación
 export function validateCreateProductInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -66,6 +72,7 @@ export function validateCreateProductInput(input) {
   };
 }
 
+// Validar y normalizar validate update producto entrada antes de continuar con la operación
 export function validateUpdateProductInput(input, current) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -75,6 +82,7 @@ export function validateUpdateProductInput(input, current) {
     fail("Debe indicar al menos un dato para actualizar.");
   }
 
+  // Centralizar la lógica de value para mantener consistente el comportamiento de la aplicación
   const value = (field) => Object.hasOwn(input, field) ? input[field] : current[field];
   const merged = validateCreateProductInput({
     category: value("category"),
@@ -90,6 +98,7 @@ export function validateUpdateProductInput(input, current) {
   return { ...merged, isActive: value("isActive") };
 }
 
+// Validar y normalizar validate producto list consulta antes de continuar con la operación
 export function validateProductListQuery(searchParams) {
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE));

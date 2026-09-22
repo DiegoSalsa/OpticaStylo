@@ -1,5 +1,7 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para payment-validation.
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new AppError({
     code: "INVALID_PAYMENT_NOTIFICATION",
@@ -8,6 +10,7 @@ function fail(message) {
   });
 }
 
+// Verificar required text para impedir que la operación continúe en un estado inválido
 function requiredText(value, label, maximumLength) {
   const normalized = typeof value === "string" ? value.trim() : "";
   if (!normalized || normalized.length > maximumLength) {
@@ -16,6 +19,7 @@ function requiredText(value, label, maximumLength) {
   return normalized;
 }
 
+// Validar y normalizar validate mercado pago notification antes de continuar con la operación
 export function validateMercadoPagoNotification({
   body,
   dataId,

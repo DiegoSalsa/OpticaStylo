@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de customer-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -15,10 +16,12 @@ import {
   validateUpdateCustomerInput,
 } from "../validations/customer-validation.js";
 
+// Centralizar la lógica de not found para mantener consistente el comportamiento de la aplicación
 function notFound() {
   throw new AppError({ code: "CUSTOMER_NOT_FOUND", message: "No se encontró el cliente.", status: 404 });
 }
 
+// Centralizar la lógica de convert unique violation para mantener consistente el comportamiento de la aplicación
 function convertUniqueViolation(error) {
   if (error?.code !== "23505") throw error;
   const linkedPatient = error.constraint === "customers_patient_id_key";
@@ -32,6 +35,7 @@ function convertUniqueViolation(error) {
   });
 }
 
+// Crear o registrar create cliente aplicando las reglas de negocio y persistencia correspondientes
 export async function createCustomer(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.CUSTOMERS_MANAGE]);
   const data = validateCreateCustomerInput(input);
@@ -60,6 +64,7 @@ export async function createCustomer(input, actor, dependencies = {}) {
   }
 }
 
+// Consultar get cliente y devolver los datos en el formato esperado por la capa llamadora
 export async function getCustomer(customerId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.CUSTOMERS_READ]);
   const id = validateCustomerId(customerId);
@@ -68,11 +73,13 @@ export async function getCustomer(customerId, actor, dependencies = {}) {
   return customer;
 }
 
+// Consultar get cliente list y devolver los datos en el formato esperado por la capa llamadora
 export async function getCustomerList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.CUSTOMERS_READ]);
   return (dependencies.listCustomers ?? listCustomers)(validateCustomerListQuery(searchParams));
 }
 
+// Actualizar update cliente manteniendo las restricciones y estados permitidos del dominio
 export async function updateCustomer(customerId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.CUSTOMERS_MANAGE]);
   const id = validateCustomerId(customerId);

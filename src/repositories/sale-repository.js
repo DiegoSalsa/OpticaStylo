@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con sale-repository.
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import {
   consumeDiscountAuthorizationWithClient,
@@ -21,6 +22,7 @@ const saleInclude = {
   users_sales_discount_authorized_byTousers: true,
 };
 
+// Transformar map comprobante al formato utilizado por el resto de la aplicación
 function mapReceipt(row) {
   return row ? {
     emailError: row.email_error, emailProviderId: row.email_provider_id,
@@ -30,6 +32,7 @@ function mapReceipt(row) {
   } : null;
 }
 
+// Transformar map venta al formato utilizado por el resto de la aplicación
 function mapSale(row, details = true) {
   if (!row) return null;
   const cart = row.store_carts;
@@ -122,14 +125,17 @@ function mapSale(row, details = true) {
   };
 }
 
+// Consultar find venta with client y devolver los datos en el formato esperado por la capa llamadora
 async function findSaleWithClient(client, saleId) {
   return mapSale(await client.sales.findUnique({ include: saleInclude, where: { id: saleId } }));
 }
 
+// Consultar find venta by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findSaleById(saleId) {
   return findSaleWithClient(prisma, saleId);
 }
 
+// Consultar load draft references y devolver los datos en el formato esperado por la capa llamadora
 async function loadDraftReferences(client, draft) {
   if (draft.customerId && !(await client.customers.findUnique({ select: { id: true }, where: { id: draft.customerId } }))) {
     return { reason: "CUSTOMER_NOT_FOUND" };
@@ -174,6 +180,7 @@ async function loadDraftReferences(client, draft) {
   return { additionsSubtotalCents, discountCents, lines, productSubtotalCents, reason: null, subtotalCents, totalCents: subtotalCents - discountCents };
 }
 
+// Centralizar la lógica de item datos para mantener consistente el comportamiento de la aplicación
 function itemData(saleId, lines) {
   return lines.map((line) => ({
     mount_source: line.mount?.source ?? null, mounted_on_product_id: line.mount?.frameProductId ?? null,
@@ -184,6 +191,7 @@ function itemData(saleId, lines) {
   }));
 }
 
+// Crear o registrar addition datos aplicando las reglas de negocio y persistencia correspondientes
 function additionData(saleId, additions) {
   return additions.map((item, index) => ({
     description: item.description, name: item.name, position: index + 1,
@@ -191,19 +199,23 @@ function additionData(saleId, additions) {
   }));
 }
 
+// Crear o registrar insert venta event aplicando las reglas de negocio y persistencia correspondientes
 async function insertSaleEvent(client, saleId, eventType, actorUserId, { details = null, newStatus = null, previousStatus = null } = {}) {
+  // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
   await client.sale_events.create({ data: {
     details: details == null ? null : JSON.stringify(details), event_type: eventType,
     new_status: newStatus, performed_by: actorUserId, previous_status: previousStatus, sale_id: saleId,
   } });
 }
 
+// Centralizar la lógica de authorize descuento para mantener consistente el comportamiento de la aplicación
 async function authorizeDiscount(client, draft, actorUserId) {
   if (!draft.discount) return draft;
   const authorizedBy = await lockDiscountAuthorizationWithClient(client, { ...draft.discount, requestedBy: actorUserId });
   return authorizedBy ? { ...draft, discount: { ...draft.discount, authorizedAt: new Date(), authorizedBy } } : null;
 }
 
+// Centralizar la lógica de record descuento para mantener consistente el comportamiento de la aplicación
 async function recordDiscount(client, saleId, draft, actorUserId, status = "QUOTATION") {
   if (!draft.discount) return;
   await insertSaleEvent(client, saleId, "DISCOUNT_AUTHORIZED", actorUserId, {
@@ -213,7 +225,9 @@ async function recordDiscount(client, saleId, draft, actorUserId, status = "QUOT
   await consumeDiscountAuthorizationWithClient(client, draft.discount.authorizationId, saleId);
 }
 
+// Crear o registrar create venta aplicando las reglas de negocio y persistencia correspondientes
 export async function createSale(draft, actorUserId, options = {}) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     if (options.requestKey) {
       const existing = await client.sales.findFirst({ where: { created_by: actorUserId, request_key: options.requestKey } });
@@ -248,10 +262,13 @@ export async function createSale(draft, actorUserId, options = {}) {
     });
     await recordDiscount(client, sale.id, authorized, actorUserId, status);
     return { reason: null, sale: await findSaleWithClient(client, sale.id) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Actualizar update venta draft manteniendo las restricciones y estados permitidos del dominio
 export async function updateSaleDraft(saleId, draft, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const sale = await client.sales.findUnique({ where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
@@ -283,9 +300,11 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
     });
     await recordDiscount(client, saleId, authorized, actorUserId);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Crear o registrar enqueue pedido aplicando las reglas de negocio y persistencia correspondientes
 async function enqueueOrder(client, sale) {
   if (!sale.customers?.email) return;
   const key = transactionalEmailDeduplicationKey("ORDER_CONFIRMED", sale.id);
@@ -298,7 +317,9 @@ async function enqueueOrder(client, sale) {
   });
 }
 
+// Centralizar la lógica de confirm venta para mantener consistente el comportamiento de la aplicación
 export async function confirmSale(saleId, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const sale = await client.sales.findUnique({
       include: {
@@ -322,10 +343,13 @@ export async function confirmSale(saleId, actorUserId) {
     await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: "PENDING", previousStatus: "QUOTATION" });
     await enqueueOrder(client, sale);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Crear o registrar caja venta pago aplicando las reglas de negocio y persistencia correspondientes
 export async function registerSalePayment(saleId, payment, actorUserId, options = {}) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const sale = await client.sales.findUnique({ include: { customers: true, sale_payments: true }, where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
@@ -363,12 +387,15 @@ export async function registerSalePayment(saleId, payment, actorUserId, options 
       });
     }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
 const ALLOWED_TRANSITIONS = Object.freeze({ PAID: ["IN_PREPARATION"], IN_PREPARATION: ["READY"], READY: ["DELIVERED"] });
 
+// Actualizar change venta estado manteniendo las restricciones y estados permitidos del dominio
 export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const current = await client.sales.findUnique({ include: { sale_payments: true }, where: { id: saleId } });
     if (!current) return { reason: "SALE_NOT_FOUND", sale: null };
@@ -388,11 +415,14 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
       await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: change.status, previousStatus: current.status });
     }
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Consultar list ventas y devolver los datos en el formato esperado por la capa llamadora
 export async function listSales({ customerId, page, pageSize, status }) {
   const where = { ...(customerId ? { customer_id: customerId } : {}), ...(status ? { status } : {}) };
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   const [items, total] = await prisma.$transaction([
     prisma.sales.findMany({
       include: saleInclude, orderBy: [{ created_at: "desc" }, { sale_number: "desc" }],
@@ -403,6 +433,7 @@ export async function listSales({ customerId, page, pageSize, status }) {
   return { items: items.map((row) => mapSale(row, false)), page, pageSize, total, totalPages: total ? Math.ceil(total / pageSize) : 0 };
 }
 
+// Consultar list venta events y devolver los datos en el formato esperado por la capa llamadora
 export async function listSaleEvents(saleId) {
   return (await prisma.sale_events.findMany({
     orderBy: [{ created_at: "asc" }, { id: "asc" }], where: { sale_id: saleId },
@@ -414,6 +445,7 @@ export async function listSaleEvents(saleId) {
   }));
 }
 
+// Transformar build pago comprobante snapshot al formato utilizado por el resto de la aplicación
 export function buildPaymentReceiptSnapshot(sale, paymentId) {
   if (!paymentId) return null;
   const index = sale.payments.findIndex((payment) => payment.id === paymentId);
@@ -423,6 +455,7 @@ export function buildPaymentReceiptSnapshot(sale, paymentId) {
   return { balanceCents: sale.totalCents - paidCents, paidCents, payment: payments.at(-1), payments, type: "PAYMENT" };
 }
 
+// Crear o registrar enqueue comprobante aplicando las reglas de negocio y persistencia correspondientes
 async function enqueueReceipt(client, receipt, emailedTo, saleId, paymentId, templateCode) {
   if (!emailedTo) return;
   const key = transactionalEmailDeduplicationKey(templateCode, receipt.id);
@@ -435,7 +468,9 @@ async function enqueueReceipt(client, receipt, emailedTo, saleId, paymentId, tem
   });
 }
 
+// Determinar si issue venta comprobante cumple la condición requerida por la aplicación
 export async function issueSaleReceipt(saleId, request, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const locked = await client.sales.findUnique({ where: { id: saleId } });
     if (!locked) return { reason: "SALE_NOT_FOUND", receipt: null };
@@ -487,9 +522,11 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
       }
     }
     return { reason: null, receipt: mapReceipt(receipt) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Consultar find comprobante by venta id y devolver los datos en el formato esperado por la capa llamadora
 export async function findReceiptBySaleId(saleId, receiptId = null) {
   return mapReceipt(await prisma.sale_receipts.findFirst({
     orderBy: [{ issued_at: "desc" }, { receipt_number: "desc" }],

@@ -1,7 +1,9 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para discount-authorization-validation.
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new AppError({
     code: "INVALID_DISCOUNT_AUTHORIZATION",
@@ -10,6 +12,7 @@ function fail(message) {
   });
 }
 
+// Validar y normalizar validate descuento authorization entrada antes de continuar con la operación
 export function validateDiscountAuthorizationInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la autorización no es válido.");

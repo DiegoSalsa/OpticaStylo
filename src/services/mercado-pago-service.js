@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de mercado-pago-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -36,6 +37,7 @@ const ATTEMPT_ERRORS = Object.freeze({
   SALE_NOT_PAYABLE: ["SALE_NOT_PAYABLE", "Solo una venta pendiente con saldo puede pagarse."],
 });
 
+// Construir y lanzar el error de dominio asociado a throw attempt reason
 function throwAttemptReason(reason) {
   const [code, message] = ATTEMPT_ERRORS[reason] ?? [
     "PAYMENT_ATTEMPT_REJECTED",
@@ -44,6 +46,7 @@ function throwAttemptReason(reason) {
   throw new AppError({ code, message, status: reason === "SALE_NOT_FOUND" ? 404 : 409 });
 }
 
+// Centralizar la lógica de provider unavailable para mantener consistente el comportamiento de la aplicación
 function providerUnavailable(cause) {
   return new AppError({
     code: "PAYMENT_PROVIDER_UNAVAILABLE",
@@ -53,6 +56,7 @@ function providerUnavailable(cause) {
   });
 }
 
+// Crear o registrar create checkout aplicando las reglas de negocio y persistencia correspondientes
 async function createCheckout(saleId, initiatedBy, dependencies) {
   const id = validateSaleId(saleId);
   const config = (dependencies.getMercadoPagoConfig ?? getMercadoPagoConfig)(
@@ -90,12 +94,14 @@ async function createCheckout(saleId, initiatedBy, dependencies) {
   }
 }
 
+// Centralizar la lógica de público checkout attempt para mantener consistente el comportamiento de la aplicación
 function publicCheckoutAttempt(attempt) {
   if (!attempt) return null;
   const { idempotencyKey: _idempotencyKey, ...safeAttempt } = attempt;
   return safeAttempt;
 }
 
+// Crear o registrar create mercado pago checkout aplicando las reglas de negocio y persistencia correspondientes
 export async function createMercadoPagoCheckout(
   saleId,
   actor,
@@ -105,10 +111,12 @@ export async function createMercadoPagoCheckout(
   return createCheckout(saleId, actor.userId, dependencies);
 }
 
+// Crear o registrar create tienda mercado pago checkout aplicando las reglas de negocio y persistencia correspondientes
 export async function createStoreMercadoPagoCheckout(saleId, dependencies = {}) {
   return createCheckout(saleId, null, dependencies);
 }
 
+// Consultar get mercado pago checkouts y devolver los datos en el formato esperado por la capa llamadora
 export async function getMercadoPagoCheckouts(saleId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const id = validateSaleId(saleId);
@@ -120,6 +128,7 @@ export async function getMercadoPagoCheckouts(saleId, actor, dependencies = {}) 
   return attempts.map(publicCheckoutAttempt);
 }
 
+// Gestionar process mercado pago notification y coordinar sus efectos secundarios
 export async function processMercadoPagoNotification(input, dependencies = {}) {
   const notification = validateMercadoPagoNotification(input);
   const audit = dependencies.auditWebhook ?? auditMercadoPagoWebhook;

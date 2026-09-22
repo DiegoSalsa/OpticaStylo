@@ -1,5 +1,7 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con virtual-try-on-3d-repository.
 
+// Centralizar la lógica de público modelo para mantener consistente el comportamiento de la aplicación
 function publicModel(asset) {
   return {
     assetId: asset.id,
@@ -20,6 +22,7 @@ const publicModelWhere = {
   products: { category: "FRAME", is_active: true },
 };
 
+// Consultar list active3d modelos y devolver los datos en el formato esperado por la capa llamadora
 export async function listActive3dModels() {
   const assets = await prisma.virtual_try_on_3d_assets.findMany({
     include: { products: true },
@@ -29,6 +32,7 @@ export async function listActive3dModels() {
   return assets.map(publicModel);
 }
 
+// Consultar find public3d modelo archivo y devolver los datos en el formato esperado por la capa llamadora
 export async function findPublic3dModelFile(assetId) {
   const asset = await prisma.virtual_try_on_3d_assets.findFirst({
     select: { file_sha256: true, model_data: true, original_filename: true },
@@ -41,6 +45,7 @@ export async function findPublic3dModelFile(assetId) {
   } : null;
 }
 
+// Consultar find public3d modelo metadatos y devolver los datos en el formato esperado por la capa llamadora
 export async function findPublic3dModelMetadata(assetId) {
   const asset = await prisma.virtual_try_on_3d_assets.findFirst({
     select: {

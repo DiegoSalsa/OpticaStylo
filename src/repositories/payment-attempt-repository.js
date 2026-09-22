@@ -1,8 +1,10 @@
 import { Prisma } from "@prisma/client";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con payment-attempt-repository.
 
 import { prisma } from "../db/prisma.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
+// Transformar map attempt al formato utilizado por el resto de la aplicación
 function mapAttempt(row) {
   if (!row) return null;
   return {
@@ -17,7 +19,9 @@ function mapAttempt(row) {
   };
 }
 
+// Centralizar la lógica de reserve mercado pago attempt para mantener consistente el comportamiento de la aplicación
 export async function reserveMercadoPagoAttempt(saleId, actorUserId, expiresAt) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const sale = await client.sales.findUnique({
       include: { sale_payments: true }, where: { id: saleId },
@@ -56,9 +60,11 @@ export async function reserveMercadoPagoAttempt(saleId, actorUserId, expiresAt) 
       provider: "MERCADO_PAGO", sale_id: saleId,
     } });
     return { attempt: mapAttempt(created), reason: null };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Centralizar la lógica de attach mercado pago preference para mantener consistente el comportamiento de la aplicación
 export async function attachMercadoPagoPreference(attemptId, preference) {
   const result = await prisma.payment_attempts.updateMany({ data: {
     checkout_url: preference.checkoutUrl, external_preference_id: preference.externalPreferenceId,
@@ -67,6 +73,7 @@ export async function attachMercadoPagoPreference(attemptId, preference) {
   return result.count ? mapAttempt(await prisma.payment_attempts.findUnique({ where: { id: attemptId } })) : null;
 }
 
+// Actualizar mark pago attempt failed manteniendo las restricciones y estados permitidos del dominio
 export async function markPaymentAttemptFailed(attemptId, reason) {
   const result = await prisma.payment_attempts.updateMany({
     data: { failure_reason: reason.slice(0, 500), status: "FAILED" },
@@ -75,12 +82,14 @@ export async function markPaymentAttemptFailed(attemptId, reason) {
   return result.count ? mapAttempt(await prisma.payment_attempts.findUnique({ where: { id: attemptId } })) : null;
 }
 
+// Consultar list pago attempts by venta id y devolver los datos en el formato esperado por la capa llamadora
 export async function listPaymentAttemptsBySaleId(saleId) {
   return (await prisma.payment_attempts.findMany({
     orderBy: [{ created_at: "desc" }, { id: "desc" }], where: { sale_id: saleId },
   })).map(mapAttempt);
 }
 
+// Transformar map provider estado al formato utilizado por el resto de la aplicación
 export function mapProviderStatus(status) {
   if (status === "approved") return "APPROVED";
   if (["pending", "in_process", "authorized"].includes(status)) return "PENDING";
@@ -89,10 +98,12 @@ export function mapProviderStatus(status) {
   return "REQUIRES_REVIEW";
 }
 
+// Determinar si is valid pago externo reference cumple la condición requerida por la aplicación
 export function isValidPaymentExternalReference(value) {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+// Centralizar la lógica de pago matches attempt para mantener consistente el comportamiento de la aplicación
 export function paymentMatchesAttempt(attempt, payment, expectedLiveMode) {
   const amount = Number(payment.transactionAmount);
   const expectedAmount = Number(attempt.amount_cents);
@@ -103,6 +114,7 @@ export function paymentMatchesAttempt(attempt, payment, expectedLiveMode) {
       && payment.externalPreferenceId === attempt.external_preference_id);
 }
 
+// Centralizar la lógica de finish provider event para mantener consistente el comportamiento de la aplicación
 async function finishProviderEvent(client, eventId, status, error = null) {
   await client.payment_provider_events.update({
     data: { processed_at: new Date(), processing_error: error, processing_status: status },
@@ -110,16 +122,21 @@ async function finishProviderEvent(client, eventId, status, error = null) {
   });
 }
 
+// Centralizar la lógica de reconcile mercado pago pago para mantener consistente el comportamiento de la aplicación
 export async function reconcileMercadoPagoPayment(notification, payment, options = {}) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(
     (client) => reconcileMercadoPagoPaymentWithClient(client, notification, payment, options),
+    // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
     { isolationLevel: "Serializable" },
   );
 }
 
+// Centralizar la lógica de reconcile mercado pago pago with client para mantener consistente el comportamiento de la aplicación
 export async function reconcileMercadoPagoPaymentWithClient(client, notification, payment, options = {}) {
   let event;
   try {
+    // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     event = await client.payment_provider_events.create({ data: {
       event_type: notification.eventType, external_object_id: notification.dataId,
       payload: notification.payload, provider: "MERCADO_PAGO", request_id: notification.requestId,
@@ -162,6 +179,7 @@ export async function reconcileMercadoPagoPaymentWithClient(client, notification
       provider_status: payment.status, provider_status_detail: payment.statusDetail,
       status: "REQUIRES_REVIEW",
     }, where: { id: attempt.id } });
+    // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     await client.sale_events.create({ data: {
       details: JSON.stringify({ externalPaymentId: payment.externalPaymentId, provider: "MERCADO_PAGO", status: payment.status }),
       event_type: "PAYMENT_STATUS_CHANGED", performed_by: null, sale_id: attempt.sale_id,
@@ -202,6 +220,7 @@ export async function reconcileMercadoPagoPaymentWithClient(client, notification
       payment_method: "MERCADO_PAGO", status: newStatus,
       ...(attempt.initiated_by ? { updated_by: attempt.initiated_by } : {}),
     }, where: { id: attempt.sale_id } });
+    // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     await client.sale_events.create({ data: {
       details: JSON.stringify({ amountCents: Number(attempt.amount_cents), externalPaymentId: payment.externalPaymentId, paymentMethod: "MERCADO_PAGO", source: "PROVIDER" }),
       event_type: "PAYMENT_REGISTERED", new_status: newStatus,

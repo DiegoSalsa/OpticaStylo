@@ -1,11 +1,14 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con user-repository.
 
 const roleRelation = "user_roles_user_roles_user_idTousers";
 
+// Centralizar la lógica de rol codes para mantener consistente el comportamiento de la aplicación
 function roleCodes(row) {
   return (row?.[roleRelation] ?? []).map((entry) => entry.roles.code).sort();
 }
 
+// Transformar map usuario al formato utilizado por el resto de la aplicación
 function mapUser(row) {
   if (!row) return null;
   return {
@@ -17,10 +20,12 @@ function mapUser(row) {
 
 const includeRoles = { [roleRelation]: { include: { roles: true } } };
 
+// Consultar find usuario by id with client y devolver los datos en el formato esperado por la capa llamadora
 async function findUserByIdWithClient(client, userId) {
   return mapUser(await client.users.findUnique({ include: includeRoles, where: { id: userId } }));
 }
 
+// Crear o registrar insert usuario with roles aplicando las reglas de negocio y persistencia correspondientes
 async function insertUserWithRoles(client, userData, assignedBy) {
   const roles = await client.roles.findMany({
     orderBy: { code: "asc" }, where: { code: { in: userData.roles } },
@@ -39,16 +44,20 @@ async function insertUserWithRoles(client, userData, assignedBy) {
   return mapUser(created);
 }
 
+// Crear o registrar create usuario with roles aplicando las reglas de negocio y persistencia correspondientes
 export async function createUserWithRoles(userData, assignedBy) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction((client) => insertUserWithRoles(client, userData, assignedBy));
 }
 
+// Consultar list usuarios y devolver los datos en el formato esperado por la capa llamadora
 export async function listUsers({ page, pageSize, search }) {
   const where = search ? { OR: [
     { email: { contains: search, mode: "insensitive" } },
     { first_name: { contains: search, mode: "insensitive" } },
     { last_name: { contains: search, mode: "insensitive" } },
   ] } : {};
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   const [items, total] = await prisma.$transaction([
     prisma.users.findMany({
       include: includeRoles,
@@ -63,11 +72,14 @@ export async function listUsers({ page, pageSize, search }) {
   };
 }
 
+// Consultar find usuario by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findUserById(userId) {
   return findUserByIdWithClient(prisma, userId);
 }
 
+// Actualizar update usuario with roles manteniendo las restricciones y estados permitidos del dominio
 export async function updateUserWithRoles(userId, userData, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const current = await findUserByIdWithClient(client, userId);
     if (!current) return { reason: "USER_NOT_FOUND", user: null };
@@ -104,16 +116,21 @@ export async function updateUserWithRoles(userId, userData, actorUserId) {
       });
     }
     return { reason: null, user: await findUserByIdWithClient(client, userId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Crear o registrar create initial admin aplicando las reglas de negocio y persistencia correspondientes
 export async function createInitialAdmin(userData) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     if (await client.users.count()) return null;
     return insertUserWithRoles(client, userData, null);
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Consultar find usuario for authentication y devolver los datos en el formato esperado por la capa llamadora
 export async function findUserForAuthentication(email) {
   const user = await prisma.users.findFirst({ include: includeRoles, where: { email } });
   if (!user) return null;
@@ -125,6 +142,7 @@ export async function findUserForAuthentication(email) {
   };
 }
 
+// Consultar find usuario for permiso authorization y devolver los datos en el formato esperado por la capa llamadora
 export async function findUserForPermissionAuthorization(email, permissionCode) {
   const user = await prisma.users.findFirst({
     where: {
@@ -141,7 +159,9 @@ export async function findUserForPermissionAuthorization(email, permissionCode) 
   } : null;
 }
 
+// Centralizar la lógica de record failed login para mantener consistente el comportamiento de la aplicación
 export async function recordFailedLogin(userId, maximumAttempts, lockMinutes) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   await prisma.$transaction(async (client) => {
     const user = await client.users.findUnique({ where: { id: userId } });
     if (!user) return;
@@ -159,5 +179,6 @@ export async function recordFailedLogin(userId, maximumAttempts, lockMinutes) {
       },
       where: { id: userId },
     });
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }

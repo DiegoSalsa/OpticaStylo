@@ -1,4 +1,5 @@
 import { normalizeChileanRut } from "../utils/chilean-rut.js";
+// Validaciones y normalización de entradas para customer-validation.
 import { AppError } from "../utils/app-error.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -7,10 +8,12 @@ const UUID_PATTERN =
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new AppError({ code: "INVALID_CUSTOMER_DATA", message, status: 400 });
 }
 
+// Centralizar la lógica de text para mantener consistente el comportamiento de la aplicación
 function text(value, label, maximumLength) {
   if (typeof value !== "string") fail(`${label} es obligatorio.`);
   const normalized = value.trim().replace(/\s+/g, " ");
@@ -21,22 +24,26 @@ function text(value, label, maximumLength) {
   return normalized;
 }
 
+// Centralizar la lógica de optional text para mantener consistente el comportamiento de la aplicación
 function optionalText(value, label, maximumLength) {
   if (value == null || value === "") return null;
   return text(value, label, maximumLength);
 }
 
+// Centralizar la lógica de rut para mantener consistente el comportamiento de la aplicación
 function rut(value) {
   const normalized = normalizeChileanRut(value);
   if (!normalized) fail("El RUT no es válido.");
   return normalized;
 }
 
+// Centralizar la lógica de optional rut para mantener consistente el comportamiento de la aplicación
 function optionalRut(value) {
   if (value == null || value === "") return null;
   return rut(value);
 }
 
+// Centralizar la lógica de correo para mantener consistente el comportamiento de la aplicación
 function email(value) {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
   if (normalized.length > 254 || !EMAIL_PATTERN.test(normalized)) {
@@ -45,11 +52,13 @@ function email(value) {
   return normalized;
 }
 
+// Centralizar la lógica de optional correo para mantener consistente el comportamiento de la aplicación
 function optionalEmail(value) {
   if (value == null || value === "") return null;
   return email(value);
 }
 
+// Centralizar la lógica de phone para mantener consistente el comportamiento de la aplicación
 function phone(value) {
   const normalized = typeof value === "string"
     ? value.trim().replace(/[\s()-]/g, "")
@@ -58,11 +67,13 @@ function phone(value) {
   return normalized;
 }
 
+// Centralizar la lógica de optional phone para mantener consistente el comportamiento de la aplicación
 function optionalPhone(value) {
   if (value == null || value === "") return null;
   return phone(value);
 }
 
+// Validar y normalizar validate cliente id antes de continuar con la operación
 export function validateCustomerId(value, label = "cliente") {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     fail(`El identificador del ${label} no es válido.`);
@@ -70,11 +81,13 @@ export function validateCustomerId(value, label = "cliente") {
   return value.toLowerCase();
 }
 
+// Centralizar la lógica de paciente id para mantener consistente el comportamiento de la aplicación
 function patientId(value) {
   if (value == null) return null;
   return validateCustomerId(value, "paciente");
 }
 
+// Validar y normalizar validate create cliente entrada antes de continuar con la operación
 export function validateCreateCustomerInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -99,6 +112,7 @@ export function validateCreateCustomerInput(input) {
   };
 }
 
+// Validar y normalizar validate update cliente entrada antes de continuar con la operación
 export function validateUpdateCustomerInput(input, current) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -109,6 +123,7 @@ export function validateUpdateCustomerInput(input, current) {
     fail("Debe indicar al menos un dato comercial para actualizar.");
   }
 
+  // Centralizar la lógica de value para mantener consistente el comportamiento de la aplicación
   const value = (field) => Object.hasOwn(input, field) ? input[field] : current[field];
 
   return validateCreateCustomerInput({
@@ -122,6 +137,7 @@ export function validateUpdateCustomerInput(input, current) {
   });
 }
 
+// Validar y normalizar validate cliente list consulta antes de continuar con la operación
 export function validateCustomerListQuery(searchParams) {
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE));

@@ -1,9 +1,11 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de bootstrap-admin-service.
 import { hashPassword } from "../auth/password.js";
 import { ROLES } from "../auth/roles.js";
 import { createInitialAdmin } from "../repositories/user-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { validateCreateUserInput } from "../validations/user-validation.js";
 
+// Centralizar la lógica de bootstrap initial admin para mantener consistente el comportamiento de la aplicación
 export async function bootstrapInitialAdmin(input, dependencies = {}) {
   const passwordHasher = dependencies.hashPassword ?? hashPassword;
   const adminCreator = dependencies.createInitialAdmin ?? createInitialAdmin;

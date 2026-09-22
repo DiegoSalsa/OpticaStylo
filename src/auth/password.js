@@ -1,4 +1,5 @@
 import {
+// Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
   randomBytes,
   scrypt as scryptCallback,
   timingSafeEqual,
@@ -16,6 +17,7 @@ const SALT_LENGTH = 16;
 const MAX_MEMORY = 256 * 1024 * 1024;
 const HASH_PARTS = 6;
 
+// Validar y normalizar validate contraseña antes de continuar con la operación
 function validatePassword(password) {
   if (typeof password !== "string" || password.length === 0) {
     throw new TypeError("La contraseña debe ser una cadena no vacía.");
@@ -26,6 +28,7 @@ function validatePassword(password) {
   }
 }
 
+// Calcular derive key a partir de los datos de entrada
 async function deriveKey(password, salt, parameters) {
   return scrypt(password, salt, DERIVED_KEY_LENGTH, {
     N: parameters.cost,
@@ -35,6 +38,7 @@ async function deriveKey(password, salt, parameters) {
   });
 }
 
+// Determinar si hash contraseña cumple la condición requerida por la aplicación
 export async function hashPassword(password) {
   validatePassword(password);
 
@@ -55,6 +59,7 @@ export async function hashPassword(password) {
   ].join("$");
 }
 
+// Validar y normalizar parse stored hash antes de continuar con la operación
 function parseStoredHash(storedHash) {
   if (typeof storedHash !== "string") {
     return null;
@@ -89,6 +94,7 @@ function parseStoredHash(storedHash) {
   };
 }
 
+// Verificar verify contraseña para impedir que la operación continúe en un estado inválido
 export async function verifyPassword(password, storedHash) {
   validatePassword(password);
 

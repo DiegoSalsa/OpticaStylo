@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de transactional-email-service.
 import { randomUUID } from "node:crypto";
 
 import { PERMISSIONS } from "../auth/permissions.js";
@@ -28,6 +29,7 @@ import { AppError } from "../utils/app-error.js";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Calcular calculate retry delay seconds a partir de los datos de entrada
 export function calculateRetryDelaySeconds({
   attemptCount,
   baseSeconds,
@@ -44,6 +46,7 @@ export function calculateRetryDelaySeconds({
   return Math.min(maxSeconds, Math.max(jittered, retryAfterSeconds ?? 0));
 }
 
+// Centralizar la lógica de empty summary para mantener consistente el comportamiento de la aplicación
 function emptySummary(mode) {
   return {
     claimed: 0,
@@ -57,6 +60,7 @@ function emptySummary(mode) {
   };
 }
 
+// Centralizar la lógica de log transition para mantener consistente el comportamiento de la aplicación
 function logTransition(logger, emailId, status, code = null) {
   logger.info(JSON.stringify({
     code,
@@ -66,6 +70,7 @@ function logTransition(logger, emailId, status, code = null) {
   }));
 }
 
+// Gestionar process transaccional correo batch y coordinar sus efectos secundarios
 export async function processTransactionalEmailBatch(options = {}, dependencies = {}) {
   const config = dependencies.config
     ?? getTransactionalEmailConfig(dependencies.environment);
@@ -197,6 +202,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
   }
 }
 
+// Consultar get transaccional correo operations y devolver los datos en el formato esperado por la capa llamadora
 export async function getTransactionalEmailOperations(actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.TRANSACTIONAL_EMAILS_MANAGE]);
   return {
@@ -207,6 +213,7 @@ export async function getTransactionalEmailOperations(actor, dependencies = {}) 
   };
 }
 
+// Centralizar la lógica de retry failed transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function retryFailedTransactionalEmail(emailId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.TRANSACTIONAL_EMAILS_MANAGE]);
   if (typeof emailId !== "string" || !UUID_PATTERN.test(emailId)) {

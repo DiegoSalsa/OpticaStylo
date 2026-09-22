@@ -1,6 +1,8 @@
 import { PERMISSIONS } from "./permissions.js";
+// Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
 import { AppError } from "../utils/app-error.js";
 
+// Verificar require agenda management para impedir que la operación continúe en un estado inválido
 export function requireScheduleManagement(actor, professionalId) {
   if (!actor) {
     throw new AppError({

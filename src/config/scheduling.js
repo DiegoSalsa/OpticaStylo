@@ -1,5 +1,7 @@
 const DEFAULT_TIME_ZONE = "America/Santiago";
+// Configuración centralizada de agenda.
 
+// Consultar get agenda time zone y devolver los datos en el formato esperado por la capa llamadora
 export function getSchedulingTimeZone(environment = process.env) {
   const timeZone = environment.APP_TIME_ZONE?.trim() || DEFAULT_TIME_ZONE;
 

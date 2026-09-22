@@ -1,9 +1,11 @@
 const CURRENCY = new Intl.NumberFormat("es-CL", {
+// Utilidades compartidas para receipt-template.
   currency: "CLP",
   maximumFractionDigits: 0,
   style: "currency",
 });
 
+// Centralizar la lógica de escape html para mantener consistente el comportamiento de la aplicación
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -13,10 +15,12 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+// Centralizar la lógica de money para mantener consistente el comportamiento de la aplicación
 function money(value) {
   return CURRENCY.format(value ?? 0);
 }
 
+// Centralizar la lógica de rows para mantener consistente el comportamiento de la aplicación
 function rows(receipt) {
   const itemRows = receipt.payload.items.map((item) => `
     <tr>
@@ -35,6 +39,7 @@ function rows(receipt) {
   return [...itemRows, ...additionRows].join("");
 }
 
+// Centralizar la lógica de render comprobante html para mantener consistente el comportamiento de la aplicación
 export function renderReceiptHtml(receipt, { document = true } = {}) {
   const receiptTitle = receipt.type === "PAYMENT"
     ? "Comprobante de abono"

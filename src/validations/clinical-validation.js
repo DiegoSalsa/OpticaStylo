@@ -1,4 +1,5 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para clinical-validation.
 import { validateAppointmentId } from "./appointment-validation.js";
 import { validatePatientId } from "./patient-validation.js";
 
@@ -19,6 +20,7 @@ const ENCOUNTER_FIELDS = Object.freeze([
   "indications",
 ]);
 
+// Construir y lanzar el error de dominio asociado a throw validation error
 function throwValidationError(message) {
   throw new AppError({
     code: "INVALID_CLINICAL_DATA",
@@ -27,16 +29,19 @@ function throwValidationError(message) {
   });
 }
 
+// Validar y normalizar validate object antes de continuar con la operación
 function validateObject(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
   }
 }
 
+// Validar y normalizar normalize text antes de continuar con la operación
 function normalizeText(value) {
   return value.replace(/\r\n?/g, "\n").trim();
 }
 
+// Validar y normalizar validate optional text antes de continuar con la operación
 function validateOptionalText(value, fieldName, maximumLength) {
   if (value === null || value === "") {
     return null;
@@ -57,6 +62,7 @@ function validateOptionalText(value, fieldName, maximumLength) {
   return normalized;
 }
 
+// Validar y normalizar validate required text antes de continuar con la operación
 function validateRequiredText(value, fieldName, maximumLength) {
   const normalized = validateOptionalText(value, fieldName, maximumLength);
 
@@ -67,6 +73,7 @@ function validateRequiredText(value, fieldName, maximumLength) {
   return normalized;
 }
 
+// Validar y normalizar validate uuid antes de continuar con la operación
 function validateUuid(value, entityName) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     throwValidationError(`El identificador de ${entityName} no es válido.`);
@@ -75,6 +82,7 @@ function validateUuid(value, entityName) {
   return value.toLowerCase();
 }
 
+// Validar y normalizar validate decimal antes de continuar con la operación
 function validateDecimal(value, fieldName, { nullable = false } = {}) {
   if (nullable && (value === null || value === undefined || value === "")) {
     return null;
@@ -92,6 +100,7 @@ function validateDecimal(value, fieldName, { nullable = false } = {}) {
   return Object.is(value, -0) ? 0 : value;
 }
 
+// Validar y normalizar validate positive decimal antes de continuar con la operación
 function validatePositiveDecimal(value, fieldName, options) {
   const normalized = validateDecimal(value, fieldName, options);
 
@@ -102,6 +111,7 @@ function validatePositiveDecimal(value, fieldName, options) {
   return normalized;
 }
 
+// Validar y normalizar validate eye antes de continuar con la operación
 function validateEye(input, eyeName) {
   validateObject(input);
 
@@ -131,6 +141,7 @@ function validateEye(input, eyeName) {
   };
 }
 
+// Validar y normalizar validate medical record entrada antes de continuar con la operación
 export function validateMedicalRecordInput(input) {
   validateObject(input);
   const changes = {};
@@ -148,18 +159,22 @@ export function validateMedicalRecordInput(input) {
   return changes;
 }
 
+// Validar y normalizar validate clínica paciente id antes de continuar con la operación
 export function validateClinicalPatientId(value) {
   return validatePatientId(value);
 }
 
+// Validar y normalizar validate atención clínica id antes de continuar con la operación
 export function validateEncounterId(value) {
   return validateUuid(value, "la atención clínica");
 }
 
+// Validar y normalizar validate receta id antes de continuar con la operación
 export function validatePrescriptionId(value) {
   return validateUuid(value, "la receta óptica");
 }
 
+// Validar y normalizar validate create atención clínica entrada antes de continuar con la operación
 export function validateCreateEncounterInput(input) {
   validateObject(input);
 
@@ -185,6 +200,7 @@ export function validateCreateEncounterInput(input) {
   };
 }
 
+// Validar y normalizar validate update atención clínica entrada antes de continuar con la operación
 export function validateUpdateEncounterInput(input) {
   validateObject(input);
   const changes = {};
@@ -214,6 +230,7 @@ export function validateUpdateEncounterInput(input) {
   return changes;
 }
 
+// Validar y normalizar validate addendum entrada antes de continuar con la operación
 export function validateAddendumInput(input) {
   validateObject(input);
 
@@ -223,6 +240,7 @@ export function validateAddendumInput(input) {
   };
 }
 
+// Validar y normalizar validate create receta entrada antes de continuar con la operación
 export function validateCreatePrescriptionInput(input) {
   validateObject(input);
 
@@ -243,6 +261,7 @@ export function validateCreatePrescriptionInput(input) {
   };
 }
 
+// Validar y normalizar validate update receta entrada antes de continuar con la operación
 export function validateUpdatePrescriptionInput(input) {
   validateObject(input);
   const changes = {};
@@ -278,6 +297,7 @@ export function validateUpdatePrescriptionInput(input) {
   return changes;
 }
 
+// Validar y normalizar validate receta list consulta antes de continuar con la operación
 export function validatePrescriptionListQuery(searchParams) {
   const patientId = searchParams.get("patientId");
 

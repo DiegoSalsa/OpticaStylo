@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de store-service.
 import { createHash } from "node:crypto";
 
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
@@ -92,6 +93,7 @@ const ERRORS = Object.freeze({
   ],
 });
 
+// Construir y lanzar el error de dominio asociado a throw reason
 function throwReason(reason) {
   const [code, message, status] = ERRORS[reason] ?? [
     "STORE_OPERATION_REJECTED",
@@ -101,16 +103,19 @@ function throwReason(reason) {
   throw new AppError({ code, message, status });
 }
 
+// Centralizar la lógica de unwrap para mantener consistente el comportamiento de la aplicación
 function unwrap(result) {
   if (result.reason) throwReason(result.reason);
   return result.cart;
 }
 
+// Centralizar la lógica de access para mantener consistente el comportamiento de la aplicación
 function access(token, account) {
   if (!token) throwReason("CART_NOT_FOUND");
   return { accountId: account?.id ?? null, tokenHash: hashSessionToken(token) };
 }
 
+// Eliminar o cancelar delete replaced private receta de forma controlada y consistente
 async function deleteReplacedPrivatePrescription(asset, dependencies) {
   if (!asset) return;
   try {
@@ -122,6 +127,7 @@ async function deleteReplacedPrivatePrescription(asset, dependencies) {
   }
 }
 
+// Crear o registrar create tienda carrito aplicando las reglas de negocio y persistencia correspondientes
 export async function createStoreCart(account, dependencies = {}) {
   const token = (dependencies.createToken ?? createSessionToken)();
   const expiresAt = new Date(Date.now() + CART_SECONDS * 1000);
@@ -133,6 +139,7 @@ export async function createStoreCart(account, dependencies = {}) {
   return { cart, maxAgeSeconds: CART_SECONDS, token };
 }
 
+// Consultar get tienda carrito y devolver los datos en el formato esperado por la capa llamadora
 export async function getStoreCart(token, account, dependencies = {}) {
   const credentials = access(token, account);
   const cart = await (dependencies.findCart ?? findStoreCart)(
@@ -143,6 +150,7 @@ export async function getStoreCart(token, account, dependencies = {}) {
   return cart;
 }
 
+// Centralizar la lógica de put tienda carrito item para mantener consistente el comportamiento de la aplicación
 export async function putStoreCartItem(token, account, productId, input, dependencies = {}) {
   const credentials = access(token, account);
   const item = validateCartItemInput(input);
@@ -155,6 +163,7 @@ export async function putStoreCartItem(token, account, productId, input, depende
   ));
 }
 
+// Centralizar la lógica de put tienda carrito items para mantener consistente el comportamiento de la aplicación
 export async function putStoreCartItems(token, account, input, dependencies = {}) {
   const credentials = access(token, account);
   const items = validateCartItemsInput(input);
@@ -165,6 +174,7 @@ export async function putStoreCartItems(token, account, input, dependencies = {}
   ));
 }
 
+// Eliminar o cancelar delete tienda carrito item de forma controlada y consistente
 export async function deleteStoreCartItem(token, account, productId, dependencies = {}) {
   const credentials = access(token, account);
   return unwrap(await (dependencies.removeItem ?? removeStoreCartItem)(
@@ -174,6 +184,7 @@ export async function deleteStoreCartItem(token, account, productId, dependencie
   ));
 }
 
+// Actualizar update tienda carrito manteniendo las restricciones y estados permitidos del dominio
 export async function updateStoreCart(token, account, input, dependencies = {}) {
   const credentials = access(token, account);
   const result = await (dependencies.configureCart ?? configureStoreCart)(
@@ -186,6 +197,7 @@ export async function updateStoreCart(token, account, input, dependencies = {}) 
   return cart;
 }
 
+// Centralizar la lógica de put manual receta para mantener consistente el comportamiento de la aplicación
 export async function putManualPrescription(token, account, input, dependencies = {}) {
   const credentials = access(token, account);
   const result = await (
@@ -201,6 +213,7 @@ export async function putManualPrescription(token, account, input, dependencies 
   return cart;
 }
 
+// Centralizar la lógica de put receta imagen para mantener consistente el comportamiento de la aplicación
 export async function putPrescriptionImage(token, account, file, dependencies = {}) {
   const credentials = access(token, account);
   const image = validatePrescriptionImage(file);
@@ -231,6 +244,7 @@ export async function putPrescriptionImage(token, account, file, dependencies = 
   }
 }
 
+// Centralizar la lógica de complete imagen receta para mantener consistente el comportamiento de la aplicación
 export async function completeImagePrescription(token, account, input, dependencies = {}) {
   const credentials = access(token, account);
   return unwrap(await (
@@ -243,6 +257,7 @@ export async function completeImagePrescription(token, account, input, dependenc
   ));
 }
 
+// Consultar get receta imagen y devolver los datos en el formato esperado por la capa llamadora
 export async function getPrescriptionImage(token, account, dependencies = {}) {
   const credentials = access(token, account);
   const image = await (dependencies.findImage ?? findCartPrescriptionImage)(
@@ -256,6 +271,7 @@ export async function getPrescriptionImage(token, account, dependencies = {}) {
   return { ...image, data };
 }
 
+// Centralizar la lógica de extract receta imagen para mantener consistente el comportamiento de la aplicación
 export async function extractPrescriptionImage(token, account, dependencies = {}) {
   const credentials = access(token, account);
   const provider = "OPENAI_GPT_5_6_LUNA";
@@ -310,6 +326,7 @@ export async function extractPrescriptionImage(token, account, dependencies = {}
   }
 }
 
+// Centralizar la lógica de público pedido para mantener consistente el comportamiento de la aplicación
 function publicOrder(sale) {
   return {
     balanceCents: sale.balanceCents,
@@ -328,6 +345,7 @@ function publicOrder(sale) {
   };
 }
 
+// Verificar checkout carrito para impedir que la operación continúe en un estado inválido
 export async function checkoutCart(token, account, dependencies = {}) {
   const credentials = access(token, account);
   const result = await (dependencies.checkoutCart ?? checkoutStoreCart)(
@@ -343,6 +361,7 @@ export async function checkoutCart(token, account, dependencies = {}) {
   return { order: publicOrder(sale), payment };
 }
 
+// Consultar get tienda pedido y devolver los datos en el formato esperado por la capa llamadora
 export async function getStoreOrder(orderId, token, account, dependencies = {}) {
   const id = validateStoreOrderId(orderId);
   if (account) {
@@ -363,6 +382,7 @@ export async function getStoreOrder(orderId, token, account, dependencies = {}) 
   return publicOrder(sale);
 }
 
+// Consultar get tienda pedidos y devolver los datos en el formato esperado por la capa llamadora
 export async function getStoreOrders(account, dependencies = {}) {
   const ids = await (dependencies.listOrders ?? listStoreOrders)(account.id);
   const sales = await Promise.all(ids.map((id) => (
@@ -371,6 +391,7 @@ export async function getStoreOrders(account, dependencies = {}) {
   return sales.filter(Boolean).map(publicOrder);
 }
 
+// Centralizar la lógica de retry tienda pedido checkout para mantener consistente el comportamiento de la aplicación
 export async function retryStoreOrderCheckout(orderId, token, account, dependencies = {}) {
   const order = await getStoreOrder(orderId, token, account, dependencies);
   if (order.status !== "PENDING" || order.balanceCents <= 0) {

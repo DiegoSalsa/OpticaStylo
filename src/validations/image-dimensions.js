@@ -1,4 +1,5 @@
 export const MAX_IMAGE_HEIGHT = 8_000;
+// Validaciones y normalización de entradas para image-dimensions.
 export const MAX_IMAGE_PIXELS = 24_000_000;
 export const MAX_IMAGE_WIDTH = 8_000;
 
@@ -8,6 +9,7 @@ const JPEG_START_OF_FRAME_MARKERS = new Set([
 ]);
 const HEIF_DIMENSION_BOX = Buffer.from("ispe");
 
+// Centralizar la lógica de dimensions are safe para mantener consistente el comportamiento de la aplicación
 function dimensionsAreSafe(dimensions) {
   if (!dimensions) return false;
   const { height, width } = dimensions;
@@ -20,6 +22,7 @@ function dimensionsAreSafe(dimensions) {
     && width * height <= MAX_IMAGE_PIXELS;
 }
 
+// Consultar read jpeg dimensions y devolver los datos en el formato esperado por la capa llamadora
 function readJpegDimensions(data) {
   let offset = 2;
   while (offset < data.length) {
@@ -45,6 +48,7 @@ function readJpegDimensions(data) {
   return null;
 }
 
+// Consultar read png dimensions y devolver los datos en el formato esperado por la capa llamadora
 function readPngDimensions(data) {
   if (data.length < 24 || data.subarray(12, 16).toString("ascii") !== "IHDR") return null;
   return {
@@ -53,6 +57,7 @@ function readPngDimensions(data) {
   };
 }
 
+// Consultar read webp dimensions y devolver los datos en el formato esperado por la capa llamadora
 function readWebpDimensions(data) {
   if (data.length < 30) return null;
   const variant = data.subarray(12, 16).toString("ascii");
@@ -78,6 +83,7 @@ function readWebpDimensions(data) {
   return null;
 }
 
+// Consultar read heif dimensions y devolver los datos en el formato esperado por la capa llamadora
 function readHeifDimensions(data) {
   const dimensions = [];
   let offset = data.indexOf(HEIF_DIMENSION_BOX);
@@ -96,6 +102,7 @@ function readHeifDimensions(data) {
   return dimensions;
 }
 
+// Determinar si has safe imagen dimensions cumple la condición requerida por la aplicación
 export function hasSafeImageDimensions(data, mediaType) {
   if (mediaType === "image/jpeg") return dimensionsAreSafe(readJpegDimensions(data));
   if (mediaType === "image/png") return dimensionsAreSafe(readPngDimensions(data));

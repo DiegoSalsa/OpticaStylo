@@ -1,4 +1,5 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para sale-validation.
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,10 +25,12 @@ const MAX_PAGE_SIZE = 100;
 const MAX_DISCOUNT_REASON_LENGTH = 300;
 const LENS_MOUNT_SOURCES = new Set(["SOLD_FRAME", "CUSTOMER_FRAME"]);
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new AppError({ code: "INVALID_SALE_DATA", message, status: 400 });
 }
 
+// Validar y normalizar validate venta id antes de continuar con la operación
 export function validateSaleId(value, label = "venta") {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     fail(`El identificador de la ${label} no es válido.`);
@@ -35,11 +38,13 @@ export function validateSaleId(value, label = "venta") {
   return value.toLowerCase();
 }
 
+// Centralizar la lógica de optional id para mantener consistente el comportamiento de la aplicación
 function optionalId(value, label) {
   if (value == null) return null;
   return validateSaleId(value, label);
 }
 
+// Centralizar la lógica de lente mount para mantener consistente el comportamiento de la aplicación
 function lensMount(value, index) {
   if (value == null) return null;
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -61,6 +66,7 @@ function lensMount(value, index) {
   };
 }
 
+// Centralizar la lógica de items para mantener consistente el comportamiento de la aplicación
 function items(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > 100) {
     fail("La venta debe incluir entre 1 y 100 productos diferentes.");
@@ -92,11 +98,13 @@ function items(value) {
   return normalized;
 }
 
+// Centralizar la lógica de optical additions para mantener consistente el comportamiento de la aplicación
 function opticalAdditions(value) {
   if (value == null || (Array.isArray(value) && value.length === 0)) return [];
   fail("Los adicionales deben agregarse desde el catálogo con su precio controlado.");
 }
 
+// Centralizar la lógica de descuento para mantener consistente el comportamiento de la aplicación
 function discount(value) {
   if (value == null) return null;
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -124,6 +132,7 @@ function discount(value) {
   };
 }
 
+// Validar y normalizar validate venta draft entrada antes de continuar con la operación
 export function validateSaleDraftInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -163,6 +172,7 @@ export function validateSaleDraftInput(input) {
   };
 }
 
+// Validar y normalizar validate comprobante entrada antes de continuar con la operación
 export function validateReceiptInput(input) {
   if (input == null) return { email: null, paymentId: null };
   if (!input || typeof input !== "object" || Array.isArray(input)) {
@@ -181,6 +191,7 @@ export function validateReceiptInput(input) {
   };
 }
 
+// Validar y normalizar validate ventas reporte consulta antes de continuar con la operación
 export function validateSalesReportQuery(searchParams) {
   const today = new Date();
   const defaultTo = today.toISOString().slice(0, 10);
@@ -200,6 +211,7 @@ export function validateSalesReportQuery(searchParams) {
   return { from, to };
 }
 
+// Validar y normalizar validate venta estado entrada antes de continuar con la operación
 export function validateSaleStatusInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -227,6 +239,7 @@ export function validateSaleStatusInput(input) {
   return { cancellationReason, status };
 }
 
+// Validar y normalizar validate venta pago entrada antes de continuar con la operación
 export function validateSalePaymentInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -275,6 +288,7 @@ export function validateSalePaymentInput(input) {
   };
 }
 
+// Validar y normalizar validate venta operation antes de continuar con la operación
 export function validateSaleOperation(value) {
   if (value == null) return "QUOTATION";
   const operation = typeof value === "string" ? value.trim().toUpperCase() : "";
@@ -284,6 +298,7 @@ export function validateSaleOperation(value) {
   return operation;
 }
 
+// Validar y normalizar validate venta list consulta antes de continuar con la operación
 export function validateSaleListQuery(searchParams) {
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(

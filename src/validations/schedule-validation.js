@@ -1,4 +1,5 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para schedule-validation.
 import { validateProfessionalId } from "./professional-validation.js";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -6,6 +7,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Construir y lanzar el error de dominio asociado a throw validation error
 function throwValidationError(message) {
   throw new AppError({
     code: "INVALID_SCHEDULE_DATA",
@@ -14,11 +16,13 @@ function throwValidationError(message) {
   });
 }
 
+// Centralizar la lógica de time to minutes para mantener consistente el comportamiento de la aplicación
 function timeToMinutes(value) {
   const [hours, minutes] = value.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
+// Validar y normalizar validate time antes de continuar con la operación
 function validateTime(value, fieldName) {
   if (typeof value !== "string" || !TIME_PATTERN.test(value)) {
     throwValidationError(`${fieldName} debe usar el formato HH:mm.`);
@@ -27,6 +31,7 @@ function validateTime(value, fieldName) {
   return value;
 }
 
+// Validar y normalizar validate working range antes de continuar con la operación
 function validateWorkingRange(value, { allowClosed = false } = {}) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throwValidationError("La configuración horaria no es válida.");
@@ -85,6 +90,7 @@ function validateWorkingRange(value, { allowClosed = false } = {}) {
   };
 }
 
+// Validar y normalizar validate weekly agenda entrada antes de continuar con la operación
 export function validateWeeklyScheduleInput(input) {
   if (!input || typeof input !== "object" || !Array.isArray(input.days)) {
     throwValidationError("Debe enviar los siete días de la agenda semanal.");
@@ -112,6 +118,7 @@ export function validateWeeklyScheduleInput(input) {
   return days.sort((left, right) => left.dayOfWeek - right.dayOfWeek);
 }
 
+// Validar y normalizar validate date only antes de continuar con la operación
 export function validateDateOnly(value) {
   if (typeof value !== "string" || !DATE_PATTERN.test(value)) {
     throwValidationError("La fecha debe usar el formato AAAA-MM-DD.");
@@ -126,10 +133,12 @@ export function validateDateOnly(value) {
   return value;
 }
 
+// Validar y normalizar validate agenda override entrada antes de continuar con la operación
 export function validateScheduleOverrideInput(input) {
   return validateWorkingRange(input, { allowClosed: true });
 }
 
+// Validar y normalizar validate instant antes de continuar con la operación
 function validateInstant(value, fieldName) {
   if (typeof value !== "string") {
     throwValidationError(`${fieldName} debe ser una fecha ISO 8601.`);
@@ -144,6 +153,7 @@ function validateInstant(value, fieldName) {
   return parsed;
 }
 
+// Validar y normalizar validate create agenda block entrada antes de continuar con la operación
 export function validateCreateScheduleBlockInput(input, currentDate = new Date()) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
@@ -177,6 +187,7 @@ export function validateCreateScheduleBlockInput(input, currentDate = new Date()
   return { endAt, reason, startAt };
 }
 
+// Validar y normalizar validate agenda block id antes de continuar con la operación
 export function validateScheduleBlockId(value) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     throwValidationError("El identificador del bloqueo no es válido.");
@@ -185,6 +196,7 @@ export function validateScheduleBlockId(value) {
   return value.toLowerCase();
 }
 
+// Validar y normalizar validate disponibilidad consulta antes de continuar con la operación
 export function validateAvailabilityQuery(professionalId, searchParams) {
   return {
     date: validateDateOnly(searchParams.get("date")),

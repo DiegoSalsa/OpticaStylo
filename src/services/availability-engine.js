@@ -1,15 +1,19 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de availability-engine.
 import { addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 
+// Centralizar la lógica de overlaps para mantener consistente el comportamiento de la aplicación
 function overlaps(leftStart, leftEnd, rightStart, rightEnd) {
   return leftStart < rightEnd && leftEnd > rightStart;
 }
 
+// Consultar get day of week y devolver los datos en el formato esperado por la capa llamadora
 function getDayOfWeek(date, timeZone) {
   const noonUtc = fromZonedTime(`${date}T12:00:00`, timeZone);
   return noonUtc.getUTCDay();
 }
 
+// Transformar build disponibilidad slots al formato utilizado por el resto de la aplicación
 export function buildAvailabilitySlots({
   appointmentDurationMinutes,
   blocks = [],
