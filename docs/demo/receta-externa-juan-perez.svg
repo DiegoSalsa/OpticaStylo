@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <rect width="1200" height="1600" fill="#f4f0e8"/>
+  <rect x="70" y="65" width="1060" height="1470" rx="12" fill="#fffdf8" stroke="#243b53" stroke-width="4"/>
+  <text x="110" y="150" fill="#243b53" font-family="Arial, sans-serif" font-size="54" font-weight="700">ÓPTICA STYLO</text>
+  <text x="110" y="205" fill="#627d98" font-family="Arial, sans-serif" font-size="28">Receta óptica</text>
+  <rect x="795" y="112" width="285" height="82" rx="8" fill="#fff3cd" stroke="#d6a700" stroke-width="2"/>
+  <text x="937" y="148" fill="#7a5d00" font-family="Arial, sans-serif" font-size="21" font-weight="700" text-anchor="middle">DOCUMENTO FICTICIO</text>
+  <text x="937" y="177" fill="#7a5d00" font-family="Arial, sans-serif" font-size="20" text-anchor="middle">Solo demostración</text>
+
+  <line x1="110" y1="250" x2="1090" y2="250" stroke="#bcccdc" stroke-width="3"/>
+  <text x="110" y="325" fill="#102a43" font-family="Arial, sans-serif" font-size="27" font-weight="700">Paciente</text>
+  <text x="110" y="372" fill="#334e68" font-family="Arial, sans-serif" font-size="31">Juan Pérez Soto</text>
+  <text x="680" y="325" fill="#102a43" font-family="Arial, sans-serif" font-size="27" font-weight="700">RUT</text>
+  <text x="680" y="372" fill="#334e68" font-family="Arial, sans-serif" font-size="31">17.234.568-9</text>
+  <text x="110" y="440" fill="#102a43" font-family="Arial, sans-serif" font-size="27" font-weight="700">Fecha de emisión</text>
+  <text x="110" y="487" fill="#334e68" font-family="Arial, sans-serif" font-size="31">15 de septiembre de 2026</text>
+
+  <rect x="110" y="550" width="980" height="420" rx="8" fill="#f8fafc" stroke="#9fb3c8" stroke-width="2"/>
+  <rect x="110" y="550" width="980" height="82" rx="8" fill="#243b53"/>
+  <text x="185" y="602" fill="white" font-family="Arial, sans-serif" font-size="26" font-weight="700">Ojo</text>
+  <text x="430" y="602" fill="white" font-family="Arial, sans-serif" font-size="26" font-weight="700">Esfera</text>
+  <text x="650" y="602" fill="white" font-family="Arial, sans-serif" font-size="26" font-weight="700">Cilindro</text>
+  <text x="900" y="602" fill="white" font-family="Arial, sans-serif" font-size="26" font-weight="700">Eje</text>
+  <line x1="110" y1="742" x2="1090" y2="742" stroke="#bcccdc" stroke-width="2"/>
+  <text x="185" y="702" fill="#243b53" font-family="Arial, sans-serif" font-size="30" font-weight="700">OD</text>
+  <text x="430" y="702" fill="#243b53" font-family="Arial, sans-serif" font-size="30">−1,00</text>
+  <text x="650" y="702" fill="#243b53" font-family="Arial, sans-serif" font-size="30">−0,25</text>
+  <text x="900" y="702" fill="#243b53" font-family="Arial, sans-serif" font-size="30">85°</text>
+  <text x="185" y="825" fill="#243b53" font-family="Arial, sans-serif" font-size="30" font-weight="700">OI</text>
+  <text x="430" y="825" fill="#243b53" font-family="Arial, sans-serif" font-size="30">−0,75</text>
+  <text x="650" y="825" fill="#243b53" font-family="Arial, sans-serif" font-size="30">−0,50</text>
+  <text x="900" y="825" fill="#243b53" font-family="Arial, sans-serif" font-size="30">95°</text>
+  <line x1="110" y1="865" x2="1090" y2="865" stroke="#bcccdc" stroke-width="2"/>
+  <text x="185" y="930" fill="#243b53" font-family="Arial, sans-serif" font-size="28" font-weight="700">Distancia pupilar</text>
+  <text x="650" y="930" fill="#243b53" font-family="Arial, sans-serif" font-size="30">63 mm</text>
+
+  <text x="110" y="1055" fill="#102a43" font-family="Arial, sans-serif" font-size="27" font-weight="700">Observación</text>
+  <text x="110" y="1105" fill="#334e68" font-family="Arial, sans-serif" font-size="27">Control visual de demostración.</text>
+  <text x="110" y="1147" fill="#334e68" font-family="Arial, sans-serif" font-size="27">Confirmar todos los valores con un profesional antes de fabricar lentes.</text>
+
+  <line x1="110" y1="1265" x2="1090" y2="1265" stroke="#bcccdc" stroke-width="3"/>
+  <text x="110" y="1335" fill="#627d98" font-family="Arial, sans-serif" font-size="23">Profesional de demostración: Profesional Pruebas</text>
+  <text x="110" y="1380" fill="#627d98" font-family="Arial, sans-serif" font-size="23">Registro ficticio preparado para Optica Stylo.</text>
+  <rect x="110" y="1435" width="980" height="58" rx="6" fill="#e6f6ff"/>
+  <text x="600" y="1472" fill="#0b69a3" font-family="Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">NO VÁLIDA PARA USO CLÍNICO NI FABRICACIÓN</text>
+</svg>
