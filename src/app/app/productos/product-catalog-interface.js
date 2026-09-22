@@ -64,7 +64,11 @@ export default function ProductCatalogInterface({ model }) {
       )}
       <div className="management-layout">
         <section className="app-card directory-card">
-          <form className="directory-search" onSubmit={search}>
+          {/* Mantener el buscador del catálogo alineado en escritorio */}
+          <form
+            className="directory-search product-catalog-search"
+            onSubmit={search}
+          >
             <Icon name="search" />
             <input
               aria-label="Buscar productos"
