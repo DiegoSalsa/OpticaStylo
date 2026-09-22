@@ -1,7 +1,9 @@
 import { createInterface } from "node:readline/promises";
+// Script operativo para bootstrap-admin.
 
 import { loadProjectEnvironment } from "./load-environment.mjs";
 
+// Consultar read hidden entrada y devolver los datos en el formato esperado por la capa llamadora
 function readHiddenInput(prompt) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error("Este comando requiere una terminal interactiva.");
@@ -10,12 +12,14 @@ function readHiddenInput(prompt) {
   return new Promise((resolve, reject) => {
     let value = "";
 
+    // Centralizar la lógica de cleanup para mantener consistente el comportamiento de la aplicación
     function cleanup() {
       process.stdin.setRawMode(false);
       process.stdin.pause();
       process.stdin.removeListener("data", handleInput);
     }
 
+    // Gestionar handle entrada y coordinar sus efectos secundarios
     function handleInput(chunk) {
       const input = chunk.toString("utf8");
 

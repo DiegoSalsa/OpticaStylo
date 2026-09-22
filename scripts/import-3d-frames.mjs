@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+// Script operativo para import-3d-frames.
 import path from "node:path";
 import process from "node:process";
 

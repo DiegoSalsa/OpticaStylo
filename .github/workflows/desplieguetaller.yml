@@ -1,5 +1,6 @@
 name: Despliegue Taller
 
+# Ejecutar el despliegue del entorno Taller al actualizar ramas habilitadas o manualmente
 on:
   push:
     branches: [main, testgeneral]
@@ -7,14 +8,18 @@ on:
 
 jobs:
   deploy:
+# Mantener el entorno Taller apagado hasta que la variable de habilitación esté activa
     if: vars.DESPLIEGUE_TALLER_HABILITADO == 'true'
+# Usar el runner Linux instalado en el servidor del taller
     runs-on: [self-hosted, linux, x64, opticastylo-taller]
     timeout-minutes: 25
 
     steps:
+# Descargar la revisión exacta que disparó el workflow
       - name: Checkout
         uses: actions/checkout@v4
 
+# Seleccionar Node.js 22 y comprobar las herramientas disponibles
       - name: Preparar Node.js
         shell: bash
         run: |
@@ -24,6 +29,7 @@ jobs:
           node --version
           npm --version
 
+# Sincronizar el código sin secretos ni artefactos locales al directorio de la aplicación
       - name: Sincronizar código al entorno Taller
         shell: bash
         run: |
@@ -39,6 +45,7 @@ jobs:
             --exclude='tmp' \
             ./ "$app_dir/"
 
+# Instalar dependencias, migrar la base, validar calidad y construir la aplicación
       - name: Instalar y validar
         shell: bash
         run: |
@@ -55,6 +62,7 @@ jobs:
           npm test
           npm run build
 
+# Reiniciar el servicio del entorno Taller después de una validación exitosa
       - name: Reiniciar servicio Taller
         shell: bash
         run: |

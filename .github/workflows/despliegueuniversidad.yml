@@ -1,5 +1,6 @@
 name: Despliegue automatizado universidad
 
+# Ejecutar validación y despliegue cuando se actualiza una rama habilitada o manualmente
 on:
   push:
     branches:
@@ -8,8 +9,10 @@ on:
   workflow_dispatch:
 
 permissions:
+# Permitir únicamente leer el repositorio durante el pipeline
   contents: read
 
+# Serializar despliegues para que nunca compitan dos releases universitarias
 concurrency:
   group: despliegue-universidad
   cancel-in-progress: false
@@ -17,16 +20,20 @@ concurrency:
 jobs:
   desplegar:
     name: Validar y desplegar en la universidad
+# Omitir el trabajo hasta que la variable de habilitación esté activada
     if: vars.DESPLIEGUE_UNIVERSIDAD_HABILITADO == 'true'
+# Usar el runner Linux instalado en el servidor universitario
     runs-on: [self-hosted, linux, x64, opticastylo-universidad]
     timeout-minutes: 35
     steps:
+# Obtener exactamente la revisión que disparó el workflow sin conservar credenciales de escritura
       - name: Descargar el código
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # versión 4
         with:
           clean: true
           persist-credentials: false
 
+# Preparar Node.js y npm con las versiones requeridas por el proyecto
       - name: Preparar Node.js
         shell: bash
         run: |
@@ -37,28 +44,34 @@ jobs:
           node --version
           npm --version
 
+# Instalar exactamente las dependencias registradas en package-lock.json
       - name: Instalar dependencias
         shell: bash
         run: npm ci
 
+# Generar el cliente que permite a la aplicación acceder al schema Prisma
       - name: Generar Prisma Client
         shell: bash
         run: npm run prisma:generate
 
+# Validar el schema contra una URL de base de datos de comprobación
       - name: Validar schema Prisma
         shell: bash
         env:
           DATABASE_URL: postgresql://prisma:prisma@localhost:5432/opticastylo
         run: npm run prisma:validate
 
+# Comprobar reglas de estilo antes de publicar la versión
       - name: Ejecutar lint
         shell: bash
         run: npm run lint
 
+# Ejecutar la suite automatizada como barrera de calidad del despliegue
       - name: Ejecutar tests
         shell: bash
         run: npm test
 
+# Delegar la preparación atómica de releases, migraciones, PM2 y health check al script de deploy
       - name: Validar y desplegar la aplicación
         shell: bash
         env:
