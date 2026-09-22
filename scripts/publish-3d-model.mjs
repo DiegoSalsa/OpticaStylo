@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+// Script operativo para publish-3d-model.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -9,6 +10,7 @@ import { validateTryOnModelMetadata } from "../src/virtual-try-on-3d/model-contr
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const LICENSES = new Set(["CC0-1.0", "CC-BY-4.0", "OWNED_BY_OPTICA_STYLO"]);
 
+// Centralizar la lógica de arguments by name para mantener consistente el comportamiento de la aplicación
 function argumentsByName(values) {
   const result = {};
   for (let index = 0; index < values.length; index += 2) {

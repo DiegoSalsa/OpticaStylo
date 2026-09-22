@@ -1,11 +1,14 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Resolver la raíz del proyecto y los orígenes permitidos para el servidor de desarrollo
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+// Aplicar cabeceras de seguridad globales, incluyendo restricciones de cámara y contenido embebido
 const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -20,6 +23,7 @@ const securityHeaders = [
 ];
 
 /** @type {import('next').NextConfig} */
+// Exponer la configuración de Next.js, imágenes remotas y la raíz usada por Turbopack
 const nextConfig = {
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
   ...(process.env.DEPLOYMENT_VERSION?.trim()

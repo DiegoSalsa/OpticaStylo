@@ -8,6 +8,7 @@ datasource db {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio appointment events {.
 model appointment_events {
   id                BigInt       @id @default(autoincrement()) @map("id")
   appointment_id    String       @map("appointment_id") @db.Uuid
@@ -29,6 +30,7 @@ model appointment_events {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio appointments {.
 model appointments {
   id                                   String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                           String                       @map("patient_id") @db.Uuid
@@ -60,6 +62,7 @@ model appointments {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio cash register movements {.
 model cash_register_movements {
   id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   session_id             String                 @map("session_id") @db.Uuid
@@ -76,6 +79,7 @@ model cash_register_movements {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio cash register sessions {.
 model cash_register_sessions {
   id                                            String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   status                                        String                    @default("OPEN") @map("status") @db.VarChar(10)
@@ -98,6 +102,7 @@ model cash_register_sessions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio clinical encounter addenda {.
 model clinical_encounter_addenda {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   encounter_id          String                @map("encounter_id") @db.Uuid
@@ -113,6 +118,7 @@ model clinical_encounter_addenda {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio clinical encounter events {.
 model clinical_encounter_events {
   id                    BigInt                @id @default(autoincrement()) @map("id")
   encounter_id          String                @map("encounter_id") @db.Uuid
@@ -128,6 +134,7 @@ model clinical_encounter_events {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio clinical encounters {.
 model clinical_encounters {
   id                                                                               String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   appointment_id                                                                   String                       @unique @map("appointment_id") @db.Uuid
@@ -159,6 +166,7 @@ model clinical_encounters {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio customer account sessions {.
 model customer_account_sessions {
   id                String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   account_id        String            @map("account_id") @db.Uuid
@@ -178,6 +186,7 @@ model customer_account_sessions {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
+/// Entidad de datos del dominio customer accounts {.
 model customer_accounts {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   customer_id                String                       @unique @map("customer_id") @db.Uuid
@@ -199,6 +208,7 @@ model customer_accounts {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio customers {.
 model customers {
   id                                String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                        String?                  @unique @map("patient_id") @db.Uuid
@@ -225,6 +235,7 @@ model customers {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio discount authorization attempts {.
 model discount_authorization_attempts {
   id                                                              String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   attempted_by                                                    String    @map("attempted_by") @db.Uuid
@@ -242,6 +253,7 @@ model discount_authorization_attempts {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio discount authorization grants {.
 model discount_authorization_grants {
   id                                                       String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   requested_by                                             String    @map("requested_by") @db.Uuid
@@ -262,6 +274,7 @@ model discount_authorization_grants {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
+/// Entidad de datos del dominio external prescriptions {.
 model external_prescriptions {
   id                   String       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   cart_id              String?      @unique @map("cart_id") @db.Uuid
@@ -297,6 +310,7 @@ model external_prescriptions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio medical record events {.
 model medical_record_events {
   id                    BigInt                @id @default(autoincrement()) @map("id")
   medical_record_id     String                @map("medical_record_id") @db.Uuid
@@ -312,6 +326,7 @@ model medical_record_events {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio medical record revisions {.
 model medical_record_revisions {
   id                      BigInt                @id @default(autoincrement()) @map("id")
   medical_record_id       String                @map("medical_record_id") @db.Uuid
@@ -333,6 +348,7 @@ model medical_record_revisions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio medical records {.
 model medical_records {
   id                                                                      String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                                                              String                     @unique @map("patient_id") @db.Uuid
@@ -355,6 +371,7 @@ model medical_records {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio optical prescriptions {.
 model optical_prescriptions {
   id                          String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   encounter_id                String                  @map("encounter_id") @db.Uuid
@@ -389,6 +406,7 @@ model optical_prescriptions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio patient guardians {.
 model patient_guardians {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id   String   @unique @map("patient_id") @db.Uuid
@@ -407,6 +425,7 @@ model patient_guardians {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio patients {.
 model patients {
   id                               String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   rut                              String                   @unique @map("rut") @db.VarChar(10)
@@ -436,6 +455,7 @@ model patients {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio payment attempts {.
 model payment_attempts {
   id                     String         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                String         @map("sale_id") @db.Uuid
@@ -464,6 +484,7 @@ model payment_attempts {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio payment provider events {.
 model payment_provider_events {
   id                 BigInt    @id @default(autoincrement()) @map("id")
   provider           String    @map("provider") @db.VarChar(30)
@@ -482,6 +503,7 @@ model payment_provider_events {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio permissions {.
 model permissions {
   id               Int                @id @default(autoincrement()) @map("id") @db.SmallInt
   code             String             @unique @map("code") @db.VarChar(100)
@@ -493,6 +515,7 @@ model permissions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio product events {.
 model product_events {
   id             BigInt   @id @default(autoincrement()) @map("id")
   product_id     String   @map("product_id") @db.Uuid
@@ -509,6 +532,7 @@ model product_events {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
+/// Entidad de datos del dominio product images {.
 model product_images {
   id                                     String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   product_id                             String    @map("product_id") @db.Uuid
@@ -538,6 +562,7 @@ model product_images {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio products {.
 model products {
   id                                                                String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sku                                                               String                     @unique @map("sku") @db.VarChar(80)
@@ -567,6 +592,7 @@ model products {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio professional profiles {.
 model professional_profiles {
   user_id                                                                        String                            @id @map("user_id") @db.Uuid
   appointment_duration_minutes                                                   Int                               @map("appointment_duration_minutes") @db.SmallInt
@@ -599,6 +625,7 @@ model professional_profiles {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio professional schedule blocks {.
 model professional_schedule_blocks {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
@@ -615,6 +642,7 @@ model professional_schedule_blocks {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio professional schedule overrides {.
 model professional_schedule_overrides {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
@@ -636,6 +664,7 @@ model professional_schedule_overrides {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio professional weekly schedules {.
 model professional_weekly_schedules {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
@@ -655,6 +684,7 @@ model professional_weekly_schedules {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio public request rate limits {.
 model public_request_rate_limits {
   bucket            String   @map("bucket") @db.VarChar(80)
   subject_hash      String   @map("subject_hash") @db.Char(64)
@@ -667,6 +697,7 @@ model public_request_rate_limits {
   @@map("public_request_rate_limits")
 }
 
+/// Entidad de datos del dominio role permissions {.
 model role_permissions {
   role_id       Int         @map("role_id") @db.SmallInt
   permission_id Int         @map("permission_id") @db.SmallInt
@@ -679,6 +710,7 @@ model role_permissions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio roles {.
 model roles {
   id               Int                @id @default(autoincrement()) @map("id") @db.SmallInt
   code             String             @unique @map("code") @db.VarChar(50)
@@ -693,6 +725,7 @@ model roles {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio sale events {.
 model sale_events {
   id              BigInt   @id @default(autoincrement()) @map("id")
   sale_id         String   @map("sale_id") @db.Uuid
@@ -710,6 +743,7 @@ model sale_events {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio sale items {.
 model sale_items {
   id                                                  String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                                             String    @map("sale_id") @db.Uuid
@@ -736,6 +770,7 @@ model sale_items {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio sale optical additions {.
 model sale_optical_additions {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id          String   @map("sale_id") @db.Uuid
@@ -754,6 +789,7 @@ model sale_optical_additions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio sale payments {.
 model sale_payments {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                    String                       @map("sale_id") @db.Uuid
@@ -779,6 +815,7 @@ model sale_payments {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio sale receipts {.
 model sale_receipts {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   receipt_number             BigInt                       @unique @default(autoincrement()) @map("receipt_number")
@@ -805,6 +842,7 @@ model sale_receipts {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
+/// Entidad de datos del dominio sales {.
 model sales {
   id                                        String                          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_number                               BigInt                          @unique @default(autoincrement()) @map("sale_number")
@@ -860,6 +898,7 @@ model sales {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio schema migrations {.
 model schema_migrations {
   version     Int      @id @map("version")
   name        String   @map("name")
@@ -870,6 +909,7 @@ model schema_migrations {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio store cart items {.
 model store_cart_items {
   id                                                        String      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   cart_id                                                   String      @map("cart_id") @db.Uuid
@@ -888,6 +928,7 @@ model store_cart_items {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio store carts {.
 model store_carts {
   id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   token_hash               String                  @unique @map("token_hash") @db.Char(64)
@@ -924,6 +965,7 @@ model store_carts {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
+/// Entidad de datos del dominio transactional email outbox {.
 model transactional_email_outbox {
   id                                  String                                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   template_code                       String                                @map("template_code") @db.VarChar(60)
@@ -967,6 +1009,7 @@ model transactional_email_outbox {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
+/// Entidad de datos del dominio transactional email provider events {.
 model transactional_email_provider_events {
   id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   provider                   String                      @map("provider") @db.VarChar(30)
@@ -986,6 +1029,7 @@ model transactional_email_provider_events {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio transactional email transitions {.
 model transactional_email_transitions {
   id                         BigInt                     @id @default(autoincrement()) @map("id")
   email_id                   String                     @map("email_id") @db.Uuid
@@ -1004,6 +1048,7 @@ model transactional_email_transitions {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio transactional email worker runs {.
 model transactional_email_worker_runs {
   id                String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   worker_id         String    @map("worker_id") @db.Uuid
@@ -1023,6 +1068,7 @@ model transactional_email_worker_runs {
   @@map("transactional_email_worker_runs")
 }
 
+/// Entidad de datos del dominio user roles {.
 model user_roles {
   user_id                             String   @map("user_id") @db.Uuid
   role_id                             Int      @map("role_id") @db.SmallInt
@@ -1038,6 +1084,7 @@ model user_roles {
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
+/// Entidad de datos del dominio user sessions {.
 model user_sessions {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   user_id      String    @map("user_id") @db.Uuid
@@ -1057,6 +1104,7 @@ model user_sessions {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
+/// Entidad de datos del dominio users {.
 model users {
   id                                                                                        String                            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   email                                                                                     String                            @map("email") @db.VarChar(254)
@@ -1115,6 +1163,7 @@ model users {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
+/// Entidad de datos del dominio virtual try on 3d assets {.
 model virtual_try_on_3d_assets {
   id                                               String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   product_id                                       String    @map("product_id") @db.Uuid

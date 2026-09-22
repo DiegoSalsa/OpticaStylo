@@ -1,4 +1,5 @@
 import { loadProjectEnvironment } from "./load-environment.mjs";
+// Script operativo para mercado-pago-preflight.
 
 loadProjectEnvironment();
 
@@ -11,6 +12,7 @@ const { getTransactionalEmailDiagnostic } = await import(
 );
 
 const checks = [];
+// Verificar check para impedir que la operación continúe en un estado inválido
 function check(name, passed, detail) {
   checks.push({ detail, name, passed });
 }
