@@ -6,6 +6,7 @@ import { createSuccessResponse } from "@/utils/api-response";
 import { AppError } from "@/utils/app-error";
 import { executeApiHandler } from "@/utils/error-handler";
 
+// GET /api/sales/[saleId]/checkout/mercado-pago/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
@@ -14,6 +15,7 @@ export async function GET(request, { params }) {
   });
 }
 
+// POST /api/sales/[saleId]/checkout/mercado-pago/ - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
     await authenticateRequest(request);

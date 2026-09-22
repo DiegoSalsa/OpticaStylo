@@ -1,6 +1,8 @@
+// Capa HTTP para internal/transactional-emails/process/process-request.js, delegando autenticación y reglas de negocio a las capas internas.
 import { processTransactionalEmailBatch } from "../../../../../services/transactional-email-service.js";
 import { hasValidBearerSecret } from "../../../../../utils/secret-authorization.js";
 
+// Centralizar la lógica de no tienda json para mantener consistente el comportamiento de la aplicación
 function noStoreJson(data, status = 200) {
   return Response.json(data, {
     headers: { "Cache-Control": "no-store" },
@@ -8,6 +10,7 @@ function noStoreJson(data, status = 200) {
   });
 }
 
+// Gestionar process solicitud y coordinar sus efectos secundarios
 export async function processRequest(request, dependencies = {}) {
   const processBatch = dependencies.processBatch ?? processTransactionalEmailBatch;
   const secret = dependencies.secret ?? process.env.CRON_SECRET;

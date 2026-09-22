@@ -3,6 +3,7 @@ import { retryFailedTransactionalEmail } from "@/services/transactional-email-se
 import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 
+// POST /api/admin/transactional-emails/[emailId]/retry/ - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

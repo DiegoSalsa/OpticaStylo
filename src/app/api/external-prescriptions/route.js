@@ -1,3 +1,4 @@
+// Capa HTTP para external-prescriptions/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { authenticateRequest } from "@/auth/authenticate-request";
 import {
   createExternalPrescription,
@@ -10,6 +11,7 @@ import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody, readMultipartFormData } from "@/utils/http-request";
 import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 
+// Validar y normalizar parse confirmed datos antes de continuar con la operación
 function parseConfirmedData(value) {
   try {
     return JSON.parse(value);
@@ -22,6 +24,7 @@ function parseConfirmedData(value) {
   }
 }
 
+// POST /api/external-prescriptions/route.js - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
@@ -57,6 +60,7 @@ export async function POST(request) {
   });
 }
 
+// GET /api/external-prescriptions/route.js - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

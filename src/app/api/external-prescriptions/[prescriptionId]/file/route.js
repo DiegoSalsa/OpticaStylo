@@ -2,6 +2,7 @@ import { authenticateRequest } from "@/auth/authenticate-request";
 import { getExternalPrescriptionFile } from "@/services/external-prescription-service";
 import { executeApiHandler } from "@/utils/error-handler";
 
+// GET /api/external-prescriptions/[prescriptionId]/file/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

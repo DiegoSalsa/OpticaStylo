@@ -3,6 +3,7 @@ import { finalizeEncounter } from "@/services/clinical-service";
 import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 
+// POST /api/clinical-encounters/[encounterId]/finalize/ - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

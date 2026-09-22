@@ -1,3 +1,4 @@
+// Capa HTTP para cash-register/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { authenticateRequest } from "@/auth/authenticate-request";
 import {
   getOpenCashRegister,
@@ -7,6 +8,7 @@ import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
+// GET /api/cash-register/route.js - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
@@ -14,6 +16,7 @@ export async function GET(request) {
   });
 }
 
+// POST /api/cash-register/route.js - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

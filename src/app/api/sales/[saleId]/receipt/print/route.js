@@ -3,6 +3,7 @@ import { getSaleReceipt } from "@/services/sale-service";
 import { executeApiHandler } from "@/utils/error-handler";
 import { renderReceiptHtml } from "@/utils/receipt-template";
 
+// GET /api/sales/[saleId]/receipt/print/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
