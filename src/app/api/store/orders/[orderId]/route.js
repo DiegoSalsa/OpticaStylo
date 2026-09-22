@@ -3,6 +3,7 @@ import { getStoreOrder } from "@/services/store-service";
 import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 
+// GET /api/store/orders/[orderId]/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });

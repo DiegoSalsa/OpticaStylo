@@ -1,3 +1,4 @@
+// Capa HTTP para store/accounts/register/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { createStoreSessionCookie } from "@/auth/store-session";
 import { registerStoreAccount } from "@/services/store-account-service";
 import { createSuccessResponse } from "@/utils/api-response";
@@ -9,6 +10,7 @@ import {
   PUBLIC_REQUEST_LIMIT_OPERATIONS,
 } from "@/security/public-request-rate-limit";
 
+// POST /api/store/accounts/register/route.js - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
     const input = await readJsonBody(request);

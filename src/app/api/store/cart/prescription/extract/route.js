@@ -1,3 +1,4 @@
+// Capa HTTP para store/cart/prescription/extract/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
 import { extractPrescriptionImage } from "@/services/store-service";
 import { createSuccessResponse } from "@/utils/api-response";
@@ -7,6 +8,7 @@ import {
   PUBLIC_REQUEST_LIMIT_OPERATIONS,
 } from "@/security/public-request-rate-limit";
 
+// POST /api/store/cart/prescription/extract/route.js - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });

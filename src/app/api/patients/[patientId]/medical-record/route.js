@@ -9,6 +9,7 @@ import { readJsonBody } from "@/utils/http-request";
 
 const CLINICAL_BODY_LIMIT = 64 * 1024;
 
+// GET /api/patients/[patientId]/medical-record/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
@@ -19,6 +20,7 @@ export async function GET(request, { params }) {
   });
 }
 
+// PATCH /api/patients/[patientId]/medical-record/ - actualizar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function PATCH(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

@@ -5,6 +5,7 @@ import { executeApiHandler } from "@/utils/error-handler";
 import { readMultipartFormData } from "@/utils/http-request";
 import { MAX_PRODUCT_IMAGE_UPLOAD_BYTES } from "@/validations/product-image-validation";
 
+// GET /api/products/[productId]/images/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
@@ -13,6 +14,7 @@ export async function GET(request, { params }) {
   });
 }
 
+// POST /api/products/[productId]/images/ - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

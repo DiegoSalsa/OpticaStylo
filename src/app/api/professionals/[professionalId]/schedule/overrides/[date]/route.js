@@ -7,6 +7,7 @@ import { createSuccessResponse } from "@/utils/api-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
+// PUT /api/professionals/[professionalId]/schedule/overrides/[date]/ - actualizar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function PUT(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
@@ -23,6 +24,7 @@ export async function PUT(request, { params }) {
   });
 }
 
+// DELETE /api/professionals/[professionalId]/schedule/overrides/[date]/ - eliminar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function DELETE(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);

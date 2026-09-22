@@ -1,3 +1,4 @@
+// Capa HTTP para store/cart/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import {
   authenticateCustomerRequest,
   createStoreCartCookie,
@@ -16,6 +17,7 @@ import {
   PUBLIC_REQUEST_LIMIT_OPERATIONS,
 } from "@/security/public-request-rate-limit";
 
+// POST /api/store/cart/route.js - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });
@@ -31,6 +33,7 @@ export async function POST(request) {
   });
 }
 
+// GET /api/store/cart/route.js - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });
@@ -38,6 +41,7 @@ export async function GET(request) {
   });
 }
 
+// PATCH /api/store/cart/route.js - actualizar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function PATCH(request) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });

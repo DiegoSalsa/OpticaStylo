@@ -1,3 +1,4 @@
+// Capa HTTP para store/cart/prescription/image/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
 import { getPrescriptionImage, putPrescriptionImage } from "@/services/store-service";
 import { createSuccessResponse } from "@/utils/api-response";
@@ -9,6 +10,7 @@ import {
 } from "@/security/public-request-rate-limit";
 import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 
+// PUT /api/store/cart/prescription/image/route.js - actualizar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function PUT(request) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });
@@ -25,6 +27,7 @@ export async function PUT(request) {
   });
 }
 
+// GET /api/store/cart/prescription/image/route.js - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request) {
   return executeApiHandler(async () => {
     const account = await authenticateCustomerRequest(request, { optional: true });
