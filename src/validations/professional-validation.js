@@ -1,8 +1,10 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para professional-validation.
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Construir y lanzar el error de dominio asociado a throw validation error
 function throwValidationError(message) {
   throw new AppError({
     code: "INVALID_PROFESSIONAL_DATA",
@@ -11,6 +13,7 @@ function throwValidationError(message) {
   });
 }
 
+// Validar y normalizar validate integer in range antes de continuar con la operación
 function validateIntegerInRange(value, fieldName, minimum, maximum) {
   if (!Number.isInteger(value) || value < minimum || value > maximum) {
     throwValidationError(
@@ -21,6 +24,7 @@ function validateIntegerInRange(value, fieldName, minimum, maximum) {
   return value;
 }
 
+// Validar y normalizar validate profesional id antes de continuar con la operación
 export function validateProfessionalId(value) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     throwValidationError("El identificador del profesional no es válido.");
@@ -29,6 +33,7 @@ export function validateProfessionalId(value) {
   return value.toLowerCase();
 }
 
+// Validar y normalizar validate create profesional entrada antes de continuar con la operación
 export function validateCreateProfessionalInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
@@ -55,6 +60,7 @@ export function validateCreateProfessionalInput(input) {
   };
 }
 
+// Validar y normalizar validate bookable antes de continuar con la operación
 function validateBookable(value) {
   if (typeof value !== "boolean") {
     throwValidationError("La disponibilidad para reservas debe ser booleana.");
@@ -63,6 +69,7 @@ function validateBookable(value) {
   return value;
 }
 
+// Validar y normalizar validate update profesional entrada antes de continuar con la operación
 export function validateUpdateProfessionalInput(input, currentProfessional) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");

@@ -1,4 +1,5 @@
 import { PERMISSIONS } from "./permissions.js";
+// Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
 import { ROLES } from "./roles.js";
 
 export const ROLE_PERMISSIONS = Object.freeze({
@@ -58,6 +59,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
   ]),
 });
 
+// Consultar get permisos for roles y devolver los datos en el formato esperado por la capa llamadora
 export function getPermissionsForRoles(roleCodes) {
   const permissions = new Set();
 

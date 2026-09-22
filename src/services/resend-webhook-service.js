@@ -1,9 +1,11 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de resend-webhook-service.
 import { createHash } from "node:crypto";
 
 import { verifyResendWebhook } from "../integrations/email/resend-webhook.js";
 import { recordTransactionalEmailProviderEvent } from "../repositories/transactional-email-repository.js";
 import { AppError } from "../utils/app-error.js";
 
+// Centralizar la lógica de sanitized event datos para mantener consistente el comportamiento de la aplicación
 function sanitizedEventData(payload) {
   const bounce = payload?.data?.bounce;
   if (!bounce || typeof bounce !== "object") return {};
@@ -13,6 +15,7 @@ function sanitizedEventData(payload) {
   };
 }
 
+// Gestionar process resend webhook y coordinar sus efectos secundarios
 export async function processResendWebhook(rawBody, headers, dependencies = {}) {
   const secret = dependencies.secret ?? process.env.RESEND_WEBHOOK_SECRET;
   let payload;

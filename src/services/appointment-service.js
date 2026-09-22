@@ -1,3 +1,5 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de appointment-service.
+// Servicio de negocio que coordina reservas.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getSchedulingTimeZone } from "../config/scheduling.js";
@@ -28,10 +30,12 @@ const STATUS_TRANSITIONS = Object.freeze({
   CONFIRMED: Object.freeze(["CHECKED_IN", "CANCELLED", "NO_SHOW"]),
 });
 
+// Determinar si has permiso cumple la condición requerida por la aplicación
 function hasPermission(actor, permission) {
   return actor?.permissions?.includes(permission) ?? false;
 }
 
+// Construir y lanzar el error de dominio asociado a throw reserva not found
 function throwAppointmentNotFound() {
   throw new AppError({
     code: "APPOINTMENT_NOT_FOUND",
@@ -40,6 +44,7 @@ function throwAppointmentNotFound() {
   });
 }
 
+// Construir y lanzar el error de dominio asociado a throw invalid transition
 function throwInvalidTransition(currentStatus, newStatus) {
   throw new AppError({
     code: "INVALID_APPOINTMENT_STATUS_TRANSITION",
@@ -48,6 +53,7 @@ function throwInvalidTransition(currentStatus, newStatus) {
   });
 }
 
+// Construir y lanzar el error de dominio asociado a throw reserva conflict
 function throwAppointmentConflict(conflict) {
   const isScheduleBlock = conflict === "SCHEDULE_BLOCK";
 
@@ -62,6 +68,7 @@ function throwAppointmentConflict(conflict) {
   });
 }
 
+// Verificar require reserva read para impedir que la operación continúe en un estado inválido
 function requireAppointmentRead(actor, appointment) {
   if (hasPermission(actor, PERMISSIONS.APPOINTMENTS_READ_ALL)) {
     return;
@@ -74,6 +81,7 @@ function requireAppointmentRead(actor, appointment) {
   }
 }
 
+// Consultar get own profesional filter y devolver los datos en el formato esperado por la capa llamadora
 function getOwnProfessionalFilter(actor) {
   if (hasPermission(actor, PERMISSIONS.APPOINTMENTS_READ_ALL)) {
     return null;
@@ -83,6 +91,7 @@ function getOwnProfessionalFilter(actor) {
   return actor.userId;
 }
 
+// Verificar require reserva para impedir que la operación continúe en un estado inválido
 async function requireAppointment(appointmentId, findRepository) {
   const appointment = await findRepository(appointmentId);
 
@@ -93,6 +102,7 @@ async function requireAppointment(appointmentId, findRepository) {
   return appointment;
 }
 
+// Verificar require bookable slot para impedir que la operación continúe en un estado inválido
 async function requireBookableSlot({
   actor,
   currentDate,
@@ -120,6 +130,7 @@ async function requireBookableSlot({
   return new Date(matchingSlot.endAt);
 }
 
+// Crear o registrar create reserva aplicando las reglas de negocio y persistencia correspondientes
 export async function createAppointment(input, actor, dependencies = {}) {
   const patientRepository = dependencies.findPatientById ?? findPatientById;
   const professionalRepository =
@@ -129,8 +140,11 @@ export async function createAppointment(input, actor, dependencies = {}) {
   const createRepository =
     dependencies.createAppointment ?? createAppointmentRepository;
 
+  // Permitir la operación únicamente a usuarios autorizados para crear reservas
   requirePermissions(actor, [PERMISSIONS.APPOINTMENTS_CREATE]);
+  // Normalizar y validar los datos recibidos antes de consultar la base de datos
   const data = validateCreateAppointmentInput(input, dependencies.currentDate);
+  // Consultar paciente y profesional en paralelo porque ninguna búsqueda depende de la otra
   const [patient, professional] = await Promise.all([
     patientRepository(data.patientId),
     professionalRepository(data.professionalId),
@@ -152,6 +166,7 @@ export async function createAppointment(input, actor, dependencies = {}) {
     });
   }
 
+  // Verificar que el horario solicitado siga disponible antes de crear la reserva
   const endAt = await requireBookableSlot({
     actor,
     currentDate: dependencies.currentDate,
@@ -160,6 +175,7 @@ export async function createAppointment(input, actor, dependencies = {}) {
     startAt: data.startAt,
     timeZone: dependencies.timeZone ?? getSchedulingTimeZone(),
   });
+  // Delegar la persistencia al repositorio, que también registra historial y notificaciones
   const result = await createRepository(
     { ...data, endAt },
     actor.userId,
@@ -176,6 +192,7 @@ export async function createAppointment(input, actor, dependencies = {}) {
   return result.appointment;
 }
 
+// Consultar get reserva y devolver los datos en el formato esperado por la capa llamadora
 export async function getAppointment(
   appointmentId,
   actor,
@@ -189,6 +206,7 @@ export async function getAppointment(
   return appointment;
 }
 
+// Consultar get reserva list y devolver los datos en el formato esperado por la capa llamadora
 export async function getAppointmentList(
   searchParams,
   actor,
@@ -201,6 +219,7 @@ export async function getAppointmentList(
   return listRepository({ ...query, ownProfessionalId });
 }
 
+// Actualizar update reserva manteniendo las restricciones y estados permitidos del dominio
 export async function updateAppointment(
   appointmentId,
   input,
@@ -213,6 +232,7 @@ export async function updateAppointment(
   const availabilityService =
     dependencies.getProfessionalAvailability ?? getProfessionalAvailability;
 
+  // Exigir permiso de edición antes de leer o modificar la reserva
   requirePermissions(actor, [PERMISSIONS.APPOINTMENTS_UPDATE]);
   const normalizedId = validateAppointmentId(appointmentId);
   const current = await requireAppointment(normalizedId, findRepository);
@@ -222,6 +242,7 @@ export async function updateAppointment(
     throwInvalidTransition(current.status, "UPDATED");
   }
 
+  // Si cambia la hora, volver a comprobar disponibilidad excluyendo la propia reserva
   const endAt = changes.startAt
     ? await requireBookableSlot({
         actor,
@@ -254,6 +275,7 @@ export async function updateAppointment(
   return result.appointment;
 }
 
+// Actualizar change reserva estado manteniendo las restricciones y estados permitidos del dominio
 export async function changeAppointmentStatus(
   appointmentId,
   input,
@@ -267,6 +289,7 @@ export async function changeAppointmentStatus(
   const statusData = validateAppointmentStatusInput(input);
   const current = await requireAppointment(normalizedId, findRepository);
 
+  // Impedir que una reserva se complete fuera del flujo de atención clínica finalizada
   if (statusData.status === "COMPLETED") {
     throw new AppError({
       code: "APPOINTMENT_COMPLETION_REQUIRES_FINALIZED_ENCOUNTER",
@@ -288,6 +311,7 @@ export async function changeAppointmentStatus(
     }
   }
 
+  // Aplicar únicamente las transiciones de estado declaradas por el dominio
   const allowedNewStatuses = STATUS_TRANSITIONS[current.status] ?? [];
 
   if (!allowedNewStatuses.includes(statusData.status)) {
@@ -318,6 +342,7 @@ export async function changeAppointmentStatus(
   return result.appointment;
 }
 
+// Consultar get reserva historial y devolver los datos en el formato esperado por la capa llamadora
 export async function getAppointmentHistory(
   appointmentId,
   actor,

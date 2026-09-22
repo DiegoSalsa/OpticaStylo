@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de schedule-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { requireScheduleManagement } from "../auth/schedule-access.js";
@@ -28,6 +29,7 @@ import {
 import { validateProfessionalId } from "../validations/professional-validation.js";
 import { buildAvailabilitySlots } from "./availability-engine.js";
 
+// Construir y lanzar el error de dominio asociado a throw profesional not found
 function throwProfessionalNotFound() {
   throw new AppError({
     code: "PROFESSIONAL_NOT_FOUND",
@@ -36,6 +38,7 @@ function throwProfessionalNotFound() {
   });
 }
 
+// Verificar require profesional para impedir que la operación continúe en un estado inválido
 async function requireProfessional(professionalId, findRepository) {
   const professional = await findRepository(professionalId);
 
@@ -46,6 +49,7 @@ async function requireProfessional(professionalId, findRepository) {
   return professional;
 }
 
+// Consultar get profesional agenda y devolver los datos en el formato esperado por la capa llamadora
 export async function getProfessionalSchedule(
   professionalId,
   actor,
@@ -61,6 +65,7 @@ export async function getProfessionalSchedule(
   return scheduleRepository(normalizedId);
 }
 
+// Centralizar la lógica de replace profesional agenda para mantener consistente el comportamiento de la aplicación
 export async function replaceProfessionalSchedule(
   professionalId,
   input,
@@ -78,6 +83,7 @@ export async function replaceProfessionalSchedule(
   return saveRepository(normalizedId, days);
 }
 
+// Consultar get profesional overrides y devolver los datos en el formato esperado por la capa llamadora
 export async function getProfessionalOverrides(
   professionalId,
   searchParams,
@@ -105,6 +111,7 @@ export async function getProfessionalOverrides(
   return listRepository(normalizedId, from, to);
 }
 
+// Actualizar set profesional override manteniendo las restricciones y estados permitidos del dominio
 export async function setProfessionalOverride(
   professionalId,
   date,
@@ -126,6 +133,7 @@ export async function setProfessionalOverride(
   return upsertRepository(normalizedId, normalizedDate, override, actor.userId);
 }
 
+// Eliminar o cancelar delete profesional override de forma controlada y consistente
 export async function deleteProfessionalOverride(
   professionalId,
   date,
@@ -149,6 +157,7 @@ export async function deleteProfessionalOverride(
   }
 }
 
+// Crear o registrar create profesional agenda block aplicando las reglas de negocio y persistencia correspondientes
 export async function createProfessionalScheduleBlock(
   professionalId,
   input,
@@ -177,6 +186,7 @@ export async function createProfessionalScheduleBlock(
   return result.block;
 }
 
+// Consultar get profesional agenda blocks y devolver los datos en el formato esperado por la capa llamadora
 export async function getProfessionalScheduleBlocks(
   professionalId,
   searchParams,
@@ -204,6 +214,7 @@ export async function getProfessionalScheduleBlocks(
   return listRepository(normalizedId, from, to);
 }
 
+// Eliminar o cancelar delete profesional agenda block de forma controlada y consistente
 export async function deleteProfessionalScheduleBlock(
   professionalId,
   blockId,
@@ -226,6 +237,7 @@ export async function deleteProfessionalScheduleBlock(
   }
 }
 
+// Consultar get profesional disponibilidad y devolver los datos en el formato esperado por la capa llamadora
 export async function getProfessionalAvailability(
   professionalId,
   searchParams,

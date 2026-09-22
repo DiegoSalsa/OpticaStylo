@@ -1,5 +1,7 @@
 import { AppError } from "../utils/app-error.js";
+// Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
 
+// Verificar require permisos para impedir que la operación continúe en un estado inválido
 export function requirePermissions(actor, requiredPermissions) {
   if (!actor) {
     throw new AppError({

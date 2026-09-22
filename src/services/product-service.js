@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de product-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
@@ -17,10 +18,12 @@ import {
   validateUpdateProductInput,
 } from "../validations/product-validation.js";
 
+// Centralizar la lógica de not found para mantener consistente el comportamiento de la aplicación
 function notFound() {
   throw new AppError({ code: "PRODUCT_NOT_FOUND", message: "No se encontró el producto.", status: 404 });
 }
 
+// Centralizar la lógica de convert unique violation para mantener consistente el comportamiento de la aplicación
 function convertUniqueViolation(error) {
   if (error?.code === "23505") {
     throw new AppError({
@@ -33,6 +36,7 @@ function convertUniqueViolation(error) {
   throw error;
 }
 
+// Crear o registrar create producto aplicando las reglas de negocio y persistencia correspondientes
 export async function createProduct(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_MANAGE]);
   try {
@@ -44,6 +48,7 @@ export async function createProduct(input, actor, dependencies = {}) {
   }
 }
 
+// Consultar get producto y devolver los datos en el formato esperado por la capa llamadora
 export async function getProduct(productId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
   const id = validateProductId(productId);
@@ -57,6 +62,7 @@ export async function getProduct(productId, actor, dependencies = {}) {
   };
 }
 
+// Consultar get producto list y devolver los datos en el formato esperado por la capa llamadora
 export async function getProductList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
   const result = await (dependencies.listProducts ?? listProducts)(validateProductListQuery(searchParams));
@@ -70,11 +76,13 @@ export async function getProductList(searchParams, actor, dependencies = {}) {
   };
 }
 
+// Consultar get producto historial y devolver los datos en el formato esperado por la capa llamadora
 export async function getProductHistory(productId, actor, dependencies = {}) {
   await getProduct(productId, actor, dependencies);
   return (dependencies.listProductEvents ?? listProductEvents)(validateProductId(productId));
 }
 
+// Actualizar update producto manteniendo las restricciones y estados permitidos del dominio
 export async function updateProduct(productId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_MANAGE]);
   const id = validateProductId(productId);

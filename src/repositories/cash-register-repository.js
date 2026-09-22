@@ -1,9 +1,12 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con cash-register-repository.
 
+// Transformar map movimiento al formato utilizado por el resto de la aplicación
 function mapMovement(row) {
   return { amountCents: Number(row.amount_cents), createdAt: row.created_at, id: row.id, movementType: row.movement_type, reason: row.reason };
 }
 
+// Consultar find sesión with client y devolver los datos en el formato esperado por la capa llamadora
 async function findSessionWithClient(client, sessionId) {
   const row = await client.cash_register_sessions.findUnique({
     include: { cash_register_movements: { orderBy: [{ created_at: "asc" }, { id: "asc" }] } },
@@ -34,12 +37,15 @@ async function findSessionWithClient(client, sessionId) {
   };
 }
 
+// Consultar find open caja caja sesión y devolver los datos en el formato esperado por la capa llamadora
 export async function findOpenCashRegisterSession() {
   const row = await prisma.cash_register_sessions.findFirst({ select: { id: true }, where: { status: "OPEN" } });
   return row ? findSessionWithClient(prisma, row.id) : null;
 }
 
+// Actualizar open caja caja manteniendo las restricciones y estados permitidos del dominio
 export async function openCashRegister(input, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const opened = await client.cash_register_sessions.create({ data: {
       opened_by: actorUserId, opening_amount_cents: input.openingAmountCents,
@@ -49,7 +55,9 @@ export async function openCashRegister(input, actorUserId) {
   });
 }
 
+// Crear o registrar create caja caja movimiento aplicando las reglas de negocio y persistencia correspondientes
 export async function createCashRegisterMovement(sessionId, movement, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const session = await client.cash_register_sessions.findUnique({ where: { id: sessionId } });
     if (!session) return { reason: "CASH_REGISTER_NOT_FOUND" };
@@ -59,10 +67,13 @@ export async function createCashRegisterMovement(sessionId, movement, actorUserI
       movement_type: movement.movementType, reason: movement.reason, session_id: sessionId,
     } });
     return { reason: null, session: await findSessionWithClient(client, sessionId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Actualizar close caja caja manteniendo las restricciones y estados permitidos del dominio
 export async function closeCashRegister(sessionId, closing, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const session = await findSessionWithClient(client, sessionId);
     if (!session) return { reason: "CASH_REGISTER_NOT_FOUND" };
@@ -77,5 +88,6 @@ export async function closeCashRegister(sessionId, closing, actorUserId) {
       expected_amount_cents: expected, status: "CLOSED",
     }, where: { id: sessionId } });
     return { reason: null, session: await findSessionWithClient(client, sessionId) };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }

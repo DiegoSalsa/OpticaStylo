@@ -1,5 +1,7 @@
+// Código de la aplicación para resend-webhook.
 import { Webhook } from "svix";
 
+// Verificar verify resend webhook para impedir que la operación continúe en un estado inválido
 export function verifyResendWebhook(rawBody, headers, secret, dependencies = {}) {
   if (!secret) throw new Error("RESEND_WEBHOOK_SECRET no está configurado.");
   const signatureHeaders = {

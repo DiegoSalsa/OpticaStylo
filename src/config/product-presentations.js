@@ -1,4 +1,5 @@
 const PRESENTATIONS_BY_SKU = Object.freeze({
+// Configuración centralizada de product-presentations.
   "HD0896-001": Object.freeze({
     description: "Montura óptica rectangular Harley-Davidson en negro brillante, con bisagras flex y tamaño 56-15-145.",
     images: Object.freeze([
@@ -30,6 +31,7 @@ const EMPTY_PRESENTATION = Object.freeze({
   specifications: Object.freeze([]),
 });
 
+// Consultar get producto presentation y devolver los datos en el formato esperado por la capa llamadora
 export function getProductPresentation(sku) {
   return PRESENTATIONS_BY_SKU[sku] ?? EMPTY_PRESENTATION;
 }

@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de sale-service.
 import { verifyPassword } from "../auth/password.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
@@ -64,6 +65,7 @@ const REPOSITORY_ERRORS = Object.freeze({
   UNEXPECTED_LENS_MOUNT: ["UNEXPECTED_LENS_MOUNT", "Solo los cristales pueden tener una montura asociada.", 409],
 });
 
+// Construir y lanzar el error de dominio asociado a throw repositorio reason
 function throwRepositoryReason(reason) {
   const [code, message, status] = REPOSITORY_ERRORS[reason] ?? [
     "SALE_OPERATION_REJECTED", "No fue posible realizar la operación comercial.", 409,
@@ -71,11 +73,13 @@ function throwRepositoryReason(reason) {
   throw new AppError({ code, message, status });
 }
 
+// Centralizar la lógica de unwrap para mantener consistente el comportamiento de la aplicación
 function unwrap(result) {
   if (result.reason) throwRepositoryReason(result.reason);
   return result.sale;
 }
 
+// Centralizar la lógica de authorize descuento solicitud para mantener consistente el comportamiento de la aplicación
 async function authorizeDiscountRequest(input, actor, dependencies) {
   const findAuthorizer = dependencies.findDiscountAuthorizer ?? findUserForPermissionAuthorization;
   const passwordVerifier = dependencies.verifyPassword ?? verifyPassword;
@@ -125,6 +129,7 @@ async function authorizeDiscountRequest(input, actor, dependencies) {
   return authorizer.id;
 }
 
+// Crear o registrar create venta aplicando las reglas de negocio y persistencia correspondientes
 export async function createSale(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   const draft = validateSaleDraftInput(input);
@@ -139,6 +144,7 @@ export async function createSale(input, actor, dependencies = {}) {
   ));
 }
 
+// Centralizar la lógica de grant descuento authorization para mantener consistente el comportamiento de la aplicación
 export async function grantDiscountAuthorization(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   const request = validateDiscountAuthorizationInput(input);
@@ -155,6 +161,7 @@ export async function grantDiscountAuthorization(input, actor, dependencies = {}
   });
 }
 
+// Consultar get venta y devolver los datos en el formato esperado por la capa llamadora
 export async function getSale(saleId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const id = validateSaleId(saleId);
@@ -163,11 +170,13 @@ export async function getSale(saleId, actor, dependencies = {}) {
   return sale;
 }
 
+// Consultar get venta list y devolver los datos en el formato esperado por la capa llamadora
 export async function getSaleList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   return (dependencies.listSales ?? listSales)(validateSaleListQuery(searchParams));
 }
 
+// Actualizar update venta draft manteniendo las restricciones y estados permitidos del dominio
 export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
   const draft = validateSaleDraftInput(input);
@@ -176,6 +185,7 @@ export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
   ));
 }
 
+// Centralizar la lógica de confirm venta para mantener consistente el comportamiento de la aplicación
 export async function confirmSale(saleId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
   return unwrap(await (dependencies.confirmSale ?? confirmSaleRepository)(
@@ -183,6 +193,7 @@ export async function confirmSale(saleId, actor, dependencies = {}) {
   ));
 }
 
+// Crear o registrar caja venta pago aplicando las reglas de negocio y persistencia correspondientes
 export async function registerSalePayment(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
   return unwrap(await (dependencies.registerSalePayment ?? registerSalePaymentRepository)(
@@ -191,6 +202,7 @@ export async function registerSalePayment(saleId, input, actor, dependencies = {
   ));
 }
 
+// Actualizar change venta estado manteniendo las restricciones y estados permitidos del dominio
 export async function changeSaleStatus(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
   return unwrap(await (dependencies.changeSaleStatus ?? changeSaleStatusRepository)(
@@ -199,11 +211,13 @@ export async function changeSaleStatus(saleId, input, actor, dependencies = {}) 
   ));
 }
 
+// Consultar get venta historial y devolver los datos en el formato esperado por la capa llamadora
 export async function getSaleHistory(saleId, actor, dependencies = {}) {
   await getSale(saleId, actor, dependencies);
   return (dependencies.listSaleEvents ?? listSaleEvents)(validateSaleId(saleId));
 }
 
+// Determinar si issue venta comprobante cumple la condición requerida por la aplicación
 export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const id = validateSaleId(saleId);
@@ -215,6 +229,7 @@ export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) 
   return result.receipt;
 }
 
+// Consultar get venta comprobante y devolver los datos en el formato esperado por la capa llamadora
 export async function getSaleReceipt(saleId, receiptId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const receipt = await (dependencies.findReceiptBySaleId ?? findReceiptBySaleId)(

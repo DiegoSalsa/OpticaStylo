@@ -1,4 +1,5 @@
 export const MEDIAPIPE_WASM_URL =
+// Código de la aplicación para virtual-try-on.
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
 export const FACE_LANDMARKER_MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";

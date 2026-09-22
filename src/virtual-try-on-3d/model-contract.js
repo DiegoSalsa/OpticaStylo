@@ -1,4 +1,5 @@
 export const TRY_ON_MODEL_SCHEMA_VERSION = 1;
+// Lógica del probador virtual 3D y sus contratos de datos.
 
 export const REQUIRED_TRY_ON_NODE_ROLES = Object.freeze([
   "front",
@@ -16,36 +17,43 @@ const OPTIONAL_TRY_ON_NODE_ROLES = Object.freeze([
   "nosepadRight",
 ]);
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new TypeError(`Metadata 3D inválida: ${message}`);
 }
 
+// Centralizar la lógica de positive number para mantener consistente el comportamiento de la aplicación
 function positiveNumber(value, path) {
   if (!Number.isFinite(value) || value <= 0) fail(`${path} debe ser mayor que cero.`);
   return value;
 }
 
+// Centralizar la lógica de finite number para mantener consistente el comportamiento de la aplicación
 function finiteNumber(value, path) {
   if (!Number.isFinite(value)) fail(`${path} debe ser un número finito.`);
   return value;
 }
 
+// Centralizar la lógica de unit interval para mantener consistente el comportamiento de la aplicación
 function unitInterval(value, path) {
   const normalized = finiteNumber(value, path);
   if (normalized < 0 || normalized > 1) fail(`${path} debe estar entre 0 y 1.`);
   return normalized;
 }
 
+// Centralizar la lógica de non empty string para mantener consistente el comportamiento de la aplicación
 function nonEmptyString(value, path) {
   if (typeof value !== "string" || !value.trim()) fail(`${path} es obligatorio.`);
   return value.trim();
 }
 
+// Centralizar la lógica de vector3 para mantener consistente el comportamiento de la aplicación
 function vector3(value, path) {
   if (!Array.isArray(value) || value.length !== 3) fail(`${path} debe tener tres valores.`);
   return value.map((item, index) => finiteNumber(item, `${path}[${index}]`));
 }
 
+// Centralizar la lógica de node names para mantener consistente el comportamiento de la aplicación
 function nodeNames(value, path, required) {
   if (value === undefined && !required) return [];
   if (!Array.isArray(value) || (required && value.length === 0)) {

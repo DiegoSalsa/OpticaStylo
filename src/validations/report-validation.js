@@ -1,10 +1,13 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para report-validation.
 import { SALE_STATUSES } from "./sale-validation.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message) {
   throw new AppError({ code: "INVALID_REPORT_QUERY", message, status: 400 });
 }
+// Centralizar la lógica de date para mantener consistente el comportamiento de la aplicación
 function date(value, label) {
   if (!DATE.test(value ?? "")) fail(`${label} debe usar AAAA-MM-DD.`);
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -16,6 +19,7 @@ function date(value, label) {
   return value;
 }
 
+// Validar y normalizar validate ventas reporte consulta antes de continuar con la operación
 export function validateSalesReportQuery(
   searchParams,
   currentDate = new Date(),

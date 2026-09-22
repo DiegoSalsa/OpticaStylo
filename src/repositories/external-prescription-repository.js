@@ -1,5 +1,7 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con external-prescription-repository.
 
+// Transformar map receta al formato utilizado por el resto de la aplicación
 function mapPrescription(row) {
   if (!row) return null;
   return {
@@ -16,13 +18,16 @@ function mapPrescription(row) {
   };
 }
 
+// Consultar find externo receta with client y devolver los datos en el formato esperado por la capa llamadora
 async function findExternalPrescriptionWithClient(client, id) {
   return mapPrescription(await client.external_prescriptions.findUnique({
     include: { patients: true }, where: { id },
   }));
 }
 
+// Crear o registrar create point of venta externo receta aplicando las reglas de negocio y persistencia correspondientes
 export async function createPointOfSaleExternalPrescription(input, actorUserId) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const [customer, patient] = await Promise.all([
       client.customers.findUnique({ select: { id: true }, where: { id: input.customerId } }),
@@ -46,10 +51,12 @@ export async function createPointOfSaleExternalPrescription(input, actorUserId) 
   });
 }
 
+// Consultar find externo receta by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findExternalPrescriptionById(id) {
   return findExternalPrescriptionWithClient(prisma, id);
 }
 
+// Consultar list externo recetas by paciente y devolver los datos en el formato esperado por la capa llamadora
 export async function listExternalPrescriptionsByPatient(patientId) {
   return (await prisma.external_prescriptions.findMany({
     include: { patients: true }, orderBy: { created_at: "desc" },
@@ -57,6 +64,7 @@ export async function listExternalPrescriptionsByPatient(patientId) {
   })).map(mapPrescription);
 }
 
+// Consultar find externo receta archivo by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findExternalPrescriptionFileById(id) {
   const row = await prisma.external_prescriptions.findFirst({
     select: {

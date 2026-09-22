@@ -1,6 +1,8 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con store-account-repository.
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
+// Transformar map account al formato utilizado por el resto de la aplicación
 function mapAccount(row) {
   if (!row) return null;
   const customer = row.customers ?? row;
@@ -13,7 +15,9 @@ function mapAccount(row) {
   };
 }
 
+// Crear o registrar create cliente account aplicando las reglas de negocio y persistencia correspondientes
 export async function createCustomerAccount(account) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const customer = await client.customers.create({ data: {
       address: account.address, created_by: null, email: account.email,
@@ -39,13 +43,16 @@ export async function createCustomerAccount(account) {
   });
 }
 
+// Consultar find cliente account for authentication y devolver los datos en el formato esperado por la capa llamadora
 export async function findCustomerAccountForAuthentication(email) {
   return mapAccount(await prisma.customer_accounts.findFirst({
     include: { customers: true }, where: { email },
   }));
 }
 
+// Centralizar la lógica de record cliente failed login para mantener consistente el comportamiento de la aplicación
 export async function recordCustomerFailedLogin(accountId, maximumAttempts, lockMinutes) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   await prisma.$transaction(async (client) => {
     const account = await client.customer_accounts.findUnique({ where: { id: accountId } });
     if (!account) return;
@@ -59,10 +66,13 @@ export async function recordCustomerFailedLogin(accountId, maximumAttempts, lock
       },
       where: { id: accountId },
     });
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+// Crear o registrar create cliente sesión aplicando las reglas de negocio y persistencia correspondientes
 export async function createCustomerSession({ accountId, expiresAt, ipAddress, tokenHash, userAgent }) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     await client.customer_accounts.update({
       data: { failed_login_attempts: 0, last_login_at: new Date(), locked_until: null },
@@ -76,7 +86,9 @@ export async function createCustomerSession({ accountId, expiresAt, ipAddress, t
   });
 }
 
+// Consultar find active cliente sesión y devolver los datos en el formato esperado por la capa llamadora
 export async function findActiveCustomerSession(tokenHash) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const now = new Date();
     const session = await client.customer_account_sessions.findFirst({
@@ -94,6 +106,7 @@ export async function findActiveCustomerSession(tokenHash) {
   });
 }
 
+// Centralizar la lógica de revoke cliente sesión para mantener consistente el comportamiento de la aplicación
 export async function revokeCustomerSession(sessionId, accountId) {
   const result = await prisma.customer_account_sessions.updateMany({
     data: { revoked_at: new Date() },

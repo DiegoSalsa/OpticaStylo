@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de public-booking-service.
 import { formatInTimeZone } from "date-fns-tz";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
@@ -14,6 +15,7 @@ const PUBLIC_SCHEDULE_ACTOR = Object.freeze({
   userId: null,
 });
 
+// Centralizar la lógica de público profesional para mantener consistente el comportamiento de la aplicación
 function publicProfessional(professional) {
   return {
     appointmentDurationMinutes: professional.appointmentDurationMinutes,
@@ -23,6 +25,7 @@ function publicProfessional(professional) {
   };
 }
 
+// Construir y lanzar el error de dominio asociado a throw profesional not found
 function throwProfessionalNotFound() {
   throw new AppError({
     code: "PUBLIC_PROFESSIONAL_NOT_FOUND",
@@ -31,6 +34,7 @@ function throwProfessionalNotFound() {
   });
 }
 
+// Construir y lanzar el error de dominio asociado a throw unavailable slot
 function throwUnavailableSlot() {
   throw new AppError({
     code: "PUBLIC_BOOKING_TIME_NOT_AVAILABLE",
@@ -39,12 +43,14 @@ function throwUnavailableSlot() {
   });
 }
 
+// Consultar get público profesionales y devolver los datos en el formato esperado por la capa llamadora
 export async function getPublicProfessionals(dependencies = {}) {
   const listRepository = dependencies.listProfessionalProfiles ?? listProfessionalProfiles;
   const professionals = await listRepository();
   return professionals.filter((professional) => professional.isBookable).map(publicProfessional);
 }
 
+// Consultar get público disponibilidad y devolver los datos en el formato esperado por la capa llamadora
 export async function getPublicAvailability(professionalId, searchParams, dependencies = {}) {
   const availabilityService = dependencies.getProfessionalAvailability ?? getProfessionalAvailability;
   const availability = await availabilityService(
@@ -56,6 +62,7 @@ export async function getPublicAvailability(professionalId, searchParams, depend
   return availability;
 }
 
+// Crear o registrar create público reserva aplicando las reglas de negocio y persistencia correspondientes
 export async function createPublicBooking(input, dependencies = {}) {
   const currentDate = dependencies.currentDate ?? new Date();
   const data = validatePublicBookingInput(input, currentDate);

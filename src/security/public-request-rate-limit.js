@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+// Controles de seguridad para limitar y proteger solicitudes sensibles.
 
 import { reservePublicRequestQuota } from "../repositories/public-request-rate-limit-repository.js";
 import { AppError } from "../utils/app-error.js";
@@ -50,21 +51,25 @@ const LIMITS = Object.freeze({
   }),
 });
 
+// Determinar si hash subject cumple la condición requerida por la aplicación
 function hashSubject(value) {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
+// Validar y normalizar normalize identifier antes de continuar con la operación
 function normalizeIdentifier(value) {
   if (typeof value !== "string") return null;
   const normalized = value.trim().toLowerCase();
   return normalized && normalized.length <= 254 ? normalized : null;
 }
 
+// Centralizar la lógica de retry after seconds para mantener consistente el comportamiento de la aplicación
 function retryAfterSeconds(expiresAt, now) {
   const expiresAtTime = new Date(expiresAt).getTime();
   return Math.max(1, Math.ceil((expiresAtTime - now.getTime()) / 1000));
 }
 
+// Centralizar la lógica de tasa límite error para mantener consistente el comportamiento de la aplicación
 function rateLimitError(expiresAt, now) {
   return new AppError({
     code: "PUBLIC_REQUEST_RATE_LIMITED",
@@ -74,6 +79,7 @@ function rateLimitError(expiresAt, now) {
   });
 }
 
+// Centralizar la lógica de enforce quota para mantener consistente el comportamiento de la aplicación
 async function enforceQuota({ bucket, maximumAttempts, subject, windowSeconds }, dependencies) {
   const result = await (dependencies.reserveQuota ?? reservePublicRequestQuota)({
     bucket,
@@ -85,6 +91,7 @@ async function enforceQuota({ bucket, maximumAttempts, subject, windowSeconds },
   }
 }
 
+// Centralizar la lógica de enforce público solicitud tasa límite para mantener consistente el comportamiento de la aplicación
 export async function enforcePublicRequestRateLimit(
   request,
   operation,

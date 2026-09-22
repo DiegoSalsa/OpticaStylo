@@ -1,3 +1,4 @@
+// Código de la aplicación para openai-prescription-reader.
 import { createHash } from "node:crypto";
 
 import { getOpenAiPrescriptionReaderConfig } from "../../config/openai.js";
@@ -47,6 +48,7 @@ const PRESCRIPTION_SCHEMA = Object.freeze({
   type: "object",
 });
 
+// Centralizar la lógica de unavailable para mantener consistente el comportamiento de la aplicación
 function unavailable() {
   return new AppError({
     code: "PRESCRIPTION_READER_UNAVAILABLE",
@@ -55,6 +57,7 @@ function unavailable() {
   });
 }
 
+// Centralizar la lógica de invalid result para mantener consistente el comportamiento de la aplicación
 function invalidResult() {
   return new AppError({
     code: "PRESCRIPTION_READER_INVALID_RESULT",
@@ -63,6 +66,7 @@ function invalidResult() {
   });
 }
 
+// Centralizar la lógica de number or null para mantener consistente el comportamiento de la aplicación
 function numberOrNull(value) {
   if (value === null) return null;
   if (typeof value !== "number" || !Number.isFinite(value) || Math.abs(value) >= 10_000) {
@@ -71,12 +75,14 @@ function numberOrNull(value) {
   return Object.is(value, -0) ? 0 : value;
 }
 
+// Centralizar la lógica de axis or null para mantener consistente el comportamiento de la aplicación
 function axisOrNull(value) {
   if (value === null) return null;
   if (!Number.isInteger(value) || value < 0 || value > 180) throw invalidResult();
   return value;
 }
 
+// Centralizar la lógica de eye para mantener consistente el comportamiento de la aplicación
 function eye(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw invalidResult();
   return {
@@ -87,6 +93,7 @@ function eye(value) {
   };
 }
 
+// Centralizar la lógica de nullable text para mantener consistente el comportamiento de la aplicación
 function nullableText(value, maximumLength) {
   if (value === null) return null;
   if (typeof value !== "string") throw invalidResult();
@@ -94,6 +101,7 @@ function nullableText(value, maximumLength) {
   return normalized ? normalized.slice(0, maximumLength) : null;
 }
 
+// Validar y normalizar normalize draft antes de continuar con la operación
 function normalizeDraft(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw invalidResult();
   if (!new Set(["LOW", "MEDIUM", "HIGH"]).has(value.confidence)) throw invalidResult();
@@ -113,6 +121,7 @@ function normalizeDraft(value) {
   };
 }
 
+// Centralizar la lógica de solicitud body para mantener consistente el comportamiento de la aplicación
 function requestBody(image, configuration) {
   const dataUrl = `data:${image.mediaType};base64,${image.data.toString("base64")}`;
   const safetyIdentifier = createHash("sha256")
@@ -146,6 +155,7 @@ function requestBody(image, configuration) {
   };
 }
 
+// Centralizar la lógica de salida text para mantener consistente el comportamiento de la aplicación
 function outputText(response) {
   if (typeof response?.output_text === "string") return response.output_text;
   if (!Array.isArray(response?.output)) return null;
@@ -159,6 +169,7 @@ function outputText(response) {
   return texts.length === 1 ? texts[0] : null;
 }
 
+// Centralizar la lógica de extract salida para mantener consistente el comportamiento de la aplicación
 function extractOutput(response) {
   const text = outputText(response);
   if (!response || response.status !== "completed" || typeof text !== "string") {
@@ -172,6 +183,7 @@ function extractOutput(response) {
   }
 }
 
+// Consultar read open ai receta imagen y devolver los datos en el formato esperado por la capa llamadora
 export async function readOpenAiPrescriptionImage(
   image,
   { environment = process.env, fetchImplementation = fetch } = {},

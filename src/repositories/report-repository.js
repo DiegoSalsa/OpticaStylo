@@ -1,9 +1,12 @@
 import { toZonedTime } from "date-fns-tz";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con report-repository.
 
 import { prisma } from "../db/prisma.js";
 
+// Centralizar la lógica de n para mantener consistente el comportamiento de la aplicación
 const n = (value) => Number(value ?? 0);
 
+// Consultar get ventas reporte datos y devolver los datos en el formato esperado por la capa llamadora
 export async function getSalesReportData({ fromDate, origin, status, toDate }) {
   const sales = await prisma.sales.findMany({
     include: { sale_items: true, sale_payments: true },

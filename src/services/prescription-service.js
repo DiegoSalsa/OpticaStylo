@@ -1,3 +1,4 @@
+// Servicio de negocio que coordina reglas, permisos y persistencia de prescription-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { hasClinicalAssignment } from "../repositories/clinical-repository.js";
@@ -16,10 +17,12 @@ import {
   validateUpdatePrescriptionInput,
 } from "../validations/clinical-validation.js";
 
+// Determinar si has permiso cumple la condición requerida por la aplicación
 function hasPermission(actor, permission) {
   return (actor?.permissions ?? []).includes(permission);
 }
 
+// Construir y lanzar el error de dominio asociado a throw receta not found
 function throwPrescriptionNotFound() {
   throw new AppError({
     code: "PRESCRIPTION_NOT_FOUND",
@@ -28,6 +31,7 @@ function throwPrescriptionNotFound() {
   });
 }
 
+// Centralizar la lógica de to ventas view para mantener consistente el comportamiento de la aplicación
 function toSalesView(prescription) {
   return {
     fulfillmentNotes: prescription.fulfillmentNotes,
@@ -43,6 +47,7 @@ function toSalesView(prescription) {
   };
 }
 
+// Centralizar la lógica de to clínica view para mantener consistente el comportamiento de la aplicación
 function toClinicalView(prescription) {
   const result = { ...prescription };
   delete result.encounterStatus;
@@ -50,6 +55,7 @@ function toClinicalView(prescription) {
   return result;
 }
 
+// Centralizar la lógica de convert repositorio error para mantener consistente el comportamiento de la aplicación
 function convertRepositoryError(reason) {
   const errors = {
     ENCOUNTER_NOT_FOUND: [
@@ -98,6 +104,7 @@ function convertRepositoryError(reason) {
   throw new AppError({ code, message, status });
 }
 
+// Crear o registrar create receta aplicando las reglas de negocio y persistencia correspondientes
 export async function createPrescription(
   encounterId,
   input,
@@ -124,6 +131,7 @@ export async function createPrescription(
   return toClinicalView(result.prescription);
 }
 
+// Actualizar update receta manteniendo las restricciones y estados permitidos del dominio
 export async function updatePrescription(
   prescriptionId,
   input,
@@ -145,6 +153,7 @@ export async function updatePrescription(
   return toClinicalView(result.prescription);
 }
 
+// Consultar get receta y devolver los datos en el formato esperado por la capa llamadora
 export async function getPrescription(
   prescriptionId,
   actor,
@@ -211,6 +220,7 @@ export async function getPrescription(
   throwPrescriptionNotFound();
 }
 
+// Consultar get receta list y devolver los datos en el formato esperado por la capa llamadora
 export async function getPrescriptionList(
   searchParams,
   actor,

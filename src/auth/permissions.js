@@ -1,4 +1,5 @@
 export const PERMISSIONS = Object.freeze({
+// Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
   APPOINTMENTS_CANCEL: "appointments.cancel",
   APPOINTMENTS_CREATE: "appointments.create",
   APPOINTMENTS_READ_ALL: "appointments.read_all",

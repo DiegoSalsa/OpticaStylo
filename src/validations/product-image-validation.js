@@ -1,4 +1,5 @@
 import { AppError } from "../utils/app-error.js";
+// Validaciones y normalización de entradas para product-image-validation.
 import { hasSafeImageDimensions } from "./image-dimensions.js";
 
 const IMAGE_TYPES = new Set([
@@ -13,10 +14,12 @@ const HEIF_BRANDS = new Set(["heic", "heif", "heix", "hevc", "hevx", "mif1", "ms
 export const MAX_PRODUCT_IMAGE_BYTES = 4 * 1024 * 1024;
 export const MAX_PRODUCT_IMAGE_UPLOAD_BYTES = MAX_PRODUCT_IMAGE_BYTES + 128 * 1024;
 
+// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message, code = "INVALID_PRODUCT_IMAGE") {
   throw new AppError({ code, message, status: 400 });
 }
 
+// Centralizar la lógica de text para mantener consistente el comportamiento de la aplicación
 function text(value, label, maximumLength) {
   if (typeof value !== "string") fail(`${label} es obligatorio.`);
   const normalized = value.trim().replace(/\s+/g, " ");
@@ -25,11 +28,13 @@ function text(value, label, maximumLength) {
   return normalized;
 }
 
+// Centralizar la lógica de starts with para mantener consistente el comportamiento de la aplicación
 function startsWith(data, signature, offset = 0) {
   if (data.length < offset + signature.length) return false;
   return signature.every((byte, index) => data[offset + index] === byte);
 }
 
+// Validar y normalizar validate producto imagen antes de continuar con la operación
 export function validateProductImage(file) {
   if (!file || typeof file.arrayBuffer !== "function") {
     fail("Debe adjuntar una imagen del producto.");
@@ -49,6 +54,7 @@ export function validateProductImage(file) {
   };
 }
 
+// Validar y normalizar validate producto imagen bytes antes de continuar con la operación
 export function validateProductImageBytes(value, mediaType) {
   const data = Buffer.isBuffer(value) ? value : Buffer.from(value ?? []);
   if (data.length < 1 || data.length > MAX_PRODUCT_IMAGE_BYTES) {
@@ -72,6 +78,7 @@ export function validateProductImageBytes(value, mediaType) {
   return data;
 }
 
+// Validar y normalizar validate producto imagen alt antes de continuar con la operación
 export function validateProductImageAlt(value) {
   return text(value, "El texto alternativo", 300);
 }

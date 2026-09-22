@@ -1,3 +1,4 @@
+// Código de la aplicación para resend-email-provider.
 const RESEND_EMAIL_ENDPOINT = "https://api.resend.com/emails";
 const RECOVERABLE_STATUS_CODES = new Set([408, 409, 425, 429]);
 const RECOVERABLE_ERROR_CODES = new Set([
@@ -10,6 +11,7 @@ const RECOVERABLE_ERROR_CODES = new Set([
   "timeout",
 ]);
 
+// Centralizar la lógica de safe error code para mantener consistente el comportamiento de la aplicación
 function safeErrorCode(value, fallback) {
   const normalized = typeof value === "string"
     ? value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 80)
@@ -17,6 +19,7 @@ function safeErrorCode(value, fallback) {
   return normalized || fallback;
 }
 
+// Centralizar la lógica de retry after para mantener consistente el comportamiento de la aplicación
 function retryAfter(response) {
   const value = Number(response.headers?.get?.("retry-after"));
   return Number.isFinite(value) && value >= 0 ? Math.min(Math.ceil(value), 86_400) : null;
@@ -35,6 +38,7 @@ export class EmailProviderError extends Error {
   }
 }
 
+// Crear o registrar create resend correo provider aplicando las reglas de negocio y persistencia correspondientes
 export function createResendEmailProvider(config, dependencies = {}) {
   const fetcher = dependencies.fetch ?? fetch;
   return {

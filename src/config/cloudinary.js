@@ -1,12 +1,15 @@
 import { AppError } from "../utils/app-error.js";
+// Configuración centralizada de cloudinary.
 
 const CLOUD_NAME_PATTERN = /^[a-z0-9_-]{2,128}$/i;
 const API_KEY_PATTERN = /^\d{6,32}$/;
 
+// Verificar required para impedir que la operación continúe en un estado inválido
 function required(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+// Consultar get cloudinary configuración y devolver los datos en el formato esperado por la capa llamadora
 export function getCloudinaryConfig(environment = process.env) {
   const cloudName = required(environment.CLOUDINARY_CLOUD_NAME);
   const apiKey = required(environment.CLOUDINARY_API_KEY);

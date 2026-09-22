@@ -1,3 +1,4 @@
+// Consultar read tienda respuesta y devolver los datos en el formato esperado por la capa llamadora
 export async function readStoreResponse(response) {
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.success) {
@@ -9,6 +10,7 @@ export async function readStoreResponse(response) {
   return payload.data;
 }
 
+// Verificar ensure tienda carrito para impedir que la operación continúe en un estado inválido
 export async function ensureStoreCart() {
   const response = await fetch("/api/store/cart", { cache: "no-store" });
   if (response.ok) return readStoreResponse(response);
@@ -16,6 +18,9 @@ export async function ensureStoreCart() {
   return readStoreResponse(await fetch("/api/store/cart", { method: "POST" }));
 }
 
+// Transformar format clp al formato utilizado por el resto de la aplicación
 export const formatClp = (value) => new Intl.NumberFormat("es-CL", {
   currency: "CLP", maximumFractionDigits: 0, style: "currency",
 }).format(value);
+// Utilidades compartidas para store-client.
+// Consultar read tienda respuesta y devolver los datos en el formato esperado por la capa llamadora

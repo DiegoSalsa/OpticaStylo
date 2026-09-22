@@ -1,6 +1,9 @@
 import { prisma } from "../db/prisma.js";
+// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con public-request-rate-limit-repository.
 
+// Centralizar la lógica de reserve público solicitud quota para mantener consistente el comportamiento de la aplicación
 export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }) {
+  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const now = new Date();
     const current = await client.public_request_rate_limits.findUnique({
@@ -21,5 +24,6 @@ export async function reservePublicRequestQuota({ bucket, subjectHash, windowSec
       where: { bucket_subject_hash: { bucket, subject_hash: subjectHash } },
     });
     return { attempts: row.request_count, expiresAt: row.expires_at };
+  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
