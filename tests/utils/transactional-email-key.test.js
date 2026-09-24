@@ -6,6 +6,7 @@ import { transactionalEmailDeduplicationKey } from "../../src/utils/transactiona
 const entityId = "00000000-0000-4000-8000-000000000001";
 const expected = Object.freeze({
   ACCOUNT_CREATED: `account:${entityId}`,
+  CUSTOMER_PATIENT_OTP: `customer-patient-otp:${entityId}`,
   APPOINTMENT_CONFIRMED: `appointment-confirmed:${entityId}`,
   APPOINTMENT_REMINDER: `appointment-reminder:${entityId}`,
   ORDER_CONFIRMED: `order-confirmed:${entityId}`,

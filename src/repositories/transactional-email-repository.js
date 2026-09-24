@@ -18,10 +18,13 @@ function numberOrNull(value) {
 }
 
 // Transformar map correo al formato utilizado por el resto de la aplicación
-function mapEmail(row) {
+function mapEmail(row, { includeOtpCode = false } = {}) {
   if (!row) return null;
   const receipt = row.sale_receipts;
   const receiptPayload = receipt?.payload ?? {};
+  const payload = { ...row.payload };
+  // Ocultar el OTP de respuestas administrativas; solo el worker que envía el correo puede leerlo.
+  if (row.template_code === "CUSTOMER_PATIENT_OTP" && !includeOtpCode) delete payload.code;
   return {
     accountId: row.account_id, appointmentId: row.appointment_id,
     attemptCount: Number(row.attempt_count), createdAt: row.created_at,
@@ -31,7 +34,7 @@ function mapEmail(row) {
     lockExpiresAt: row.lock_expires_at, lockedBy: row.locked_by,
     nextAttemptAt: row.next_attempt_at, paymentId: row.payment_id,
     payload: {
-      ...row.payload,
+      ...payload,
       ...(receipt ? {
         balanceCents: numberOrNull(receiptPayload.balanceCents),
         paidCents: numberOrNull(receiptPayload.paidCents),
@@ -127,7 +130,7 @@ export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTest
       });
       await updateReceiptStatus(client, current.receipt_id, "PROCESSING");
       await transition(client, { ...email, attempt_count: current.attempt_count }, "PROCESSING", "WORKER_CLAIMED");
-      claimed.push(mapEmail(current));
+      claimed.push(mapEmail(current, { includeOtpCode: true }));
     }
     return { emails: claimed, recoveredCount };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes

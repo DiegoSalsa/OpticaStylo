@@ -1,9 +1,13 @@
 import {
+  createCustomerPatientOtpChallenge,
   findCustomerClinicalOverview,
-  linkCustomerToPatient,
+  verifyCustomerPatientOtpChallenge,
 } from "../repositories/customer-clinical-repository.js";
 import { AppError } from "../utils/app-error.js";
-import { validateCustomerPatientLinkInput } from "../validations/customer-clinical-validation.js";
+import {
+  validateCustomerPatientLinkRequest,
+  validateCustomerPatientOtpInput,
+} from "../validations/customer-clinical-validation.js";
 
 const GENERIC_LINK_MESSAGE = "No fue posible verificar un registro de paciente con los datos proporcionados.";
 
@@ -42,15 +46,41 @@ function throwLinkReason(reason) {
   });
 }
 
-// Consultar únicamente las reservas y recetas permitidas para la cuenta autenticada.
-export async function getCustomerClinicalOverview(account, dependencies = {}) {
-  return (dependencies.findOverview ?? findCustomerClinicalOverview)(accountId(account), dependencies.now?.() ?? new Date());
+// Traducir cualquier fallo previo al OTP con un mensaje uniforme contra enumeración.
+function throwIdentityReason() {
+  throw new AppError({
+    code: "CUSTOMER_PATIENT_LINK_FAILED",
+    message: GENERIC_LINK_MESSAGE,
+    status: 409,
+  });
 }
 
-// Verificar identidad y ejecutar el vínculo sin aceptar patientId desde el navegador.
-export async function linkCustomerPatient(account, input, dependencies = {}) {
-  const normalized = validateCustomerPatientLinkInput(input, dependencies.currentDate ?? new Date());
-  const result = await (dependencies.linkPatient ?? linkCustomerToPatient)(accountId(account), normalized);
+// Consultar únicamente las reservas y recetas permitidas para la cuenta autenticada.
+export async function getCustomerClinicalOverview(account, dependencies = {}) {
+  return (dependencies.findOverview ?? findCustomerClinicalOverview)(accountId(account), dependencies.now?.() ?? new Date(), dependencies.repositoryDependencies ?? {});
+}
+
+// Verificar identidad y generar un desafío sin aceptar correo receptor ni patientId desde el navegador.
+export async function requestCustomerPatientLinkCode(account, input, dependencies = {}) {
+  const normalized = validateCustomerPatientLinkRequest(input, dependencies.currentDate ?? new Date());
+  const result = await (dependencies.createChallenge ?? createCustomerPatientOtpChallenge)(accountId(account), normalized, dependencies.repositoryDependencies ?? {});
+  if (result.reason === "ALREADY_LINKED" && result.samePatient) return { challengeSent: false, linked: true, patient: result.patient };
+  if (result.reason === "ALREADY_LINKED") throwLinkReason(result.reason);
+  if (result.reason) throwIdentityReason();
+  return { challengeSent: true, expiresAt: result.expiresAt, maskedEmail: result.maskedEmail };
+}
+
+// Verificar el código y completar el vínculo únicamente una vez demostrado el control del correo.
+export async function confirmCustomerPatientLink(account, input, dependencies = {}) {
+  const normalized = validateCustomerPatientOtpInput(input);
+  const result = await (dependencies.verifyChallenge ?? verifyCustomerPatientOtpChallenge)(accountId(account), normalized.code, dependencies.repositoryDependencies ?? {});
+  if (["OTP_INVALID", "OTP_EXPIRED", "OTP_ATTEMPTS"].includes(result.reason)) {
+    throw new AppError({
+      code: "CUSTOMER_PATIENT_OTP_INVALID",
+      message: "No fue posible verificar el código de vinculación.",
+      status: 409,
+    });
+  }
   if (result.reason) throwLinkReason(result.reason);
   return { linked: true, patient: result.patient };
 }

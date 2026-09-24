@@ -1,7 +1,5 @@
 import { AppError } from "../utils/app-error.js";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 // Lanzar un error uniforme para entradas inválidas del vínculo clínico.
 function invalidInput(message) {
   throw new AppError({ code: "INVALID_CUSTOMER_PATIENT_LINK", message, status: 400 });
@@ -25,28 +23,28 @@ function birthDate(value, currentDate = new Date()) {
   return value;
 }
 
-// Validar el correo opcional sin aceptar campos arbitrarios para seleccionar pacientes.
-function optionalEmail(value) {
-  if (value == null || value === "") return null;
-  if (typeof value !== "string") invalidInput("El correo electrónico no es válido.");
-  const normalized = value.trim().toLowerCase();
-  if (normalized.length > 254 || !EMAIL_PATTERN.test(normalized)) {
-    invalidInput("El correo electrónico no es válido.");
-  }
-  return normalized;
-}
-
-// Validar exclusivamente los datos permitidos para el intento de vinculación.
-export function validateCustomerPatientLinkInput(input, currentDate = new Date()) {
+// Validar exclusivamente la fecha permitida para solicitar un desafío de vinculación.
+export function validateCustomerPatientLinkRequest(input, currentDate = new Date()) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     invalidInput("El cuerpo de la solicitud no es válido.");
   }
-  const allowed = new Set(["birthDate", "email"]);
+  const allowed = new Set(["birthDate"]);
   if (Object.keys(input).some((key) => !allowed.has(key))) {
     invalidInput("El cuerpo de la solicitud no es válido.");
   }
   return {
     birthDate: birthDate(input.birthDate, currentDate),
-    email: optionalEmail(input.email),
   };
+}
+
+// Validar exclusivamente el código OTP que puede confirmar la vinculación.
+export function validateCustomerPatientOtpInput(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) invalidInput("El cuerpo de la solicitud no es válido.");
+  if (Object.keys(input).some((key) => key !== "code")) {
+    invalidInput("El cuerpo de la solicitud no es válido.");
+  }
+  if (typeof input.code !== "string" || !/^\d{6}$/.test(input.code)) {
+    invalidInput("El código de vinculación no es válido.");
+  }
+  return { code: input.code };
 }

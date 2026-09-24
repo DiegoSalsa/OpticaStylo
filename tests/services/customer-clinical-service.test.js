@@ -2,62 +2,86 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  confirmCustomerPatientLink,
   getCustomerClinicalOverview,
-  linkCustomerPatient,
+  requestCustomerPatientLinkCode,
 } from "../../src/services/customer-clinical-service.js";
 
 const account = { id: "00000000-0000-4000-8000-000000000001" };
 const birthDate = "1990-05-20";
 
-test("vincula una cuenta con identidad verificada", async () => {
-  const result = await linkCustomerPatient(account, { birthDate }, {
-    linkPatient: async (accountId, identity) => {
+test("solicita un OTP y solo devuelve el correo enmascarado", async () => {
+  const result = await requestCustomerPatientLinkCode(account, { birthDate }, {
+    createChallenge: async (accountId, identity) => {
       assert.equal(accountId, account.id);
-      assert.deepEqual(identity, { birthDate, email: null });
+      assert.deepEqual(identity, { birthDate });
+      return { expiresAt: new Date("2026-09-24T12:10:00.000Z"), maskedEmail: "a••a@ejemplo.cl", reason: null };
+    },
+  });
+  assert.deepEqual(result, { challengeSent: true, expiresAt: new Date("2026-09-24T12:10:00.000Z"), maskedEmail: "a••a@ejemplo.cl" });
+});
+
+test("confirma un OTP correcto y vincula la cuenta", async () => {
+  const result = await confirmCustomerPatientLink(account, { code: "123456" }, {
+    verifyChallenge: async (accountId, code) => {
+      assert.equal(accountId, account.id); assert.equal(code, "123456");
       return { patient: { firstNames: "Ana", lastNames: "Pérez", rutMasked: "••••678-5" }, reason: null };
     },
   });
   assert.deepEqual(result, { linked: true, patient: { firstNames: "Ana", lastNames: "Pérez", rutMasked: "••••678-5" } });
 });
 
-test("usa el mismo mensaje para fecha, correo e identidad inexistente", async () => {
-  for (const reason of ["IDENTITY", "PATIENT_LINKED"]) {
+test("traduce OTP incorrecto, expirado o agotado al mismo error", async () => {
+  for (const reason of ["OTP_INVALID", "OTP_EXPIRED", "OTP_ATTEMPTS"]) {
     await assert.rejects(
-      () => linkCustomerPatient(account, { birthDate, email: "incorrecto@example.com" }, {
-        linkPatient: async () => ({ patient: null, reason }),
-      }),
-      (error) => ["CUSTOMER_PATIENT_LINK_FAILED", "CUSTOMER_PATIENT_LINK_CONFLICT"].includes(error.code)
-        && error.message === "No fue posible verificar un registro de paciente con los datos proporcionados.",
+      () => confirmCustomerPatientLink(account, { code: "123456" }, { verifyChallenge: async () => ({ reason }) }),
+      (error) => error.code === "CUSTOMER_PATIENT_OTP_INVALID" && error.message === "No fue posible verificar el código de vinculación.",
     );
   }
 });
 
-test("traduce una cuenta ya vinculada a otro paciente sin cambiarla", async () => {
+test("mantiene la idempotencia y separa conflictos reales", async () => {
+  const idempotent = await confirmCustomerPatientLink(account, { code: "123456" }, {
+    verifyChallenge: async () => ({ patient: { firstNames: "Ana" }, reason: null }),
+  });
+  assert.equal(idempotent.linked, true);
   await assert.rejects(
-    () => linkCustomerPatient(account, { birthDate }, { linkPatient: async () => ({ reason: "ALREADY_LINKED" }) }),
-    (error) => error.code === "CUSTOMER_PATIENT_ALREADY_LINKED" && error.status === 409,
+    () => confirmCustomerPatientLink(account, { code: "123456" }, { verifyChallenge: async () => ({ reason: "ALREADY_LINKED" }) }),
+    (error) => error.code === "CUSTOMER_PATIENT_ALREADY_LINKED",
+  );
+  await assert.rejects(
+    () => confirmCustomerPatientLink(account, { code: "123456" }, { verifyChallenge: async () => ({ reason: "PATIENT_LINKED" }) }),
+    (error) => error.code === "CUSTOMER_PATIENT_LINK_CONFLICT" && error.message.includes("No fue posible verificar"),
   );
 });
 
-test("rechaza la vinculación sin sesión y entradas malformadas", async () => {
-  await assert.rejects(() => linkCustomerPatient(null, { birthDate }), (error) => error.status === 401);
-  await assert.rejects(() => linkCustomerPatient(account, { birthDate: "1990-02-30" }), /fecha de nacimiento no es válida/);
-  await assert.rejects(() => linkCustomerPatient(account, { birthDate, patientId: "00000000-0000-4000-8000-000000000002" }), /cuerpo de la solicitud no es válido/);
-});
-
-test("deriva el resumen clínico desde la cuenta y no acepta patientId externo", async () => {
-  let receivedAccountId = null;
-  const overview = {
+test("una cuenta ya vinculada al mismo paciente responde de forma idempotente", async () => {
+  const result = await requestCustomerPatientLinkCode(account, { birthDate }, {
+    createChallenge: async () => ({
+      patient: { firstNames: "Ana", lastNames: "Pérez", rutMasked: "••••678-5" },
+      reason: "ALREADY_LINKED",
+      samePatient: true,
+    }),
+  });
+  assert.deepEqual(result, {
+    challengeSent: false,
     linked: true,
     patient: { firstNames: "Ana", lastNames: "Pérez", rutMasked: "••••678-5" },
-    upcomingAppointments: [{ startAt: "2026-10-01T15:00:00.000Z", status: "CONFIRMED" }],
-    appointmentHistory: [],
-    prescriptions: { active: [], history: [] },
-  };
+  });
+});
+
+test("rechaza request sin sesión e inputs malformados", async () => {
+  await assert.rejects(() => requestCustomerPatientLinkCode(null, { birthDate }), (error) => error.status === 401);
+  await assert.rejects(() => requestCustomerPatientLinkCode(account, { birthDate: "1990-02-30" }), /fecha de nacimiento no es válida/);
+  await assert.rejects(() => confirmCustomerPatientLink(account, { code: "123456", patientId: "otro" }), /cuerpo de la solicitud no es válido/);
+});
+
+test("deriva el resumen desde la cuenta y no acepta patientId externo", async () => {
+  let receivedAccountId = null;
+  const overview = { linked: false, patient: null, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] } };
   const result = await getCustomerClinicalOverview(account, {
     findOverview: async (accountId) => { receivedAccountId = accountId; return overview; },
   });
   assert.equal(receivedAccountId, account.id);
-  assert.equal(result.patient.rutMasked, "••••678-5");
   assert.equal(result.patientId, undefined);
 });
