@@ -59,7 +59,7 @@ function fakeClinicalClient() {
       create: async ({ data }) => { const row = { ...data, created_at: new Date("2026-09-24T12:00:00.000Z"), consumed_at: null, attempt_count: 0 }; state.challenges.push(row); return row; },
       findFirst: async ({ where }) => state.challenges.filter((row) => row.account_id === where.account_id && row.consumed_at === null).sort((a, b) => b.created_at - a.created_at)[0] ?? null,
     },
-    transactional_email_outbox: { create: async ({ data }) => { state.outbox.push(data); return data; } },
+    transactional_email_outbox: { create: async ({ data }) => { const row = { id: data.deduplication_key, ...data }; state.outbox.push(row); return row; } },
     appointments: { findMany: async ({ where }) => state.appointments.filter((row) => row.patient_id === where.patient_id) },
     optical_prescriptions: { findMany: async ({ where }) => state.prescriptions.filter((row) => row.patient_id === where.clinical_encounters.patient_id && row.encounterStatus === where.clinical_encounters.status) },
   };
@@ -113,6 +113,7 @@ test("el repository crea un OTP con hash, receptor clínico y expiración", asyn
     client, environment, createChallengeId: () => "30000000-0000-4000-8000-000000000001", generateCode: () => "123456", now: () => new Date("2026-09-24T12:00:00.000Z"),
   });
   assert.equal(result.maskedEmail, "a•a@example.com");
+  assert.equal(result.outboxId, "customer-patient-otp:30000000-0000-4000-8000-000000000001");
   assert.equal(client.state.outbox[0].recipient_email, "ana@example.com");
   assert.notEqual(client.state.challenges[0].code_hash, "123456");
   assert.equal(client.state.challenges[0].expires_at.toISOString(), "2026-09-24T12:10:00.000Z");

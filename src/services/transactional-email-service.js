@@ -92,12 +92,13 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
   try {
     const claim = await (dependencies.claimBatch ?? claimTransactionalEmailBatch)({
-    deliveryMode: config.mode,
-    effectiveTestRecipient: config.testRecipient,
-    limit: Math.min(options.limit ?? config.batchSize, config.batchSize),
-    lockSeconds: config.lockSeconds,
-    workerId,
-  });
+      deliveryMode: config.mode,
+      effectiveTestRecipient: config.testRecipient,
+      emailId: options.emailId ?? null,
+      limit: Math.min(options.limit ?? config.batchSize, config.batchSize),
+      lockSeconds: config.lockSeconds,
+      workerId,
+    });
   summary.claimed = claim.emails.length;
   summary.recovered = claim.recoveredCount;
   const provider = dependencies.provider
@@ -200,6 +201,11 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
     await finishRun(runId, summary);
     throw error;
   }
+}
+
+// Procesar inmediatamente un correo puntual para no depender del worker periódico.
+export async function processTransactionalEmailById(emailId, dependencies = {}) {
+  return processTransactionalEmailBatch({ emailId, triggerSource: "interactive" }, dependencies);
 }
 
 // Consultar get transaccional correo operations y devolver los datos en el formato esperado por la capa llamadora

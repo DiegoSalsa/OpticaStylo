@@ -3,6 +3,8 @@ import {
   findCustomerClinicalOverview,
   verifyCustomerPatientOtpChallenge,
 } from "../repositories/customer-clinical-repository.js";
+import { getTransactionalEmailConfig } from "../config/transactional-email.js";
+import { processTransactionalEmailById } from "./transactional-email-service.js";
 import { AppError } from "../utils/app-error.js";
 import {
   validateCustomerPatientLinkRequest,
@@ -55,6 +57,22 @@ function throwIdentityReason() {
   });
 }
 
+// Informar un fallo de entrega con el mismo error genérico para no facilitar enumeración.
+function throwOtpDeliveryReason() {
+  throw new AppError({
+    code: "CUSTOMER_PATIENT_LINK_FAILED",
+    message: GENERIC_LINK_MESSAGE,
+    status: 409,
+  });
+}
+
+// Exigir un modo de correo entregable antes de crear un desafío que el usuario no podrá recibir.
+function assertOtpEmailConfigured(environment, emailConfig) {
+  const config = emailConfig ?? getTransactionalEmailConfig(environment);
+  if (!["live", "test"].includes(config.mode)) throwOtpDeliveryReason();
+  return config;
+}
+
 // Consultar únicamente las reservas y recetas permitidas para la cuenta autenticada.
 export async function getCustomerClinicalOverview(account, dependencies = {}) {
   return (dependencies.findOverview ?? findCustomerClinicalOverview)(accountId(account), dependencies.now?.() ?? new Date(), dependencies.repositoryDependencies ?? {});
@@ -63,10 +81,29 @@ export async function getCustomerClinicalOverview(account, dependencies = {}) {
 // Verificar identidad y generar un desafío sin aceptar correo receptor ni patientId desde el navegador.
 export async function requestCustomerPatientLinkCode(account, input, dependencies = {}) {
   const normalized = validateCustomerPatientLinkRequest(input, dependencies.currentDate ?? new Date());
-  const result = await (dependencies.createChallenge ?? createCustomerPatientOtpChallenge)(accountId(account), normalized, dependencies.repositoryDependencies ?? {});
+  const authenticatedAccountId = accountId(account);
+  if (!dependencies.createChallenge) {
+    try {
+      assertOtpEmailConfigured(dependencies.environment, dependencies.emailConfig);
+    } catch (error) {
+      if (error?.code === "CUSTOMER_PATIENT_LINK_FAILED") throw error;
+      throwOtpDeliveryReason();
+    }
+  }
+  const result = await (dependencies.createChallenge ?? createCustomerPatientOtpChallenge)(authenticatedAccountId, normalized, dependencies.repositoryDependencies ?? {});
   if (result.reason === "ALREADY_LINKED" && result.samePatient) return { challengeSent: false, linked: true, patient: result.patient };
   if (result.reason === "ALREADY_LINKED") throwLinkReason(result.reason);
   if (result.reason) throwIdentityReason();
+  if (result.outboxId) {
+    try {
+      const config = assertOtpEmailConfigured(dependencies.environment, dependencies.emailConfig);
+      const delivery = await (dependencies.processImmediateEmail ?? processTransactionalEmailById)(result.outboxId, dependencies.emailProcessorDependencies ?? {});
+      if (delivery.sent !== 1 || !["live", "test"].includes(config.mode)) throwOtpDeliveryReason();
+    } catch (error) {
+      if (error?.code === "CUSTOMER_PATIENT_LINK_FAILED") throw error;
+      throwOtpDeliveryReason();
+    }
+  }
   return { challengeSent: true, expiresAt: result.expiresAt, maskedEmail: result.maskedEmail };
 }
 

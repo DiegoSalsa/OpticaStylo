@@ -121,7 +121,7 @@ export async function createCustomerPatientOtpChallenge(accountId, identity, dep
       account_id: account.id, code_hash: codeHash, expires_at: expiresAt, id: challengeId, patient_id: patient.id,
     } });
     // Encolar el correo en la infraestructura transaccional existente y no usar el receptor del navegador.
-    await client.transactional_email_outbox.create({ data: {
+    const outbox = await client.transactional_email_outbox.create({ data: {
       account_id: account.id,
       deduplication_key: transactionalEmailDeduplicationKey("CUSTOMER_PATIENT_OTP", challengeId),
       payload: { code },
@@ -129,7 +129,7 @@ export async function createCustomerPatientOtpChallenge(accountId, identity, dep
       template_code: "CUSTOMER_PATIENT_OTP",
     } });
     return {
-      expiresAt, maskedEmail: maskCustomerPatientEmail(patient.email), reason: null,
+      expiresAt, maskedEmail: maskCustomerPatientEmail(patient.email), outboxId: outbox.id, reason: null,
     };
     }, { isolationLevel: "Serializable" });
   } catch (error) {

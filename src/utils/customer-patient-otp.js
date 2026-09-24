@@ -2,9 +2,9 @@ import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 
 const OTP_LENGTH = 6;
 
-// Leer una clave estable del entorno para que el hash no sea reversible con la base aislada.
+// Exigir un secreto independiente para la verificación clínica y evitar reutilizar CRON_SECRET.
 function otpSecret(environment = process.env) {
-  const secret = environment.CUSTOMER_PATIENT_OTP_SECRET?.trim() || environment.CRON_SECRET?.trim();
+  const secret = environment.CUSTOMER_PATIENT_OTP_SECRET?.trim();
   if (!secret || secret.length < 32) {
     throw new Error("CUSTOMER_PATIENT_OTP_SECRET debe tener al menos 32 caracteres.");
   }
