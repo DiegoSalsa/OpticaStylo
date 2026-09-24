@@ -10,6 +10,18 @@ const WEBHOOK_STATUSES = Object.freeze({
   "email.suppressed": "SUPPRESSED",
 });
 
+// Definir los estados finales que ya no necesitan conservar el código OTP para un reintento.
+const OTP_TERMINAL_STATUSES = new Set([
+  "BOUNCED", "COMPLAINED", "DEAD_LETTER", "DELIVERED", "SENT", "SIMULATED", "SUPPRESSED", "TEST_SENT",
+]);
+
+// Eliminar el código únicamente después de que el correo deja de ser reintentable.
+export function sanitizeTransactionalEmailPayload(templateCode, payload, status) {
+  const sanitized = { ...(payload ?? {}) };
+  if (templateCode === "CUSTOMER_PATIENT_OTP" && OTP_TERMINAL_STATUSES.has(status)) delete sanitized.code;
+  return sanitized;
+}
+
 // Centralizar la lógica de number or null para mantener consistente el comportamiento de la aplicación
 function numberOrNull(value) {
   if (value == null) return null;
@@ -18,11 +30,11 @@ function numberOrNull(value) {
 }
 
 // Transformar map correo al formato utilizado por el resto de la aplicación
-function mapEmail(row, { includeOtpCode = false } = {}) {
+export function mapEmail(row, { includeOtpCode = false } = {}) {
   if (!row) return null;
   const receipt = row.sale_receipts;
   const receiptPayload = receipt?.payload ?? {};
-  const payload = { ...row.payload };
+  const payload = sanitizeTransactionalEmailPayload(row.template_code, row.payload, row.status);
   // Ocultar el OTP de respuestas administrativas; solo el worker que envía el correo puede leerlo.
   if (row.template_code === "CUSTOMER_PATIENT_OTP" && !includeOtpCode) delete payload.code;
   return {
@@ -98,16 +110,17 @@ async function recoverExpiredLocks(client, limit) {
 }
 
 // Centralizar la lógica de claim transaccional correo batch para mantener consistente el comportamiento de la aplicación
-export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTestRecipient = null, limit, lockSeconds, workerId }) {
+export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTestRecipient = null, emailId = null, limit, lockSeconds, workerId }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
-    const recoveredCount = await recoverExpiredLocks(client, limit);
+    // Limitar el claim a un correo puntual cuando la solicitud interactiva lo requiere.
+    const recoveredCount = emailId ? 0 : await recoverExpiredLocks(client, limit);
     const now = new Date();
     const candidates = await client.transactional_email_outbox.findMany({
       include: { sale_receipts: true },
       orderBy: [{ next_attempt_at: "asc" }, { created_at: "asc" }, { id: "asc" }],
-      take: limit * 2,
-      where: { next_attempt_at: { lte: now }, status: { in: ["PENDING", "FAILED"] } },
+      take: emailId ? 1 : limit * 2,
+      where: { ...(emailId ? { id: emailId } : {}), next_attempt_at: { lte: now }, status: { in: ["PENDING", "FAILED"] } },
     });
     const claimed = [];
     for (const email of candidates) {
@@ -149,6 +162,7 @@ export async function completeTransactionalEmail(emailId, workerId, { effectiveR
       last_error_code: null, lock_expires_at: null, locked_at: null, locked_by: null,
       processing_finished_at: new Date(), provider, provider_message_id: providerMessageId,
       sent_at: sentAt, status,
+      ...(OTP_TERMINAL_STATUSES.has(status) ? { payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, status) } : {}),
     }, where: { id: emailId } });
     await updateReceiptStatus(client, email.receipt_id, status, providerMessageId);
     await transition(client, email, status, status === "SIMULATED" ? "SIMULATION_COMPLETED" : "PROVIDER_ACCEPTED");
@@ -168,7 +182,10 @@ export async function completeTransactionalEmail(emailId, workerId, { effectiveR
       const webhookStatus = WEBHOOK_STATUSES[pending?.event_type];
       if (webhookStatus) {
         finalStatus = webhookStatus;
-        await client.transactional_email_outbox.update({ data: { status: webhookStatus }, where: { id: emailId } });
+        await client.transactional_email_outbox.update({ data: {
+          payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, webhookStatus),
+          status: webhookStatus,
+        }, where: { id: emailId } });
         await updateReceiptStatus(client, email.receipt_id, webhookStatus, providerMessageId);
         await transition(client, { ...email, status }, webhookStatus, "EARLY_PROVIDER_WEBHOOK");
       }
@@ -192,6 +209,7 @@ export async function failTransactionalEmail(emailId, workerId, { errorCode, max
       last_error: message, last_error_code: errorCode, lock_expires_at: null,
       locked_at: null, locked_by: null, next_attempt_at: nextAttemptAt,
       processing_finished_at: new Date(), status,
+      ...(OTP_TERMINAL_STATUSES.has(status) ? { payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, status) } : {}),
     }, include: { sale_receipts: true }, where: { id: emailId } });
     await updateReceiptStatus(client, email.receipt_id, status, null, message);
     await transition(client, email, status, status === "DEAD_LETTER" ? "RETRY_EXHAUSTED_OR_PERMANENT" : "RETRY_SCHEDULED", errorCode);
@@ -208,6 +226,7 @@ export async function suppressTransactionalEmail(emailId, workerId, reasonCode) 
     const result = await client.transactional_email_outbox.update({ data: {
       lock_expires_at: null, locked_at: null, locked_by: null,
       processing_finished_at: new Date(), skip_reason: reasonCode, status: "SUPPRESSED",
+      payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, "SUPPRESSED"),
     }, include: { sale_receipts: true }, where: { id: emailId } });
     await updateReceiptStatus(client, email.receipt_id, "SUPPRESSED", null, reasonCode);
     await transition(client, email, "SUPPRESSED", reasonCode);
@@ -285,6 +304,10 @@ export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 1
     const email = await client.transactional_email_outbox.findUnique({ include: { sale_receipts: true }, where: { id: emailId } });
     if (!email) return { email: null, reason: "NOT_FOUND" };
     if (!["FAILED", "DEAD_LETTER"].includes(email.status)) return { email: mapEmail(email), reason: "NOT_RETRYABLE" };
+    // Impedir reintentos manuales de OTP terminales cuyo código ya fue eliminado del outbox.
+    if (email.template_code === "CUSTOMER_PATIENT_OTP" && email.status === "DEAD_LETTER") {
+      return { email: mapEmail(email), reason: "NOT_RETRYABLE" };
+    }
     const result = await client.transactional_email_outbox.update({ data: {
       attempt_count: 0, last_error: null, last_error_code: null,
       next_attempt_at: new Date(), processing_finished_at: null,

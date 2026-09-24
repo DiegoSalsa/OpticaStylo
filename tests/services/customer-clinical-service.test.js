@@ -21,6 +21,40 @@ test("solicita un OTP y solo devuelve el correo enmascarado", async () => {
   assert.deepEqual(result, { challengeSent: true, expiresAt: new Date("2026-09-24T12:10:00.000Z"), maskedEmail: "a••a@ejemplo.cl" });
 });
 
+test("procesa inmediatamente el correo OTP y exige confirmación de entrega", async () => {
+  let processedId;
+  const result = await requestCustomerPatientLinkCode(account, { birthDate }, {
+    createChallenge: async () => ({
+      expiresAt: new Date("2026-09-24T12:10:00.000Z"),
+      maskedEmail: "a••a@ejemplo.cl",
+      outboxId: "otp-outbox-1",
+      reason: null,
+    }),
+    emailConfig: { mode: "live" },
+    processImmediateEmail: async (outboxId) => { processedId = outboxId; return { sent: 1 }; },
+  });
+  assert.equal(processedId, "otp-outbox-1");
+  assert.equal(result.challengeSent, true);
+});
+
+test("no confirma el OTP cuando el correo está deshabilitado o no se entrega", async () => {
+  await assert.rejects(
+    () => requestCustomerPatientLinkCode(account, { birthDate }, {
+      createChallenge: async () => ({ outboxId: "otp-outbox-disabled", reason: null }),
+      emailConfig: { mode: "disabled" },
+    }),
+    (error) => error.code === "CUSTOMER_PATIENT_LINK_FAILED" && error.status === 409,
+  );
+  await assert.rejects(
+    () => requestCustomerPatientLinkCode(account, { birthDate }, {
+      createChallenge: async () => ({ outboxId: "otp-outbox-failed", reason: null }),
+      emailConfig: { mode: "live" },
+      processImmediateEmail: async () => ({ failed: 1, sent: 0 }),
+    }),
+    (error) => error.code === "CUSTOMER_PATIENT_LINK_FAILED" && error.status === 409,
+  );
+});
+
 test("confirma un OTP correcto y vincula la cuenta", async () => {
   const result = await confirmCustomerPatientLink(account, { code: "123456" }, {
     verifyChallenge: async (accountId, code) => {

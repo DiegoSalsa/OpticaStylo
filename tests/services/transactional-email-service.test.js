@@ -57,6 +57,19 @@ test("disabled no reclama ni afirma procesamiento", async () => {
   assert.equal(result.sent, 0);
 });
 
+test("el procesamiento inmediato reclama únicamente el correo OTP solicitado", async () => {
+  let claimedOptions;
+  const dependencies = runDependencies("live", {
+    claimBatch: async (options) => {
+      claimedOptions = options;
+      return { emails: [], recoveredCount: 0 };
+    },
+  });
+  const result = await processTransactionalEmailBatch({ emailId: "otp-outbox-1" }, dependencies);
+  assert.equal(claimedOptions.emailId, "otp-outbox-1");
+  assert.equal(result.claimed, 0);
+});
+
 test("simulate procesa sin contactar al proveedor", async () => {
   let completed;
   const dependencies = runDependencies("simulate", {
