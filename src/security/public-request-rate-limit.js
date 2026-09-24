@@ -14,6 +14,8 @@ export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   STORE_CART_CREATION: "store_cart_creation",
   STORE_LOGIN: "store_login",
   STORE_PATIENT_LINK: "store_patient_link",
+  // Separar la cuota de ingreso del código para contener intentos de fuerza bruta.
+  STORE_PATIENT_LINK_VERIFY: "store_patient_link_verify",
   STORE_REGISTRATION: "store_registration",
 });
 
@@ -47,6 +49,10 @@ const LIMITS = Object.freeze({
     network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),
   }),
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 5, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 12, windowSeconds: 15 * 60 }),
+  }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK_VERIFY]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 5, windowSeconds: 15 * 60 }),
     network: Object.freeze({ maximumAttempts: 12, windowSeconds: 15 * 60 }),
   }),

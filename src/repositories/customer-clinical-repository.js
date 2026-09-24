@@ -1,4 +1,14 @@
 import { prisma } from "../db/prisma.js";
+import { randomUUID } from "node:crypto";
+import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import {
+  CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS,
+  CUSTOMER_PATIENT_OTP_TTL_SECONDS,
+  generateCustomerPatientOtp,
+  hashCustomerPatientOtp,
+  maskCustomerPatientEmail,
+  verifyCustomerPatientOtp,
+} from "../utils/customer-patient-otp.js";
 
 const professionalUser = "users_professional_profiles_user_idTousers";
 
@@ -65,8 +75,8 @@ export function mapCustomerClinicalPrescription(row) {
 }
 
 // Leer la cuenta y su relación existente sin aceptar identificadores enviados por el navegador.
-export async function findCustomerClinicalContext(accountId) {
-  return prisma.customer_accounts.findUnique({
+export async function findCustomerClinicalContext(accountId, database = prisma) {
+  return database.customer_accounts.findUnique({
     select: { ...accountSelect, id: true },
     where: { id: accountId },
   });
@@ -80,35 +90,47 @@ async function findVerifiablePatient(client, { birthDate, email, rut }) {
   });
 }
 
-// Vincular cuenta y paciente atómicamente para evitar carreras y sobrescrituras.
-export async function linkCustomerToPatient(accountId, identity) {
+// Crear un desafío OTP después de verificar la identidad contra la cuenta autenticada.
+export async function createCustomerPatientOtpChallenge(accountId, identity, dependencies = {}) {
   try {
-    return await prisma.$transaction(async (client) => {
+    const database = dependencies.client ?? prisma;
+    return await database.$transaction(async (client) => {
     const account = await client.customer_accounts.findUnique({ select: { ...accountSelect, id: true }, where: { id: accountId } });
     if (!account?.customers?.rut) return { reason: "IDENTITY" };
-    const currentPatientId = account.customers.patient_id;
     const expectedEmail = account.email.trim().toLowerCase();
-    if (identity.email && identity.email !== expectedEmail) return { reason: "IDENTITY" };
-
-    if (currentPatientId) {
-      const linked = await client.patients.findUnique({ select: { birth_date: true, email: true, first_names: true, id: true, last_names: true, rut: true }, where: { id: currentPatientId } });
-      if (!linked || linked.rut !== account.customers.rut || linked.email.trim().toLowerCase() !== expectedEmail || formatDateOnly(linked.birth_date) !== identity.birthDate) {
-        return { reason: "ALREADY_LINKED" };
-      }
-      return { patient: publicPatient(linked), reason: null };
+    if (account.customers.patient_id) {
+      const linked = await client.patients.findUnique({ select: { birth_date: true, email: true, first_names: true, id: true, last_names: true, rut: true }, where: { id: account.customers.patient_id } });
+      if (!linked || linked.rut !== account.customers.rut || linked.email.trim().toLowerCase() !== expectedEmail || formatDateOnly(linked.birth_date) !== identity.birthDate) return { reason: "IDENTITY" };
+      return { patient: publicPatient(linked), reason: "ALREADY_LINKED", samePatient: true };
     }
-
     const patient = await findVerifiablePatient(client, { birthDate: identity.birthDate, email: expectedEmail, rut: account.customers.rut });
     if (!patient) return { reason: "IDENTITY" };
     if (patient.customers && patient.customers.id !== account.customers.id) return { reason: "PATIENT_LINKED" };
 
-    const updated = await client.customers.updateMany({ data: { patient_id: patient.id }, where: { id: account.customers.id, patient_id: null } });
-    if (!updated.count) {
-      const latest = await client.customers.findUnique({ select: { patient_id: true }, where: { id: account.customers.id } });
-      if (latest?.patient_id === patient.id) return { patient: publicPatient(patient), reason: null };
-      return { reason: "ALREADY_LINKED" };
-    }
-    return { patient: publicPatient(patient), reason: null };
+    // Invalidar desafíos anteriores para que solo exista un código válido por cuenta.
+    const now = dependencies.now?.() ?? new Date();
+    await client.customer_patient_link_challenges.updateMany({
+      data: { consumed_at: now },
+      where: { account_id: account.id, consumed_at: null },
+    });
+    const challengeId = (dependencies.createChallengeId ?? randomUUID)();
+    const code = (dependencies.generateCode ?? generateCustomerPatientOtp)();
+    const expiresAt = new Date(now.getTime() + CUSTOMER_PATIENT_OTP_TTL_SECONDS * 1000);
+    const codeHash = (dependencies.hashCode ?? hashCustomerPatientOtp)(challengeId, code, dependencies.environment);
+    await client.customer_patient_link_challenges.create({ data: {
+      account_id: account.id, code_hash: codeHash, expires_at: expiresAt, id: challengeId, patient_id: patient.id,
+    } });
+    // Encolar el correo en la infraestructura transaccional existente y no usar el receptor del navegador.
+    await client.transactional_email_outbox.create({ data: {
+      account_id: account.id,
+      deduplication_key: transactionalEmailDeduplicationKey("CUSTOMER_PATIENT_OTP", challengeId),
+      payload: { code },
+      recipient_email: patient.email,
+      template_code: "CUSTOMER_PATIENT_OTP",
+    } });
+    return {
+      expiresAt, maskedEmail: maskCustomerPatientEmail(patient.email), reason: null,
+    };
     }, { isolationLevel: "Serializable" });
   } catch (error) {
     // Traducir conflictos concurrentes de la restricción única a un resultado de dominio seguro.
@@ -117,20 +139,68 @@ export async function linkCustomerToPatient(accountId, identity) {
   }
 }
 
+// Verificar el OTP y vincular la relación solo después de demostrar posesión del correo.
+export async function verifyCustomerPatientOtpChallenge(accountId, code, dependencies = {}) {
+  const database = dependencies.client ?? prisma;
+  try {
+    return await database.$transaction(async (client) => {
+    const now = dependencies.now?.() ?? new Date();
+    const challenge = await client.customer_patient_link_challenges.findFirst({
+      orderBy: [{ created_at: "desc" }, { id: "desc" }],
+      where: { account_id: accountId, consumed_at: null },
+    });
+    if (!challenge || challenge.expires_at <= now || challenge.attempt_count >= CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS) {
+      return { reason: "OTP_INVALID" };
+    }
+    const valid = (dependencies.verifyCode ?? verifyCustomerPatientOtp)(challenge.id, code, challenge.code_hash, dependencies.environment);
+    if (!valid) {
+      await client.customer_patient_link_challenges.updateMany({
+        data: { attempt_count: { increment: 1 } },
+        where: { attempt_count: { lt: CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS }, consumed_at: null, id: challenge.id },
+      });
+      return { reason: "OTP_INVALID" };
+    }
+    const account = await client.customer_accounts.findUnique({ select: { customer_id: true, customers: { select: { patient_id: true } } }, where: { id: accountId } });
+    if (!account) return { reason: "IDENTITY" };
+    const patient = await client.patients.findUnique({
+      select: { birth_date: true, email: true, first_names: true, id: true, last_names: true, rut: true, customers: { select: { id: true } } },
+      where: { id: challenge.patient_id },
+    });
+    if (!patient || (patient.customers && patient.customers.id !== account.customer_id)) {
+      await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
+      return { reason: "PATIENT_LINKED" };
+    }
+    if (account.customers.patient_id && account.customers.patient_id !== patient.id) {
+      await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
+      return { reason: "ALREADY_LINKED" };
+    }
+    const updated = await client.customers.updateMany({ data: { patient_id: patient.id }, where: { id: account.customer_id, patient_id: null } });
+    await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
+    if (!updated.count && account.customers.patient_id !== patient.id) return { reason: "ALREADY_LINKED" };
+    return { patient: publicPatient(patient), reason: null };
+    }, { isolationLevel: "Serializable" });
+  } catch (error) {
+    // Traducir una carrera de vinculación protegida por la restricción UNIQUE a un conflicto seguro.
+    if (error?.code === "P2002" || error?.code === "P2034") return { reason: "PATIENT_LINKED" };
+    throw error;
+  }
+}
+
 // Obtener reservas y recetas mediante proyecciones independientes del expediente clínico.
-export async function findCustomerClinicalOverview(accountId, now = new Date()) {
-  const account = await findCustomerClinicalContext(accountId);
+export async function findCustomerClinicalOverview(accountId, now = new Date(), dependencies = {}) {
+  const database = dependencies.client ?? prisma;
+  const account = await findCustomerClinicalContext(accountId, database);
   const patientId = account?.customers?.patient_id;
-  const patient = patientId ? await prisma.patients.findUnique({ select: { first_names: true, last_names: true, rut: true }, where: { id: patientId } }) : null;
+  const patient = patientId ? await database.patients.findUnique({ select: { first_names: true, last_names: true, rut: true }, where: { id: patientId } }) : null;
   if (!patientId || !patient) return { linked: false, patient: null, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] } };
 
   const [appointments, prescriptions] = await Promise.all([
-    prisma.appointments.findMany({
+    database.appointments.findMany({
       orderBy: [{ start_at: "asc" }, { id: "asc" }],
       select: { end_at: true, id: true, professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } }, start_at: true, status: true },
       where: { patient_id: patientId },
     }),
-    prisma.optical_prescriptions.findMany({
+    database.optical_prescriptions.findMany({
       orderBy: [{ issued_at: "desc" }, { version: "desc" }],
       select: {
         fulfillment_notes: true, issued_at: true, left_addition: true, left_axis: true, left_cylinder: true, left_sphere: true,

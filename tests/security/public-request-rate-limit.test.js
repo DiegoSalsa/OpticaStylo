@@ -11,9 +11,10 @@ function dependencies(attemptsByBucket = new Map()) {
   return {
     getMetadata: () => ({ ipAddress: "203.0.113.15" }),
     now: () => new Date("2026-08-22T12:00:00.000Z"),
-    reserveQuota: async ({ bucket }) => {
-      const attempts = (attemptsByBucket.get(bucket) ?? 0) + 1;
-      attemptsByBucket.set(bucket, attempts);
+    reserveQuota: async ({ bucket, subjectHash }) => {
+      const key = `${bucket}:${subjectHash}`;
+      const attempts = (attemptsByBucket.get(key) ?? 0) + 1;
+      attemptsByBucket.set(key, attempts);
       return { attempts, expiresAt: new Date("2026-08-22T12:15:00.000Z") };
     },
   };
@@ -122,6 +123,28 @@ test("limita los intentos de vinculación clínica por cuenta", async () => {
       request,
       PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
       "cuenta-cliente",
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,
+  );
+});
+
+test("limita los intentos de vinculación clínica por red aunque cambie la cuenta", async () => {
+  const deps = dependencies();
+  const request = new Request("https://example.com/api/store/accounts/me/patient-link/request-code", { method: "POST" });
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
+      `cuenta-${attempt}`,
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
+      "cuenta-final",
       deps,
     ),
     (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,

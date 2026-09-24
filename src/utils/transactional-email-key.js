@@ -1,6 +1,7 @@
-const PREFIXES = Object.freeze({
 // Utilidades compartidas para transactional-email-key.
+const PREFIXES = Object.freeze({
   ACCOUNT_CREATED: "account",
+  CUSTOMER_PATIENT_OTP: "customer-patient-otp",
   APPOINTMENT_CONFIRMED: "appointment-confirmed",
   APPOINTMENT_REMINDER: "appointment-reminder",
   ORDER_CONFIRMED: "order-confirmed",
