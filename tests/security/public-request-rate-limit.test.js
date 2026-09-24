@@ -106,6 +106,28 @@ test("limita la carga de recetas antes de enviarlas a Cloudinary", async () => {
   );
 });
 
+test("limita los intentos de vinculación clínica por cuenta", async () => {
+  const deps = dependencies();
+  const request = new Request("https://example.com/api/store/accounts/me/patient-link", { method: "POST" });
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
+      "cuenta-cliente",
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
+      "cuenta-cliente",
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,
+  );
+});
+
 test("aplica las cuotas antes de crear recursos o leer archivos multipart", async () => {
   const [cart, image] = await Promise.all([
     source("app/api/store/cart/route.js"),
