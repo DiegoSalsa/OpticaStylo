@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para internal-shell.
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,14 +13,13 @@ const NAVIGATION = [
   { href: "/app/ficha-clinica", icon: "file", label: "Gestión clínica", permissions: ["medical_records.read_assigned"] },
   { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", permissions: ["sales.read"] },
   { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
-  { href: "/app/productos", icon: "eye", label: "Catálogo e inventario", permissions: ["products.read"] },
+  { href: "/app/productos", icon: "eye", label: "Catálogo de productos", permissions: ["products.read"] },
   { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", permissions: ["users.read"] },
   { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", permissions: ["sales.reports_read"] },
 ];
 
 const ActorContext = createContext(null);
 
-// Consultar read respuesta y devolver los datos en el formato esperado por la capa llamadora
 async function readResponse(response) {
   const body = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.error?.message ?? "No fue posible completar la solicitud.");
@@ -46,7 +44,6 @@ export default function InternalShell({ children }) {
   const navigation = useMemo(() => NAVIGATION.filter((item) =>
     item.permissions.every((permission) => actor?.permissions.includes(permission))), [actor]);
 
-  // Centralizar la lógica de logout para mantener consistente el comportamiento de la aplicación
   async function logout() {
     try {
       await readResponse(await fetch("/api/auth/logout", { method: "POST" }));
@@ -91,5 +88,4 @@ export default function InternalShell({ children }) {
 }
 
 export { readResponse };
-// Centralizar la lógica de use interno actor para mantener consistente el comportamiento de la aplicación
 export function useInternalActor() { return useContext(ActorContext); }

@@ -1,7 +1,5 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con public-request-rate-limit-repository.
 
-// Centralizar la lógica de reserve público solicitud quota para mantener consistente el comportamiento de la aplicación
 export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {

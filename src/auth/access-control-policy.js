@@ -59,7 +59,6 @@ export const ROLE_PERMISSIONS = Object.freeze({
   ]),
 });
 
-// Consultar get permisos for roles y devolver los datos en el formato esperado por la capa llamadora
 export function getPermissionsForRoles(roleCodes) {
   const permissions = new Set();
 

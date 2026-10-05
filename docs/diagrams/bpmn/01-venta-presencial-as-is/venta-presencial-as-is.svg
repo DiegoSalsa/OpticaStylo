@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2640" height="1420" viewBox="0 0 2640 1420" role="img" aria-labelledby="svg-title svg-desc">
+  <title id="svg-title">BPMN-01 — Proceso actual de venta presencial en Óptica Stylo</title>
+  <desc id="svg-desc">Borrador pendiente de validación del proceso AS-IS, con pools Cliente y Óptica Stylo, lanes de atención y ventas y profesional clínico.</desc>
+  <defs>
+    <marker id="seq-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#4B5563" /></marker>
+    <marker id="msg-arrow" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M1,0 L10,4 L1,8" fill="none" stroke="#6B7280" stroke-width="1.3" /></marker>
+    <marker id="msg-circle" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto" markerUnits="strokeWidth"><circle cx="5" cy="5" r="3" fill="#fff" stroke="#6B7280" stroke-width="1.2" /></marker>
+    <style>
+      .base { font-family: Arial, Helvetica, sans-serif; }
+      .pool { fill: #fff; stroke: #555; stroke-width: 1.5; }
+      .lane-sales { fill: #f7fbff; stroke: #6c8ebf; stroke-width: 1.2; }
+      .lane-clinical { fill: #fbf8fd; stroke: #9673a6; stroke-width: 1.2; }
+      .task { fill: #dae8fc; stroke: #6c8ebf; stroke-width: 1.5; rx: 10; ry: 10; }
+      .subprocess { fill: #e1d5e7; stroke: #9673a6; stroke-width: 1.5; rx: 10; ry: 10; }
+      .gateway { fill: #fff2cc; stroke: #d6b656; stroke-width: 1.5; }
+      .start { fill: #d5e8d4; stroke: #82b366; stroke-width: 2; }
+      .end { fill: #f8cecc; stroke: #b85450; stroke-width: 4; }
+      .seq { fill: none; stroke: #4B5563; stroke-width: 1.6; marker-end: url(#seq-arrow); }
+      .msg { fill: none; stroke: #6B7280; stroke-width: 1.3; stroke-dasharray: 8 6; marker-start: url(#msg-circle); marker-end: url(#msg-arrow); }
+      .task-label { font-size: 14px; fill: #1F2937; text-anchor: middle; }
+      .small-label { font-size: 11px; fill: #374151; text-anchor: middle; }
+      .gateway-label { font-size: 13px; font-weight: 700; fill: #1F2937; text-anchor: middle; }
+      .flow-label { font-size: 12px; font-weight: 700; fill: #374151; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+      .message-label { font-size: 10px; fill: #4B5563; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+    </style>
+  </defs>
+  <g class="base">
+    <rect x="0" y="0" width="2640" height="1420" fill="#fff" />
+    <text x="30" y="55" font-size="28" font-weight="700" fill="#073A32">BPMN-01 — Proceso actual de venta presencial en Óptica Stylo (AS-IS)</text>
+    <text x="30" y="84" font-size="15" fill="#4B5563">Óptica Stylo, Concepción · Modelo de colaboración BPMN 2.0</text>
+    <rect x="30" y="100" width="2540" height="48" rx="10" fill="#fff2cc" stroke="#d6b656" stroke-width="2" />
+    <text x="48" y="130" font-size="14" fill="#5F4600"><tspan font-weight="700">BORRADOR PENDIENTE DE VALIDACIÓN</tspan><tspan> — El repositorio no documenta el AS-IS. Todo flujo intermedio es una hipótesis para entrevista; no representa funciones de la plataforma futura.</tspan></text>
+
+    <!-- Pools and lanes -->
+    <rect class="pool" x="30" y="170" width="2540" height="320" />
+    <line x1="80" y1="170" x2="80" y2="490" stroke="#555" stroke-width="1.5" />
+    <text x="57" y="330" font-size="16" font-weight="700" fill="#333" text-anchor="middle" transform="rotate(-90 57 330)">Cliente</text>
+    <rect class="pool" x="30" y="600" width="2540" height="700" />
+    <line x1="80" y1="600" x2="80" y2="1300" stroke="#555" stroke-width="1.5" />
+    <text x="57" y="950" font-size="16" font-weight="700" fill="#333" text-anchor="middle" transform="rotate(-90 57 950)">Óptica Stylo</text>
+    <rect class="lane-sales" x="80" y="600" width="2490" height="470" />
+    <line x1="115" y1="600" x2="115" y2="1070" stroke="#6c8ebf" stroke-width="1.2" />
+    <text x="102" y="835" font-size="14" font-weight="700" fill="#274B6D" text-anchor="middle" transform="rotate(-90 102 835)">Personal de atención y ventas</text>
+    <rect class="lane-clinical" x="80" y="1070" width="2490" height="230" />
+    <line x1="115" y1="1070" x2="115" y2="1300" stroke="#9673a6" stroke-width="1.2" />
+    <text x="102" y="1185" font-size="14" font-weight="700" fill="#5A3F68" text-anchor="middle" transform="rotate(-90 102 1185)">Profesional clínico</text>
+
+    <!-- Message flows (behind activities) -->
+    <path class="msg" d="M245 370 V515 H140 V770" /><text class="message-label" x="190" y="508">Solicitud de atención</text>
+    <path class="msg" d="M445 370 V530 H280 V750" /><text class="message-label" x="360" y="523">Necesidad</text>
+    <path class="msg" d="M460 750 V545 H1035 V370" /><text class="message-label" x="735" y="538">Alternativas</text>
+    <path class="msg" d="M1200 750 V560 H1035 V370" /><text class="message-label" x="1120" y="553">Precio y plazo</text>
+    <path class="msg" d="M1345 275 V520 H1380 V750" /><text class="message-label" x="1363" y="512">Rechazo</text>
+    <path class="msg" d="M1345 450 V535 H1380 V750" /><text class="message-label" x="1363" y="548">Aceptación</text>
+    <path class="msg" d="M1665 890 V550 H1593 V450" /><text class="message-label" x="1629" y="543">Solicitud de datos y pago</text>
+    <path class="msg" d="M1593 450 V565 H1850 V890" /><text class="message-label" x="1720" y="558">Datos y pago</text>
+    <path class="msg" d="M2030 890 V540 H1953 V450" /><text class="message-label" x="1991" y="533">Comprobante</text>
+    <path class="msg" d="M2310 815 V520 H2240 V380" /><text class="message-label" x="2275" y="513">Producto</text>
+    <path class="msg" d="M2315 970 V570 H2250 V475" /><text class="message-label" x="2282" y="563">Plazo y retiro</text>
+
+    <!-- Sequence flows: Cliente -->
+    <path class="seq" d="M140 325 H170" /><path class="seq" d="M320 325 H370" /><path class="seq" d="M520 325 H960" /><path class="seq" d="M1110 325 H1160" />
+    <path class="seq" d="M1188 298 V238 H1270" /><text class="flow-label" x="1215" y="230">No</text>
+    <path class="seq" d="M1420 238 H1470" />
+    <path class="seq" d="M1188 353 V413 H1270" /><text class="flow-label" x="1215" y="405">Sí</text>
+    <path class="seq" d="M1420 413 H1510" /><path class="seq" d="M1675 413 H1870" /><path class="seq" d="M2035 413 H2070" />
+    <path class="seq" d="M2098 385 V345 H2170" /><text class="flow-label" x="2130" y="338">Sí</text>
+    <path class="seq" d="M2310 345 H2430" />
+    <path class="seq" d="M2098 440 H2170" /><text class="flow-label" x="2130" y="433">No</text>
+    <path class="seq" d="M2330 440 H2430" />
+
+    <!-- Sequence flows: Óptica -->
+    <path class="seq" d="M160 790 H210" /><path class="seq" d="M350 790 H390" /><path class="seq" d="M530 790 H590" />
+    <path class="seq" d="M645 790 H850" /><text class="flow-label" x="735" y="783">No</text>
+    <path class="seq" d="M618 818 V1188 H740" /><text class="flow-label" x="635" y="980">Sí</text>
+    <path class="seq" d="M920 1188 H930 V790 H905" />
+    <path class="seq" d="M905 790 H950" /><path class="seq" d="M1090 790 H1130" /><path class="seq" d="M1270 790 H1310" /><path class="seq" d="M1450 790 H1490" />
+    <path class="seq" d="M1518 763 V680 H1590" /><text class="flow-label" x="1545" y="672">No</text>
+    <path class="seq" d="M1730 680 H1780" />
+    <path class="seq" d="M1518 818 V930 H1590" /><text class="flow-label" x="1545" y="922">Sí</text>
+    <path class="seq" d="M1740 930 H1780" /><path class="seq" d="M1920 930 H1960" /><path class="seq" d="M2100 930 H2140" />
+    <path class="seq" d="M2168 903 V850 H2240" /><text class="flow-label" x="2200" y="842">Sí</text>
+    <path class="seq" d="M2380 850 H2460" />
+    <path class="seq" d="M2168 958 V1005 H2240" /><text class="flow-label" x="2200" y="997">No</text>
+    <path class="seq" d="M2390 1005 H2460" />
+
+    <!-- Cliente activities and events -->
+    <circle class="start" cx="120" cy="325" r="20" />
+    <rect class="task" x="170" y="280" width="150" height="90" /><text class="task-label" x="245" y="319"><tspan x="245">Llegar al local y</tspan><tspan x="245" dy="19">solicitar atención</tspan></text>
+    <rect class="task" x="370" y="280" width="150" height="90" /><text class="task-label" x="445" y="319"><tspan x="445">Expresar necesidad</tspan><tspan x="445" dy="19">de compra</tspan></text>
+    <rect class="task" x="960" y="280" width="150" height="90" /><text class="task-label" x="1035" y="319"><tspan x="1035">Evaluar propuesta</tspan><tspan x="1035" dy="19">comercial</tspan></text>
+    <text class="gateway-label" x="1188" y="278">¿Acepta la propuesta?</text><polygon class="gateway" points="1188,298 1215,325.5 1188,353 1160,325.5" /><text x="1188" y="332" font-size="18" font-weight="700" text-anchor="middle" fill="#5F4600">X</text>
+    <rect class="task" x="1270" y="200" width="150" height="75" /><text class="task-label" x="1345" y="243">Comunicar rechazo</text>
+    <circle class="end" cx="1490" cy="238" r="20" /><text class="small-label" x="1490" y="278" font-weight="700">Compra no realizada</text>
+    <rect class="task" x="1270" y="375" width="150" height="75" /><text class="task-label" x="1345" y="418">Comunicar aceptación</text>
+    <rect class="task" x="1510" y="375" width="165" height="75" /><text class="task-label" x="1593" y="405"><tspan x="1593">Proporcionar datos y</tspan><tspan x="1593" dy="19">realizar pago</tspan></text>
+    <rect class="task" x="1870" y="375" width="165" height="75" /><text class="task-label" x="1953" y="405"><tspan x="1953">Recibir comprobante</tspan><tspan x="1953" dy="19">e indicaciones</tspan></text>
+    <text class="gateway-label" x="2098" y="370">¿Recibe el producto ahora?</text><polygon class="gateway" points="2098,385 2125,412.5 2098,440 2070,412.5" /><text x="2098" y="419" font-size="18" font-weight="700" text-anchor="middle" fill="#5F4600">X</text>
+    <rect class="task" x="2170" y="310" width="140" height="70" /><text class="task-label" x="2240" y="350">Recibir producto</text>
+    <circle class="end" cx="2450" cy="345" r="20" /><text class="small-label" x="2450" y="385" font-weight="700">Compra completada</text>
+    <rect class="task" x="2170" y="405" width="160" height="70" /><text class="task-label" x="2250" y="433"><tspan x="2250">Esperar preparación</tspan><tspan x="2250" dy="19">o retiro</tspan></text>
+    <circle class="end" cx="2450" cy="440" r="20" /><text class="small-label" x="2450" y="480" font-weight="700">Compra pendiente de entrega</text>
+
+    <!-- Óptica activities and events -->
+    <circle class="start" cx="140" cy="790" r="20" /><rect x="130" y="782" width="20" height="16" fill="none" stroke="#4F7D45" /><path d="M130 782 L140 790 L150 782" fill="none" stroke="#4F7D45" /><text class="small-label" x="140" y="830" font-weight="700">Solicitud recibida</text>
+    <rect class="task" x="210" y="750" width="140" height="80" /><text class="task-label" x="280" y="783"><tspan x="280">Identificar necesidad</tspan><tspan x="280" dy="19">comercial</tspan></text>
+    <rect class="task" x="390" y="750" width="140" height="80" /><text class="task-label" x="460" y="783"><tspan x="460">Presentar alternativas</tspan><tspan x="460" dy="19">disponibles</tspan></text>
+    <text class="gateway-label" x="618" y="730"><tspan x="618">¿Requiere evaluación</tspan><tspan x="618" dy="16">visual previa?</tspan></text><polygon class="gateway" points="618,763 645,790.5 618,818 590,790.5" /><text x="618" y="797" font-size="18" font-weight="700" text-anchor="middle" fill="#5F4600">X</text>
+    <rect class="subprocess" x="740" y="1145" width="180" height="85" /><text class="task-label" x="830" y="1182"><tspan x="830">Realizar atención clínica</tspan><tspan x="830" dy="24" font-size="20" font-weight="700">＋</tspan></text>
+    <polygon class="gateway" points="878,763 905,790.5 878,818 850,790.5" /><text x="878" y="797" font-size="18" font-weight="700" text-anchor="middle" fill="#5F4600">X</text>
+    <rect class="task" x="950" y="750" width="140" height="80" /><text class="task-label" x="1020" y="783"><tspan x="1020">Definir producto y</tspan><tspan x="1020" dy="19">condiciones</tspan></text>
+    <rect class="task" x="1130" y="750" width="140" height="80" /><text class="task-label" x="1200" y="783"><tspan x="1200">Informar precio</tspan><tspan x="1200" dy="19">y plazo</tspan></text>
+    <rect class="task" x="1310" y="750" width="140" height="80" /><text class="task-label" x="1380" y="783"><tspan x="1380">Recibir decisión</tspan><tspan x="1380" dy="19">del cliente</tspan></text>
+    <text class="gateway-label" x="1518" y="742">¿Cliente acepta?</text><polygon class="gateway" points="1518,763 1545,790.5 1518,818 1490,790.5" /><text x="1518" y="797" font-size="18" font-weight="700" text-anchor="middle" fill="#5F4600">X</text>
+    <rect class="task" x="1590" y="645" width="140" height="70" /><text class="task-label" x="1660" y="674"><tspan x="1660">Cerrar atención</tspan><tspan x="1660" dy="19">sin venta</tspan></text>
+    <circle class="end" cx="1800" cy="680" r="20" /><text class="small-label" x="1800" y="720" font-weight="700">Atención finalizada sin venta</text>
+    <rect class="task" x="1590" y="890" width="150" height="80" /><text class="task-label" x="1665" y="923"><tspan x="1665">Solicitar datos y</tspan><tspan x="1665" dy="19">medio de pago</tspan></text>
+    <rect class="task" x="1780" y="890" width="140" height="80" /><text class="task-label" x="1850" y="923"><tspan x="1850">Registrar venta</tspan><tspan x="1850" dy="19">y pago</tspan></text>
+    <rect class="task" x="1960" y="890" width="140" height="80" /><text class="task-label" x="2030" y="935">Entregar comprobante</text>
+    <text class="gateway-label" x="2168" y="882">¿Entrega inmediata?</text><polygon class="gateway" points="2168,903 2195,930.5 2168,958 2140,930.5" /><text x="2168" y="937" font-size="18" font-weight="700" text-anchor="middle" fill="#5F4600">X</text>
+    <rect class="task" x="2240" y="815" width="140" height="70" /><text class="task-label" x="2310" y="855">Entregar producto</text>
+    <circle class="end" cx="2480" cy="850" r="20" /><text class="small-label" x="2480" y="890" font-weight="700">Venta finalizada con entrega</text>
+    <rect class="task" x="2240" y="970" width="150" height="70" /><text class="task-label" x="2315" y="998"><tspan x="2315">Coordinar preparación</tspan><tspan x="2315" dy="19">y retiro</tspan></text>
+    <circle class="end" cx="2480" cy="1005" r="20" /><text class="small-label" x="2480" y="1045" font-weight="700">Venta pendiente de entrega</text>
+
+    <!-- Legend and footer -->
+    <rect x="30" y="1320" width="2540" height="45" rx="8" fill="#f5f5f5" stroke="#9CA3AF" />
+    <text x="45" y="1348" font-size="12" fill="#374151"><tspan font-weight="700">Leyenda:</tspan><tspan>  círculo verde = inicio  ·  rectángulo azul = actividad  ·  rombo amarillo = decisión XOR  ·  actividad morada con + = subproceso colapsado  ·  círculo rojo = fin  ·  línea discontinua = mensaje entre pools</tspan></text>
+    <text x="30" y="1392" font-size="11" font-style="italic" fill="#6B7280">Las decisiones sobre evaluación clínica, registro, pago, comprobante y entrega deben confirmarse con Óptica Stylo antes de aprobar este AS-IS.</text>
+  </g>
+</svg>

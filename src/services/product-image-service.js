@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de product-image-service.
 import { createHash } from "node:crypto";
 
 import { PERMISSIONS } from "../auth/permissions.js";
@@ -19,12 +18,10 @@ import {
   validateProductImageBytes,
 } from "../validations/product-image-validation.js";
 
-// Centralizar la lógica de not found para mantener consistente el comportamiento de la aplicación
 function notFound() {
   throw new AppError({ code: "PRODUCT_IMAGE_NOT_FOUND", message: "No se encontró la imagen del producto.", status: 404 });
 }
 
-// Centralizar la lógica de grouped para mantener consistente el comportamiento de la aplicación
 function grouped(images) {
   return images.map((image) => ({
     alt: image.alt,
@@ -46,7 +43,6 @@ function grouped(images) {
   }));
 }
 
-// Consultar get producto imágenes y devolver los datos en el formato esperado por la capa llamadora
 export async function getProductImages(productId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
   const id = validateProductId(productId);
@@ -55,7 +51,6 @@ export async function getProductImages(productId, actor, dependencies = {}) {
   return grouped(await (dependencies.listImages ?? listActiveProductImages)([id]));
 }
 
-// Crear o registrar add producto imagen aplicando las reglas de negocio y persistencia correspondientes
 export async function addProductImage(productId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_MANAGE]);
   const id = validateProductId(productId);

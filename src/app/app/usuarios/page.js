@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para page.
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -64,7 +63,6 @@ export default function UsersPage() {
     return () => controller.abort();
   }, [actor, requestUsers]);
 
-  // Centralizar la lógica de select para mantener consistente el comportamiento de la aplicación
   function select(user) {
     setSelectedId(user.id);
     setForm({
@@ -78,14 +76,12 @@ export default function UsersPage() {
     setNotice(null);
   }
 
-  // Centralizar la lógica de reset para mantener consistente el comportamiento de la aplicación
   function reset() {
     setSelectedId(null);
     setForm(EMPTY);
     setNotice(null);
   }
 
-  // Centralizar la lógica de toggle rol para mantener consistente el comportamiento de la aplicación
   function toggleRole(role) {
     setForm((current) => ({
       ...current,
@@ -95,7 +91,6 @@ export default function UsersPage() {
     }));
   }
 
-  // Centralizar la lógica de search para mantener consistente el comportamiento de la aplicación
   async function search(event) {
     event.preventDefault();
     const normalized = query.trim();
@@ -114,7 +109,6 @@ export default function UsersPage() {
     }
   }
 
-  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     setStatus("saving");

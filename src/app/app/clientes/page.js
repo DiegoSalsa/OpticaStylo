@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para page.
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -55,7 +54,6 @@ export default function CustomersPage() {
       });
     return () => controller.abort();
   }, [actor, requestCustomers]);
-  // Centralizar la lógica de select para mantener consistente el comportamiento de la aplicación
   async function select(customer) {
     setSelectedId(customer.id);
     setStatus("loading-detail");
@@ -71,13 +69,11 @@ export default function CustomersPage() {
       setStatus("ready");
     }
   }
-  // Centralizar la lógica de reset para mantener consistente el comportamiento de la aplicación
   function reset() {
     setSelectedId(null);
     setForm(EMPTY);
     setNotice(null);
   }
-  // Centralizar la lógica de search para mantener consistente el comportamiento de la aplicación
   async function search(event) {
     event.preventDefault();
     const normalized = query.trim();
@@ -95,7 +91,6 @@ export default function CustomersPage() {
       setStatus("error");
     }
   }
-  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     setStatus("saving");

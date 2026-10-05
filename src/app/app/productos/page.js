@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para page.
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -86,7 +85,6 @@ export default function ProductsPage() {
     return () => controller.abort();
   }, [actor, requestProducts]);
 
-  // Centralizar la lógica de select para mantener consistente el comportamiento de la aplicación
   function select(product) {
     setSelectedId(product.id);
     setForm({ ...product, unitPriceCents: String(product.unitPriceCents) });
@@ -97,7 +95,6 @@ export default function ProductsPage() {
     void loadImages(product.id);
   }
 
-  // Centralizar la lógica de reset para mantener consistente el comportamiento de la aplicación
   function reset() {
     setSelectedId(null);
     setForm(EMPTY);
@@ -107,7 +104,6 @@ export default function ProductsPage() {
     setNotice(null);
   }
 
-  // Centralizar la lógica de search para mantener consistente el comportamiento de la aplicación
   async function search(event) {
     event.preventDefault();
     const normalized = query.trim();
@@ -126,7 +122,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     setStatus("saving");
@@ -167,7 +162,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Centralizar la lógica de upload imagen para mantener consistente el comportamiento de la aplicación
   async function uploadImage(event) {
     event.preventDefault();
     if (!selectedId || !imageFile) return;

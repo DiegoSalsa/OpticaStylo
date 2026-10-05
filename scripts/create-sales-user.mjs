@@ -1,5 +1,4 @@
 import { randomBytes } from "node:crypto";
-// Script operativo para create-sales-user.
 
 import { loadProjectEnvironment } from "./load-environment.mjs";
 

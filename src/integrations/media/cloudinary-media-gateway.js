@@ -1,4 +1,3 @@
-// Código de la aplicación para cloudinary-media-gateway.
 import { randomUUID } from "node:crypto";
 
 import { v2 as cloudinary } from "cloudinary";
@@ -6,7 +5,6 @@ import { v2 as cloudinary } from "cloudinary";
 import { getCloudinaryConfig } from "../../config/cloudinary.js";
 import { AppError } from "../../utils/app-error.js";
 
-// Centralizar la lógica de configure para mantener consistente el comportamiento de la aplicación
 function configure(sdk, environment) {
   const configuration = getCloudinaryConfig(environment);
   sdk.config({
@@ -18,7 +16,6 @@ function configure(sdk, environment) {
   return configuration;
 }
 
-// Centralizar la lógica de upload buffer para mantener consistente el comportamiento de la aplicación
 function uploadBuffer(sdk, data, options) {
   return new Promise((resolve, reject) => {
     const stream = sdk.uploader.upload_stream(options, (error, result) => {
@@ -31,7 +28,6 @@ function uploadBuffer(sdk, data, options) {
   });
 }
 
-// Centralizar la lógica de upload failure para mantener consistente el comportamiento de la aplicación
 function uploadFailure(error) {
   console.error("No fue posible guardar un archivo en Cloudinary.", error);
   throw new AppError({
@@ -41,7 +37,6 @@ function uploadFailure(error) {
   });
 }
 
-// Centralizar la lógica de upload result para mantener consistente el comportamiento de la aplicación
 function uploadResult(result) {
   return {
     assetId: result.asset_id,
@@ -54,7 +49,6 @@ function uploadResult(result) {
   };
 }
 
-// Crear o registrar create cloudinary media gateway aplicando las reglas de negocio y persistencia correspondientes
 export function createCloudinaryMediaGateway({
   environment = process.env,
   fetchImplementation = fetch,
@@ -153,7 +147,6 @@ export function createCloudinaryMediaGateway({
   });
 }
 
-// Consultar get cloudinary media gateway y devolver los datos en el formato esperado por la capa llamadora
 export function getCloudinaryMediaGateway(options) {
   return createCloudinaryMediaGateway(options);
 }

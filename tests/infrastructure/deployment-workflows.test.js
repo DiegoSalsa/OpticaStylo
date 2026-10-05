@@ -8,6 +8,12 @@ async function readWorkflow(name) {
   return readFile(new URL(name, workflowDirectory), "utf8");
 }
 
+test("Nginx reemplaza X-Forwarded-For con la dirección de conexión", async () => {
+  const nginx = await readFile(new URL("../../deploy/nginx-optica-stylo.conf", import.meta.url), "utf8");
+  assert.match(nginx, /proxy_set_header X-Forwarded-For \$remote_addr;/);
+  assert.doesNotMatch(nginx, /proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;/);
+});
+
 test("el despliegue universitario queda limitado al runner y a main", async () => {
   const workflow = await readWorkflow("despliegueuniversidad.yml");
 

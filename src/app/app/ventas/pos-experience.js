@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para pos-experience.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -168,7 +167,6 @@ export default function PosExperience() {
     prescriptionMode,
   ]);
 
-  // Centralizar la lógica de choose cliente para mantener consistente el comportamiento de la aplicación
   function chooseCustomer(value) {
     setCustomer(value);
     choosePatient(null);
@@ -181,7 +179,6 @@ export default function PosExperience() {
     }
   }
 
-  // Centralizar la lógica de choose paciente para mantener consistente el comportamiento de la aplicación
   function choosePatient(value) {
     setPatient(value);
     setPrescriptionId("");
@@ -190,7 +187,6 @@ export default function PosExperience() {
     setExternalPrescriptionId(null);
   }
 
-  // Crear o registrar add line aplicando las reglas de negocio y persistencia correspondientes
   function addLine(product, mount = null) {
     if (!canEdit) return false;
     const existing = lines.find((line) => line.id === product.id);
@@ -219,7 +215,6 @@ export default function PosExperience() {
     return true;
   }
 
-  // Crear o registrar add producto aplicando las reglas de negocio y persistencia correspondientes
   function addProduct(product) {
     if (product.category === "PRESCRIPTION_LENS") {
       setSelectedLensId(product.id);
@@ -234,7 +229,6 @@ export default function PosExperience() {
     return added;
   }
 
-  // Crear o registrar add configured lente aplicando las reglas de negocio y persistencia correspondientes
   function addConfiguredLens() {
     if (!selectedLens) {
       setError("Selecciona una opción de cristales antes de agregarla.");
@@ -252,7 +246,6 @@ export default function PosExperience() {
     setNotice(`${mountNotice} Puedes adjuntar una receta si corresponde.`);
   }
 
-  // Centralizar la lógica de quantity para mantener consistente el comportamiento de la aplicación
   function quantity(productId, next) {
     const product = lines.find((line) => line.id === productId);
     const attachedLenses =
@@ -286,7 +279,6 @@ export default function PosExperience() {
     );
   }
 
-  // Actualizar set externo eye manteniendo las restricciones y estados permitidos del dominio
   function setExternalEye(side, field, value) {
     setExternalPrescriptionId(null);
     setExternalPrescription((current) => ({
@@ -295,7 +287,6 @@ export default function PosExperience() {
     }));
   }
 
-  // Crear o registrar create cliente aplicando las reglas de negocio y persistencia correspondientes
   async function createCustomer(event) {
     event.preventDefault();
     setPending(true);
@@ -319,7 +310,6 @@ export default function PosExperience() {
     }
   }
 
-  // Crear o registrar create paciente aplicando las reglas de negocio y persistencia correspondientes
   async function createPatient(event) {
     event.preventDefault();
     setPending(true);
@@ -363,7 +353,6 @@ export default function PosExperience() {
     }
   }
 
-  // Consultar load quotations y devolver los datos en el formato esperado por la capa llamadora
   async function loadQuotations() {
     setShowQuotations(true);
     setPending(true);
@@ -382,7 +371,6 @@ export default function PosExperience() {
     }
   }
 
-  // Consultar load quotation y devolver los datos en el formato esperado por la capa llamadora
   async function loadQuotation(id) {
     setPending(true);
     setError("");
@@ -421,7 +409,6 @@ export default function PosExperience() {
     }
   }
 
-  // Crear o registrar create solicitud key aplicando las reglas de negocio y persistencia correspondientes
   function createRequestKey() {
     return (
       globalThis.crypto?.randomUUID?.() ??
@@ -429,7 +416,6 @@ export default function PosExperience() {
     );
   }
 
-  // Consultar read externo receta imagen y devolver los datos en el formato esperado por la capa llamadora
   async function readExternalPrescriptionImage() {
     if (
       !prescriptionFile ||
@@ -469,7 +455,6 @@ export default function PosExperience() {
     }
   }
 
-  // Verificar ensure externo receta para impedir que la operación continúe en un estado inválido
   async function ensureExternalPrescription() {
     if (externalPrescriptionId) return externalPrescriptionId;
     const confirmedData = externalPrescriptionData(externalPrescription);
@@ -500,7 +485,6 @@ export default function PosExperience() {
     return created.id;
   }
 
-  // Transformar build draft al formato utilizado por el resto de la aplicación
   async function buildDraft() {
     const selectedExternalPrescriptionId =
       attachPrescription && prescriptionMode === "external"
@@ -530,7 +514,6 @@ export default function PosExperience() {
     };
   }
 
-  // Crear o registrar save operation aplicando las reglas de negocio y persistencia correspondientes
   async function saveOperation(operation) {
     setPending(true);
     setError("");
@@ -584,7 +567,6 @@ export default function PosExperience() {
     }
   }
 
-  // Crear o registrar caja pago aplicando las reglas de negocio y persistencia correspondientes
   async function registerPayment(event) {
     event.preventDefault();
     const paymentForm = event.currentTarget;
@@ -669,7 +651,6 @@ export default function PosExperience() {
     }
   }
 
-  // Centralizar la lógica de scan sku para mantener consistente el comportamiento de la aplicación
   async function scanSku(event) {
     event.preventDefault();
     const code = scannerRef.current?.value.trim().toUpperCase();
@@ -697,7 +678,6 @@ export default function PosExperience() {
     }
   }
 
-  // Determinar si issue current comprobante cumple la condición requerida por la aplicación
   async function issueCurrentReceipt() {
     if (!sale) return;
     setPending(true);
@@ -719,7 +699,6 @@ export default function PosExperience() {
     }
   }
 
-  // Centralizar la lógica de reset para mantener consistente el comportamiento de la aplicación
   function reset() {
     setCustomer(null);
     setPatient(null);

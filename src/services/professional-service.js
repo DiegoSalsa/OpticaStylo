@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de professional-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -14,7 +13,6 @@ import {
   validateUpdateProfessionalInput,
 } from "../validations/professional-validation.js";
 
-// Construir y lanzar el error de dominio asociado a throw profesional not found
 function throwProfessionalNotFound() {
   throw new AppError({
     code: "PROFESSIONAL_NOT_FOUND",
@@ -23,7 +21,6 @@ function throwProfessionalNotFound() {
   });
 }
 
-// Crear o registrar create profesional aplicando las reglas de negocio y persistencia correspondientes
 export async function createProfessional(input, actor, dependencies = {}) {
   const createRepository =
     dependencies.createProfessionalProfile ?? createProfessionalProfile;
@@ -58,7 +55,6 @@ export async function createProfessional(input, actor, dependencies = {}) {
   }
 }
 
-// Consultar get profesional y devolver los datos en el formato esperado por la capa llamadora
 export async function getProfessional(professionalId, actor, dependencies = {}) {
   const findRepository = dependencies.findProfessionalById ?? findProfessionalById;
 

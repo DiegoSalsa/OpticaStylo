@@ -1,5 +1,4 @@
 import { FACE_LANDMARK_INDICES } from "../constants/virtual-try-on.js";
-// Utilidades compartidas para virtual-try-on-3d-geometry.
 import { Euler, Quaternion } from "three";
 
 const {
@@ -23,19 +22,16 @@ const AVERAGE_IRIS_DIAMETER_MM = 11.7;
 const REFERENCE_FACE_WIDTH_MM = 135;
 const FACE_MESH_LANDMARK_COUNT = 468;
 
-// Centralizar la lógica de finite point para mantener consistente el comportamiento de la aplicación
 function finitePoint(point) {
   return point
     && Number.isFinite(point.x)
     && Number.isFinite(point.y);
 }
 
-// Centralizar la lógica de clamp para mantener consistente el comportamiento de la aplicación
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-// Centralizar la lógica de mirrored point para mantener consistente el comportamiento de la aplicación
 function mirroredPoint(point, videoWidth, videoHeight) {
   return {
     x: (1 - point.x) * videoWidth,
@@ -43,19 +39,16 @@ function mirroredPoint(point, videoWidth, videoHeight) {
   };
 }
 
-// Centralizar la lógica de point distance para mantener consistente el comportamiento de la aplicación
 function pointDistance(first, second) {
   return Math.hypot(second.x - first.x, second.y - first.y);
 }
 
-// Centralizar la lógica de smooth values para mantener consistente el comportamiento de la aplicación
 function smoothValues(previous, next, factor) {
   return previous.map(
     (value, index) => value + (next[index] - value) * factor,
   );
 }
 
-// Centralizar la lógica de apply soft dead zone para mantener consistente el comportamiento de la aplicación
 function applySoftDeadZone(previous, next, threshold) {
   const difference = next - previous;
   const magnitude = Math.abs(difference);
@@ -63,7 +56,6 @@ function applySoftDeadZone(previous, next, threshold) {
   return next - Math.sign(difference) * threshold;
 }
 
-// Centralizar la lógica de smooth angles para mantener consistente el comportamiento de la aplicación
 function smoothAngles(previous, next, factor) {
   return previous.map((value, index) => {
     const difference = next[index] - value;
@@ -72,24 +64,20 @@ function smoothAngles(previous, next, factor) {
   });
 }
 
-// Centralizar la lógica de quaternion from euler para mantener consistente el comportamiento de la aplicación
 function quaternionFromEuler(rotation) {
   return new Quaternion().setFromEuler(new Euler(...rotation, "XYZ"));
 }
 
-// Centralizar la lógica de quaternion array from euler para mantener consistente el comportamiento de la aplicación
 function quaternionArrayFromEuler(rotation) {
   return quaternionFromEuler(rotation).toArray();
 }
 
-// Centralizar la lógica de euler from quaternion array para mantener consistente el comportamiento de la aplicación
 function eulerFromQuaternionArray(quaternion) {
   const value = new Quaternion().fromArray(quaternion).normalize();
   const euler = new Euler().setFromQuaternion(value, "XYZ");
   return [euler.x, euler.y, euler.z];
 }
 
-// Centralizar la lógica de slerp quaternion arrays para mantener consistente el comportamiento de la aplicación
 function slerpQuaternionArrays(previous, next, factor) {
   return new Quaternion()
     .fromArray(previous)
@@ -99,14 +87,12 @@ function slerpQuaternionArrays(previous, next, factor) {
     .toArray();
 }
 
-// Centralizar la lógica de quaternion angle para mantener consistente el comportamiento de la aplicación
 function quaternionAngle(previous, next) {
   const first = new Quaternion().fromArray(previous).normalize();
   const second = new Quaternion().fromArray(next).normalize();
   return first.angleTo(second);
 }
 
-// Centralizar la lógica de iris pixels per millimeter para mantener consistente el comportamiento de la aplicación
 function irisPixelsPerMillimeter(landmarks, videoWidth, videoHeight, irisDiameterMm) {
   const diameters = IRIS_DIAMETER_PAIRS.flatMap(([firstIndex, secondIndex]) => {
     const first = landmarks[firstIndex];
@@ -124,19 +110,16 @@ function irisPixelsPerMillimeter(landmarks, videoWidth, videoHeight, irisDiamete
     / irisDiameterMm;
 }
 
-// Centralizar la lógica de wrapped angle distance para mantener consistente el comportamiento de la aplicación
 function wrappedAngleDistance(first, second) {
   return Math.abs(Math.atan2(Math.sin(first - second), Math.cos(first - second)));
 }
 
-// Actualizar closest signed angle manteniendo las restricciones y estados permitidos del dominio
 function closestSignedAngle(angle, fallback) {
   return wrappedAngleDistance(angle, fallback) <= wrappedAngleDistance(-angle, fallback)
     ? angle
     : -angle;
 }
 
-// Centralizar la lógica de rotation from rostro transform para mantener consistente el comportamiento de la aplicación
 function rotationFromFaceTransform(faceTransform, fallbackRotation) {
   const data = faceTransform?.data;
   if ((!Array.isArray(data) && !ArrayBuffer.isView(data)) || data.length !== 16) {
@@ -167,7 +150,6 @@ function rotationFromFaceTransform(faceTransform, fallbackRotation) {
   ];
 }
 
-// Centralizar la lógica de rostro mesh positions para mantener consistente el comportamiento de la aplicación
 function faceMeshPositions(
   landmarks,
   videoWidth,
@@ -362,7 +344,6 @@ export function landmarksToGlassesPose(
   };
 }
 
-// Centralizar la lógica de resolve smoothing factors para mantener consistente el comportamiento de la aplicación
 function resolveSmoothingFactors(previous, next, smoothing) {
   if (Number.isFinite(smoothing)) {
     const factor = clamp(smoothing, 0, 1);
@@ -397,7 +378,6 @@ function resolveSmoothingFactors(previous, next, smoothing) {
     clamp(scaleChange / 0.12, 0, 1),
   );
 
-  // Centralizar la lógica de compensated para mantener consistente el comportamiento de la aplicación
   const compensated = (base) => 1 - ((1 - base) ** frameCompensation);
   return {
     mesh: compensated(0.24 + motion * 0.32),
@@ -409,7 +389,6 @@ function resolveSmoothingFactors(previous, next, smoothing) {
   };
 }
 
-// Centralizar la lógica de smooth glasses pose3 d para mantener consistente el comportamiento de la aplicación
 export function smoothGlassesPose3D(previous, next, smoothing = null) {
   if (!previous) return next;
   if (!next) return previous;

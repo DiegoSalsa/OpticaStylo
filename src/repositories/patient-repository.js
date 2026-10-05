@@ -1,17 +1,13 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con patient-repository.
 
-// Transformar format date only al formato utilizado por el resto de la aplicación
 function formatDateOnly(value) {
   return value instanceof Date ? value.toISOString().slice(0, 10) : value;
 }
 
-// Centralizar la lógica de date only para mantener consistente el comportamiento de la aplicación
 function dateOnly(value) {
   return value instanceof Date ? value : new Date(`${value}T00:00:00.000Z`);
 }
 
-// Centralizar la lógica de guardian para mantener consistente el comportamiento de la aplicación
 function guardian(row) {
   return row ? {
     email: row.email, firstNames: row.first_names, id: row.id,
@@ -19,7 +15,6 @@ function guardian(row) {
   } : null;
 }
 
-// Transformar map paciente al formato utilizado por el resto de la aplicación
 function mapPatient(row) {
   if (!row) return null;
   return {
@@ -29,7 +24,6 @@ function mapPatient(row) {
   };
 }
 
-// Centralizar la lógica de guardian datos para mantener consistente el comportamiento de la aplicación
 function guardianData(value) {
   return {
     email: value.email, first_names: value.firstNames, last_names: value.lastNames,
@@ -37,14 +31,12 @@ function guardianData(value) {
   };
 }
 
-// Consultar find paciente by id with client y devolver los datos en el formato esperado por la capa llamadora
 async function findPatientByIdWithClient(client, patientId) {
   return mapPatient(await client.patients.findUnique({
     include: { patient_guardians: true }, where: { id: patientId },
   }));
 }
 
-// Crear o registrar create paciente with guardian aplicando las reglas de negocio y persistencia correspondientes
 export async function createPatientWithGuardian(patientData, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -63,12 +55,10 @@ export async function createPatientWithGuardian(patientData, actorUserId) {
   });
 }
 
-// Consultar find paciente by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findPatientById(patientId) {
   return findPatientByIdWithClient(prisma, patientId);
 }
 
-// Consultar list pacientes y devolver los datos en el formato esperado por la capa llamadora
 export async function listPatients({ page, pageSize, search }) {
   const where = search ? { OR: [
     { first_names: { contains: search, mode: "insensitive" } },
@@ -91,7 +81,6 @@ export async function listPatients({ page, pageSize, search }) {
   };
 }
 
-// Actualizar update paciente with guardian manteniendo las restricciones y estados permitidos del dominio
 export async function updatePatientWithGuardian(patientId, patientData, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {

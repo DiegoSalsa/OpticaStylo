@@ -184,6 +184,25 @@ model customer_account_sessions {
   @@map("customer_account_sessions")
 }
 
+/// Desafío temporal de posesión del correo para vincular una cuenta comercial con un paciente.
+model customer_patient_link_challenges {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  account_id        String            @map("account_id") @db.Uuid
+  patient_id        String            @map("patient_id") @db.Uuid
+  code_hash         String            @map("code_hash") @db.Char(64)
+  expires_at        DateTime          @map("expires_at") @db.Timestamptz(6)
+  attempt_count     Int               @default(0) @map("attempt_count") @db.SmallInt
+  consumed_at       DateTime?         @map("consumed_at") @db.Timestamptz(6)
+  created_at        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at        DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  customer_accounts customer_accounts @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  patients          patients          @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([account_id, created_at(sort: Desc)], map: "customer_patient_link_challenges_account_index")
+  @@index([expires_at], map: "customer_patient_link_challenges_expiration_index")
+  @@map("customer_patient_link_challenges")
+}
+
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio customer accounts {.
@@ -200,6 +219,7 @@ model customer_accounts {
   created_at                 DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
   updated_at                 DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
   customer_account_sessions  customer_account_sessions[]
+  customer_patient_link_challenges customer_patient_link_challenges[]
   customers                  customers                    @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
   store_carts                store_carts[]
   transactional_email_outbox transactional_email_outbox[]
@@ -442,6 +462,7 @@ model patients {
   appointments                     appointments[]
   clinical_encounters              clinical_encounters[]
   customers                        customers?
+  customer_patient_link_challenges customer_patient_link_challenges[]
   external_prescriptions           external_prescriptions[]
   medical_records                  medical_records?
   patient_guardians                patient_guardians?

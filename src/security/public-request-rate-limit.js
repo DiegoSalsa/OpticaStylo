@@ -13,6 +13,9 @@ export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   PRESCRIPTION_UPLOAD: "prescription_upload",
   STORE_CART_CREATION: "store_cart_creation",
   STORE_LOGIN: "store_login",
+  STORE_PATIENT_LINK: "store_patient_link",
+  // Separar la cuota de ingreso del código para contener intentos de fuerza bruta.
+  STORE_PATIENT_LINK_VERIFY: "store_patient_link_verify",
   STORE_REGISTRATION: "store_registration",
 });
 
@@ -45,31 +48,35 @@ const LIMITS = Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 4, windowSeconds: 15 * 60 }),
     network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),
   }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 5, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 12, windowSeconds: 15 * 60 }),
+  }),
+  [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK_VERIFY]: Object.freeze({
+    identifier: Object.freeze({ maximumAttempts: 5, windowSeconds: 15 * 60 }),
+    network: Object.freeze({ maximumAttempts: 12, windowSeconds: 15 * 60 }),
+  }),
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_REGISTRATION]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 2, windowSeconds: 15 * 60 }),
     network: Object.freeze({ maximumAttempts: 4, windowSeconds: 15 * 60 }),
   }),
 });
 
-// Determinar si hash subject cumple la condición requerida por la aplicación
 function hashSubject(value) {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
-// Validar y normalizar normalize identifier antes de continuar con la operación
 function normalizeIdentifier(value) {
   if (typeof value !== "string") return null;
   const normalized = value.trim().toLowerCase();
   return normalized && normalized.length <= 254 ? normalized : null;
 }
 
-// Centralizar la lógica de retry after seconds para mantener consistente el comportamiento de la aplicación
 function retryAfterSeconds(expiresAt, now) {
   const expiresAtTime = new Date(expiresAt).getTime();
   return Math.max(1, Math.ceil((expiresAtTime - now.getTime()) / 1000));
 }
 
-// Centralizar la lógica de tasa límite error para mantener consistente el comportamiento de la aplicación
 function rateLimitError(expiresAt, now) {
   return new AppError({
     code: "PUBLIC_REQUEST_RATE_LIMITED",
@@ -79,7 +86,6 @@ function rateLimitError(expiresAt, now) {
   });
 }
 
-// Centralizar la lógica de enforce quota para mantener consistente el comportamiento de la aplicación
 async function enforceQuota({ bucket, maximumAttempts, subject, windowSeconds }, dependencies) {
   const result = await (dependencies.reserveQuota ?? reservePublicRequestQuota)({
     bucket,
@@ -91,7 +97,6 @@ async function enforceQuota({ bucket, maximumAttempts, subject, windowSeconds },
   }
 }
 
-// Centralizar la lógica de enforce público solicitud tasa límite para mantener consistente el comportamiento de la aplicación
 export async function enforcePublicRequestRateLimit(
   request,
   operation,

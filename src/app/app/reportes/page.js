@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para page.
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -30,12 +29,10 @@ const PAYMENT = {
   MERCADO_PAGO: "Mercado Pago",
   TRANSBANK: "Transbank",
 };
-// Centralizar la lógica de today para mantener consistente el comportamiento de la aplicación
 const today = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(
     new Date(),
   );
-// Centralizar la lógica de month ago para mantener consistente el comportamiento de la aplicación
 const monthAgo = () => {
   const value = new Date();
   value.setDate(value.getDate() - 29);
@@ -44,12 +41,10 @@ const monthAgo = () => {
   }).format(value);
 };
 
-// Centralizar la lógica de csv value para mantener consistente el comportamiento de la aplicación
 function csvValue(value) {
   const text = String(value ?? "");
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
-// Centralizar la lógica de export csv para mantener consistente el comportamiento de la aplicación
 function exportCsv(data) {
   const rows = [
     ["Producto", "SKU", "Unidades", "Venta bruta CLP"],
@@ -345,8 +340,8 @@ export default function ReportsPage() {
               </article>
             </section>
             <p className="inline-success report-note">
-              No se muestran stock, rotación ni quiebres: esas métricas dependen
-              del software de inventario de la etapa 6.
+              El reporte resume ventas y recaudación; no calcula existencias ni
+              rotación de productos.
             </p>
           </>
         )

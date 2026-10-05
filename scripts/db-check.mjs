@@ -1,5 +1,4 @@
 import { loadProjectEnvironment } from "./load-environment.mjs";
-// Script operativo para db-check.
 
 loadProjectEnvironment();
 

@@ -11,7 +11,6 @@ import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody, readMultipartFormData } from "@/utils/http-request";
 import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 
-// Validar y normalizar parse confirmed datos antes de continuar con la operación
 function parseConfirmedData(value) {
   try {
     return JSON.parse(value);

@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de patient-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -15,7 +14,6 @@ import {
   validateUpdatePatientInput,
 } from "../validations/patient-validation.js";
 
-// Construir y lanzar el error de dominio asociado a throw paciente not found
 function throwPatientNotFound() {
   throw new AppError({
     code: "PATIENT_NOT_FOUND",
@@ -24,7 +22,6 @@ function throwPatientNotFound() {
   });
 }
 
-// Centralizar la lógica de convert unique violation para mantener consistente el comportamiento de la aplicación
 function convertUniqueViolation(error) {
   if (error?.code === "23505") {
     throw new AppError({
@@ -38,7 +35,6 @@ function convertUniqueViolation(error) {
   throw error;
 }
 
-// Crear o registrar create paciente aplicando las reglas de negocio y persistencia correspondientes
 export async function createPatient(input, actor, dependencies = {}) {
   const createPatientRepository =
     dependencies.createPatientWithGuardian ?? createPatientWithGuardian;
@@ -57,7 +53,6 @@ export async function createPatient(input, actor, dependencies = {}) {
   }
 }
 
-// Consultar get paciente y devolver los datos en el formato esperado por la capa llamadora
 export async function getPatient(patientId, actor, dependencies = {}) {
   const findPatientRepository =
     dependencies.findPatientById ?? findPatientById;
@@ -74,7 +69,6 @@ export async function getPatient(patientId, actor, dependencies = {}) {
   return patient;
 }
 
-// Consultar get paciente list y devolver los datos en el formato esperado por la capa llamadora
 export async function getPatientList(searchParams, actor, dependencies = {}) {
   const listPatientRepository = dependencies.listPatients ?? listPatients;
 
@@ -84,7 +78,6 @@ export async function getPatientList(searchParams, actor, dependencies = {}) {
   return listPatientRepository(query);
 }
 
-// Actualizar update paciente manteniendo las restricciones y estados permitidos del dominio
 export async function updatePatient(
   patientId,
   input,

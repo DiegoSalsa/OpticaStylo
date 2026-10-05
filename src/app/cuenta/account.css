@@ -255,6 +255,63 @@
 .account-card + .account-card {
   margin-top: 1rem;
 }
+.clinical-card {
+  scroll-margin-top: 1rem;
+}
+.clinical-copy {
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  margin: 0 0 1rem;
+}
+.clinical-link-form {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.clinical-link-form .field {
+  min-width: 220px;
+}
+.clinical-link-form .inline-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+.clinical-columns {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.clinical-columns h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.8rem;
+}
+.clinical-columns h4 {
+  color: var(--color-text-soft);
+  font-size: 0.65rem;
+  margin: 1rem 0 0.4rem;
+  text-transform: uppercase;
+}
+.clinical-row,
+.prescription-row {
+  border-top: 1px solid #e5eeeb;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0;
+}
+.clinical-row strong,
+.prescription-row strong {
+  font-size: 0.74rem;
+}
+.clinical-row span,
+.prescription-row span,
+.clinical-row small,
+.prescription-row small,
+.clinical-empty {
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  margin: 0;
+}
 .account-card-heading {
   align-items: end;
   display: flex;
@@ -387,6 +444,9 @@
     min-height: 44px;
   }
   .account-shortcuts {
+    grid-template-columns: 1fr;
+  }
+  .clinical-columns {
     grid-template-columns: 1fr;
   }
 }
