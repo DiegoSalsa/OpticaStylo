@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para glasses-3d-interface.
 
 import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";

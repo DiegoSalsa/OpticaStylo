@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de authentication-service.
 import { verifyPassword } from "../auth/password.js";
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
 import {
@@ -18,7 +17,6 @@ const SESSION_DURATION_SECONDS = 8 * 60 * 60;
 const DUMMY_PASSWORD_HASH =
   "scrypt$131072$8$1$1VpTqz7qaGhSriwQ89u7mw$VvWr9s_9jrqhj73MssrTKvfSRJ1rYTfKsDYqvrt29rIZ9AIKwUZwklSKLWdI5Z_yob175zu9y-I4g3crAMe21Q";
 
-// Construir y lanzar el error de dominio asociado a throw invalid credentials
 function throwInvalidCredentials() {
   throw new AppError({
     code: "INVALID_CREDENTIALS",
@@ -27,7 +25,6 @@ function throwInvalidCredentials() {
   });
 }
 
-// Centralizar la lógica de login para mantener consistente el comportamiento de la aplicación
 export async function login(input, requestMetadata = {}, dependencies = {}) {
   const findUser =
     dependencies.findUserForAuthentication ?? findUserForAuthentication;
@@ -85,7 +82,6 @@ export async function login(input, requestMetadata = {}, dependencies = {}) {
   };
 }
 
-// Centralizar la lógica de logout para mantener consistente el comportamiento de la aplicación
 export async function logout(actor, dependencies = {}) {
   const sessionRevoker = dependencies.revokeSession ?? revokeSession;
 

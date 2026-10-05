@@ -1,5 +1,4 @@
 import { AppError } from "../utils/app-error.js";
-// Validaciones y normalización de entradas para appointment-validation.
 import {
   validateCreatePatientInput,
   validatePatientId,
@@ -18,7 +17,6 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ISO_WITH_TIME_ZONE_PATTERN = /(?:Z|[+-]\d{2}:\d{2})$/i;
 
-// Construir y lanzar el error de dominio asociado a throw validation error
 function throwValidationError(message) {
   throw new AppError({
     code: "INVALID_APPOINTMENT_DATA",
@@ -27,14 +25,12 @@ function throwValidationError(message) {
   });
 }
 
-// Validar y normalizar validate object antes de continuar con la operación
 function validateObject(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
   }
 }
 
-// Validar y normalizar validate date time antes de continuar con la operación
 function validateDateTime(value, fieldName) {
   if (
     typeof value !== "string" ||
@@ -49,7 +45,6 @@ function validateDateTime(value, fieldName) {
   return new Date(value);
 }
 
-// Validar y normalizar validate optional text antes de continuar con la operación
 function validateOptionalText(value, fieldName, maximumLength) {
   if (value === undefined || value === null || value === "") {
     return null;
@@ -70,7 +65,6 @@ function validateOptionalText(value, fieldName, maximumLength) {
   return normalized;
 }
 
-// Validar y normalizar validate reserva id antes de continuar con la operación
 export function validateAppointmentId(value) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     throwValidationError("El identificador de la reserva no es válido.");
@@ -79,7 +73,6 @@ export function validateAppointmentId(value) {
   return value.toLowerCase();
 }
 
-// Validar y normalizar validate create reserva entrada antes de continuar con la operación
 export function validateCreateAppointmentInput(input, currentDate = new Date()) {
   validateObject(input);
 
@@ -101,7 +94,6 @@ export function validateCreateAppointmentInput(input, currentDate = new Date()) 
   };
 }
 
-// Validar y normalizar validate público reserva entrada antes de continuar con la operación
 export function validatePublicBookingInput(input, currentDate = new Date()) {
   validateObject(input);
 
@@ -129,7 +121,6 @@ export function validatePublicBookingInput(input, currentDate = new Date()) {
   };
 }
 
-// Validar y normalizar validate update reserva entrada antes de continuar con la operación
 export function validateUpdateAppointmentInput(input, currentDate = new Date()) {
   validateObject(input);
 
@@ -156,7 +147,6 @@ export function validateUpdateAppointmentInput(input, currentDate = new Date()) 
   };
 }
 
-// Validar y normalizar validate reserva estado entrada antes de continuar con la operación
 export function validateAppointmentStatusInput(input) {
   validateObject(input);
 
@@ -183,7 +173,6 @@ export function validateAppointmentStatusInput(input) {
   return { cancellationReason, status: input.status };
 }
 
-// Validar y normalizar validate reserva list consulta antes de continuar con la operación
 export function validateAppointmentListQuery(searchParams) {
   const from = validateDateTime(searchParams.get("from"), "La fecha inicial");
   const to = validateDateTime(searchParams.get("to"), "La fecha final");

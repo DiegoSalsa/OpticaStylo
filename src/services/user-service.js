@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de user-service.
 import { hashPassword } from "../auth/password.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
@@ -16,12 +15,10 @@ import {
   validateUserListQuery,
 } from "../validations/user-validation.js";
 
-// Determinar si is unique violation cumple la condición requerida por la aplicación
 function isUniqueViolation(error) {
   return error?.code === "23505";
 }
 
-// Crear o registrar create usuario aplicando las reglas de negocio y persistencia correspondientes
 export async function createUser(input, actor, dependencies = {}) {
   const createUserRepository =
     dependencies.createUserWithRoles ?? createUserWithRoles;
@@ -67,13 +64,11 @@ export async function createUser(input, actor, dependencies = {}) {
   }
 }
 
-// Consultar get usuario list y devolver los datos en el formato esperado por la capa llamadora
 export async function getUserList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.USERS_READ]);
   return (dependencies.listUsers ?? listUsers)(validateUserListQuery(searchParams));
 }
 
-// Consultar get usuario y devolver los datos en el formato esperado por la capa llamadora
 export async function getUser(userId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.USERS_READ]);
   const user = await (dependencies.findUserById ?? findUserById)(validateUserId(userId));
@@ -83,7 +78,6 @@ export async function getUser(userId, actor, dependencies = {}) {
   return user;
 }
 
-// Actualizar update usuario manteniendo las restricciones y estados permitidos del dominio
 export async function updateUser(userId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.USERS_UPDATE]);
   if (Object.hasOwn(input ?? {}, "roles")) {

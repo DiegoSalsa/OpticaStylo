@@ -1,14 +1,11 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con prescription-repository.
 
 const issuerUser = "users_professional_profiles_user_idTousers";
 
-// Centralizar la lógica de to number para mantener consistente el comportamiento de la aplicación
 function toNumber(value) {
   return value === null ? null : Number(value);
 }
 
-// Transformar map receta al formato utilizado por el resto de la aplicación
 function mapPrescription(row) {
   if (!row) return null;
   const encounter = row.clinical_encounters;
@@ -41,7 +38,6 @@ const prescriptionInclude = {
   professional_profiles: { include: { [issuerUser]: true } },
 };
 
-// Centralizar la lógica de with context para mantener consistente el comportamiento de la aplicación
 function withContext(row) {
   if (!row) return null;
   return {
@@ -50,19 +46,16 @@ function withContext(row) {
   };
 }
 
-// Consultar find receta with client y devolver los datos en el formato esperado por la capa llamadora
 async function findPrescriptionWithClient(client, prescriptionId) {
   return withContext(await client.optical_prescriptions.findUnique({
     include: prescriptionInclude, where: { id: prescriptionId },
   }));
 }
 
-// Consultar find receta by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findPrescriptionById(prescriptionId) {
   return findPrescriptionWithClient(prisma, prescriptionId);
 }
 
-// Consultar list recetas by paciente id y devolver los datos en el formato esperado por la capa llamadora
 export async function listPrescriptionsByPatientId(patientId) {
   return (await prisma.optical_prescriptions.findMany({
     include: prescriptionInclude,
@@ -71,7 +64,6 @@ export async function listPrescriptionsByPatientId(patientId) {
   })).map(withContext);
 }
 
-// Centralizar la lógica de receta datos para mantener consistente el comportamiento de la aplicación
 function prescriptionData(data) {
   return {
     fulfillment_notes: data.fulfillmentNotes,
@@ -83,7 +75,6 @@ function prescriptionData(data) {
   };
 }
 
-// Crear o registrar create or replace receta aplicando las reglas de negocio y persistencia correspondientes
 export async function createOrReplacePrescription(encounterId, prescription, actorUserId, issuedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -114,7 +105,6 @@ export async function createOrReplacePrescription(encounterId, prescription, act
   }, { isolationLevel: "Serializable" });
 }
 
-// Actualizar update receta manteniendo las restricciones y estados permitidos del dominio
 export async function updatePrescription(prescriptionId, changes, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {

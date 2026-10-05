@@ -1,10 +1,8 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con discount-authorization-repository.
 
 const MAXIMUM_ATTEMPTS = 5;
 const WINDOW_MINUTES = 15;
 
-// Centralizar la lógica de begin descuento authorization attempt para mantener consistente el comportamiento de la aplicación
 export async function beginDiscountAuthorizationAttempt({ attemptedBy, authorizerEmail, maximumAttempts = MAXIMUM_ATTEMPTS, windowMinutes = WINDOW_MINUTES }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -25,7 +23,6 @@ export async function beginDiscountAuthorizationAttempt({ attemptedBy, authorize
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de complete descuento authorization attempt para mantener consistente el comportamiento de la aplicación
 export async function completeDiscountAuthorizationAttempt(attemptId, { authorizerUserId = null, succeeded }) {
   const result = await prisma.discount_authorization_attempts.updateMany({
     data: { authorizer_user_id: authorizerUserId, completed_at: new Date(), status: succeeded ? "SUCCEEDED" : "FAILED" },

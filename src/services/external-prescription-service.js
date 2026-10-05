@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de external-prescription-service.
 import { createHash } from "node:crypto";
 
 import { PERMISSIONS } from "../auth/permissions.js";
@@ -21,7 +20,6 @@ import {
   validatePrescriptionImageBytes,
 } from "../validations/store-validation.js";
 
-// Centralizar la lógica de not found para mantener consistente el comportamiento de la aplicación
 function notFound() {
   throw new AppError({
     code: "EXTERNAL_PRESCRIPTION_NOT_FOUND",
@@ -30,7 +28,6 @@ function notFound() {
   });
 }
 
-// Validar y normalizar normalize notes antes de continuar con la operación
 function normalizeNotes(value) {
   if (value == null || value === "") return null;
   const notes = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
@@ -44,7 +41,6 @@ function normalizeNotes(value) {
   return notes;
 }
 
-// Verificar ensure paciente para impedir que la operación continúe en un estado inválido
 async function ensurePatient(patientId, dependencies) {
   const id = validatePatientId(patientId);
   const patient = await (dependencies.findPatientById ?? findPatientById)(id);
@@ -54,7 +50,6 @@ async function ensurePatient(patientId, dependencies) {
   return id;
 }
 
-// Crear o registrar create with repositorio aplicando las reglas de negocio y persistencia correspondientes
 async function createWithRepository(data, actor, dependencies) {
   const result = await (
     dependencies.createPrescription ?? createPosPrescriptionRepository
@@ -68,7 +63,6 @@ async function createWithRepository(data, actor, dependencies) {
   return result.prescription;
 }
 
-// Centralizar la lógica de upload receta imagen para mantener consistente el comportamiento de la aplicación
 async function uploadPrescriptionImage(image, dependencies) {
   const data = validatePrescriptionImageBytes(
     Buffer.from(await image.file.arrayBuffer()),
@@ -89,7 +83,6 @@ async function uploadPrescriptionImage(image, dependencies) {
   };
 }
 
-// Consultar read receta imagen draft y devolver los datos en el formato esperado por la capa llamadora
 async function readPrescriptionImageDraft(image, dependencies) {
   const data = validatePrescriptionImageBytes(
     Buffer.from(await image.file.arrayBuffer()),
@@ -108,7 +101,6 @@ async function readPrescriptionImageDraft(image, dependencies) {
   });
 }
 
-// Crear o registrar create uploaded receta aplicando las reglas de negocio y persistencia correspondientes
 async function createUploadedPrescription(data, actor, dependencies) {
   try {
     return await createWithRepository(data, actor, dependencies);
@@ -121,7 +113,6 @@ async function createUploadedPrescription(data, actor, dependencies) {
   }
 }
 
-// Crear o registrar create point of venta externo receta aplicando las reglas de negocio y persistencia correspondientes
 export async function createPointOfSaleExternalPrescription(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   if (!input || typeof input !== "object" || Array.isArray(input)) {
@@ -147,7 +138,6 @@ export async function createPointOfSaleExternalPrescription(input, actor, depend
   }, actor, dependencies);
 }
 
-// Consultar read point of venta externo receta imagen y devolver los datos en el formato esperado por la capa llamadora
 export async function readPointOfSaleExternalPrescriptionImage(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   if (!input || typeof input !== "object" || Array.isArray(input)) {
@@ -160,7 +150,6 @@ export async function readPointOfSaleExternalPrescriptionImage(input, actor, dep
   return readPrescriptionImageDraft(validatePrescriptionImage(input.image), dependencies);
 }
 
-// Crear o registrar create externo receta aplicando las reglas de negocio y persistencia correspondientes
 export async function createExternalPrescription(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   if (!input || typeof input !== "object" || Array.isArray(input)) {
@@ -198,14 +187,12 @@ export async function createExternalPrescription(input, actor, dependencies = {}
   throw new AppError({ code: "INVALID_PRESCRIPTION_SOURCE", message: "La receta externa debe registrarse manualmente o mediante imagen.", status: 400 });
 }
 
-// Consultar get externo receta list y devolver los datos en el formato esperado por la capa llamadora
 export async function getExternalPrescriptionList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const patientId = await ensurePatient(searchParams.get("patientId"), dependencies);
   return (dependencies.listByPatient ?? listExternalPrescriptionsByPatient)(patientId);
 }
 
-// Consultar get externo receta y devolver los datos en el formato esperado por la capa llamadora
 export async function getExternalPrescription(id, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const prescription = await (dependencies.findPrescription ?? findExternalPrescriptionById)(
@@ -215,7 +202,6 @@ export async function getExternalPrescription(id, actor, dependencies = {}) {
   return prescription;
 }
 
-// Consultar get externo receta archivo y devolver los datos en el formato esperado por la capa llamadora
 export async function getExternalPrescriptionFile(id, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   const file = await (dependencies.findFile ?? findExternalPrescriptionFileById)(

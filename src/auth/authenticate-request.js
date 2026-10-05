@@ -3,7 +3,6 @@ import { findActiveSessionByTokenHash } from "../repositories/session-repository
 import { AppError } from "../utils/app-error.js";
 import { hashSessionToken, SESSION_COOKIE_NAME } from "./session-token.js";
 
-// Consultar get cookie value y devolver los datos en el formato esperado por la capa llamadora
 function getCookieValue(cookieHeader, cookieName) {
   if (!cookieHeader) {
     return null;
@@ -26,7 +25,6 @@ function getCookieValue(cookieHeader, cookieName) {
   return null;
 }
 
-// Construir y lanzar el error de dominio asociado a throw authentication required
 function throwAuthenticationRequired() {
   throw new AppError({
     code: "AUTHENTICATION_REQUIRED",
@@ -35,7 +33,6 @@ function throwAuthenticationRequired() {
   });
 }
 
-// Centralizar la lógica de authenticate solicitud para mantener consistente el comportamiento de la aplicación
 export async function authenticateRequest(request, dependencies = {}) {
   const findSession =
     dependencies.findActiveSessionByTokenHash ?? findActiveSessionByTokenHash;

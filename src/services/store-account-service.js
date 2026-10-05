@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de store-account-service.
 import { hashPassword, verifyPassword } from "../auth/password.js";
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
 import {
@@ -20,7 +19,6 @@ const LOCK_MINUTES = 15;
 const DUMMY_PASSWORD_HASH =
   "scrypt$131072$8$1$1VpTqz7qaGhSriwQ89u7mw$VvWr9s_9jrqhj73MssrTKvfSRJ1rYTfKsDYqvrt29rIZ9AIKwUZwklSKLWdI5Z_yob175zu9y-I4g3crAMe21Q";
 
-// Centralizar la lógica de público account para mantener consistente el comportamiento de la aplicación
 function publicAccount(account) {
   return {
     address: account.address,
@@ -34,7 +32,6 @@ function publicAccount(account) {
   };
 }
 
-// Centralizar la lógica de invalid credentials para mantener consistente el comportamiento de la aplicación
 function invalidCredentials() {
   throw new AppError({
     code: "INVALID_CUSTOMER_CREDENTIALS",
@@ -43,7 +40,6 @@ function invalidCredentials() {
   });
 }
 
-// Determinar si issue sesión cumple la condición requerida por la aplicación
 async function issueSession(account, metadata, dependencies) {
   const token = (dependencies.createSessionToken ?? createSessionToken)();
   const expiresAt = new Date(Date.now() + SESSION_SECONDS * 1000);
@@ -62,7 +58,6 @@ async function issueSession(account, metadata, dependencies) {
   };
 }
 
-// Crear o registrar caja tienda account aplicando las reglas de negocio y persistencia correspondientes
 export async function registerStoreAccount(input, metadata = {}, dependencies = {}) {
   const account = validateStoreAccountRegistration(input);
   const passwordHash = await (dependencies.hashPassword ?? hashPassword)(account.password);
@@ -85,7 +80,6 @@ export async function registerStoreAccount(input, metadata = {}, dependencies = 
   }
 }
 
-// Centralizar la lógica de login tienda account para mantener consistente el comportamiento de la aplicación
 export async function loginStoreAccount(input, metadata = {}, dependencies = {}) {
   const credentials = validateStoreLogin(input);
   const account = await (
@@ -109,7 +103,6 @@ export async function loginStoreAccount(input, metadata = {}, dependencies = {})
   return issueSession(account, metadata, dependencies);
 }
 
-// Centralizar la lógica de logout tienda account para mantener consistente el comportamiento de la aplicación
 export async function logoutStoreAccount(account, dependencies = {}) {
   await (dependencies.revokeCustomerSession ?? revokeCustomerSession)(
     account.sessionId,
@@ -117,7 +110,6 @@ export async function logoutStoreAccount(account, dependencies = {}) {
   );
 }
 
-// Consultar get tienda account profile y devolver los datos en el formato esperado por la capa llamadora
 export function getStoreAccountProfile(account) {
   return publicAccount(account);
 }

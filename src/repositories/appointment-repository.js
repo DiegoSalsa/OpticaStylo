@@ -1,5 +1,4 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con appointment-repository.
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 const professionalUser = "users_professional_profiles_user_idTousers";
@@ -8,7 +7,6 @@ const appointmentInclude = {
   professional_profiles: { include: { [professionalUser]: true } },
 };
 
-// Transformar map reserva al formato utilizado por el resto de la aplicación
 function mapAppointment(row) {
   if (!row) return null;
   const professional = row.professional_profiles[professionalUser];
@@ -27,7 +25,6 @@ function mapAppointment(row) {
   };
 }
 
-// Transformar map event al formato utilizado por el resto de la aplicación
 function mapEvent(row) {
   return {
     createdAt: row.created_at, details: row.details, eventType: row.event_type,
@@ -41,14 +38,12 @@ function mapEvent(row) {
   };
 }
 
-// Consultar find reserva by id with client y devolver los datos en el formato esperado por la capa llamadora
 async function findAppointmentByIdWithClient(client, appointmentId) {
   return mapAppointment(await client.appointments.findUnique({
     include: appointmentInclude, where: { id: appointmentId },
   }));
 }
 
-// Crear o registrar enqueue reserva correos aplicando las reglas de negocio y persistencia correspondientes
 async function enqueueAppointmentEmails(client, { appointmentId, endAt, recipientEmail, reminderHours, startAt }) {
   const payload = { appointmentId, endAt, startAt };
   const confirmedKey = transactionalEmailDeduplicationKey("APPOINTMENT_CONFIRMED", appointmentId);
@@ -72,7 +67,6 @@ async function enqueueAppointmentEmails(client, { appointmentId, endAt, recipien
   });
 }
 
-// Consultar find collision y devolver los datos en el formato esperado por la capa llamadora
 // Detectar reservas activas o bloqueos profesionales que se superpongan al intervalo solicitado
 async function findCollision(client, professionalId, startAt, endAt, excludedAppointmentId = null) {
   const [appointment, block] = await Promise.all([
@@ -91,12 +85,10 @@ async function findCollision(client, professionalId, startAt, endAt, excludedApp
   return appointment ? "APPOINTMENT" : block ? "SCHEDULE_BLOCK" : null;
 }
 
-// Consultar find reserva by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findAppointmentById(appointmentId) {
   return findAppointmentByIdWithClient(prisma, appointmentId);
 }
 
-// Consultar list reservas y devolver los datos en el formato esperado por la capa llamadora
 export async function listAppointments({ from, ownProfessionalId, patientId, professionalId, status, to }) {
   return (await prisma.appointments.findMany({
     include: appointmentInclude,
@@ -111,7 +103,6 @@ export async function listAppointments({ from, ownProfessionalId, patientId, pro
   })).map(mapAppointment);
 }
 
-// Consultar get busy reservas y devolver los datos en el formato esperado por la capa llamadora
 export async function getBusyAppointments(professionalId, from, to, excludedAppointmentId = null) {
   const rows = await prisma.appointments.findMany({
     orderBy: [{ start_at: "asc" }, { id: "asc" }],
@@ -125,7 +116,6 @@ export async function getBusyAppointments(professionalId, from, to, excludedAppo
   return rows.map((row) => ({ endAt: row.end_at, startAt: row.start_at }));
 }
 
-// Crear o registrar create reserva aplicando las reglas de negocio y persistencia correspondientes
 export async function createAppointment(appointmentData, actorUserId, options = {}) {
   // Ejecutar creación, historial y correos dentro de una transacción consistente
   return prisma.$transaction(async (client) => {
@@ -154,12 +144,10 @@ export async function createAppointment(appointmentData, actorUserId, options = 
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de date only para mantener consistente el comportamiento de la aplicación
 function dateOnly(value) {
   return value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
 }
 
-// Crear o registrar create público reserva aplicando las reglas de negocio y persistencia correspondientes
 export async function createPublicBooking(bookingData, options = {}) {
   // Crear reservas públicas y sus pacientes dentro de una transacción serializable
   return prisma.$transaction(async (client) => {
@@ -207,7 +195,6 @@ export async function createPublicBooking(bookingData, options = {}) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Actualizar update reserva manteniendo las restricciones y estados permitidos del dominio
 export async function updateAppointment(appointmentId, changes, actorUserId) {
   // Actualizar la reserva y su historial con aislamiento serializable para evitar carreras
   return prisma.$transaction(async (client) => {
@@ -245,7 +232,6 @@ export async function updateAppointment(appointmentId, changes, actorUserId) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Actualizar change reserva estado manteniendo las restricciones y estados permitidos del dominio
 export async function changeAppointmentStatus(appointmentId, allowedCurrentStatuses, statusData, actorUserId) {
   // Cambiar el estado y registrar el evento dentro de una transacción atómica
   return prisma.$transaction(async (client) => {
@@ -271,7 +257,6 @@ export async function changeAppointmentStatus(appointmentId, allowedCurrentStatu
   }, { isolationLevel: "Serializable" });
 }
 
-// Consultar get reserva historial y devolver los datos en el formato esperado por la capa llamadora
 export async function getAppointmentHistory(appointmentId) {
   return (await prisma.appointment_events.findMany({
     include: { users: true }, orderBy: [{ created_at: "asc" }, { id: "asc" }],

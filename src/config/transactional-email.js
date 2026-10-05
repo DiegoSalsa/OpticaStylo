@@ -1,5 +1,4 @@
 const MODES = Object.freeze(["disabled", "simulate", "test", "live"]);
-// Configuración centralizada de transactional-email.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export class EmailConfigurationError extends Error {
@@ -10,12 +9,10 @@ export class EmailConfigurationError extends Error {
   }
 }
 
-// Consultar get reserva reminder hours y devolver los datos en el formato esperado por la capa llamadora
 export function getAppointmentReminderHours(environment = process.env) {
   return integer(environment, "EMAIL_APPOINTMENT_REMINDER_HOURS", 24, 1, 168);
 }
 
-// Centralizar la lógica de integer para mantener consistente el comportamiento de la aplicación
 function integer(environment, name, fallback, minimum, maximum) {
   const raw = environment[name];
   if (raw == null || raw === "") return fallback;
@@ -29,7 +26,6 @@ function integer(environment, name, fallback, minimum, maximum) {
   return value;
 }
 
-// Validar y normalizar normalized correo antes de continuar con la operación
 function normalizedEmail(value, name) {
   const email = value?.trim().toLowerCase() ?? "";
   if (!email || email.length > 254 || !EMAIL_PATTERN.test(email)) {
@@ -41,7 +37,6 @@ function normalizedEmail(value, name) {
   return email;
 }
 
-// Verificar require value para impedir que la operación continúe en un estado inválido
 function requireValue(value, name) {
   const normalized = value?.trim() ?? "";
   if (!normalized) {
@@ -53,7 +48,6 @@ function requireValue(value, name) {
   return normalized;
 }
 
-// Consultar get transaccional correo configuración y devolver los datos en el formato esperado por la capa llamadora
 export function getTransactionalEmailConfig(environment = process.env) {
   const mode = (environment.EMAIL_MODE ?? "disabled").trim().toLowerCase();
   if (!MODES.includes(mode)) {
@@ -121,7 +115,6 @@ export function getTransactionalEmailConfig(environment = process.env) {
   return config;
 }
 
-// Consultar get transaccional correo diagnostic y devolver los datos en el formato esperado por la capa llamadora
 export function getTransactionalEmailDiagnostic(environment = process.env) {
   try {
     const config = getTransactionalEmailConfig(environment);

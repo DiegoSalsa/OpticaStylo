@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para pos-ticket-panel.
 
 import Icon from "@/components/ui/icon";
 import DiscountAuthorizationPanel from "./discount-authorization-panel";
