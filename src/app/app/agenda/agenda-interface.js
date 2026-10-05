@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para agenda-interface.
 
 import Link from "next/link";
 

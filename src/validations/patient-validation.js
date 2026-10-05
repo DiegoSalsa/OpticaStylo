@@ -1,5 +1,4 @@
 import { normalizeChileanRut } from "../utils/chilean-rut.js";
-// Validaciones y normalización de entradas para patient-validation.
 import { AppError } from "../utils/app-error.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -11,7 +10,6 @@ const MAX_ADDRESS_LENGTH = 500;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
-// Construir y lanzar el error de dominio asociado a throw validation error
 function throwValidationError(message) {
   throw new AppError({
     code: "INVALID_PATIENT_DATA",
@@ -20,7 +18,6 @@ function throwValidationError(message) {
   });
 }
 
-// Validar y normalizar validate required text antes de continuar con la operación
 function validateRequiredText(value, fieldName, maximumLength) {
   if (typeof value !== "string") {
     throwValidationError(`${fieldName} es obligatorio.`);
@@ -41,7 +38,6 @@ function validateRequiredText(value, fieldName, maximumLength) {
   return normalizedValue;
 }
 
-// Validar y normalizar validate rut antes de continuar con la operación
 function validateRut(value, fieldName) {
   const normalizedRut = normalizeChileanRut(value);
 
@@ -52,7 +48,6 @@ function validateRut(value, fieldName) {
   return normalizedRut;
 }
 
-// Validar y normalizar validate correo antes de continuar con la operación
 function validateEmail(value, fieldName) {
   if (typeof value !== "string") {
     throwValidationError(`${fieldName} es obligatorio.`);
@@ -70,7 +65,6 @@ function validateEmail(value, fieldName) {
   return normalizedEmail;
 }
 
-// Validar y normalizar validate phone antes de continuar con la operación
 function validatePhone(value, fieldName) {
   if (typeof value !== "string") {
     throwValidationError(`${fieldName} es obligatorio.`);
@@ -85,7 +79,6 @@ function validatePhone(value, fieldName) {
   return normalizedPhone;
 }
 
-// Validar y normalizar validate birth date antes de continuar con la operación
 function validateBirthDate(value, currentDate) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throwValidationError("La fecha de nacimiento debe usar el formato AAAA-MM-DD.");
@@ -115,7 +108,6 @@ function validateBirthDate(value, currentDate) {
   return value;
 }
 
-// Determinar si is minor cumple la condición requerida por la aplicación
 function isMinor(birthDate, currentDate) {
   const eighteenthBirthday = new Date(`${birthDate}T00:00:00.000Z`);
   eighteenthBirthday.setUTCFullYear(eighteenthBirthday.getUTCFullYear() + 18);
@@ -123,7 +115,6 @@ function isMinor(birthDate, currentDate) {
   return eighteenthBirthday > currentDate;
 }
 
-// Validar y normalizar validate guardian antes de continuar con la operación
 function validateGuardian(value, required) {
   if (value == null) {
     if (required) {
@@ -161,7 +152,6 @@ function validateGuardian(value, required) {
   };
 }
 
-// Validar y normalizar validate create paciente entrada antes de continuar con la operación
 export function validateCreatePatientInput(input, currentDate = new Date()) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
@@ -196,7 +186,6 @@ export function validateCreatePatientInput(input, currentDate = new Date()) {
   };
 }
 
-// Validar y normalizar validate update paciente entrada antes de continuar con la operación
 export function validateUpdatePatientInput(
   input,
   currentPatient,
@@ -233,7 +222,6 @@ export function validateUpdatePatientInput(
   );
 }
 
-// Validar y normalizar validate paciente id antes de continuar con la operación
 export function validatePatientId(value) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     throwValidationError("El identificador del paciente no es válido.");
@@ -242,7 +230,6 @@ export function validatePatientId(value) {
   return value.toLowerCase();
 }
 
-// Validar y normalizar validate paciente list consulta antes de continuar con la operación
 export function validatePatientListQuery(searchParams) {
   const rawPage = searchParams.get("page") ?? "1";
   const rawPageSize = searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE);

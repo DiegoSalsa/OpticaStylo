@@ -1,9 +1,7 @@
 import { AppError } from "./app-error.js";
-// Utilidades compartidas para http-request.
 
 const DEFAULT_MAX_BODY_BYTES = 16 * 1024;
 
-// Construir y lanzar el error de dominio asociado a throw body too large
 function throwBodyTooLarge() {
   throw new AppError({
     code: "REQUEST_BODY_TOO_LARGE",
@@ -12,7 +10,6 @@ function throwBodyTooLarge() {
   });
 }
 
-// Consultar read json body y devolver los datos en el formato esperado por la capa llamadora
 export async function readJsonBody(
   request,
   maxBodyBytes = DEFAULT_MAX_BODY_BYTES,
@@ -40,7 +37,6 @@ export async function readJsonBody(
   }
 }
 
-// Consultar read multipart form datos y devolver los datos en el formato esperado por la capa llamadora
 export async function readMultipartFormData(request, maxBodyBytes) {
   const declaredLength = Number(request.headers.get("content-length"));
   if (Number.isFinite(declaredLength) && declaredLength > maxBodyBytes) {

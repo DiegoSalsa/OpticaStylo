@@ -58,11 +58,11 @@ npx prisma migrate dev --name descripcion_del_cambio
 npm run prisma:generate
 ```
 
-Revisar el SQL generado por Prisma, ejecutar lint/tests/build y versionar conjuntamente el schema y la carpeta nueva. En CI, universidad y Vercel se usa exclusivamente `prisma migrate deploy`, que no es interactivo.
+Revisar el SQL generado por Prisma, ejecutar lint/tests/build y versionar conjuntamente el schema y la carpeta nueva. El workflow de calidad no ejecuta migraciones. El despliegue universitario usa `prisma migrate deploy` como paso operativo controlado; Vercel solo valida y compila.
 
 ## Vercel
 
-`postinstall` genera Prisma Client. `vercel.json` valida el schema, ejecuta las migraciones pendientes y compila Next.js. `DATABASE_URL` es la única fuente de credenciales. La URL debe incluir los parámetros TLS/pooling requeridos por el proveedor PostgreSQL; ninguna variable de servidor se expone al navegador.
+`postinstall` genera Prisma Client. `vercel.json` valida el schema y compila Next.js; no ejecuta DDL en Preview ni Production. Las migraciones de producción se aplican como paso operativo explícito con `npm run db:migrate`. `DATABASE_URL` es la única fuente de credenciales. La URL debe incluir los parámetros TLS/pooling requeridos por el proveedor PostgreSQL; ninguna variable de servidor se expone al navegador.
 
 ## Universidad
 

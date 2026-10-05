@@ -1,4 +1,3 @@
-// Código de la aplicación para layout.
 import "./globals.css";
 
 export const metadata = {

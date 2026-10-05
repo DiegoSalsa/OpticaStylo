@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de clinical-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -26,7 +25,6 @@ import {
 } from "../validations/clinical-validation.js";
 import { validateAppointmentId } from "../validations/appointment-validation.js";
 
-// Construir y lanzar el error de dominio asociado a throw clínica access not assigned
 function throwClinicalAccessNotAssigned() {
   throw new AppError({
     code: "CLINICAL_ACCESS_NOT_ASSIGNED",
@@ -35,7 +33,6 @@ function throwClinicalAccessNotAssigned() {
   });
 }
 
-// Construir y lanzar el error de dominio asociado a throw paciente not found
 function throwPatientNotFound() {
   throw new AppError({
     code: "PATIENT_NOT_FOUND",
@@ -44,7 +41,6 @@ function throwPatientNotFound() {
   });
 }
 
-// Construir y lanzar el error de dominio asociado a throw atención clínica not found
 function throwEncounterNotFound() {
   throw new AppError({
     code: "CLINICAL_ENCOUNTER_NOT_FOUND",
@@ -53,7 +49,6 @@ function throwEncounterNotFound() {
   });
 }
 
-// Verificar require paciente para impedir que la operación continúe en un estado inválido
 async function requirePatient(patientId, findRepository) {
   const patient = await findRepository(patientId);
 
@@ -64,7 +59,6 @@ async function requirePatient(patientId, findRepository) {
   return patient;
 }
 
-// Verificar require assignment para impedir que la operación continúe en un estado inválido
 async function requireAssignment(
   patientId,
   actor,
@@ -78,7 +72,6 @@ async function requireAssignment(
   }
 }
 
-// Centralizar la lógica de convert atención clínica repositorio error para mantener consistente el comportamiento de la aplicación
 function convertEncounterRepositoryError(reason) {
   const errors = {
     ALREADY_FINALIZED: [
@@ -132,7 +125,6 @@ function convertEncounterRepositoryError(reason) {
   throw new AppError({ code, message, status });
 }
 
-// Consultar get medical record y devolver los datos en el formato esperado por la capa llamadora
 export async function getMedicalRecord(patientId, actor, dependencies = {}) {
   const findPatientRepository = dependencies.findPatientById ?? findPatientById;
   const assignmentRepository =
@@ -159,7 +151,6 @@ export async function getMedicalRecord(patientId, actor, dependencies = {}) {
   };
 }
 
-// Actualizar update medical record manteniendo las restricciones y estados permitidos del dominio
 export async function updateMedicalRecord(
   patientId,
   input,
@@ -184,7 +175,6 @@ export async function updateMedicalRecord(
   return updateRepository(normalizedPatientId, changes, actor.userId);
 }
 
-// Crear o registrar create atención clínica aplicando las reglas de negocio y persistencia correspondientes
 export async function createEncounter(input, actor, dependencies = {}) {
   const createRepository =
     dependencies.createClinicalEncounter ?? createClinicalEncounter;
@@ -200,7 +190,6 @@ export async function createEncounter(input, actor, dependencies = {}) {
   return result.encounter;
 }
 
-// Consultar get atención clínica y devolver los datos en el formato esperado por la capa llamadora
 export async function getEncounter(encounterId, actor, dependencies = {}) {
   const findRepository =
     dependencies.findClinicalEncounterById ?? findClinicalEncounterById;
@@ -230,7 +219,6 @@ export async function getEncounter(encounterId, actor, dependencies = {}) {
   return encounter;
 }
 
-// Consultar get atención clínica for reserva y devolver los datos en el formato esperado por la capa llamadora
 export async function getEncounterForAppointment(appointmentId, actor, dependencies = {}) {
   const findRepository = dependencies.findClinicalEncounterByAppointmentId
     ?? findClinicalEncounterByAppointmentId;
@@ -245,7 +233,6 @@ export async function getEncounterForAppointment(appointmentId, actor, dependenc
   return encounter;
 }
 
-// Actualizar update atención clínica manteniendo las restricciones y estados permitidos del dominio
 export async function updateEncounter(
   encounterId,
   input,
@@ -267,7 +254,6 @@ export async function updateEncounter(
   return result.encounter;
 }
 
-// Centralizar la lógica de finalize atención clínica para mantener consistente el comportamiento de la aplicación
 export async function finalizeEncounter(
   encounterId,
   actor,
@@ -291,7 +277,6 @@ export async function finalizeEncounter(
   return result.encounter;
 }
 
-// Crear o registrar add atención clínica addendum aplicando las reglas de negocio y persistencia correspondientes
 export async function addEncounterAddendum(
   encounterId,
   input,
@@ -333,7 +318,6 @@ export async function addEncounterAddendum(
   return result.addendum;
 }
 
-// Consultar get paciente clínica historial y devolver los datos en el formato esperado por la capa llamadora
 export async function getPatientClinicalHistory(
   patientId,
   actor,

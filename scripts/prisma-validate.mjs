@@ -1,5 +1,4 @@
 import { spawnSync } from "node:child_process";
-// Script operativo para prisma-validate.
 
 import { loadProjectEnvironment } from "./load-environment.mjs";
 

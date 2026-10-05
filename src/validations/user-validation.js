@@ -1,5 +1,4 @@
 import { ROLE_CODES } from "../auth/roles.js";
-// Validaciones y normalización de entradas para user-validation.
 import { AppError } from "../utils/app-error.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,7 +8,6 @@ const MAX_NAME_LENGTH = 100;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-// Construir y lanzar el error de dominio asociado a throw validation error
 function throwValidationError(message) {
   throw new AppError({
     code: "INVALID_USER_DATA",
@@ -18,7 +16,6 @@ function throwValidationError(message) {
   });
 }
 
-// Validar y normalizar validate name antes de continuar con la operación
 function validateName(value, fieldName) {
   if (typeof value !== "string") {
     throwValidationError(`${fieldName} es obligatorio.`);
@@ -37,7 +34,6 @@ function validateName(value, fieldName) {
   return normalizedValue;
 }
 
-// Validar y normalizar validate correo antes de continuar con la operación
 function validateEmail(value) {
   if (typeof value !== "string") {
     throwValidationError("El correo electrónico es obligatorio.");
@@ -55,7 +51,6 @@ function validateEmail(value) {
   return normalizedEmail;
 }
 
-// Validar y normalizar validate contraseña antes de continuar con la operación
 function validatePassword(value) {
   if (typeof value !== "string") {
     throwValidationError("La contraseña es obligatoria.");
@@ -76,7 +71,6 @@ function validatePassword(value) {
   return value;
 }
 
-// Validar y normalizar validate login contraseña antes de continuar con la operación
 function validateLoginPassword(value) {
   if (typeof value !== "string" || value.length === 0) {
     throwValidationError("La contraseña es obligatoria.");
@@ -91,7 +85,6 @@ function validateLoginPassword(value) {
   return value;
 }
 
-// Validar y normalizar validate roles antes de continuar con la operación
 function validateRoles(value) {
   if (!Array.isArray(value) || value.length === 0) {
     throwValidationError("Debe asignar al menos un rol al usuario.");
@@ -111,7 +104,6 @@ function validateRoles(value) {
   return uniqueRoles;
 }
 
-// Validar y normalizar validate create usuario entrada antes de continuar con la operación
 export function validateCreateUserInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
@@ -126,7 +118,6 @@ export function validateCreateUserInput(input) {
   };
 }
 
-// Validar y normalizar validate login entrada antes de continuar con la operación
 export function validateLoginInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
@@ -138,7 +129,6 @@ export function validateLoginInput(input) {
   };
 }
 
-// Validar y normalizar validate usuario id antes de continuar con la operación
 export function validateUserId(value) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     throwValidationError("El identificador del usuario no es válido.");
@@ -146,7 +136,6 @@ export function validateUserId(value) {
   return value.toLowerCase();
 }
 
-// Validar y normalizar validate update usuario entrada antes de continuar con la operación
 export function validateUpdateUserInput(input, currentUser) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throwValidationError("El cuerpo de la solicitud no es válido.");
@@ -173,7 +162,6 @@ export function validateUpdateUserInput(input, currentUser) {
   };
 }
 
-// Validar y normalizar validate usuario list consulta antes de continuar con la operación
 export function validateUserListQuery(searchParams) {
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(searchParams.get("pageSize") ?? "20");

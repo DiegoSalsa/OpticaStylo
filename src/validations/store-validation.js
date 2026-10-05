@@ -1,5 +1,4 @@
 import { validateCreatePrescriptionInput } from "./clinical-validation.js";
-// Validaciones y normalización de entradas para store-validation.
 import { normalizeChileanRut } from "../utils/chilean-rut.js";
 import { AppError } from "../utils/app-error.js";
 import { hasSafeImageDimensions } from "./image-dimensions.js";
@@ -27,12 +26,10 @@ const HEIF_BRANDS = new Set([
   "msf1",
 ]);
 
-// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(message, code = "INVALID_STORE_DATA") {
   throw new AppError({ code, message, status: 400 });
 }
 
-// Centralizar la lógica de object para mantener consistente el comportamiento de la aplicación
 function object(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     fail("El cuerpo de la solicitud no es válido.");
@@ -40,7 +37,6 @@ function object(value) {
   return value;
 }
 
-// Centralizar la lógica de text para mantener consistente el comportamiento de la aplicación
 function text(value, label, maximumLength, { nullable = false } = {}) {
   if (nullable && (value == null || value === "")) return null;
   if (typeof value !== "string") fail(`${label} es obligatorio.`);
@@ -52,7 +48,6 @@ function text(value, label, maximumLength, { nullable = false } = {}) {
   return normalized;
 }
 
-// Centralizar la lógica de correo para mantener consistente el comportamiento de la aplicación
 function email(value) {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
   if (normalized.length > 254 || !EMAIL_PATTERN.test(normalized)) {
@@ -61,7 +56,6 @@ function email(value) {
   return normalized;
 }
 
-// Centralizar la lógica de phone para mantener consistente el comportamiento de la aplicación
 function phone(value) {
   const normalized = typeof value === "string"
     ? value.trim().replace(/[\s()-]/g, "")
@@ -70,14 +64,12 @@ function phone(value) {
   return normalized;
 }
 
-// Centralizar la lógica de rut para mantener consistente el comportamiento de la aplicación
 function rut(value) {
   const normalized = normalizeChileanRut(value);
   if (!normalized) fail("El RUT no es válido.");
   return normalized;
 }
 
-// Centralizar la lógica de uuid para mantener consistente el comportamiento de la aplicación
 function uuid(value, label) {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
     fail(`El identificador de ${label} no es válido.`);
@@ -85,7 +77,6 @@ function uuid(value, label) {
   return value.toLowerCase();
 }
 
-// Centralizar la lógica de contraseña para mantener consistente el comportamiento de la aplicación
 function password(value, { allowLegacy = false } = {}) {
   if (typeof value !== "string" || value.length === 0) {
     fail("La contraseña es obligatoria.");
@@ -97,7 +88,6 @@ function password(value, { allowLegacy = false } = {}) {
   return value;
 }
 
-// Validar y normalizar validate tienda account registration antes de continuar con la operación
 export function validateStoreAccountRegistration(input) {
   object(input);
   return {
@@ -111,18 +101,15 @@ export function validateStoreAccountRegistration(input) {
   };
 }
 
-// Validar y normalizar validate tienda login antes de continuar con la operación
 export function validateStoreLogin(input) {
   object(input);
   return { email: email(input.email), password: password(input.password, { allowLegacy: true }) };
 }
 
-// Validar y normalizar validate tienda producto id antes de continuar con la operación
 export function validateStoreProductId(value) {
   return uuid(value, "producto");
 }
 
-// Validar y normalizar validate carrito item entrada antes de continuar con la operación
 export function validateCartItemInput(input) {
   object(input);
   if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > 100) {
@@ -136,7 +123,6 @@ export function validateCartItemInput(input) {
   };
 }
 
-// Validar y normalizar validate carrito items entrada antes de continuar con la operación
 export function validateCartItemsInput(input) {
   object(input);
   if (!Array.isArray(input.items) || input.items.length < 1 || input.items.length > 10) {
@@ -159,7 +145,6 @@ export function validateCartItemsInput(input) {
   return { items };
 }
 
-// Centralizar la lógica de buyer para mantener consistente el comportamiento de la aplicación
 function buyer(value) {
   object(value);
   return {
@@ -172,32 +157,21 @@ function buyer(value) {
   };
 }
 
-// Centralizar la lógica de fulfillment para mantener consistente el comportamiento de la aplicación
 function fulfillment(value) {
   object(value);
   const method = typeof value.method === "string" ? value.method.trim().toUpperCase() : "";
-  if (!new Set(["PICKUP", "DELIVERY"]).has(method)) {
-    fail("La entrega debe ser retiro en tienda o despacho.");
-  }
-  if (method === "PICKUP") {
-    return {
-      address: null,
-      city: null,
-      method,
-      notes: text(value.notes, "Las notas de entrega", 500, { nullable: true }),
-      region: null,
-    };
+  if (method !== "PICKUP") {
+    fail("La tienda online actualmente solo permite retiro en tienda.", "FULFILLMENT_METHOD_UNAVAILABLE");
   }
   return {
-    address: text(value.address, "La dirección de despacho", 500),
-    city: text(value.city, "La comuna o ciudad", 120),
+    address: null,
+    city: null,
     method,
     notes: text(value.notes, "Las notas de entrega", 500, { nullable: true }),
-    region: text(value.region, "La región", 120),
+    region: null,
   };
 }
 
-// Validar y normalizar validate carrito configuración antes de continuar con la operación
 export function validateCartConfiguration(input) {
   object(input);
   return {
@@ -209,7 +183,6 @@ export function validateCartConfiguration(input) {
   };
 }
 
-// Validar y normalizar validate externo receta datos antes de continuar con la operación
 export function validateExternalPrescriptionData(input) {
   const prescription = validateCreatePrescriptionInput(input);
   return {
@@ -220,7 +193,6 @@ export function validateExternalPrescriptionData(input) {
   };
 }
 
-// Validar y normalizar validate receta imagen antes de continuar con la operación
 export function validatePrescriptionImage(file) {
   if (!file || typeof file.arrayBuffer !== "function") {
     fail("Debe adjuntar una imagen de la receta.", "INVALID_PRESCRIPTION_IMAGE");
@@ -236,13 +208,11 @@ export function validatePrescriptionImage(file) {
   return { file, filename, mediaType: file.type, size: file.size };
 }
 
-// Centralizar la lógica de bytes start with para mantener consistente el comportamiento de la aplicación
 function bytesStartWith(data, signature, offset = 0) {
   if (data.length < offset + signature.length) return false;
   return signature.every((byte, index) => data[offset + index] === byte);
 }
 
-// Validar y normalizar validate receta imagen bytes antes de continuar con la operación
 export function validatePrescriptionImageBytes(value, mediaType) {
   const data = Buffer.isBuffer(value) ? value : Buffer.from(value ?? []);
   if (data.length < 1 || data.length > MAX_PRESCRIPTION_IMAGE_BYTES) {
@@ -275,12 +245,10 @@ export function validatePrescriptionImageBytes(value, mediaType) {
   return data;
 }
 
-// Validar y normalizar validate tienda pedido id antes de continuar con la operación
 export function validateStoreOrderId(value) {
   return uuid(value, "pedido");
 }
 
-// Validar y normalizar validate externo receta id antes de continuar con la operación
 export function validateExternalPrescriptionId(value) {
   return uuid(value, "receta externa");
 }

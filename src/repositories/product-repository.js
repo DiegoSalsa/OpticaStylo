@@ -1,7 +1,5 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con product-repository.
 
-// Transformar map producto al formato utilizado por el resto de la aplicación
 function mapProduct(row) {
   if (!row) return null;
   return {
@@ -12,7 +10,6 @@ function mapProduct(row) {
   };
 }
 
-// Crear o registrar insert event aplicando las reglas de negocio y persistencia correspondientes
 async function insertEvent(client, productId, eventType, changedFields, actorUserId) {
   // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
   await client.product_events.create({ data: {
@@ -23,7 +20,6 @@ async function insertEvent(client, productId, eventType, changedFields, actorUse
   } });
 }
 
-// Crear o registrar create producto aplicando las reglas de negocio y persistencia correspondientes
 export async function createProduct(product, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -37,12 +33,10 @@ export async function createProduct(product, actorUserId) {
   });
 }
 
-// Consultar find producto by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findProductById(productId) {
   return mapProduct(await prisma.products.findUnique({ where: { id: productId } }));
 }
 
-// Consultar list productos y devolver los datos en el formato esperado por la capa llamadora
 export async function listProducts({ category, excludeCategory = null, includeTestData = true, isActive, page, pageSize, search }) {
   const where = {
     ...(category ? { category } : {}),
@@ -65,7 +59,6 @@ export async function listProducts({ category, excludeCategory = null, includeTe
   return { items: items.map(mapProduct), page, pageSize, total, totalPages: total ? Math.ceil(total / pageSize) : 0 };
 }
 
-// Actualizar update producto manteniendo las restricciones y estados permitidos del dominio
 export async function updateProduct(productId, product, changedFields, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -81,7 +74,6 @@ export async function updateProduct(productId, product, changedFields, actorUser
   });
 }
 
-// Consultar list producto events y devolver los datos en el formato esperado por la capa llamadora
 export async function listProductEvents(productId) {
   const events = await prisma.product_events.findMany({
     orderBy: [{ created_at: "asc" }, { id: "asc" }], where: { product_id: productId },

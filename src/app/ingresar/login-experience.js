@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para login-experience.
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,7 +13,6 @@ export default function LoginExperience() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  // Centralizar la lógica de submit para mantener consistente el comportamiento de la aplicación
   async function submit(event) {
     event.preventDefault();
     setError(""); setPending(true);

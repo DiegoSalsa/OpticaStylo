@@ -4,12 +4,12 @@ Plataforma web full-stack para centralizar los procesos comerciales, clínicos y
 
 ## Alcance funcional
 
-- Tienda pública con catálogo, carrito invitado o autenticado, pedidos y retiro en tienda.
+- Tienda pública con catálogo de productos, carrito invitado o autenticado, pedidos y retiro en tienda.
 - Reserva pública de horas y gestión interna de agenda profesional.
 - Administración de pacientes, clientes, usuarios y profesionales.
 - Ficha clínica, atenciones, recetas ópticas y conservación del historial.
 - Punto de venta con cotizaciones, descuentos autorizados, abonos y comprobantes.
-- Catálogo administrativo, imágenes en Cloudinary e inventario simulado.
+- Catálogo administrativo de productos e imágenes en Cloudinary; la disponibilidad publicada es referencial.
 - Pago mediante Mercado Pago y conciliación segura por webhook.
 - Lectura asistida de recetas externas con revisión humana obligatoria.
 - Probador virtual 3D con seguimiento facial y alternativa mediante fotografía.
@@ -151,7 +151,7 @@ La arquitectura de persistencia es `Route Handler → Service → Repository →
 - `SALES`: clientes, POS, pagos, pedidos y lectura comercial de recetas emitidas.
 - `CLINICAL_PROFESSIONAL`: agenda propia, pacientes asignados, atenciones y recetas clínicas.
 
-Paciente y cliente se modelan como conceptos distintos. Los datos clínicos no se exponen a administración ni ventas, salvo la proyección mínima de una receta finalizada necesaria para preparar una venta.
+Paciente y cliente se modelan como conceptos distintos. El linkeo cuenta-paciente exige un OTP de seis dígitos, con expiración, intentos limitados, HMAC, rate limiting y protección contra IDOR. La cuenta solo puede consultar la proyección clínica limitada de su propia relación validada.
 
 ## Migraciones
 
@@ -164,7 +164,7 @@ npx prisma migrate dev --name descripcion_del_cambio
 npm run prisma:generate
 ```
 
-En CI y producción solo se ejecuta `npm run db:migrate` (`prisma migrate deploy`). Consulta la estrategia completa en [`docs/prisma-migration.md`](docs/prisma-migration.md).
+En CI de calidad y en builds de Vercel no se ejecutan migraciones. La aplicación de cambios en producción o en el servidor universitario se realiza de forma explícita y controlada mediante `npm run db:migrate` (`prisma migrate deploy`). Consulta la estrategia completa en [`docs/prisma-migration.md`](docs/prisma-migration.md).
 
 Después de aplicar las migraciones en una base nueva, ejecutar una sola vez:
 
@@ -205,27 +205,33 @@ npm run build
 npm audit --omit=dev
 ```
 
-El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y Prisma Migrate. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia.
+El workflow `.github/workflows/quality.yml` ejecuta `npm ci`, generación y validación de Prisma, lint, pruebas y build en cada pull request y en las ramas de desarrollo configuradas. `main` debe exigir este workflow como required check antes de permitir merges; esa protección es una configuración administrativa de GitHub y debe aplicarse desde el repositorio.
+
+El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y Prisma Migrate. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia. `CUSTOMER_PATIENT_OTP_SECRET` debe ser independiente de `CRON_SECRET` y tener al menos 32 caracteres.
 
 Las pruebas se organizan por ámbito: aplicación, autenticación, configuración, base de datos, infraestructura, integraciones, repositorios, seguridad, servicios, interfaz, utilidades y validaciones.
 
 ## Despliegues
 
 - Producción continúa desplegándose en Vercel y utilizando la base configurada en Neon.
-- El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx. Sus archivos operativos se encuentran en `deploy/`.
+- El entorno académico puede desplegarse en un servidor universitario mediante un runner propio, PM2 y Nginx. Sus archivos operativos se encuentran en `deploy/`; Nginx reemplaza `X-Forwarded-For` y el backend confía en ese único proxy declarado.
 - Las variables privadas se conservan fuera del repositorio y cada entorno utiliza su propia base de datos.
-- Vercel valida el schema, ejecuta `prisma migrate deploy`, genera Prisma Client durante la instalación y compila Next.js.
-- El workflow `.github/workflows/despliegueuniversidad.yml` valida `main` y `testgeneral` mediante el runner propio. El script comprueba Prisma, lint, 430 tests, base, build, migraciones, PM2 y `/api/health`; si el health check falla restaura la versión anterior.
+- Vercel valida el schema, genera Prisma Client durante la instalación y compila Next.js. Una build de Preview o Production no aplica DDL; las migraciones se ejecutan como paso operativo explícito.
+- El workflow `.github/workflows/despliegueuniversidad.yml` valida `main` y `testgeneral` mediante el runner propio. El script comprueba Prisma, lint, la suite de tests, base, build, migraciones, PM2 y `/api/health`; si el health check falla restaura la versión anterior.
 - Los correos transaccionales permanecen deshabilitados hasta disponer de proveedor, remitente y dominio verificados; no se utiliza programación cron.
 
-## Decisiones pendientes del negocio
+## Alcance actual y límites
 
-- Proveedor, tarifas y reglas de despacho.
-- Precios definitivos de cristales y adicionales ópticos.
-- Datos reales del catálogo, existencias y sucursales de retiro.
-- Software externo de inventario, versión, API, autenticación y documentación.
+- La tienda online ofrece únicamente retiro en tienda. No se crean nuevas ventas con `DELIVERY`; los registros históricos con ese método se conservan y se pueden leer.
+- El catálogo de productos y sus precios forman parte del alcance. La disponibilidad que se muestra es referencial y no representa inventario real.
+- Inventario real, integración con un proveedor externo, existencias y reglas de despacho quedan fuera del alcance actual.
+- Los precios definitivos de cristales, adicionales y sucursales de retiro requieren validación comercial antes de una publicación final.
 
-La integración definitiva de inventario permanece aplazada hasta recibir esa información. Mientras tanto, la disponibilidad mostrada por el sistema es explícitamente simulada.
+## Pendientes técnicos
+
+El repositorio no declara Docker como requisito y por eso no se añadieron `Dockerfile` ni `docker-compose.yml`. La incorporación de una imagen reproducible puede evaluarse cuando exista una necesidad de infraestructura concreta.
+
+No se añadió una suite E2E de navegador en esta fase. Para una etapa posterior, la propuesta mínima de Playwright cubre ocho recorridos: login interno, reserva pública, creación y cierre de venta POS, carrito y checkout con retiro, carga y confirmación de receta, cuenta de cliente, vinculación OTP y acceso clínico restringido.
 
 ## Licencia
 

@@ -1,4 +1,3 @@
-// Código de la aplicación para page.
 import { redirect } from "next/navigation";
 
 export const metadata = {

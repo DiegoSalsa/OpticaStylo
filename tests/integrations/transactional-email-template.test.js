@@ -8,6 +8,7 @@ import {
 
 const payloadByCode = {
   ACCOUNT_CREATED: { firstNames: "<script>alert('x')</script>" },
+  CUSTOMER_PATIENT_OTP: { code: "123456" },
   APPOINTMENT_CONFIRMED: { startAt: "2026-08-24T13:00:00.000Z" },
   APPOINTMENT_REMINDER: { startAt: "2026-08-24T13:00:00.000Z" },
   ORDER_CONFIRMED: { saleNumber: 21, totalCents: 45000 },

@@ -1,4 +1,3 @@
-// Código de la aplicación para page.
 import InformationPage from "@/components/content/information-page";
 
 export const metadata = { title: "Privacidad | Óptica Stylo" };

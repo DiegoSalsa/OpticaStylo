@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con transactional-email-repository.
 
 import { prisma } from "../db/prisma.js";
+import { CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS } from "../utils/customer-patient-otp.js";
 
 const FINAL_STATUSES = new Set(["SENT", "TEST_SENT", "SIMULATED", "DEAD_LETTER", "DELIVERED", "BOUNCED", "COMPLAINED", "SUPPRESSED"]);
 const WEBHOOK_STATUSES = Object.freeze({
@@ -10,18 +10,34 @@ const WEBHOOK_STATUSES = Object.freeze({
   "email.suppressed": "SUPPRESSED",
 });
 
-// Centralizar la lógica de number or null para mantener consistente el comportamiento de la aplicación
+// Definir los estados finales que ya no necesitan conservar el código OTP para un reintento.
+const OTP_TERMINAL_STATUSES = new Set([
+  "BOUNCED", "COMPLAINED", "DEAD_LETTER", "DELIVERED", "SENT", "SIMULATED", "SUPPRESSED", "TEST_SENT",
+]);
+
+// Eliminar el código únicamente después de que el correo deja de ser reintentable.
+export function sanitizeTransactionalEmailPayload(templateCode, payload, status) {
+  const sanitized = { ...(payload ?? {}) };
+  if (templateCode === "CUSTOMER_PATIENT_OTP" && OTP_TERMINAL_STATUSES.has(status)) delete sanitized.code;
+  return sanitized;
+}
+
 function numberOrNull(value) {
   if (value == null) return null;
   const number = Number(value);
   return Number.isSafeInteger(number) ? number : null;
 }
 
-// Transformar map correo al formato utilizado por el resto de la aplicación
-function mapEmail(row) {
+export function mapEmail(row, { includeOtpCode = false } = {}) {
   if (!row) return null;
   const receipt = row.sale_receipts;
   const receiptPayload = receipt?.payload ?? {};
+  const payload = sanitizeTransactionalEmailPayload(row.template_code, row.payload, row.status);
+  // Ocultar el OTP de respuestas administrativas; solo el worker que envía el correo puede leerlo.
+  if (row.template_code === "CUSTOMER_PATIENT_OTP" && !includeOtpCode) {
+    delete payload.code;
+    delete payload.challengeId;
+  }
   return {
     accountId: row.account_id, appointmentId: row.appointment_id,
     attemptCount: Number(row.attempt_count), createdAt: row.created_at,
@@ -31,7 +47,7 @@ function mapEmail(row) {
     lockExpiresAt: row.lock_expires_at, lockedBy: row.locked_by,
     nextAttemptAt: row.next_attempt_at, paymentId: row.payment_id,
     payload: {
-      ...row.payload,
+      ...payload,
       ...(receipt ? {
         balanceCents: numberOrNull(receiptPayload.balanceCents),
         paidCents: numberOrNull(receiptPayload.paidCents),
@@ -50,7 +66,6 @@ function mapEmail(row) {
   };
 }
 
-// Centralizar la lógica de transition para mantener consistente el comportamiento de la aplicación
 async function transition(client, email, toStatus, reasonCode, errorCode = null, actorId = null) {
   await client.transactional_email_transitions.create({ data: {
     actor_id: actorId, attempt_count: Number(email.attempt_count), email_id: email.id,
@@ -59,7 +74,6 @@ async function transition(client, email, toStatus, reasonCode, errorCode = null,
   } });
 }
 
-// Actualizar update comprobante estado manteniendo las restricciones y estados permitidos del dominio
 async function updateReceiptStatus(client, receiptId, status, providerId = null, error = null) {
   if (!receiptId) return;
   await client.sale_receipts.update({ data: {
@@ -68,7 +82,6 @@ async function updateReceiptStatus(client, receiptId, status, providerId = null,
   }, where: { id: receiptId } });
 }
 
-// Centralizar la lógica de recover expired locks para mantener consistente el comportamiento de la aplicación
 async function recoverExpiredLocks(client, limit) {
   const now = new Date();
   const expired = await client.transactional_email_outbox.findMany({
@@ -94,17 +107,17 @@ async function recoverExpiredLocks(client, limit) {
   return recovered;
 }
 
-// Centralizar la lógica de claim transaccional correo batch para mantener consistente el comportamiento de la aplicación
-export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTestRecipient = null, limit, lockSeconds, workerId }) {
+export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTestRecipient = null, emailId = null, limit, lockSeconds, workerId }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
-    const recoveredCount = await recoverExpiredLocks(client, limit);
+    // Limitar el claim a un correo puntual cuando la solicitud interactiva lo requiere.
+    const recoveredCount = emailId ? 0 : await recoverExpiredLocks(client, limit);
     const now = new Date();
     const candidates = await client.transactional_email_outbox.findMany({
       include: { sale_receipts: true },
       orderBy: [{ next_attempt_at: "asc" }, { created_at: "asc" }, { id: "asc" }],
-      take: limit * 2,
-      where: { next_attempt_at: { lte: now }, status: { in: ["PENDING", "FAILED"] } },
+      take: emailId ? 1 : limit * 2,
+      where: { ...(emailId ? { id: emailId } : {}), next_attempt_at: { lte: now }, status: { in: ["PENDING", "FAILED"] } },
     });
     const claimed = [];
     for (const email of candidates) {
@@ -127,14 +140,13 @@ export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTest
       });
       await updateReceiptStatus(client, current.receipt_id, "PROCESSING");
       await transition(client, { ...email, attempt_count: current.attempt_count }, "PROCESSING", "WORKER_CLAIMED");
-      claimed.push(mapEmail(current));
+      claimed.push(mapEmail(current, { includeOtpCode: true }));
     }
     return { emails: claimed, recoveredCount };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de complete transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function completeTransactionalEmail(emailId, workerId, { effectiveRecipientEmail = null, provider = null, providerMessageId = null, status }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -146,6 +158,7 @@ export async function completeTransactionalEmail(emailId, workerId, { effectiveR
       last_error_code: null, lock_expires_at: null, locked_at: null, locked_by: null,
       processing_finished_at: new Date(), provider, provider_message_id: providerMessageId,
       sent_at: sentAt, status,
+      ...(OTP_TERMINAL_STATUSES.has(status) ? { payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, status) } : {}),
     }, where: { id: emailId } });
     await updateReceiptStatus(client, email.receipt_id, status, providerMessageId);
     await transition(client, email, status, status === "SIMULATED" ? "SIMULATION_COMPLETED" : "PROVIDER_ACCEPTED");
@@ -165,7 +178,10 @@ export async function completeTransactionalEmail(emailId, workerId, { effectiveR
       const webhookStatus = WEBHOOK_STATUSES[pending?.event_type];
       if (webhookStatus) {
         finalStatus = webhookStatus;
-        await client.transactional_email_outbox.update({ data: { status: webhookStatus }, where: { id: emailId } });
+        await client.transactional_email_outbox.update({ data: {
+          payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, webhookStatus),
+          status: webhookStatus,
+        }, where: { id: emailId } });
         await updateReceiptStatus(client, email.receipt_id, webhookStatus, providerMessageId);
         await transition(client, { ...email, status }, webhookStatus, "EARLY_PROVIDER_WEBHOOK");
       }
@@ -175,7 +191,6 @@ export async function completeTransactionalEmail(emailId, workerId, { effectiveR
   });
 }
 
-// Centralizar la lógica de fail transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function failTransactionalEmail(emailId, workerId, { errorCode, maxAttempts, nextAttemptAt, permanent }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -189,6 +204,7 @@ export async function failTransactionalEmail(emailId, workerId, { errorCode, max
       last_error: message, last_error_code: errorCode, lock_expires_at: null,
       locked_at: null, locked_by: null, next_attempt_at: nextAttemptAt,
       processing_finished_at: new Date(), status,
+      ...(OTP_TERMINAL_STATUSES.has(status) ? { payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, status) } : {}),
     }, include: { sale_receipts: true }, where: { id: emailId } });
     await updateReceiptStatus(client, email.receipt_id, status, null, message);
     await transition(client, email, status, status === "DEAD_LETTER" ? "RETRY_EXHAUSTED_OR_PERMANENT" : "RETRY_SCHEDULED", errorCode);
@@ -196,7 +212,6 @@ export async function failTransactionalEmail(emailId, workerId, { errorCode, max
   });
 }
 
-// Centralizar la lógica de suppress transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function suppressTransactionalEmail(emailId, workerId, reasonCode) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -205,6 +220,7 @@ export async function suppressTransactionalEmail(emailId, workerId, reasonCode) 
     const result = await client.transactional_email_outbox.update({ data: {
       lock_expires_at: null, locked_at: null, locked_by: null,
       processing_finished_at: new Date(), skip_reason: reasonCode, status: "SUPPRESSED",
+      payload: sanitizeTransactionalEmailPayload(email.template_code, email.payload, "SUPPRESSED"),
     }, include: { sale_receipts: true }, where: { id: emailId } });
     await updateReceiptStatus(client, email.receipt_id, "SUPPRESSED", null, reasonCode);
     await transition(client, email, "SUPPRESSED", reasonCode);
@@ -212,17 +228,35 @@ export async function suppressTransactionalEmail(emailId, workerId, reasonCode) 
   });
 }
 
-// Consultar get reserva reminder eligibility y devolver los datos en el formato esperado por la capa llamadora
-export async function getAppointmentReminderEligibility(email) {
+// Verificar que los correos sujetos a vigencia sigan siendo utilizables antes de enviarlos.
+export async function getTransactionalEmailEligibility(email, dependencies = {}) {
+  const database = dependencies.client ?? prisma;
+  const now = dependencies.now?.() ?? new Date();
+  if (email.templateCode === "CUSTOMER_PATIENT_OTP") {
+    const challengeId = email.payload?.challengeId;
+    if (typeof challengeId !== "string" || !email.accountId) return { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
+    // Exigir el mismo challenge y cuenta con código sin consumir, vigente y con intentos disponibles.
+    const challenge = await database.customer_patient_link_challenges.findFirst({
+      select: { id: true },
+      where: {
+        account_id: email.accountId,
+        attempt_count: { lt: CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS },
+        consumed_at: null,
+        expires_at: { gt: now },
+        id: challengeId,
+      },
+    });
+    return challenge ? { eligible: true, reason: null } : { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
+  }
   if (email.templateCode !== "APPOINTMENT_REMINDER" || !email.appointmentId) return { eligible: true, reason: null };
-  const appointment = await prisma.appointments.findUnique({ select: { start_at: true, status: true }, where: { id: email.appointmentId } });
+  // Conservar el control existente para no enviar recordatorios cancelados o ya iniciados.
+  const appointment = await database.appointments.findUnique({ select: { start_at: true, status: true }, where: { id: email.appointmentId } });
   if (!appointment) return { eligible: false, reason: "APPOINTMENT_NOT_FOUND" };
   if (appointment.status !== "CONFIRMED") return { eligible: false, reason: `APPOINTMENT_${appointment.status}`.slice(0, 80) };
-  if (appointment.start_at.getTime() <= Date.now()) return { eligible: false, reason: "APPOINTMENT_ALREADY_STARTED" };
+  if (appointment.start_at <= now) return { eligible: false, reason: "APPOINTMENT_ALREADY_STARTED" };
   return { eligible: true, reason: null };
 }
 
-// Consultar find recipient suppression y devolver los datos en el formato esperado por la capa llamadora
 export async function findRecipientSuppression(emailId, recipientEmail) {
   return (await prisma.transactional_email_outbox.findFirst({
     orderBy: { updated_at: "desc" }, select: { status: true },
@@ -233,14 +267,12 @@ export async function findRecipientSuppression(emailId, recipientEmail) {
   }))?.status ?? null;
 }
 
-// Centralizar la lógica de start transaccional correo worker run para mantener consistente el comportamiento de la aplicación
 export async function startTransactionalEmailWorkerRun({ deliveryMode, triggerSource, workerId }) {
   return (await prisma.transactional_email_worker_runs.create({ data: {
     delivery_mode: deliveryMode, trigger_source: triggerSource, worker_id: workerId,
   } })).id;
 }
 
-// Centralizar la lógica de finish transaccional correo worker run para mantener consistente el comportamiento de la aplicación
 export async function finishTransactionalEmailWorkerRun(runId, summary) {
   await prisma.transactional_email_worker_runs.update({ data: {
     claimed_count: summary.claimed, dead_letter_count: summary.deadLetter,
@@ -249,7 +281,6 @@ export async function finishTransactionalEmailWorkerRun(runId, summary) {
   }, where: { id: runId } });
 }
 
-// Consultar get transaccional correo metrics y devolver los datos en el formato esperado por la capa llamadora
 export async function getTransactionalEmailMetrics() {
   const [groups, oldest, lastRun] = await Promise.all([
     prisma.transactional_email_outbox.groupBy({ _count: { _all: true }, by: ["status"] }),
@@ -271,7 +302,6 @@ export async function getTransactionalEmailMetrics() {
   };
 }
 
-// Centralizar la lógica de retry transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 10) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -282,6 +312,10 @@ export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 1
     const email = await client.transactional_email_outbox.findUnique({ include: { sale_receipts: true }, where: { id: emailId } });
     if (!email) return { email: null, reason: "NOT_FOUND" };
     if (!["FAILED", "DEAD_LETTER"].includes(email.status)) return { email: mapEmail(email), reason: "NOT_RETRYABLE" };
+    // Impedir reintentos manuales de OTP terminales cuyo código ya fue eliminado del outbox.
+    if (email.template_code === "CUSTOMER_PATIENT_OTP" && email.status === "DEAD_LETTER") {
+      return { email: mapEmail(email), reason: "NOT_RETRYABLE" };
+    }
     const result = await client.transactional_email_outbox.update({ data: {
       attempt_count: 0, last_error: null, last_error_code: null,
       next_attempt_at: new Date(), processing_finished_at: null,
@@ -294,7 +328,6 @@ export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 1
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de record transaccional correo provider event para mantener consistente el comportamiento de la aplicación
 export async function recordTransactionalEmailProviderEvent(event) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {

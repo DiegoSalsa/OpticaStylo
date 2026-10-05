@@ -1,4 +1,3 @@
-// Centralizar la lógica de audit mercado pago webhook para mantener consistente el comportamiento de la aplicación
 export function auditMercadoPagoWebhook(event, logger = console) {
   const entry = JSON.stringify({
     dataId: event.dataId ?? null,
@@ -13,5 +12,3 @@ export function auditMercadoPagoWebhook(event, logger = console) {
     logger.info(entry);
   }
 }
-// Utilidades compartidas para payment-monitor.
-// Centralizar la lógica de audit mercado pago webhook para mantener consistente el comportamiento de la aplicación

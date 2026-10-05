@@ -24,3 +24,13 @@ test("acepta x-forwarded-for solo con proxy declarado", () => {
   });
   assert.equal(getRequestMetadata(request, { TRUST_PROXY: "true" }).ipAddress, "2001:db8::5");
 });
+
+test("prioriza la dirección que el proxy reemplaza frente a un X-Forwarded-For falsificado", () => {
+  const request = new Request("https://opticastylo.example", {
+    headers: {
+      "x-forwarded-for": "198.51.100.99",
+      "x-real-ip": "203.0.113.42",
+    },
+  });
+  assert.equal(getRequestMetadata(request, { TRUST_PROXY: "true" }).ipAddress, "203.0.113.42");
+});
