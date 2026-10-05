@@ -46,7 +46,7 @@ test("exige una contraseña robusta para el registro", () => {
   );
 });
 
-test("normaliza retiro y despacho por separado", () => {
+test("normaliza únicamente retiro en tienda para compras nuevas", () => {
   const buyer = {
     address: account.address,
     email: account.email,
@@ -56,17 +56,12 @@ test("normaliza retiro y despacho por separado", () => {
     rut: account.rut,
   };
   const pickup = validateCartConfiguration({ buyer, fulfillment: { method: "pickup" } });
-  const delivery = validateCartConfiguration({
-    buyer,
-    fulfillment: {
-      address: "Calle Uno 10",
-      city: "Santiago",
-      method: "delivery",
-      region: "Metropolitana",
-    },
-  });
   assert.equal(pickup.fulfillment.address, null);
-  assert.equal(delivery.fulfillment.method, "DELIVERY");
+  assert.equal(pickup.fulfillment.method, "PICKUP");
+  assert.throws(
+    () => validateCartConfiguration({ buyer, fulfillment: { method: "delivery" } }),
+    (error) => error.code === "FULFILLMENT_METHOD_UNAVAILABLE" && error.status === 400,
+  );
 });
 
 test("valida cantidades del carrito", () => {

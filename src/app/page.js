@@ -1,4 +1,3 @@
-// Código de la aplicación para page.
 import Link from "next/link";
 import Image from "next/image";
 import PublicFooter from "@/components/navigation/public-footer";
@@ -263,10 +262,10 @@ export default function HomePage() {
                 <Icon name="cart" size={21} />
               </span>
               <div>
-                <h3>Retiro en tienda o Despacho</h3>
+                <h3>Retiro en tienda</h3>
                 <p>
-                  Retira gratis en nuestra red local o recibe tus lentes
-                  directamente en tu domicilio.
+                  Retira gratis tus lentes en la sucursal que coordinemos
+                  después de confirmar tu compra.
                 </p>
               </div>
             </article>
