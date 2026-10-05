@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para pos-catalog-panel.
 
 import Icon from "@/components/ui/icon";
 import { ADULT_BIRTH_DATE_CUTOFF, customerDetails } from "./pos-form-model";
@@ -305,8 +304,8 @@ export default function PosCatalogPanel({ model }) {
           <div>
             <h2>Productos</h2>
             <p>
-              Catálogo rápido con precios controlados. La disponibilidad es
-              simulada hasta integrar inventario.
+              Catálogo rápido con precios controlados. La disponibilidad se
+              confirma durante la preparación del pedido.
             </p>
           </div>
         </div>
@@ -398,7 +397,7 @@ export default function PosCatalogPanel({ model }) {
                       {item.sku}
                       {item.requiresPrescription ? " · Receta opcional" : ""}
                       {item.availability?.source === "MOCK"
-                        ? " · Disponibilidad simulada"
+                        ? " · Disponibilidad referencial"
                         : ""}
                       {item.isTestData ? " · Dato de prueba" : ""}
                     </small>

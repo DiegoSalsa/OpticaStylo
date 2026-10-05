@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para product-catalog-interface.
 
 import Image from "next/image";
 
@@ -37,10 +36,9 @@ export default function ProductCatalogInterface({ model }) {
       <header className="app-heading">
         <div>
           <p className="eyebrow">Catálogo comercial</p>
-          <h1>Catálogo e inventario</h1>
+          <h1>Catálogo de productos</h1>
           <p>
-            Productos reales registrados. El stock exacto sigue simulado hasta
-            la etapa 6.
+            Administra los productos, precios e imágenes publicados en la tienda.
           </p>
         </div>
         {canManage && (

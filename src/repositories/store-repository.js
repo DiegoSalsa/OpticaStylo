@@ -1,5 +1,4 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con store-repository.
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
@@ -7,7 +6,6 @@ import { transactionalEmailDeduplicationKey } from "../utils/transactional-email
 const TEST_DATA_AVAILABLE = canUseStoreTestData();
 const itemProduct = "products_store_cart_items_product_idToproducts";
 
-// Transformar map receta al formato utilizado por el resto de la aplicación
 function mapPrescription(row) {
   if (!row) return null;
   return {
@@ -19,7 +17,6 @@ function mapPrescription(row) {
   };
 }
 
-// Transformar map carrito base al formato utilizado por el resto de la aplicación
 function mapCartBase(row) {
   if (!row) return null;
   return {
@@ -48,7 +45,6 @@ const cartInclude = {
   },
 };
 
-// Consultar load carrito y devolver los datos en el formato esperado por la capa llamadora
 async function loadCart(client, tokenHash, accountId = null) {
   const row = await client.store_carts.findFirst({
     include: cartInclude,
@@ -81,7 +77,6 @@ async function loadCart(client, tokenHash, accountId = null) {
   };
 }
 
-// Centralizar la lógica de lock active carrito para mantener consistente el comportamiento de la aplicación
 async function lockActiveCart(client, tokenHash, accountId) {
   const cart = await client.store_carts.findFirst({
     where: { token_hash: tokenHash, OR: [{ customer_account_id: null }, { customer_account_id: accountId }] },
@@ -91,7 +86,6 @@ async function lockActiveCart(client, tokenHash, accountId) {
   return { cart, reason: null };
 }
 
-// Crear o registrar create or rotate tienda carrito aplicando las reglas de negocio y persistencia correspondientes
 export async function createOrRotateStoreCart(tokenHash, accountId, expiresAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -108,17 +102,14 @@ export async function createOrRotateStoreCart(tokenHash, accountId, expiresAt) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Consultar find tienda carrito y devolver los datos en el formato esperado por la capa llamadora
 export async function findStoreCart(tokenHash, accountId = null) {
   return loadCart(prisma, tokenHash, accountId);
 }
 
-// Centralizar la lógica de upsert tienda carrito item para mantener consistente el comportamiento de la aplicación
 export async function upsertStoreCartItem(tokenHash, accountId, productId, quantity, mountFrameProductId = null) {
   return upsertStoreCartItems(tokenHash, accountId, [{ mountFrameProductId, productId, quantity }]);
 }
 
-// Centralizar la lógica de upsert tienda carrito items para mantener consistente el comportamiento de la aplicación
 export async function upsertStoreCartItems(tokenHash, accountId, items) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -172,7 +163,6 @@ export async function removeStoreCartItem(tokenHash, accountId, productId) {
   });
 }
 
-// Centralizar la lógica de cloudinary asset para mantener consistente el comportamiento de la aplicación
 function cloudinaryAsset(row) {
   return row?.cloudinary_asset_id ? {
     assetId: row.cloudinary_asset_id, format: row.cloudinary_format,
@@ -180,12 +170,15 @@ function cloudinaryAsset(row) {
   } : null;
 }
 
-// Centralizar la lógica de configure tienda carrito para mantener consistente el comportamiento de la aplicación
 export async function configureStoreCart(tokenHash, accountId, configuration) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
+    // Mantener el bloqueo también en la capa de persistencia si un consumidor omite el validador público.
+    if (configuration.fulfillment.method !== "PICKUP") {
+      return { cart: null, reason: "FULFILLMENT_METHOD_UNAVAILABLE" };
+    }
     if (configuration.clinicalPrescriptionId && !accountId) return { cart: null, reason: "ACCOUNT_REQUIRED_FOR_PRESCRIPTION" };
     if (configuration.clinicalPrescriptionId) {
       const account = await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } });
@@ -218,7 +211,6 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Crear o registrar save manual externo receta aplicando las reglas de negocio y persistencia correspondientes
 export async function saveManualExternalPrescription(tokenHash, accountId, data, confirmedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -245,7 +237,6 @@ export async function saveManualExternalPrescription(tokenHash, accountId, data,
   });
 }
 
-// Crear o registrar save externo receta imagen aplicando las reglas de negocio y persistencia correspondientes
 export async function saveExternalPrescriptionImage(tokenHash, accountId, image) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -270,7 +261,6 @@ export async function saveExternalPrescriptionImage(tokenHash, accountId, image)
   });
 }
 
-// Centralizar la lógica de confirm externo receta para mantener consistente el comportamiento de la aplicación
 export async function confirmExternalPrescription(tokenHash, accountId, data, confirmedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -285,7 +275,6 @@ export async function confirmExternalPrescription(tokenHash, accountId, data, co
   });
 }
 
-// Centralizar la lógica de claim carrito receta extraction para mantener consistente el comportamiento de la aplicación
 export async function claimCartPrescriptionExtraction(tokenHash, accountId, provider) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -312,7 +301,6 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de complete carrito receta extraction para mantener consistente el comportamiento de la aplicación
 export async function completeCartPrescriptionExtraction(tokenHash, accountId, provider, data) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -327,7 +315,6 @@ export async function completeCartPrescriptionExtraction(tokenHash, accountId, p
   });
 }
 
-// Centralizar la lógica de fail carrito receta extraction para mantener consistente el comportamiento de la aplicación
 export async function failCartPrescriptionExtraction(tokenHash, accountId, provider) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -341,7 +328,6 @@ export async function failCartPrescriptionExtraction(tokenHash, accountId, provi
   });
 }
 
-// Consultar find carrito receta imagen y devolver los datos en el formato esperado por la capa llamadora
 export async function findCartPrescriptionImage(tokenHash, accountId) {
   const row = await prisma.external_prescriptions.findFirst({
     where: {
@@ -355,7 +341,6 @@ export async function findCartPrescriptionImage(tokenHash, accountId) {
   } : null;
 }
 
-// Verificar ensure guest cliente para impedir que la operación continúe en un estado inválido
 async function ensureGuestCustomer(client, buyer) {
   if (buyer.rut) {
     const existing = await client.customers.findUnique({ where: { rut: buyer.rut } });
@@ -368,7 +353,6 @@ async function ensureGuestCustomer(client, buyer) {
   } })).id;
 }
 
-// Verificar checkout tienda carrito para impedir que la operación continúe en un estado inválido
 export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -445,7 +429,6 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Consultar list tienda pedidos y devolver los datos en el formato esperado por la capa llamadora
 export async function listStoreOrders(accountId) {
   return (await prisma.store_carts.findMany({
     orderBy: { checked_out_at: "desc" }, select: { sale_id: true },
@@ -453,12 +436,10 @@ export async function listStoreOrders(accountId) {
   })).map((row) => row.sale_id);
 }
 
-// Consultar find externo receta by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findExternalPrescriptionById(prescriptionId) {
   return mapPrescription(await prisma.external_prescriptions.findUnique({ where: { id: prescriptionId } }));
 }
 
-// Consultar find externo receta archivo by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findExternalPrescriptionFileById(prescriptionId) {
   const row = await prisma.external_prescriptions.findFirst({ where: { id: prescriptionId, source: "IMAGE" } });
   return row ? { cloudinary: cloudinaryAsset(row), data: row.file_data, filename: row.original_filename, mediaType: row.media_type } : null;
