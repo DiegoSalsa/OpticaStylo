@@ -6,6 +6,7 @@ import {
   enforcePublicRequestRateLimit,
   PUBLIC_REQUEST_LIMIT_OPERATIONS,
 } from "../../src/security/public-request-rate-limit.js";
+import { getRequestMetadata } from "../../src/utils/request-metadata.js";
 
 function dependencies(attemptsByBucket = new Map()) {
   return {
@@ -143,6 +144,47 @@ test("limita los intentos de vinculación clínica por red aunque cambie la cuen
   await assert.rejects(
     () => enforcePublicRequestRateLimit(
       request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
+      "cuenta-final",
+      deps,
+    ),
+    (error) => error.code === "PUBLIC_REQUEST_RATE_LIMITED" && error.status === 429,
+  );
+});
+
+test("una X-Forwarded-For falsificada no crea una cuota de red distinta detrás de Nginx", async () => {
+  const attemptsByBucket = new Map();
+  const deps = {
+    getMetadata: (request) => getRequestMetadata(request, { TRUST_PROXY: "true" }),
+    now: () => new Date("2026-08-22T12:00:00.000Z"),
+    reserveQuota: async ({ bucket, subjectHash }) => {
+      const key = `${bucket}:${subjectHash}`;
+      const attempts = (attemptsByBucket.get(key) ?? 0) + 1;
+      attemptsByBucket.set(key, attempts);
+      return { attempts, expiresAt: new Date("2026-08-22T12:15:00.000Z") };
+    },
+  };
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const request = new Request("https://example.com/api/store/accounts/me/patient-link", {
+      headers: {
+        "x-forwarded-for": `198.51.100.${attempt + 1}`,
+        "x-real-ip": "203.0.113.15",
+      },
+      method: "POST",
+    });
+    await enforcePublicRequestRateLimit(
+      request,
+      PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
+      `cuenta-${attempt}`,
+      deps,
+    );
+  }
+  await assert.rejects(
+    () => enforcePublicRequestRateLimit(
+      new Request("https://example.com/api/store/accounts/me/patient-link", {
+        headers: { "x-forwarded-for": "198.51.100.250", "x-real-ip": "203.0.113.15" },
+        method: "POST",
+      }),
       PUBLIC_REQUEST_LIMIT_OPERATIONS.STORE_PATIENT_LINK,
       "cuenta-final",
       deps,
