@@ -11,7 +11,7 @@ Se revisó el árbol completo del repositorio (424 archivos rastreados por `rg -
 1. El alcance solicitado por el responsable del Proyecto de Título comienza cuando un cliente llega al local de Óptica Stylo y termina con compra completada, abandono o una derivación relacionada. Esta es la única fuente explícita para el inicio y los resultados del proceso.
 2. El sitio contiene una presentación pública de una **evaluación oftalmológica en sucursal con reserva de hora** (`src/app/page.js`, sección “Evaluación Oftalmológica”). Esto respalda la existencia del servicio como contexto, pero no confirma que forme parte de cada venta ni cómo se deriva al cliente desde el mostrador.
 3. El sitio reproduce una reseña pública según la cual se encargaron lentes ópticos y estuvieron disponibles en menos de 24 horas (`src/app/page.js`). Esto es un indicio de preparación posterior, no una descripción suficiente del procedimiento, los responsables ni el plazo habitual.
-4. El repositorio identifica expresamente información comercial todavía no confirmada: precios definitivos de cristales y adicionales, catálogo y existencias reales, sucursales de retiro y software externo de inventario (`README.md`, “Decisiones pendientes del negocio”).
+4. El repositorio identifica expresamente información comercial todavía no confirmada: precios definitivos de cristales y adicionales, catálogo, disponibilidad y sucursales de retiro (`README.md`, “Alcance actual y límites”).
 5. Un documento histórico del proyecto declara que las decisiones de comercio electrónico eran provisionales y debían revisarse al confirmar el “proceso operativo real” (`docs/ecommerce-decisions.md` en el historial Git). Esto confirma la ausencia de un levantamiento AS-IS aprobado.
 6. No se encontró en el repositorio una copia, enlace o identificación bibliográfica de la tesis anterior mencionada como referencia metodológica. En consecuencia, no se extrajo ni copió contenido de ese trabajo; el nivel de detalle y la notación se guiaron por BPMN 2.0 y por las instrucciones de este encargo.
 
@@ -30,7 +30,7 @@ Estas ideas aparecen en el modelo de dominio y ayudan a formular preguntas. No s
 - POS web, cotizaciones digitales, descuentos autorizados, abonos, caja y comprobantes electrónicos.
 - Registro digital de clientes, pacientes, fichas clínicas y recetas.
 - Mercado Pago, conciliación por webhook, correo transaccional y lectura automática de recetas.
-- Catálogo web, pedidos en línea, despacho, inventario simulado y probador virtual 3D.
+- Catálogo web, pedidos en línea, retiro en tienda y probador virtual 3D.
 - Estados y automatizaciones definidos por el software (`PENDING`, `PAID`, `READY`, etc.).
 
 ## Descripción textual del proceso
