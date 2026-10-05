@@ -18,7 +18,7 @@ import {
   failTransactionalEmail,
   findRecipientSuppression,
   finishTransactionalEmailWorkerRun,
-  getAppointmentReminderEligibility,
+  getTransactionalEmailEligibility,
   getTransactionalEmailMetrics,
   retryTransactionalEmail,
   startTransactionalEmailWorkerRun,
@@ -106,7 +106,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
   for (const email of claim.emails) {
     const eligibility = await (
-      dependencies.getReminderEligibility ?? getAppointmentReminderEligibility
+      dependencies.getEmailEligibility ?? getTransactionalEmailEligibility
     )(email);
     if (!eligibility.eligible) {
       await (dependencies.suppressEmail ?? suppressTransactionalEmail)(
@@ -149,6 +149,15 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
         mode: config.mode,
         timeZone: config.timeZone,
       });
+      // Revalidar el OTP justo antes de llamar al proveedor para suprimir desafíos obsoletos.
+      if (email.templateCode === "CUSTOMER_PATIENT_OTP") {
+        const current = await (dependencies.getEmailEligibility ?? getTransactionalEmailEligibility)(email);
+        if (!current.eligible) {
+          await (dependencies.suppressEmail ?? suppressTransactionalEmail)(email.id, workerId, current.reason);
+          logTransition(logger, email.id, "SUPPRESSED", current.reason);
+          continue;
+        }
+      }
       const recipient = config.mode === "test"
         ? config.testRecipient
         : email.recipientEmail;

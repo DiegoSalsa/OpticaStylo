@@ -124,7 +124,7 @@ export async function createCustomerPatientOtpChallenge(accountId, identity, dep
     const outbox = await client.transactional_email_outbox.create({ data: {
       account_id: account.id,
       deduplication_key: transactionalEmailDeduplicationKey("CUSTOMER_PATIENT_OTP", challengeId),
-      payload: { code },
+      payload: { challengeId, code },
       recipient_email: patient.email,
       template_code: "CUSTOMER_PATIENT_OTP",
     } });

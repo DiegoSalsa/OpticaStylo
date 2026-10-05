@@ -115,6 +115,7 @@ test("el repository crea un OTP con hash, receptor clínico y expiración", asyn
   assert.equal(result.maskedEmail, "a•a@example.com");
   assert.equal(result.outboxId, "customer-patient-otp:30000000-0000-4000-8000-000000000001");
   assert.equal(client.state.outbox[0].recipient_email, "ana@example.com");
+  assert.equal(client.state.outbox[0].payload.challengeId, "30000000-0000-4000-8000-000000000001");
   assert.notEqual(client.state.challenges[0].code_hash, "123456");
   assert.equal(client.state.challenges[0].expires_at.toISOString(), "2026-09-24T12:10:00.000Z");
 });
