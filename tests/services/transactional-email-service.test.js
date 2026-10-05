@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { EmailProviderError } from "../../src/integrations/email/resend-email-provider.js";
+import { getTransactionalEmailEligibility, sanitizeTransactionalEmailPayload } from "../../src/repositories/transactional-email-repository.js";
 import {
   calculateRetryDelaySeconds,
   getTransactionalEmailOperations,
@@ -40,7 +41,7 @@ function runDependencies(mode, overrides = {}) {
     findSuppression: async () => null,
     finishRun: async (_id, summary) => { finished = summary; },
     get finished() { return finished; },
-    getReminderEligibility: async () => ({ eligible: true, reason: null }),
+    getEmailEligibility: async () => ({ eligible: true, reason: null }),
     logger: { info() {} },
     startRun: async () => "run-1",
     workerId: "00000000-0000-4000-8000-000000000002",
@@ -56,7 +57,6 @@ test("disabled no reclama ni afirma procesamiento", async () => {
   assert.equal(result.status, "DISABLED");
   assert.equal(result.sent, 0);
 });
-
 test("el procesamiento inmediato reclama únicamente el correo OTP solicitado", async () => {
   let claimedOptions;
   const dependencies = runDependencies("live", {
@@ -68,6 +68,62 @@ test("el procesamiento inmediato reclama únicamente el correo OTP solicitado", 
   const result = await processTransactionalEmailBatch({ emailId: "otp-outbox-1" }, dependencies);
   assert.equal(claimedOptions.emailId, "otp-outbox-1");
   assert.equal(result.claimed, 0);
+});
+
+// Verificar el recorrido del worker con un challenge vigente o invalidado antes de llamar a Resend.
+function otpDelivery(challenge) {
+  const otp = { ...email, accountId: "account-a", payload: { challengeId: "challenge-a", code: "123456" }, status: "FAILED", templateCode: "CUSTOMER_PATIENT_OTP" };
+  const now = new Date("2026-09-24T12:00:00.000Z");
+  const client = { customer_patient_link_challenges: { findFirst: async ({ where }) => challenge
+    && challenge.id === where.id
+    && challenge.account_id === where.account_id
+    && challenge.consumed_at === null
+    && challenge.expires_at > where.expires_at.gt
+    && challenge.attempt_count < where.attempt_count.lt ? { id: challenge.id } : null } };
+  let providerCalls = 0;
+  let suppressed = null;
+  let logged = "";
+  const dependencies = runDependencies("live", {
+    claimBatch: async () => ({ emails: [otp], recoveredCount: 0 }),
+    completeEmail: async () => {},
+    getEmailEligibility: (message) => getTransactionalEmailEligibility(message, { client, now: () => now }),
+    logger: { info: (message) => { logged += message; } },
+    provider: { send: async () => { providerCalls += 1; return { provider: "RESEND", providerMessageId: "provider-otp" }; } },
+    suppressEmail: async (_id, _worker, reason) => {
+      suppressed = { payload: sanitizeTransactionalEmailPayload(otp.templateCode, otp.payload, "SUPPRESSED"), reason, status: "SUPPRESSED" };
+    },
+  });
+  return { dependencies, get providerCalls() { return providerCalls; }, get suppressed() { return suppressed; }, get logged() { return logged; } };
+}
+
+const validChallenge = { account_id: "account-a", attempt_count: 0, consumed_at: null, expires_at: new Date("2026-09-24T12:10:00.000Z"), id: "challenge-a" };
+
+test("el worker envía un OTP vigente y reintenta uno FAILED válido", async () => {
+  const flow = otpDelivery(validChallenge);
+  const result = await processTransactionalEmailBatch({}, flow.dependencies);
+  assert.equal(result.sent, 1);
+  assert.equal(flow.providerCalls, 1);
+  assert.equal(flow.suppressed, null);
+  assert.equal(flow.logged.includes("123456"), false);
+});
+
+test("el worker suprime OTP reemplazados, expirados, agotados, ausentes y de otra cuenta", async () => {
+  const now = new Date("2026-09-24T12:00:00.000Z");
+  for (const challenge of [
+    { ...validChallenge, consumed_at: now },
+    { ...validChallenge, expires_at: now },
+    { ...validChallenge, attempt_count: 5 },
+    null,
+    { ...validChallenge, account_id: "account-b" },
+  ]) {
+    const flow = otpDelivery(challenge);
+    const result = await processTransactionalEmailBatch({}, flow.dependencies);
+    assert.equal(result.sent, 0);
+    assert.equal(flow.providerCalls, 0);
+    assert.equal(flow.suppressed?.status, "SUPPRESSED");
+    assert.equal(flow.suppressed.payload.code, undefined);
+    assert.equal(flow.logged.includes("123456"), false);
+  }
 });
 
 test("simulate procesa sin contactar al proveedor", async () => {
@@ -176,7 +232,7 @@ test("omite una reserva cancelada y registra el motivo", async () => {
   const reminder = { ...email, appointmentId: "appointment-1", templateCode: "APPOINTMENT_REMINDER" };
   const dependencies = runDependencies("live", {
     claimBatch: async () => ({ emails: [reminder], recoveredCount: 0 }),
-    getReminderEligibility: async () => ({ eligible: false, reason: "APPOINTMENT_CANCELLED" }),
+    getEmailEligibility: async () => ({ eligible: false, reason: "APPOINTMENT_CANCELLED" }),
     provider: { send: async () => assert.fail("No debe enviar recordatorios cancelados") },
     suppressEmail: async (_id, _worker, value) => { reason = value; },
   });
@@ -202,7 +258,7 @@ test("dos trabajadores simultáneos no procesan dos veces el mismo mensaje", asy
     config: config("live"),
     findSuppression: async () => null,
     finishRun: async () => {},
-    getReminderEligibility: async () => ({ eligible: true, reason: null }),
+    getEmailEligibility: async () => ({ eligible: true, reason: null }),
     logger: { info() {} },
     provider: {
       send: async () => {
@@ -267,3 +323,4 @@ test("administración recibe diagnóstico seguro y puede reintentar", async () =
   });
   assert.deepEqual(retried, { id: email.id, status: "PENDING" });
 });
+

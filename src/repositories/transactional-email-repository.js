@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 // Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con transactional-email-repository.
 
 import { prisma } from "../db/prisma.js";
+import { CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS } from "../utils/customer-patient-otp.js";
 
 const FINAL_STATUSES = new Set(["SENT", "TEST_SENT", "SIMULATED", "DEAD_LETTER", "DELIVERED", "BOUNCED", "COMPLAINED", "SUPPRESSED"]);
 const WEBHOOK_STATUSES = Object.freeze({
@@ -36,7 +37,10 @@ export function mapEmail(row, { includeOtpCode = false } = {}) {
   const receiptPayload = receipt?.payload ?? {};
   const payload = sanitizeTransactionalEmailPayload(row.template_code, row.payload, row.status);
   // Ocultar el OTP de respuestas administrativas; solo el worker que envía el correo puede leerlo.
-  if (row.template_code === "CUSTOMER_PATIENT_OTP" && !includeOtpCode) delete payload.code;
+  if (row.template_code === "CUSTOMER_PATIENT_OTP" && !includeOtpCode) {
+    delete payload.code;
+    delete payload.challengeId;
+  }
   return {
     accountId: row.account_id, appointmentId: row.appointment_id,
     attemptCount: Number(row.attempt_count), createdAt: row.created_at,
@@ -234,13 +238,32 @@ export async function suppressTransactionalEmail(emailId, workerId, reasonCode) 
   });
 }
 
-// Consultar get reserva reminder eligibility y devolver los datos en el formato esperado por la capa llamadora
-export async function getAppointmentReminderEligibility(email) {
+// Verificar que los correos sujetos a vigencia sigan siendo utilizables antes de enviarlos.
+export async function getTransactionalEmailEligibility(email, dependencies = {}) {
+  const database = dependencies.client ?? prisma;
+  const now = dependencies.now?.() ?? new Date();
+  if (email.templateCode === "CUSTOMER_PATIENT_OTP") {
+    const challengeId = email.payload?.challengeId;
+    if (typeof challengeId !== "string" || !email.accountId) return { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
+    // Exigir el mismo challenge y cuenta con código sin consumir, vigente y con intentos disponibles.
+    const challenge = await database.customer_patient_link_challenges.findFirst({
+      select: { id: true },
+      where: {
+        account_id: email.accountId,
+        attempt_count: { lt: CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS },
+        consumed_at: null,
+        expires_at: { gt: now },
+        id: challengeId,
+      },
+    });
+    return challenge ? { eligible: true, reason: null } : { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
+  }
   if (email.templateCode !== "APPOINTMENT_REMINDER" || !email.appointmentId) return { eligible: true, reason: null };
-  const appointment = await prisma.appointments.findUnique({ select: { start_at: true, status: true }, where: { id: email.appointmentId } });
+  // Conservar el control existente para no enviar recordatorios cancelados o ya iniciados.
+  const appointment = await database.appointments.findUnique({ select: { start_at: true, status: true }, where: { id: email.appointmentId } });
   if (!appointment) return { eligible: false, reason: "APPOINTMENT_NOT_FOUND" };
   if (appointment.status !== "CONFIRMED") return { eligible: false, reason: `APPOINTMENT_${appointment.status}`.slice(0, 80) };
-  if (appointment.start_at.getTime() <= Date.now()) return { eligible: false, reason: "APPOINTMENT_ALREADY_STARTED" };
+  if (appointment.start_at <= now) return { eligible: false, reason: "APPOINTMENT_ALREADY_STARTED" };
   return { eligible: true, reason: null };
 }
 
