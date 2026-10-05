@@ -7,6 +7,38 @@
   display: grid;
   gap: 0.45rem;
 }
+/* Mantener el buscador del catálogo alineado en escritorio */
+.directory-search.product-catalog-search {
+  align-items: center;
+  background: #f6faf9;
+  border: 1px solid #d4e2df;
+  border-radius: 11px;
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  min-width: 0;
+  padding-left: 0.8rem;
+}
+.directory-search.product-catalog-search > .icon {
+  flex: 0 0 auto;
+  max-width: none;
+}
+.directory-search.product-catalog-search input {
+  background: transparent;
+  border: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  outline: 0;
+  padding: 0.78rem 0;
+  width: auto;
+}
+.directory-search.product-catalog-search .app-button {
+  border-radius: 9px;
+  flex: 0 0 auto;
+  margin: 0.25rem;
+  width: auto;
+}
 .management-item {
   align-items: center;
   background: #fff;
@@ -232,5 +264,16 @@
 
   .editor-actions .app-button {
     width: 100%;
+  }
+
+  /* Adaptar el buscador a pantallas pequeñas */
+  .directory-search.product-catalog-search {
+    flex-wrap: wrap;
+    padding: 0.35rem 0.35rem 0.35rem 0.8rem;
+  }
+
+  .directory-search.product-catalog-search .app-button {
+    flex-basis: 100%;
+    margin: 0;
   }
 }
