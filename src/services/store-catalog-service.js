@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de store-catalog-service.
 import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import { findProductById, listProducts } from "../repositories/product-repository.js";
@@ -10,7 +9,6 @@ import {
 } from "../validations/product-validation.js";
 import { validateStoreProductId } from "../validations/store-validation.js";
 
-// Centralizar la lógica de público producto para mantener consistente el comportamiento de la aplicación
 function publicProduct(product, availabilityProvider, images = []) {
   const presentation = getProductPresentation(product.sku);
   return {
@@ -28,7 +26,6 @@ function publicProduct(product, availabilityProvider, images = []) {
   };
 }
 
-// Centralizar la lógica de group imágenes by producto para mantener consistente el comportamiento de la aplicación
 function groupImagesByProduct(images) {
   return images.reduce((grouped, image) => {
     const current = grouped.get(image.productId) ?? [];
@@ -38,12 +35,10 @@ function groupImagesByProduct(images) {
   }, new Map());
 }
 
-// Determinar si can use test datos cumple la condición requerida por la aplicación
 function canUseTestData(dependencies) {
   return dependencies.includeTestData ?? canUseStoreTestData();
 }
 
-// Consultar get tienda productos y devolver los datos en el formato esperado por la capa llamadora
 export async function getStoreProducts(searchParams, dependencies = {}) {
   const publicQuery = new URLSearchParams(searchParams);
   publicQuery.set("isActive", "true");
@@ -65,7 +60,6 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
   return { ...result, items };
 }
 
-// Consultar get tienda producto y devolver los datos en el formato esperado por la capa llamadora
 export async function getStoreProduct(productId, dependencies = {}) {
   const product = await (dependencies.findProductById ?? findProductById)(
     validateStoreProductId(productId),

@@ -1,7 +1,5 @@
 import { AppError } from "../utils/app-error.js";
-// Configuración centralizada de payment-providers.
 
-// Verificar required secret para impedir que la operación continúe en un estado inválido
 function requiredSecret(value, variableName) {
   const normalized = typeof value === "string" ? value.trim() : "";
   if (!normalized) {
@@ -14,7 +12,6 @@ function requiredSecret(value, variableName) {
   return normalized;
 }
 
-// Centralizar la lógica de optional público url para mantener consistente el comportamiento de la aplicación
 function optionalPublicUrl(value) {
   const normalized = typeof value === "string" ? value.trim().replace(/\/$/, "") : "";
   if (!normalized) return null;
@@ -36,7 +33,6 @@ function optionalPublicUrl(value) {
   return normalized;
 }
 
-// Centralizar la lógica de pago mode para mantener consistente el comportamiento de la aplicación
 function paymentMode(value) {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : "sandbox";
   if (!["sandbox", "production"].includes(normalized)) {
@@ -49,7 +45,6 @@ function paymentMode(value) {
   return normalized;
 }
 
-// Consultar get mercado pago configuración y devolver los datos en el formato esperado por la capa llamadora
 export function getMercadoPagoConfig(environment = process.env) {
   const mode = paymentMode(environment.MERCADO_PAGO_MODE);
   const productionEnabled = environment.MERCADO_PAGO_PRODUCTION_ENABLED === "true";
@@ -76,12 +71,10 @@ export function getMercadoPagoConfig(environment = process.env) {
   };
 }
 
-// Verificar require mercado pago webhook secret para impedir que la operación continúe en un estado inválido
 export function requireMercadoPagoWebhookSecret(config) {
   return requiredSecret(config.webhookSecret, "MERCADO_PAGO_WEBHOOK_SECRET");
 }
 
-// Verificar require mercado pago checkout ready para impedir que la operación continúe en un estado inválido
 export function requireMercadoPagoCheckoutReady(config) {
   requireMercadoPagoWebhookSecret(config);
   if (!config.publicUrl) {

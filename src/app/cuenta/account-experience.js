@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para account-experience.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";

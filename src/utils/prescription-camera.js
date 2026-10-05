@@ -1,8 +1,6 @@
 export const PRESCRIPTION_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
-// Utilidades compartidas para prescription-camera.
 export const MAX_CAMERA_IMAGE_EDGE = 2200;
 
-// Consultar get cámara constraints y devolver los datos en el formato esperado por la capa llamadora
 export function getCameraConstraints(facingMode = "environment") {
   return {
     audio: false,
@@ -14,7 +12,6 @@ export function getCameraConstraints(facingMode = "environment") {
   };
 }
 
-// Consultar get cámara error message y devolver los datos en el formato esperado por la capa llamadora
 export function getCameraErrorMessage(error) {
   switch (error?.name) {
     case "NotAllowedError":
@@ -30,7 +27,6 @@ export function getCameraErrorMessage(error) {
   }
 }
 
-// Centralizar la lógica de next cámara facing mode para mantener consistente el comportamiento de la aplicación
 export function nextCameraFacingMode(facingMode) {
   return facingMode === "environment" ? "user" : "environment";
 }

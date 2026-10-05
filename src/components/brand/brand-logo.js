@@ -1,5 +1,4 @@
 import Image from "next/image";
-// Código de la aplicación para brand-logo.
 
 export default function BrandLogo({ compact = false, priority = false }) {
   return (

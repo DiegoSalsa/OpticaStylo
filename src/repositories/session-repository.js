@@ -1,7 +1,5 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con session-repository.
 
-// Consultar find active sesión by token hash y devolver los datos en el formato esperado por la capa llamadora
 export async function findActiveSessionByTokenHash(tokenHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -33,7 +31,6 @@ export async function findActiveSessionByTokenHash(tokenHash) {
   });
 }
 
-// Crear o registrar create sesión for successful login aplicando las reglas de negocio y persistencia correspondientes
 export async function createSessionForSuccessfulLogin({ expiresAt, ipAddress, tokenHash, userAgent, userId }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -48,7 +45,6 @@ export async function createSessionForSuccessfulLogin({ expiresAt, ipAddress, to
   });
 }
 
-// Centralizar la lógica de revoke sesión para mantener consistente el comportamiento de la aplicación
 export async function revokeSession(sessionId, userId) {
   const result = await prisma.user_sessions.updateMany({
     data: { revoked_at: new Date() }, where: { id: sessionId, revoked_at: null, user_id: userId },

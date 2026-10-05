@@ -1,4 +1,3 @@
-// Utilidades compartidas para api-response.
 /**
  * Construye una respuesta exitosa con el contrato común de la API.
  */

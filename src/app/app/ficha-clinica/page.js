@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para page.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -72,13 +71,11 @@ export default function ClinicalRecordPage() {
     recordDirty || encounterDirty || prescriptionDirty || addendumDirty;
 
   useEffect(() => {
-    // Centralizar la lógica de warn before unload para mantener consistente el comportamiento de la aplicación
     const warnBeforeUnload = (event) => {
       if (!hasUnsavedChanges) return;
       event.preventDefault();
       event.returnValue = "";
     };
-    // Centralizar la lógica de warn interno navigation para mantener consistente el comportamiento de la aplicación
     const warnInternalNavigation = (event) => {
       if (
         !hasUnsavedChanges ||
@@ -153,7 +150,6 @@ export default function ClinicalRecordPage() {
     return () => controller.abort();
   }, [actor]);
 
-  // Actualizar open reserva manteniendo las restricciones y estados permitidos del dominio
   async function openAppointment(appointment) {
     if (appointment.id === selected?.id || busy || operationInProgress.current)
       return;
@@ -243,7 +239,6 @@ export default function ClinicalRecordPage() {
     openAppointmentRef.current = openAppointment;
   });
 
-  // Actualizar mark present manteniendo las restricciones y estados permitidos del dominio
   async function markPresent() {
     await perform(async () => {
       const updated = await readResponse(
@@ -259,7 +254,6 @@ export default function ClinicalRecordPage() {
       );
     }, "Paciente marcado como presente. Ya puede iniciar la atención.");
   }
-  // Crear o registrar create atención clínica aplicando las reglas de negocio y persistencia correspondientes
   async function createEncounter(event) {
     event.preventDefault();
     await perform(async () => {
@@ -277,7 +271,6 @@ export default function ClinicalRecordPage() {
       setSavedEncounterForm({ ...encounterForm });
     }, "Atención clínica iniciada como borrador.");
   }
-  // Crear o registrar save atención clínica aplicando las reglas de negocio y persistencia correspondientes
   async function saveEncounter(event) {
     event.preventDefault();
     await perform(async () => {
@@ -292,7 +285,6 @@ export default function ClinicalRecordPage() {
       setSavedEncounterForm({ ...encounterForm });
     }, "Borrador clínico guardado con historial de cambios.");
   }
-  // Crear o registrar save record aplicando las reglas de negocio y persistencia correspondientes
   async function saveRecord(event) {
     event.preventDefault();
     await perform(async () => {
@@ -314,7 +306,6 @@ export default function ClinicalRecordPage() {
       setRecordRevisions(refreshed.revisions ?? []);
     }, "Antecedentes actualizados y auditados.");
   }
-  // Crear o registrar save receta aplicando las reglas de negocio y persistencia correspondientes
   async function savePrescription(event) {
     event.preventDefault();
     await perform(
@@ -359,7 +350,6 @@ export default function ClinicalRecordPage() {
         : "Receta óptica emitida.",
     );
   }
-  // Centralizar la lógica de finalize para mantener consistente el comportamiento de la aplicación
   async function finalize() {
     if (hasUnsavedChanges) {
       setNotice({
@@ -393,7 +383,6 @@ export default function ClinicalRecordPage() {
       ]);
     }, "Atención finalizada. El registro ahora es inmutable.");
   }
-  // Crear o registrar add permanent addendum aplicando las reglas de negocio y persistencia correspondientes
   async function addPermanentAddendum(event) {
     event.preventDefault();
     await perform(async () => {
@@ -418,7 +407,6 @@ export default function ClinicalRecordPage() {
       setAddendum({ content: "", reason: "" });
     }, "Adenda permanente agregada.");
   }
-  // Centralizar la lógica de perform para mantener consistente el comportamiento de la aplicación
   async function perform(action, success) {
     if (operationInProgress.current) return;
     operationInProgress.current = true;
@@ -434,7 +422,6 @@ export default function ClinicalRecordPage() {
       setStatus("ready");
     }
   }
-  // Centralizar la lógica de eye para mantener consistente el comportamiento de la aplicación
   function eye(side, field, value) {
     setPrescription((current) => ({
       ...current,

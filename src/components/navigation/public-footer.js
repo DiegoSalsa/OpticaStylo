@@ -1,5 +1,4 @@
 import Link from "next/link";
-// Código de la aplicación para public-footer.
 import BrandLogo from "@/components/brand/brand-logo";
 
 export default function PublicFooter() {

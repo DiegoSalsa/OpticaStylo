@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con transactional-email-repository.
 
 import { prisma } from "../db/prisma.js";
 import { CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS } from "../utils/customer-patient-otp.js";
@@ -23,14 +22,12 @@ export function sanitizeTransactionalEmailPayload(templateCode, payload, status)
   return sanitized;
 }
 
-// Centralizar la lógica de number or null para mantener consistente el comportamiento de la aplicación
 function numberOrNull(value) {
   if (value == null) return null;
   const number = Number(value);
   return Number.isSafeInteger(number) ? number : null;
 }
 
-// Transformar map correo al formato utilizado por el resto de la aplicación
 export function mapEmail(row, { includeOtpCode = false } = {}) {
   if (!row) return null;
   const receipt = row.sale_receipts;
@@ -69,7 +66,6 @@ export function mapEmail(row, { includeOtpCode = false } = {}) {
   };
 }
 
-// Centralizar la lógica de transition para mantener consistente el comportamiento de la aplicación
 async function transition(client, email, toStatus, reasonCode, errorCode = null, actorId = null) {
   await client.transactional_email_transitions.create({ data: {
     actor_id: actorId, attempt_count: Number(email.attempt_count), email_id: email.id,
@@ -78,7 +74,6 @@ async function transition(client, email, toStatus, reasonCode, errorCode = null,
   } });
 }
 
-// Actualizar update comprobante estado manteniendo las restricciones y estados permitidos del dominio
 async function updateReceiptStatus(client, receiptId, status, providerId = null, error = null) {
   if (!receiptId) return;
   await client.sale_receipts.update({ data: {
@@ -87,7 +82,6 @@ async function updateReceiptStatus(client, receiptId, status, providerId = null,
   }, where: { id: receiptId } });
 }
 
-// Centralizar la lógica de recover expired locks para mantener consistente el comportamiento de la aplicación
 async function recoverExpiredLocks(client, limit) {
   const now = new Date();
   const expired = await client.transactional_email_outbox.findMany({
@@ -113,7 +107,6 @@ async function recoverExpiredLocks(client, limit) {
   return recovered;
 }
 
-// Centralizar la lógica de claim transaccional correo batch para mantener consistente el comportamiento de la aplicación
 export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTestRecipient = null, emailId = null, limit, lockSeconds, workerId }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -154,7 +147,6 @@ export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTest
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de complete transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function completeTransactionalEmail(emailId, workerId, { effectiveRecipientEmail = null, provider = null, providerMessageId = null, status }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -199,7 +191,6 @@ export async function completeTransactionalEmail(emailId, workerId, { effectiveR
   });
 }
 
-// Centralizar la lógica de fail transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function failTransactionalEmail(emailId, workerId, { errorCode, maxAttempts, nextAttemptAt, permanent }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -221,7 +212,6 @@ export async function failTransactionalEmail(emailId, workerId, { errorCode, max
   });
 }
 
-// Centralizar la lógica de suppress transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function suppressTransactionalEmail(emailId, workerId, reasonCode) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -267,7 +257,6 @@ export async function getTransactionalEmailEligibility(email, dependencies = {})
   return { eligible: true, reason: null };
 }
 
-// Consultar find recipient suppression y devolver los datos en el formato esperado por la capa llamadora
 export async function findRecipientSuppression(emailId, recipientEmail) {
   return (await prisma.transactional_email_outbox.findFirst({
     orderBy: { updated_at: "desc" }, select: { status: true },
@@ -278,14 +267,12 @@ export async function findRecipientSuppression(emailId, recipientEmail) {
   }))?.status ?? null;
 }
 
-// Centralizar la lógica de start transaccional correo worker run para mantener consistente el comportamiento de la aplicación
 export async function startTransactionalEmailWorkerRun({ deliveryMode, triggerSource, workerId }) {
   return (await prisma.transactional_email_worker_runs.create({ data: {
     delivery_mode: deliveryMode, trigger_source: triggerSource, worker_id: workerId,
   } })).id;
 }
 
-// Centralizar la lógica de finish transaccional correo worker run para mantener consistente el comportamiento de la aplicación
 export async function finishTransactionalEmailWorkerRun(runId, summary) {
   await prisma.transactional_email_worker_runs.update({ data: {
     claimed_count: summary.claimed, dead_letter_count: summary.deadLetter,
@@ -294,7 +281,6 @@ export async function finishTransactionalEmailWorkerRun(runId, summary) {
   }, where: { id: runId } });
 }
 
-// Consultar get transaccional correo metrics y devolver los datos en el formato esperado por la capa llamadora
 export async function getTransactionalEmailMetrics() {
   const [groups, oldest, lastRun] = await Promise.all([
     prisma.transactional_email_outbox.groupBy({ _count: { _all: true }, by: ["status"] }),
@@ -316,7 +302,6 @@ export async function getTransactionalEmailMetrics() {
   };
 }
 
-// Centralizar la lógica de retry transaccional correo para mantener consistente el comportamiento de la aplicación
 export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 10) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -343,7 +328,6 @@ export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 1
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de record transaccional correo provider event para mantener consistente el comportamiento de la aplicación
 export async function recordTransactionalEmailProviderEvent(event) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {

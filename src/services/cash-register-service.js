@@ -1,4 +1,3 @@
-// Servicio de negocio que coordina reglas, permisos y persistencia de cash-register-service.
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -15,7 +14,6 @@ import {
   validateCashRegisterOpeningInput,
 } from "../validations/cash-register-validation.js";
 
-// Centralizar la lógica de fail para mantener consistente el comportamiento de la aplicación
 function fail(reason) {
   const message = reason === "CASH_REGISTER_NOT_FOUND"
     ? "No se encontró la caja solicitada."
@@ -27,13 +25,11 @@ function fail(reason) {
   });
 }
 
-// Consultar get open caja caja y devolver los datos en el formato esperado por la capa llamadora
 export async function getOpenCashRegister(actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   return (dependencies.findOpenCashRegisterSession ?? findOpenCashRegisterSession)();
 }
 
-// Actualizar open caja caja manteniendo las restricciones y estados permitidos del dominio
 export async function openCashRegister(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
   try {
@@ -54,7 +50,6 @@ export async function openCashRegister(input, actor, dependencies = {}) {
   }
 }
 
-// Crear o registrar caja caja movimiento aplicando las reglas de negocio y persistencia correspondientes
 export async function registerCashMovement(sessionId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
   const result = await (dependencies.createCashRegisterMovement
@@ -67,7 +62,6 @@ export async function registerCashMovement(sessionId, input, actor, dependencies
   return result.session;
 }
 
-// Actualizar close caja caja manteniendo las restricciones y estados permitidos del dominio
 export async function closeCashRegister(sessionId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
   const result = await (dependencies.closeCashRegister ?? closeCashRegisterRepository)(

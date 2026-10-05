@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para pos-prescription-panel.
 
 import { PRESCRIPTION_READER_IMAGE_TYPES } from "./pos-form-model";
 

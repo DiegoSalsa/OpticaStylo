@@ -1,5 +1,4 @@
 import { prisma } from "../db/prisma.js";
-// Repositorio que encapsula las consultas y escrituras de base de datos relacionadas con clinical-repository.
 
 const profileUser = "users_professional_profiles_user_idTousers";
 const MEDICAL_RECORD_COLUMNS = Object.freeze({
@@ -12,7 +11,6 @@ const ENCOUNTER_COLUMNS = Object.freeze({
   indications: "indications", reasonForVisit: "reason_for_visit",
 });
 
-// Transformar map medical record al formato utilizado por el resto de la aplicación
 function mapMedicalRecord(row) {
   return row ? {
     allergies: row.allergies, createdAt: row.created_at,
@@ -23,7 +21,6 @@ function mapMedicalRecord(row) {
   } : null;
 }
 
-// Transformar map revision al formato utilizado por el resto de la aplicación
 function mapRevision(row) {
   const user = row.professional_profiles[profileUser];
   return {
@@ -37,7 +34,6 @@ function mapRevision(row) {
   };
 }
 
-// Transformar map addendum al formato utilizado por el resto de la aplicación
 function mapAddendum(row) {
   const user = row.professional_profiles[profileUser];
   return {
@@ -47,7 +43,6 @@ function mapAddendum(row) {
   };
 }
 
-// Transformar map atención clínica al formato utilizado por el resto de la aplicación
 function mapEncounter(row, additions = {}) {
   if (!row) return null;
   const professional = row.professional_profiles_clinical_encounters_professional_idToprofessional_profiles[profileUser];
@@ -74,26 +69,22 @@ const encounterInclude = {
   },
 };
 
-// Consultar find atención clínica with client y devolver los datos en el formato esperado por la capa llamadora
 async function findEncounterWithClient(client, encounterId) {
   return mapEncounter(await client.clinical_encounters.findUnique({
     include: encounterInclude, where: { id: encounterId },
   }));
 }
 
-// Determinar si has clínica assignment cumple la condición requerida por la aplicación
 export async function hasClinicalAssignment(patientId, professionalId, statuses = ["CONFIRMED", "CHECKED_IN", "COMPLETED"]) {
   return (await prisma.appointments.count({
     where: { patient_id: patientId, professional_id: professionalId, status: { in: statuses } },
   })) > 0;
 }
 
-// Consultar find medical record by paciente id y devolver los datos en el formato esperado por la capa llamadora
 export async function findMedicalRecordByPatientId(patientId) {
   return mapMedicalRecord(await prisma.medical_records.findUnique({ where: { patient_id: patientId } }));
 }
 
-// Consultar list medical record revisions y devolver los datos en el formato esperado por la capa llamadora
 export async function listMedicalRecordRevisions(patientId) {
   const rows = await prisma.medical_record_revisions.findMany({
     include: { professional_profiles: { include: { [profileUser]: true } } },
@@ -102,7 +93,6 @@ export async function listMedicalRecordRevisions(patientId) {
   return rows.map(mapRevision);
 }
 
-// Centralizar la lógica de upsert medical record para mantener consistente el comportamiento de la aplicación
 export async function upsertMedicalRecord(patientId, changes, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -132,7 +122,6 @@ export async function upsertMedicalRecord(patientId, changes, actorUserId) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Crear o registrar create clínica atención clínica aplicando las reglas de negocio y persistencia correspondientes
 export async function createClinicalEncounter(encounterData, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -160,7 +149,6 @@ export async function createClinicalEncounter(encounterData, actorUserId) {
   }, { isolationLevel: "Serializable" });
 }
 
-// Consultar load addenda y devolver los datos en el formato esperado por la capa llamadora
 async function loadAddenda(client, encounterId) {
   return (await client.clinical_encounter_addenda.findMany({
     include: { professional_profiles: { include: { [profileUser]: true } } },
@@ -168,7 +156,6 @@ async function loadAddenda(client, encounterId) {
   })).map(mapAddendum);
 }
 
-// Consultar find clínica atención clínica by id y devolver los datos en el formato esperado por la capa llamadora
 export async function findClinicalEncounterById(encounterId) {
   const [row, addenda] = await Promise.all([
     prisma.clinical_encounters.findUnique({ include: encounterInclude, where: { id: encounterId } }),
@@ -177,7 +164,6 @@ export async function findClinicalEncounterById(encounterId) {
   return row ? mapEncounter(row, { addenda }) : null;
 }
 
-// Consultar find clínica atención clínica by reserva id y devolver los datos en el formato esperado por la capa llamadora
 export async function findClinicalEncounterByAppointmentId(appointmentId) {
   const row = await prisma.clinical_encounters.findUnique({
     select: { id: true }, where: { appointment_id: appointmentId },
@@ -185,7 +171,6 @@ export async function findClinicalEncounterByAppointmentId(appointmentId) {
   return row ? findClinicalEncounterById(row.id) : null;
 }
 
-// Actualizar update clínica atención clínica manteniendo las restricciones y estados permitidos del dominio
 export async function updateClinicalEncounter(encounterId, changes, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -205,7 +190,6 @@ export async function updateClinicalEncounter(encounterId, changes, actorUserId)
   }, { isolationLevel: "Serializable" });
 }
 
-// Centralizar la lógica de finalize clínica atención clínica para mantener consistente el comportamiento de la aplicación
 export async function finalizeClinicalEncounter(encounterId, actorUserId, finalizedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -237,7 +221,6 @@ export async function finalizeClinicalEncounter(encounterId, actorUserId, finali
   }, { isolationLevel: "Serializable" });
 }
 
-// Crear o registrar add clínica atención clínica addendum aplicando las reglas de negocio y persistencia correspondientes
 export async function addClinicalEncounterAddendum(encounterId, addendumData, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -258,7 +241,6 @@ export async function addClinicalEncounterAddendum(encounterId, addendumData, ac
   }, { isolationLevel: "Serializable" });
 }
 
-// Consultar list paciente clínica historial y devolver los datos en el formato esperado por la capa llamadora
 export async function listPatientClinicalHistory(patientId) {
   const rows = await prisma.clinical_encounters.findMany({
     include: {

@@ -1,4 +1,3 @@
-// Utilidades compartidas para transactional-email-key.
 const PREFIXES = Object.freeze({
   ACCOUNT_CREATED: "account",
   CUSTOMER_PATIENT_OTP: "customer-patient-otp",
@@ -10,7 +9,6 @@ const PREFIXES = Object.freeze({
   POS_PAYMENT_RECEIPT: "receipt-payment",
 });
 
-// Centralizar la lógica de transaccional correo deduplication key para mantener consistente el comportamiento de la aplicación
 export function transactionalEmailDeduplicationKey(templateCode, entityId) {
   const prefix = PREFIXES[templateCode];
   if (!prefix || typeof entityId !== "string" || !entityId.trim()) {

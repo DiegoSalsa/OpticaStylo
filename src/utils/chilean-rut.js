@@ -21,7 +21,6 @@ function calculateCheckDigit(body) {
   return String(result);
 }
 
-// Validar y normalizar normalize chilean rut antes de continuar con la operación
 export function normalizeChileanRut(value) {
   if (typeof value !== "string") {
     return null;
@@ -43,5 +42,4 @@ export function normalizeChileanRut(value) {
   const normalizedBody = body.replace(/^0+(?=\d)/, "");
   return `${normalizedBody}-${checkDigit}`;
 }
-// Utilidades compartidas para chilean-rut.
 // Calcular calculate check digit a partir de los datos de entrada

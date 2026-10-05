@@ -1,5 +1,4 @@
 "use client";
-// Código de la aplicación para cash-register-panel.
 
 import { useEffect, useState } from "react";
 
@@ -17,7 +16,6 @@ export default function CashRegisterPanel({ onChange }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  // Centralizar la lógica de refresh para mantener consistente el comportamiento de la aplicación
   async function refresh() {
     try {
       const current = await readResponse(await fetch("/api/cash-register", { cache: "no-store" }));
@@ -43,7 +41,6 @@ export default function CashRegisterPanel({ onChange }) {
     return () => { active = false; };
   }, [onChange]);
 
-  // Centralizar la lógica de solicitud para mantener consistente el comportamiento de la aplicación
   async function request(url, body) {
     setPending(true);
     setError("");
@@ -62,7 +59,6 @@ export default function CashRegisterPanel({ onChange }) {
     }
   }
 
-  // Actualizar open manteniendo las restricciones y estados permitidos del dominio
   function open(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -72,7 +68,6 @@ export default function CashRegisterPanel({ onChange }) {
     });
   }
 
-  // Centralizar la lógica de movimiento para mantener consistente el comportamiento de la aplicación
   function movement(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -84,7 +79,6 @@ export default function CashRegisterPanel({ onChange }) {
     event.currentTarget.reset();
   }
 
-  // Actualizar close manteniendo las restricciones y estados permitidos del dominio
   function close(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
