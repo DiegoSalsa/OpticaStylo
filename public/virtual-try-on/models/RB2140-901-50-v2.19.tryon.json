@@ -1,0 +1,108 @@
+{
+  "analysis": {
+    "confidence": 1,
+    "status": "valid",
+    "warnings": []
+  },
+  "anchorsRaw": {
+    "bridge": [
+      0,
+      0.0067718963623046875,
+      -0.001896804690361023
+    ],
+    "fitOrigin": [
+      0,
+      0.0004276726394891739,
+      0.008031976409256458
+    ],
+    "hingeLeft": [
+      -0.07000000402331352,
+      0.018799999728798866,
+      -0.002200000162702054
+    ],
+    "hingeRight": [
+      0.07000000402331352,
+      0.018799999728798866,
+      -0.002200000162702054
+    ]
+  },
+  "dimensionsMm": {
+    "bridgeWidth": 22,
+    "frameWidth": 147.85990118980408,
+    "lensWidth": 50,
+    "templeLength": 150
+  },
+  "fitting": {
+    "verticalOffsetMm": 2
+  },
+  "identity": {
+    "modelId": "rb2140-901-50-v2.19",
+    "name": "Ray-Ban Original Wayfarer RB2140",
+    "sha256": "2c30f78bef6c2ae29eb42348fdb80e0852236ecaece3b38b5b7caf3b089b3ac6",
+    "sku": "RB2140-901-50",
+    "sourceFilename": "RB2140-901-50-v2.19.glb"
+  },
+  "nodes": {
+    "front": [
+      "FRAME_FRONT",
+      "RIVET_FRONT_LEFT",
+      "RIVET_FRONT_RIGHT"
+    ],
+    "bridge": [
+      "FRAME_FRONT"
+    ],
+    "hingeLeft": [
+      "HINGE_LEFT",
+      "HINGE_LEFT_KNUCKLE_0",
+      "HINGE_LEFT_KNUCKLE_1",
+      "HINGE_LEFT_KNUCKLE_2",
+      "HINGE_LEFT_KNUCKLE_3",
+      "HINGE_LEFT_KNUCKLE_4"
+    ],
+    "hingeRight": [
+      "HINGE_RIGHT",
+      "HINGE_RIGHT_KNUCKLE_0",
+      "HINGE_RIGHT_KNUCKLE_1",
+      "HINGE_RIGHT_KNUCKLE_2",
+      "HINGE_RIGHT_KNUCKLE_3",
+      "HINGE_RIGHT_KNUCKLE_4"
+    ],
+    "templeLeft": [
+      "TEMPLE_LEFT",
+      "MARK_RAYBAN_OUTER_LEFT",
+      "MARK_INSIDE_LEFT",
+      "MARK_WAYFARER_PRINT",
+      "MARK_ITALY_PRINT",
+      "MARK_C_PRINT"
+    ],
+    "templeRight": [
+      "TEMPLE_RIGHT",
+      "MARK_RAYBAN_OUTER_RIGHT",
+      "MARK_INSIDE_RIGHT_CODE"
+    ],
+    "lensLeft": [
+      "LENS_LEFT"
+    ],
+    "lensRight": [
+      "LENS_RIGHT"
+    ],
+    "nosepadLeft": [],
+    "nosepadRight": []
+  },
+  "normalization": {
+    "axisConvention": "X_RIGHT_Y_UP_Z_FORWARD",
+    "millimetersPerUnit": 1000,
+    "modelYawOffsetDegrees": 0,
+    "offsetRaw": [
+      0,
+      -0.0004276726394891739,
+      -0.008031976409256458
+    ]
+  },
+  "occlusion": {
+    "frontDepthMm": 21.48630190640688,
+    "maskFrontDepthMm": 22.48630190640688,
+    "templeStartDepthMm": 23.48630190640688
+  },
+  "schemaVersion": 1
+}
