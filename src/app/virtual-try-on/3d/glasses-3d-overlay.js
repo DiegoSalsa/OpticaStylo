@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { DEMO_3D_GLASSES } from "@/constants/virtual-try-on";
+import { BUILT_IN_3D_GLASSES } from "@/constants/virtual-try-on";
 import {
   landmarksToGlassesPose,
   smoothGlassesPose3D,
@@ -70,14 +70,8 @@ export default function Glasses3DOverlay() {
     width: 1280,
     height: 720,
   });
-  const [models, setModels] = useState([
-    { ...DEMO_3D_GLASSES, assetId: "demo", isDemo: true },
-  ]);
-  const [selectedModel, setSelectedModel] = useState({
-    ...DEMO_3D_GLASSES,
-    assetId: "demo",
-    isDemo: true,
-  });
+  const [models, setModels] = useState(BUILT_IN_3D_GLASSES);
+  const [selectedModel, setSelectedModel] = useState(BUILT_IN_3D_GLASSES[0]);
   const [fitAdjustment, setFitAdjustment] = useState(DEFAULT_FIT_ADJUSTMENT);
   const [captureMessage, setCaptureMessage] = useState("");
   const [cameraVisual, setCameraVisual] = useState({
@@ -140,12 +134,11 @@ export default function Glasses3DOverlay() {
         });
         const payload = await response.json();
         if (response.ok && payload.success && payload.data.length > 0) {
-          setModels(payload.data);
-          setSelectedModel(payload.data[0]);
+          setModels([...BUILT_IN_3D_GLASSES, ...payload.data]);
         }
       } catch (error) {
         if (error?.name !== "AbortError") {
-          // El GLB de demostración mantiene utilizable el prototipo sin fingir catálogo.
+          // Las muestras locales siguen disponibles cuando el catálogo no responde.
         }
       }
     }

@@ -5,68 +5,12 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BufferAttribute, BufferGeometry, DoubleSide } from "three";
 
+import {
+  prepareLensMaterial,
+  prepareTempleMaterial,
+} from "@/virtual-try-on-3d/model-materials";
+
 const TEMPLE_DETAIL_PATTERN = /(?:temple|brand_(?:plaque|wordmark)|inner_model_marking)/i;
-
-function injectAfter(source, marker, addition) {
-  return source.includes(marker)
-    ? source.replace(marker, `${marker}\n${addition}`)
-    : source;
-}
-
-function prepareTempleMaterial(material, geometry) {
-  const uniforms = {
-    bendRadians: { value: 0 },
-    bendStart: { value: geometry.bendStart },
-  };
-  material.userData.tryOnTempleUniforms = uniforms;
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.uTryOnTempleBend = uniforms.bendRadians;
-    shader.uniforms.uTryOnTempleBendStart = uniforms.bendStart;
-    shader.vertexShader = `
-      uniform float uTryOnTempleBend;
-      uniform float uTryOnTempleBendStart;
-    ${shader.vertexShader}`;
-    shader.vertexShader = injectAfter(
-      shader.vertexShader,
-      "#include <begin_vertex>",
-      `
-        float tryOnBendDistance = max(0.0, position.z - uTryOnTempleBendStart);
-        transformed.x += sign(position.x) * tan(uTryOnTempleBend) * tryOnBendDistance;
-      `,
-    );
-  };
-  material.customProgramCacheKey = () => "optica-stylo-temple-v2";
-  material.needsUpdate = true;
-  return uniforms;
-}
-
-function prepareLensMaterial(material) {
-  material.envMapIntensity = 1.9;
-  material.opacity = Math.max(0.1, material.opacity ?? 1);
-  material.roughness = Math.max(0.06, material.roughness ?? 0.1);
-  material.transparent = true;
-  material.depthWrite = false;
-  material.onBeforeCompile = (shader) => {
-    shader.fragmentShader = shader.fragmentShader.replace(
-      "#include <opaque_fragment>",
-      `
-        float tryOnLensFresnel = pow(
-          1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0),
-          2.4
-        );
-        diffuseColor.rgb = mix(
-          diffuseColor.rgb,
-          vec3(0.64, 0.82, 0.77),
-          tryOnLensFresnel * 0.2
-        );
-        diffuseColor.a = clamp(diffuseColor.a + tryOnLensFresnel * 0.15, 0.0, 0.24);
-        #include <opaque_fragment>
-      `,
-    );
-  };
-  material.customProgramCacheKey = () => "optica-stylo-lens-v1";
-  material.needsUpdate = true;
-}
 
 function actualizarCurvaturaPatillas(uniforms, bendRadians) {
   uniforms.bendRadians.value = bendRadians;
@@ -79,6 +23,8 @@ function actualizarCurvaturaPatillas(uniforms, bendRadians) {
  */
 export default function GlassesModel({
   faceMeshTriangleIndices,
+  lensOpacity,
+  lensTintStrength,
   modelMetadata,
   modelUrl,
   onReady,
@@ -113,6 +59,9 @@ export default function GlassesModel({
     ) * 0.5;
     const templeGeometry = {
       bendStart: hingeDepth,
+      bendDirection: Math.cos(
+        modelMetadata.normalization.modelYawOffsetDegrees * Math.PI / 180,
+      ) > 0 ? -1 : 1,
     };
 
     clonedScene.traverse((child) => {
@@ -123,7 +72,7 @@ export default function GlassesModel({
         const adjustedMaterial = material?.clone?.() ?? material;
         if (adjustedMaterial) {
           if (lensNodes.has(child.name)) {
-            prepareLensMaterial(adjustedMaterial);
+            prepareLensMaterial(adjustedMaterial, lensOpacity, lensTintStrength);
             child.renderOrder = 4;
           } else {
             adjustedMaterial.envMapIntensity = 1.65;
@@ -147,7 +96,7 @@ export default function GlassesModel({
       scene: clonedScene,
       templeUniforms,
     };
-  }, [modelMetadata, scene]);
+  }, [lensOpacity, lensTintStrength, modelMetadata, scene]);
 
   useEffect(() => {
     onReady?.();

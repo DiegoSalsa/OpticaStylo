@@ -249,6 +249,8 @@ export default function Glasses3DInterface({ model }) {
                   <GlassesModel
                     key={selectedModel.assetId}
                     faceMeshTriangleIndices={faceMeshTriangleIndices}
+                    lensOpacity={selectedModel.lensOpacity}
+                    lensTintStrength={selectedModel.lensTintStrength}
                     modelMetadata={modelMetadata}
                     modelUrl={selectedModel.modelUrl}
                     onReady={handleModelReady}
