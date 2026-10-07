@@ -1,0 +1,21 @@
+{
+  "environment": "Codex in-app browser, Windows, webcam local",
+  "note": "Sesión sin rostro detectado. FPS medios incluyen arranque. Latencia es aproximada; no mide jitter facial ni p95 de movimiento humano.",
+  "metrics": {
+    "backend": "worker",
+    "cameraFps": 21.915919131598653,
+    "schedulingFps": 59.9246282425424,
+    "inferenceFps": 21.00833937878926,
+    "processingMs": 13.75630693451322,
+    "droppedFrames": 148,
+    "resultAgeMs": null,
+    "facialSpeedPxPerSecond": 0,
+    "angularSpeedRadPerSecond": 0,
+    "positionAlpha": 1,
+    "rotationAlpha": 1,
+    "scaleAlpha": 1,
+    "inferenceMs": 11.299999997019768,
+    "approximateLatencyMs": 31.29999999998836,
+    "renderFps": 59.9810084582032
+  }
+}
