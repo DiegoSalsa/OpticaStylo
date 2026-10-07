@@ -34,6 +34,9 @@ if (modelData.length < 12 || modelData.length > 50 * 1024 * 1024 || modelData.su
   throw new Error("El archivo debe ser un GLB válido de hasta 50 MiB.");
 }
 const metadata = validateTryOnModelMetadata(JSON.parse(await readFile(metadataPath, "utf8")));
+if (metadata.identity.sha256 !== createHash("sha256").update(modelData).digest("hex")) {
+  throw new Error("La metadata no corresponde al GLB: SHA-256 diferente. Reimporte el archivo.");
+}
 if (metadata.analysis.status !== "valid") throw new Error("La calibración todavía requiere revisión y no puede publicarse.");
 
 loadProjectEnvironment();
