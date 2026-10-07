@@ -623,7 +623,7 @@
   .page { padding: 0 10px 30px; }
   .experience { grid-template-columns: minmax(0, 1fr); min-height: 0; border-radius: 0 0 16px 16px; }
   .viewerPanel { grid-row: 1; align-self: start; padding: 13px; }
-  .viewer { height: clamp(380px, 60svh, 510px); min-height: 0; aspect-ratio: auto; }
+  .viewer { width: 100%; height: auto; min-height: 0; aspect-ratio: var(--camera-aspect-ratio, var(--viewer-fallback-aspect)); }
   .guidePanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 13px; border-right: 0; border-top: 1px solid #dce1df; }
   .guidePrivacy { grid-column: 1 / -1; margin: 0 2px; }
   .controlsPanel { border-top: 1px solid #dce1df; border-left: 0; }
@@ -635,8 +635,7 @@
   .page { padding-inline: 0; }
   .experience { border-right: 0; border-left: 0; border-radius: 0; }
   .viewerPanel { padding: 10px 8px 13px; }
-  .viewer { --viewer-fallback-aspect: 3 / 4; min-height: 390px; border-radius: 14px; }
-  .viewer { height: clamp(365px, 62svh, 490px); }
+  .viewer { --viewer-fallback-aspect: 3 / 4; border-radius: 14px; }
   .viewerDock { gap: 5px; padding: 0; }
   .dockButton,
   .captureButton { min-height: 35px; padding: 0 9px; font-size: 0.56rem; }

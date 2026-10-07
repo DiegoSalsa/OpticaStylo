@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280">
+<defs><pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#537870" stroke-width="2"/></pattern></defs>
+<rect width="720" height="1280" fill="#163d35"/><rect width="720" height="1280" fill="url(#grid)"/>
+<g fill="#f6e5c5" font-family="Arial" font-size="25"><text x="28" y="100">FUENTE COMPLETA</text><text x="28" y="135">720 × 1280 · fixture sintético</text><text x="28" y="1220">BORDE INFERIOR DE LA FUENTE</text></g>
+<g fill="none" stroke="#91ecba" stroke-width="9"><path d="M15 180V15H180M540 15H705V180M15 1100V1265H180M540 1265H705V1100"/></g>
+<ellipse cx="360" cy="540" rx="174" ry="232" fill="#d69d77"/>
+<path d="M180 430Q190 275 360 283Q550 290 542 440Q475 327 360 355Q245 330 180 430" fill="#332c29"/>
+<g fill="#2e2d2b"><ellipse cx="285" cy="510" rx="20" ry="15"/><ellipse cx="435" cy="510" rx="20" ry="15"/></g>
+<path d="M360 520L345 598L380 602M285 670Q360 710 435 670" fill="none" stroke="#9b5744" stroke-width="12" stroke-linecap="round"/>
+<path d="M100 1000Q120 775 360 786Q600 775 620 1000L650 1170H70Z" fill="#3b7768"/>
+</svg>

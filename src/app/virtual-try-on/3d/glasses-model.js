@@ -14,6 +14,7 @@ export default function GlassesModel({ faceMeshTriangleIndices, lensOpacity, len
   const groupRef = useRef(), occluderRef = useRef(), renderCount = useRef(0), startedAt = useRef(0);
   const headProxyRef = useRef(), headProxyMeshRef = useRef();
   const templesRef = useRef([]);
+  const uploadedFaceRef = useRef(null), uploadedGeometryRef = useRef(null);
   const { scene } = useGLTF(modelUrl);
   const faceMeshGeometry = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -61,7 +62,10 @@ export default function GlassesModel({ faceMeshTriangleIndices, lensOpacity, len
     const pose = poseFilterRef.current ? poseFilterRef.current.sample(now) : poseRef.current;
     if (!startedAt.current) startedAt.current = now;
     renderCount.current++;
-    debugMetricsRef.current.renderFps = renderCount.current / Math.max(0.001, (now - startedAt.current) / 1000);
+    if (now - startedAt.current >= 500) {
+      debugMetricsRef.current.renderFps = renderCount.current / ((now - startedAt.current) / 1000);
+      renderCount.current = 0; startedAt.current = now;
+    }
     if (!group || !occluder) return;
     group.visible = occluder.visible = Boolean(pose);
     if (headProxyRef.current) headProxyRef.current.visible = Boolean(pose) && occlusionEnabled;
@@ -85,7 +89,12 @@ export default function GlassesModel({ faceMeshTriangleIndices, lensOpacity, len
     }
     for (const { side, uniforms } of templesRef.current) setTempleBend(uniforms, pose.templeBends?.[side === "left" ? 0 : 1] ?? pose.templeFit[side].bendRadians);
     const positions = pose.faceMesh?.positions, attribute = faceMeshGeometry.getAttribute("position");
-    if (positions && faceMeshTriangleIndices?.length && occlusionEnabled) { attribute.array.set(positions); attribute.needsUpdate = true; }
+    if (positions && faceMeshTriangleIndices?.length && occlusionEnabled) {
+      if (uploadedFaceRef.current !== positions || uploadedGeometryRef.current !== faceMeshGeometry) {
+        attribute.array.set(positions); attribute.needsUpdate = true;
+        uploadedFaceRef.current = positions; uploadedGeometryRef.current = faceMeshGeometry;
+      }
+    }
     else occluder.visible = false;
   });
   return <>

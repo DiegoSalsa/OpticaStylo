@@ -1,0 +1,8 @@
+{
+  "commit": "7290abcfdd898b06a77416a5499e958370fb088c",
+  "poseFilterSha256": "d545f3d2f3a928b26540120d30c8a92a4cf8c13ad6345e78c8059f628ca9c555",
+  "models": {
+    "RB2140-901-50-v2.19": "2f93d7b4c1b566d1b3d0cae030aed8a00cb75f6ccf5211096629ad9746d7cc06",
+    "Harley-Davidson_HD0896_001_V4_definitivo": "1a70c61aa2d76b6edf5265006002a31314a39f4058d0a8a074eff8409dce4060"
+  }
+}
