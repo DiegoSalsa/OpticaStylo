@@ -15,6 +15,23 @@ import { cameraStreamDiagnostics } from "@/virtual-try-on-3d/camera-stream";
 import styles from "./virtual-try-on-3d.module.css";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
+const DIAGNOSTIC_ROWS = [
+  ["cameraFps", "Camera FPS"], ["recentRenderFps", "Render FPS"], ["recentInferenceFps", "Inference FPS"],
+  ["cameraSize", "Camera px"], ["trackingSize", "Tracking px"], ["backend", "Backend"],
+  ["trackingProfile", "Perfil"], ["trackingTargetFps", "Objetivo inferencia"], ["rendererDpr", "DPR"],
+  ["inferenceP50Ms", "SDK p50 ms"], ["inferenceP95Ms", "SDK p95 ms"],
+  ["deliveryP50Ms", "Delivery p50 ms"], ["deliveryP95Ms", "Delivery p95 ms"],
+  ["preprocessingMs", "Preparación ms"], ["measurementAgeMs", "Edad medición ms"],
+  ["timeSinceLastValidResultMs", "Desde válido ms"], ["currentGraceMs", "Grace ms"],
+  ["rawCheekWidthPx", "Ancho facial raw px"], ["correctedFaceWidthPx", "Ancho corregido px"],
+  ["pixelsPerMm", "Pixels/mm"], ["poseScale", "Scale"], ["projectionLength", "Projection length"],
+  ["correctionFactor", "Factor corrección"], ["yaw", "Yaw °"], ["pitch", "Pitch °"], ["roll", "Roll °"],
+  ["orientationSource", "Orientación"], ["orientationDisagreementDegrees", "Matriz vs landmarks °"],
+  ["matrixProjectionLength", "Projection matriz"], ["geometricProjectionLength", "Projection landmarks"],
+  ["temporaryMissCount", "Misses temporales"], ["visibilityTimeoutCount", "Pérdidas visibles"],
+  ["trackingBudgetExceeded", "Presupuesto excedido"],
+  ["performanceBudget", "Resultado presupuesto"],
+];
 
 function subscribeCameraLayout(listener) {
   const query = window.matchMedia(COMPACT_CAMERA_MEDIA_QUERY);
@@ -28,6 +45,7 @@ function subscribeCameraLayout(listener) {
 
 function TrackingDiagnostics({ metricsRef, videoRef, streamRef, cameraConstraintsRef, viewerRef, mediaLayerRef, fitMode }) {
   const outputRef = useRef(null);
+  const tableRef = useRef(null);
   useEffect(() => {
     const timer = window.setInterval(() => {
       const viewer = viewerRef.current?.getBoundingClientRect();
@@ -45,6 +63,12 @@ function TrackingDiagnostics({ metricsRef, videoRef, streamRef, cameraConstraint
         // Put the tracking diagnosis before the longer camera capability dump,
         // so a phone can show the failure stage without scrolling past it.
         const m = metricsRef.current;
+        const values = { ...m, cameraSize: `${m.camera.videoWidth} × ${m.camera.videoHeight}`,
+          trackingSize: m.trackingWidth ? `${m.trackingWidth} × ${m.trackingHeight}` : null };
+        for (const element of tableRef.current?.querySelectorAll("[data-metric]") ?? []) {
+          const value = values[element.dataset.metric];
+          element.textContent = value == null ? "—" : typeof value === "number" ? value.toFixed(2) : String(value);
+        }
         outputRef.current.textContent = JSON.stringify({
           backend: m.backend, trackingState: m.trackingState,
           inferenceCount: m.inferenceCount, faceResultCount: m.faceResultCount,
@@ -61,7 +85,12 @@ function TrackingDiagnostics({ metricsRef, videoRef, streamRef, cameraConstraint
     }, 500);
     return () => window.clearInterval(timer);
   }, [metricsRef, videoRef, streamRef, cameraConstraintsRef, viewerRef, mediaLayerRef, fitMode]);
-  return <details className={styles.trackingDiagnostics}><summary>Diagnóstico de seguimiento</summary><pre><output ref={outputRef} aria-label="Métricas de tracking" /></pre></details>;
+  return <details className={styles.trackingDiagnostics}><summary>Diagnóstico de seguimiento</summary>
+    <div className={styles.trackingTable}><table ref={tableRef} aria-label="Rendimiento y geometría de tracking"><tbody>
+      {DIAGNOSTIC_ROWS.map(([key, label]) => <tr key={key}><th scope="row">{label}</th><td data-metric={key}>—</td></tr>)}
+    </tbody></table></div>
+    <pre><output ref={outputRef} aria-label="Métricas de tracking" /></pre>
+  </details>;
 }
 
 export default function Glasses3DInterface({ model }) {
@@ -272,7 +301,7 @@ export default function Glasses3DInterface({ model }) {
             <Canvas
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
-              dpr={[1, 1.5]}
+              dpr={compactLayout ? 1 : [1, 1.5]}
               gl={{
                 alpha: true,
                 antialias: true,
@@ -297,7 +326,7 @@ export default function Glasses3DInterface({ model }) {
               <hemisphereLight args={["#ffffff", "#52635e", 1.05]} />
               <directionalLight position={[250, 320, 480]} intensity={1.7} />
               <directionalLight position={[-280, 40, 260]} intensity={0.65} />
-              <Environment resolution={128}>
+              <Environment resolution={compactLayout ? 64 : 128}>
                 <Lightformer
                   color="#ffffff"
                   form="rect"

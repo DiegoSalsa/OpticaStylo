@@ -1,0 +1,341 @@
+{
+  "physicalPhone": false,
+  "note": "Matriz inconsistente inyectada y carga simulada proporcional a píxeles; no medición de un teléfono.",
+  "inconsistentMatrix": {
+    "beforeScale": 3.8095238095238106,
+    "beforeProjectionLength": 0.35,
+    "beforeCorrectedFaceWidthPx": 514.2857142857144,
+    "afterScale": 1.3333333333333335,
+    "diagnostics": {
+      "reason": null,
+      "orientationSource": "landmarks-consistency",
+      "orientationDisagreementDegrees": 70.00308772807487,
+      "rigidSignalsAgree": true,
+      "matrixProjectionLength": 0.34202014332566855,
+      "geometricProjectionLength": 1,
+      "matrixCorrectionFactor": 2.857142857142857,
+      "matrixYaw": 70.00000000000003,
+      "matrixPitch": 0,
+      "matrixRoll": 0,
+      "geometricYaw": 0,
+      "geometricPitch": 0.7039293723376902,
+      "geometricRoll": 0,
+      "rigidProjectionLengths": [
+        1,
+        1,
+        1
+      ],
+      "rigidSpans": {
+        "eyes": {
+          "lengthPx": 104.4148768909715,
+          "projectionLength": 1
+        },
+        "cheeks": {
+          "lengthPx": 180.00000000000003,
+          "projectionLength": 1
+        },
+        "temples": {
+          "lengthPx": 181.85334064352855,
+          "projectionLength": 1
+        }
+      },
+      "yaw": 0,
+      "pitch": 0.7039293723376902,
+      "roll": 0,
+      "videoWidth": 720,
+      "videoHeight": 1280,
+      "rawCheekWidthPx": 158.71077706489763,
+      "unprojectedCheekWidthPx": 180.00000000000003,
+      "correctedFaceWidthPx": 180.00000000000003,
+      "projectionLength": 1,
+      "correctionFactor": 1,
+      "pixelsPerMm": 1.3333333333333335,
+      "poseScale": 1.3333333333333335,
+      "eyeDistancePx": 100.14345459229935,
+      "focalPx": 720,
+      "horizontalFovDegrees": 53.13010235415598
+    }
+  },
+  "desktop": {
+    "approved": {
+      "Harley-Davidson_HD0896_001_V4_definitivo": "1a70c61aa2d76b6edf5265006002a31314a39f4058d0a8a074eff8409dce4060",
+      "RB2140-901-50-v2.19": "2f93d7b4c1b566d1b3d0cae030aed8a00cb75f6ccf5211096629ad9746d7cc06"
+    },
+    "current": {
+      "Harley-Davidson_HD0896_001_V4_definitivo": "1a70c61aa2d76b6edf5265006002a31314a39f4058d0a8a074eff8409dce4060",
+      "RB2140-901-50-v2.19": "2f93d7b4c1b566d1b3d0cae030aed8a00cb75f6ccf5211096629ad9746d7cc06"
+    }
+  },
+  "pipelines": [
+    {
+      "baseCostMs": 25,
+      "backend": "worker",
+      "fixedCost": false,
+      "changes": [],
+      "frames": 1200,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 32,
+      "finalProfile": "640",
+      "finalSdkP50Ms": 25,
+      "finalSdkP95Ms": 25,
+      "finalDeliveryP95Ms": 33,
+      "finalGraceMs": 180,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 25,
+      "backend": "main-thread",
+      "fixedCost": false,
+      "changes": [],
+      "frames": 872,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 47,
+      "finalProfile": "480",
+      "finalSdkP50Ms": 18,
+      "finalSdkP95Ms": 18,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 50,
+      "backend": "worker",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 1040,
+          "maxDimension": 480
+        }
+      ],
+      "frames": 1200,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 65,
+      "finalProfile": "480",
+      "finalSdkP50Ms": 32,
+      "finalSdkP95Ms": 32,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 50,
+      "backend": "main-thread",
+      "fixedCost": false,
+      "changes": [],
+      "frames": 618,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 33,
+      "finalProfile": "480",
+      "finalSdkP50Ms": 32,
+      "finalSdkP95Ms": 32,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 80,
+      "backend": "worker",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 1565,
+          "maxDimension": 480
+        }
+      ],
+      "frames": 1200,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 65,
+      "finalProfile": "480",
+      "finalSdkP50Ms": 49,
+      "finalSdkP95Ms": 49,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198.0000000000001,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 80,
+      "backend": "main-thread",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 1039,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 618,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 34,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 31,
+      "finalSdkP95Ms": 31,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 120,
+      "backend": "worker",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 2100,
+          "maxDimension": 480
+        },
+        {
+          "now": 3734,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 1200,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 65,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 43,
+      "finalSdkP95Ms": 43,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198.0000000000001,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 120,
+      "backend": "main-thread",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 1556,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 411,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 22,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 43,
+      "finalSdkP95Ms": 43,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198.0000000000001,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 180,
+      "backend": "worker",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 3150,
+          "maxDimension": 480
+        },
+        {
+          "now": 5385,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 1200,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 65,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 62,
+      "finalSdkP95Ms": 62,
+      "finalDeliveryP95Ms": 66,
+      "finalGraceMs": 198.0000000000001,
+      "budgetExceeded": false
+    },
+    {
+      "baseCostMs": 180,
+      "backend": "main-thread",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 2085,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 428,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 36,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 62,
+      "finalSdkP95Ms": 62,
+      "finalDeliveryP95Ms": 99,
+      "finalGraceMs": 297.0000000000001,
+      "budgetExceeded": true
+    },
+    {
+      "baseCostMs": 250,
+      "backend": "worker",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 4210,
+          "maxDimension": 480
+        },
+        {
+          "now": 7173,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 1200,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 98,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 85,
+      "finalSdkP95Ms": 85,
+      "finalDeliveryP95Ms": 99,
+      "finalGraceMs": 297.00000000029905,
+      "budgetExceeded": true
+    },
+    {
+      "baseCostMs": 250,
+      "backend": "main-thread",
+      "fixedCost": false,
+      "changes": [
+        {
+          "now": 3114,
+          "maxDimension": 360
+        }
+      ],
+      "frames": 227,
+      "hidden": 0,
+      "scaleError": 0,
+      "finalMaxHoldMs": 13,
+      "finalProfile": "360",
+      "finalSdkP50Ms": 85,
+      "finalSdkP95Ms": 85,
+      "finalDeliveryP95Ms": 99,
+      "finalGraceMs": 297.00000000000097,
+      "budgetExceeded": true
+    }
+  ],
+  "fixedCost": {
+    "baseCostMs": 250,
+    "backend": "main-thread",
+    "fixedCost": true,
+    "changes": [
+      {
+        "now": 4705,
+        "maxDimension": 360
+      }
+    ],
+    "frames": 188,
+    "hidden": 0,
+    "scaleError": 0,
+    "finalMaxHoldMs": 45,
+    "finalProfile": "360",
+    "finalSdkP50Ms": 250,
+    "finalSdkP95Ms": 250,
+    "finalDeliveryP95Ms": 297,
+    "finalGraceMs": 800,
+    "budgetExceeded": true
+  }
+}

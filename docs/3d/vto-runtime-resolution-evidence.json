@@ -1,0 +1,41 @@
+{
+  "physicalPhone": false,
+  "note": "Webcam sin rostro; mismo equipo; desktop1280x900 y viewport compacto390x844. Comprobar integración, no precisión humana ni rendimiento de teléfono.",
+  "desktop": {
+    "backend": "worker",
+    "trackingProfile": "native",
+    "sourceWidth": 1280,
+    "sourceHeight": 720,
+    "trackingWidth": 1280,
+    "trackingHeight": 720,
+    "recentRenderFps": 60.01936108422072,
+    "rendererDpr": 1.0000000149011612,
+    "inferenceP50Ms": 10.699999988079071,
+    "inferenceP95Ms": 16.5,
+    "deliveryP50Ms": 33.5,
+    "deliveryP95Ms": 52.099999994039536,
+    "currentGraceMs": 180,
+    "noFaceResultCount": 308
+  },
+  "compact": {
+    "backend": "worker",
+    "trackingProfile": "480",
+    "sourceWidth": 1280,
+    "sourceHeight": 720,
+    "trackingWidth": 480,
+    "trackingHeight": 270,
+    "bitmapWidth": 480,
+    "bitmapHeight": 270,
+    "bitmapDimensionCorrection": false,
+    "recentRenderFps": 59.73715651099556,
+    "rendererDpr": 1,
+    "inferenceP50Ms": 7.5,
+    "inferenceP95Ms": 9.099999994039536,
+    "deliveryP50Ms": 65.70000000298023,
+    "deliveryP95Ms": 72.70000000298023,
+    "recentInferenceFps": 15.722497911878769,
+    "currentGraceMs": 210,
+    "performanceBudget": "acceptable",
+    "noFaceResultCount": 1527
+  }
+}

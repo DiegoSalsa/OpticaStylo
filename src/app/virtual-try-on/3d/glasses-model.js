@@ -14,6 +14,7 @@ export default function GlassesModel({ faceMeshTriangleIndices, lensOpacity, len
   const groupRef = useRef(), occluderRef = useRef(), renderCount = useRef(0), startedAt = useRef(0);
   const headProxyRef = useRef(), headProxyMeshRef = useRef();
   const templesRef = useRef([]);
+  const uploadedMesh = useRef({ geometry: null, positions: null }), fpsWindow = useRef({ started: 0, frames: 0 });
   const { scene } = useGLTF(modelUrl);
   const faceMeshGeometry = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -56,19 +57,27 @@ export default function GlassesModel({ faceMeshTriangleIndices, lensOpacity, len
     for (const material of Array.isArray(child.material) ? child.material : [child.material]) material.dispose();
   }), [model]);
 
-  useFrame(() => {
+  useFrame(({ gl }) => {
     const now = performance.now(), group = groupRef.current, occluder = occluderRef.current;
     const pose = poseFilterRef.current ? poseFilterRef.current.sample(now) : poseRef.current;
     if (!startedAt.current) startedAt.current = now;
     renderCount.current++;
     debugMetricsRef.current.renderFps = renderCount.current / Math.max(0.001, (now - startedAt.current) / 1000);
+    const window = fpsWindow.current;
+    if (!window.started) window.started = now;
+    window.frames++;
+    if (now - window.started >= 500) {
+      debugMetricsRef.current.recentRenderFps = window.frames * 1000 / (now - window.started);
+      window.started = now; window.frames = 0;
+    }
+    debugMetricsRef.current.rendererDpr = gl.getPixelRatio();
     if (!group || !occluder) return;
     group.visible = occluder.visible = Boolean(pose);
     if (headProxyRef.current) headProxyRef.current.visible = Boolean(pose) && occlusionEnabled;
     if (!pose) return;
     debugMetricsRef.current.posePosition = pose.position;
     debugMetricsRef.current.poseQuaternion = pose.quaternion;
-    debugMetricsRef.current.pixelsPerMm = pose.scale;
+    debugMetricsRef.current.renderedPoseScale = pose.scale;
     debugMetricsRef.current.faceEyeDepthMm ??= [0, 0];
     debugMetricsRef.current.faceEyeDepthMm[0] = pose.faceMesh.positions[33 * 3 + 2];
     debugMetricsRef.current.faceEyeDepthMm[1] = pose.faceMesh.positions[263 * 3 + 2];
@@ -85,7 +94,12 @@ export default function GlassesModel({ faceMeshTriangleIndices, lensOpacity, len
     }
     for (const { side, uniforms } of templesRef.current) setTempleBend(uniforms, pose.templeBends?.[side === "left" ? 0 : 1] ?? pose.templeFit[side].bendRadians);
     const positions = pose.faceMesh?.positions, attribute = faceMeshGeometry.getAttribute("position");
-    if (positions && faceMeshTriangleIndices?.length && occlusionEnabled) { attribute.array.set(positions); attribute.needsUpdate = true; }
+    if (positions && faceMeshTriangleIndices?.length && occlusionEnabled) {
+      if (uploadedMesh.current.geometry !== faceMeshGeometry || uploadedMesh.current.positions !== positions) {
+        attribute.array.set(positions); attribute.needsUpdate = true;
+        uploadedMesh.current.geometry = faceMeshGeometry; uploadedMesh.current.positions = positions;
+      }
+    }
     else occluder.visible = false;
   });
   return <>

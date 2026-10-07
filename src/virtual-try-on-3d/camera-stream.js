@@ -2,7 +2,7 @@ export function cameraStreamConstraints(facingMode, compactLayout, supported = {
   const video = {
     facingMode: { ideal: facingMode },
     width: { ideal: 1280 },
-    frameRate: { ideal: 60, max: 60 },
+    frameRate: compactLayout ? { ideal: 30, max: 30 } : { ideal: 60, max: 60 },
   };
   if (compactLayout) {
     // A width preference leaves height/aspect free to follow the native sensor.
