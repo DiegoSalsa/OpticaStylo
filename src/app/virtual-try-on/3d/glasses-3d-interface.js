@@ -5,24 +5,47 @@ import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { formatClp } from "@/utils/store-client";
-import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-projection";
+import { cameraProjection } from "@/virtual-try-on-3d/camera-projection";
+import { COMPACT_CAMERA_MEDIA_QUERY, mediaRectangle } from "@/virtual-try-on-3d/camera-viewport";
+import { cameraStreamDiagnostics } from "@/virtual-try-on-3d/camera-stream";
 
 import styles from "./virtual-try-on-3d.module.css";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
 
-function TrackingDiagnostics({ metricsRef }) {
+function subscribeCameraLayout(listener) {
+  const query = window.matchMedia(COMPACT_CAMERA_MEDIA_QUERY);
+  if (query.addEventListener) {
+    query.addEventListener("change", listener);
+    return () => query.removeEventListener("change", listener);
+  }
+  query.addListener(listener);
+  return () => query.removeListener(listener);
+}
+
+function TrackingDiagnostics({ metricsRef, videoRef, streamRef, cameraConstraintsRef, viewerRef, mediaLayerRef, fitMode }) {
   const outputRef = useRef(null);
   useEffect(() => {
     const timer = window.setInterval(() => {
+      const viewer = viewerRef.current?.getBoundingClientRect();
+      const layer = mediaLayerRef.current?.getBoundingClientRect();
+      metricsRef.current.camera = cameraStreamDiagnostics(videoRef.current,
+        streamRef.current?.getVideoTracks()[0], cameraConstraintsRef.current);
+      metricsRef.current.viewport = {
+        fitMode,
+        viewer: viewer ? { width: viewer.width, height: viewer.height } : null,
+        mediaLayer: layer ? { width: layer.width, height: layer.height } : null,
+        visibleSourceFraction: viewer && layer && layer.width && layer.height
+          ? Math.min(1, viewer.width / layer.width) * Math.min(1, viewer.height / layer.height) : null,
+      };
       if (outputRef.current) outputRef.current.textContent = JSON.stringify(metricsRef.current, null, 2);
     }, 500);
     return () => window.clearInterval(timer);
-  }, [metricsRef]);
-  return <details><summary>Diagnóstico de seguimiento</summary><pre><output ref={outputRef} aria-label="Métricas de tracking" /></pre></details>;
+  }, [metricsRef, videoRef, streamRef, cameraConstraintsRef, viewerRef, mediaLayerRef, fitMode]);
+  return <details className={styles.trackingDiagnostics}><summary>Diagnóstico de seguimiento</summary><pre><output ref={outputRef} aria-label="Métricas de tracking" /></pre></details>;
 }
 
 export default function Glasses3DInterface({ model }) {
@@ -32,6 +55,7 @@ export default function Glasses3DInterface({ model }) {
     cameraAspectRatio,
     cameraStatus,
     cameraVisual,
+    cameraConstraintsRef,
     captureTryOn,
     cartMessage,
     catalogSearch,
@@ -64,6 +88,7 @@ export default function Glasses3DInterface({ model }) {
     setSelectedModel,
     startCamera,
     stopCamera,
+    streamRef,
     updateFitAdjustment,
     videoDimensions,
     videoRef,
@@ -71,6 +96,10 @@ export default function Glasses3DInterface({ model }) {
   } = model;
   const projection = cameraProjection(videoDimensions.width, videoDimensions.height);
   const viewerRef = useRef(null);
+  const mediaLayerRef = useRef(null);
+  const compactLayout = useSyncExternalStore(subscribeCameraLayout,
+    () => window.matchMedia(COMPACT_CAMERA_MEDIA_QUERY).matches, () => false);
+  const fitMode = compactLayout ? "contain" : "cover";
   const [viewerSize, setViewerSize] = useState({ width: 0, height: 0 });
   const [occlusionEnabled, setOcclusionEnabled] = useState(true);
   useEffect(() => {
@@ -81,14 +110,19 @@ export default function Glasses3DInterface({ model }) {
     if (viewerRef.current) observer.observe(viewerRef.current);
     return () => observer.disconnect();
   }, []);
-  // Both camera pixels and WebGL use exactly this cover rectangle. Centering
-  // only horizontally fails for portrait sources on a wide/short mobile viewer.
-  const { width: coverWidth, height: coverHeight } = coverRectangle(viewerSize.width, viewerSize.height, projection.aspect);
+  // Video, landmarks' source space and WebGL share one aspect-preserving layer.
+  // ResizeObserver and the live media query recompute it after phone rotation.
+  const rectangle = mediaRectangle(viewerSize.width, viewerSize.height, projection.aspect, fitMode);
+  const framingGuides = <><div className={styles.focusGuide} aria-hidden="true">
+    <span /><span /><span /><span />
+  </div><div className={styles.faceOval} aria-hidden="true" /></>;
 
   return (
     <section className={styles.experience} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
-        {debugMode && <><TrackingDiagnostics metricsRef={debugMetricsRef} />
+        {debugMode && <><TrackingDiagnostics metricsRef={debugMetricsRef} videoRef={videoRef}
+          streamRef={streamRef} cameraConstraintsRef={cameraConstraintsRef} viewerRef={viewerRef}
+          mediaLayerRef={mediaLayerRef} fitMode={fitMode} />
           <label><input type="checkbox" checked={occlusionEnabled} onChange={(e) => setOcclusionEnabled(e.target.checked)} />Oclusión facial</label></>}
         <div className={styles.cameraState} data-active={cameraActive}>
           <span aria-hidden="true" />
@@ -187,7 +221,8 @@ export default function Glasses3DInterface({ model }) {
               : undefined
           }
         >
-          <div className={styles.mediaLayer} style={coverWidth ? { width: coverWidth, height: coverHeight } : undefined}>
+          <div ref={mediaLayerRef} className={styles.mediaLayer} data-fit-mode={fitMode}
+            style={rectangle.width ? { width: rectangle.width, height: rectangle.height } : undefined}>
           <video
             className={styles.videoElement}
             ref={videoRef}
@@ -290,15 +325,10 @@ export default function Glasses3DInterface({ model }) {
               </Suspense>
             </Canvas>
           )}
-          </div>
 
-          <div className={styles.focusGuide} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
+          {fitMode === "contain" && framingGuides}
           </div>
-          <div className={styles.faceOval} aria-hidden="true" />
+          {fitMode === "cover" && framingGuides}
 
           {cameraStatus !== "ready" && cameraStatus !== "photo" && (
             <div className={styles.viewerPlaceholder}>
