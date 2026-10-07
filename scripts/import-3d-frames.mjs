@@ -8,7 +8,7 @@ const projectRoot = process.cwd();
 const requestedConfigs = process.argv.slice(2);
 const configPaths = requestedConfigs.length > 0
   ? requestedConfigs
-  : ["config/virtual-try-on-3d/HD0896-001.json"];
+  : ["config/virtual-try-on-3d/HD0896-001.json", "config/virtual-try-on-3d/RB2140-901-50.json"];
 
 for (const configPath of configPaths) {
   const absoluteConfigPath = path.resolve(projectRoot, configPath);
@@ -19,6 +19,7 @@ for (const configPath of configPaths) {
   const metadata = await analyzeTryOnGlb({
     data,
     dimensionsMm: config.dimensionsMm,
+    units: config.units,
     identity: {
       ...config.identity,
       sourceFilename: path.basename(sourcePath),
