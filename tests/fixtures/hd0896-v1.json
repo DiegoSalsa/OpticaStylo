@@ -1,0 +1,97 @@
+{
+  "analysis": {
+    "confidence": 1,
+    "status": "valid",
+    "warnings": []
+  },
+  "anchorsRaw": {
+    "bridge": [
+      0,
+      0.01235,
+      0.000018
+    ],
+    "fitOrigin": [
+      0,
+      0.000131,
+      -0.0025
+    ],
+    "hingeLeft": [
+      -0.0658,
+      0.0111,
+      0.007
+    ],
+    "hingeRight": [
+      0.0658,
+      0.0111,
+      0.007
+    ]
+  },
+  "dimensionsMm": {
+    "bridgeWidth": 15,
+    "frameWidth": 137,
+    "lensWidth": 56,
+    "templeLength": 145
+  },
+  "fitting": {
+    "verticalOffsetMm": 2
+  },
+  "identity": {
+    "modelId": "harley-davidson-hd0896-001-v4",
+    "name": "Harley-Davidson HD0896",
+    "sha256": "fb78ef8a562e9e0d6ba176da6362aea4e6036347f9c874e88a8028bfa7f4bc8d",
+    "sku": "HD0896-001",
+    "sourceFilename": "Harley-Davidson_HD0896_001_V4_definitivo.glb"
+  },
+  "nodes": {
+    "front": [
+      "frame_rim_L",
+      "frame_rim_R",
+      "integrated_bridge"
+    ],
+    "bridge": [
+      "integrated_bridge"
+    ],
+    "hingeLeft": [
+      "hinge_barrel_L_0",
+      "hinge_barrel_L_1",
+      "hinge_barrel_L_2",
+      "hinge_pin_L"
+    ],
+    "hingeRight": [
+      "hinge_barrel_R_0",
+      "hinge_barrel_R_1",
+      "hinge_barrel_R_2",
+      "hinge_pin_R"
+    ],
+    "templeLeft": [
+      "temple_L"
+    ],
+    "templeRight": [
+      "temple_R"
+    ],
+    "lensLeft": [
+      "lens_L"
+    ],
+    "lensRight": [
+      "lens_R"
+    ],
+    "nosepadLeft": [],
+    "nosepadRight": []
+  },
+  "normalization": {
+    "axisConvention": "X_RIGHT_Y_UP_Z_BACK",
+    "millimetersPerUnit": 987.38261,
+    "modelYawOffsetDegrees": 180,
+    "offsetRaw": [
+      0,
+      -0.000131,
+      0.0025
+    ]
+  },
+  "occlusion": {
+    "frontDepthMm": 7.993736,
+    "maskFrontDepthMm": 8.658567,
+    "templeStartDepthMm": 9.323398
+  },
+  "schemaVersion": 1
+}

@@ -1,4 +1,4 @@
-export const TRY_ON_MODEL_SCHEMA_VERSION = 1;
+export const TRY_ON_MODEL_SCHEMA_VERSION = 2;
 // Lógica del probador virtual 3D y sus contratos de datos.
 
 export const REQUIRED_TRY_ON_NODE_ROLES = Object.freeze([
@@ -66,9 +66,8 @@ export function validateTryOnModelMetadata(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     fail("se esperaba un objeto.");
   }
-  if (value.schemaVersion !== TRY_ON_MODEL_SCHEMA_VERSION) {
-    fail(`schemaVersion debe ser ${TRY_ON_MODEL_SCHEMA_VERSION}.`);
-  }
+  if (value.schemaVersion === 2) return validateV2(value);
+  if (value.schemaVersion !== 1) fail("schemaVersion debe ser 1 o 2.");
 
   const status = value.analysis?.status;
   if (!["valid", "review_required"].includes(status)) {
@@ -157,6 +156,84 @@ export function validateTryOnModelMetadata(value) {
       maskFrontDepthMm,
       templeStartDepthMm,
     },
-    schemaVersion: TRY_ON_MODEL_SCHEMA_VERSION,
+    schemaVersion: 1,
+  };
+}
+
+const ANCHOR_ROLES = ["bridgeSeat", "frontCenter", "hingeLeft", "hingeRight",
+  "lensCenterLeft", "lensCenterRight", "templeDirectionLeft", "templeDirectionRight"];
+
+function validateV2(value) {
+  if (value.normalization?.axisConvention !== "X_RIGHT_Y_UP_Z_FORWARD") {
+    fail("V2 requiere X_RIGHT_Y_UP_Z_FORWARD (patillas hacia -Z).");
+  }
+  const matrix = value.normalization?.canonicalFromSource;
+  if (!Array.isArray(matrix) || matrix.length !== 16 || !matrix.every(Number.isFinite)) {
+    fail("canonicalFromSource debe ser una matriz finita de 16 valores column-major.");
+  }
+  const basis = [0, 4, 8].map((i) => Math.hypot(matrix[i], matrix[i + 1], matrix[i + 2]));
+  const determinant = matrix[0] * (matrix[5] * matrix[10] - matrix[6] * matrix[9])
+    - matrix[4] * (matrix[1] * matrix[10] - matrix[2] * matrix[9])
+    + matrix[8] * (matrix[1] * matrix[6] - matrix[2] * matrix[5]);
+  if (determinant <= 0 || basis.some((n) => n <= 0 || Math.abs(n / basis[0] - 1) > 1e-4)
+    || matrix[3] !== 0 || matrix[7] !== 0 || matrix[11] !== 0 || matrix[15] !== 1) {
+    fail("canonicalFromSource requiere transformación afín con escala uniforme positiva.");
+  }
+  for (const [a, b] of [[0, 4], [0, 8], [4, 8]]) {
+    if (Math.abs(matrix[a] * matrix[b] + matrix[a + 1] * matrix[b + 1]
+      + matrix[a + 2] * matrix[b + 2]) / basis[0] ** 2 > 1e-4) fail("ejes no ortogonales.");
+  }
+  if (Math.abs(basis[0] / value.normalization.millimetersPerUnit - 1) > 1e-4) fail("millimetersPerUnit no coincide con transformación.");
+  if (!["frameWidth", "declaredUnits"].includes(value.normalization.scaleSource)) fail("scaleSource inválido.");
+  const anchors = {};
+  for (const role of ANCHOR_ROLES) {
+    const anchor = value.anchors?.[role];
+    anchors[role] = { position: vector3(anchor?.position, `anchors.${role}`),
+      confidence: unitInterval(anchor?.confidence, `anchors.${role}.confidence`),
+      source: nonEmptyString(anchor?.source, `anchors.${role}.source`) };
+  }
+  if (Math.hypot(...anchors.bridgeSeat.position) > 1e-4) fail("bridgeSeat debe ser origen V2.");
+  const dimensionsMm = { frameWidth: positiveNumber(value.dimensionsMm?.frameWidth, "dimensionsMm.frameWidth") };
+  for (const key of ["bridgeWidth", "lensWidth", "templeLength"]) {
+    if (value.dimensionsMm?.[key] != null) dimensionsMm[key] = positiveNumber(value.dimensionsMm[key], `dimensionsMm.${key}`);
+  }
+  const status = value.analysis?.status;
+  if (!["valid", "review_required"].includes(status)) fail("analysis.status inválido.");
+  const level = value.capabilities?.level;
+  if (!["full", "partial", "basic"].includes(level)) fail("capabilities.level inválido.");
+  const nodes = {};
+  for (const role of [...REQUIRED_TRY_ON_NODE_ROLES, ...OPTIONAL_TRY_ON_NODE_ROLES]) {
+    nodes[role] = nodeNames(value.nodes?.[role], `nodes.${role}`, false);
+  }
+  const temples = {};
+  for (const side of ["left", "right"]) {
+    const samples = value.temples?.[side]?.samplesMm ?? [];
+    if (!Array.isArray(samples) || samples.length > 256) fail("samplesMm inválido.");
+    const cells = value.temples?.[side]?.cellsMm ?? [];
+    if (!Array.isArray(cells) || cells.length > 128) fail("cellsMm inválido.");
+    temples[side] = { samplesMm: samples.map((p) => vector3(p, "samplesMm")), cellsMm: cells.map((cell) => {
+      const min = vector3(cell.min, "cellsMm.min"), max = vector3(cell.max, "cellsMm.max");
+      if (min.some((n, i) => n > max[i])) fail("cellsMm límites invertidos.");
+      return { min, max };
+    }) };
+  }
+  const templeBending = value.capabilities.templeBending === true;
+  if (templeBending && (!nodes.templeLeft.length || !nodes.templeRight.length
+    || !temples.left.samplesMm.length || !temples.right.samplesMm.length)) fail("bending requiere piezas y muestras por lado.");
+  const identity = {};
+  for (const key of ["modelId", "name", "sha256", "sku", "sourceFilename"]) {
+    identity[key] = nonEmptyString(value.identity?.[key], `identity.${key}`);
+  }
+  if (!/^[a-f0-9]{64}$/.test(identity.sha256)) fail("sha256 inválido.");
+  return {
+    schemaVersion: 2, identity, nodes, anchors, dimensionsMm, temples,
+    analysis: { status, confidence: unitInterval(value.analysis.confidence, "analysis.confidence"),
+      warnings: (value.analysis.warnings ?? []).map((s) => nonEmptyString(s, "warning")) },
+    capabilities: { level, templeBending, lensMaterials: value.capabilities.lensMaterials === true },
+    normalization: { axisConvention: value.normalization.axisConvention,
+      canonicalFromSource: [...matrix], scaleSource: value.normalization.scaleSource,
+      millimetersPerUnit: positiveNumber(value.normalization.millimetersPerUnit, "millimetersPerUnit") },
+    occlusion: { frontDepthMm: positiveNumber(value.occlusion?.frontDepthMm, "frontDepthMm"),
+      maskFrontDepthMm: positiveNumber(value.occlusion?.maskFrontDepthMm, "maskFrontDepthMm") },
   };
 }
