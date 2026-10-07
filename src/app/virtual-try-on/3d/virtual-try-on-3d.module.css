@@ -236,12 +236,13 @@
   transition: opacity 180ms ease;
 }
 
-.threeCanvas[data-cropped="true"] {
-  right: auto;
+.mediaLayer {
+  position: absolute;
   left: 50%;
-  width: auto !important;
-  aspect-ratio: var(--overlay-aspect-ratio);
-  transform: translateX(-50%);
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
 }
 
 .viewerPlaceholder {
