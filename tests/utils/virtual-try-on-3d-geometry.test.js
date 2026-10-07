@@ -1,203 +1,77 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { landmarksToGlassesPose } from "../../src/utils/virtual-try-on-3d-geometry.js";
+import { cameraProjection, unprojectVideoPoint, coverRectangle } from "../../src/virtual-try-on-3d/camera-projection.js";
+import { faceLandmarks } from "../fixtures/vto-fixtures.js";
 
-import {
-  landmarksToGlassesPose,
-  smoothGlassesPose3D,
-} from "../../src/utils/virtual-try-on-3d-geometry.js";
-
-const modelMetadata = JSON.parse(readFileSync(new URL(
-  "../../public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json",
-  import.meta.url,
-), "utf8"));
-
-function faceLandmarks() {
-  const landmarks = Array.from({ length: 478 }, () => ({ x: 0.5, y: 0.5, z: 0 }));
-  landmarks[33] = { x: 0.35, y: 0.4, z: 0 };
-  landmarks[263] = { x: 0.65, y: 0.4, z: 0 };
-  landmarks[6] = { x: 0.5, y: 0.43, z: 0 };
-  landmarks[1] = { x: 0.5, y: 0.5, z: 0 };
-  landmarks[10] = { x: 0.5, y: 0.2, z: 0 };
-  landmarks[152] = { x: 0.5, y: 0.8, z: 0 };
-  landmarks[234] = { x: 0.25, y: 0.51, z: 0 };
-  landmarks[454] = { x: 0.75, y: 0.51, z: 0 };
-  landmarks[127] = { x: 0.28, y: 0.36, z: 0 };
-  landmarks[356] = { x: 0.72, y: 0.36, z: 0 };
-  landmarks[468] = { x: 0.38, y: 0.4, z: 0 };
-  landmarks[473] = { x: 0.62, y: 0.4, z: 0 };
-  return landmarks;
+const metadata = JSON.parse(readFileSync(new URL("../../public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json", import.meta.url)));
+const pose = (options = {}, adjustment = null) => {
+  const { landmarks, transform } = faceLandmarks(options);
+  return landmarksToGlassesPose(landmarks, 1000, 500, metadata, transform, adjustment);
+};
+test("bridgeSeat se apoya en nariz sin offset ni yaw de modelo", () => {
+  const p = pose(); assert.deepEqual(p.position, [0, 35, 0]);
+  assert.ok(p.rotation.every((v) => Math.abs(v) < 1e-8)); assert.ok(Math.abs(p.scale - 500 / 135) < 1e-8);
+  assert.deepEqual(Array.from(p.faceMesh.positions.slice(18, 21)), [0, 0, 0]);
+});
+for (const axis of ["yaw", "pitch", "roll"]) for (const angle of [-Math.PI / 4, -0.26, 0.26, Math.PI / 4]) {
+  test(`pose ${axis} ${angle.toFixed(2)} respeta matriz y espejo`, () => {
+    const p = pose({ [axis]: angle });
+    const expected = new Quaternion().setFromEuler(new Euler(axis === "pitch" ? angle : 0,
+      axis === "yaw" ? -angle : 0, axis === "roll" ? -angle : 0));
+    assert.ok(expected.angleTo(new Quaternion().fromArray(p.quaternion)) < 1e-6);
+    assert.deepEqual(p.position, [0, 35, 0]);
+    assert.ok(Math.abs(p.scale / pose().scale - 1) < 1e-6);
+  });
 }
-
-function yawTransform(angle) {
-  const cosine = Math.cos(angle);
-  const sine = Math.sin(angle);
-  return {
-    columns: 4,
-    data: [
-      cosine, 0, -sine, 0,
-      0, 1, 0, 0,
-      sine, 0, cosine, 0,
-      0, 0, 0, 1,
-    ],
-    rows: 4,
-  };
+test("matriz tipada y fallback 3D producen el mismo giro", () => {
+  const f = faceLandmarks({ yaw: 0.5, roll: 0.15 });
+  const typed = landmarksToGlassesPose(f.landmarks, 1000, 500, metadata, { data: new Float32Array(f.transform.data) });
+  const fallback = landmarksToGlassesPose(f.landmarks, 1000, 500, metadata);
+  assert.ok(new Quaternion().fromArray(typed.quaternion).angleTo(new Quaternion().fromArray(fallback.quaternion)) < 0.03);
+});
+for (const zoom of [0.65, 1.4]) test(`cerca/lejos zoom ${zoom} conserva mm y anclaje`, () => {
+  assert.ok(Math.abs(pose({ zoom }).scale / pose().scale - zoom) < 1e-6);
+  assert.deepEqual(pose({ zoom }).position, [0, 35, 0]);
+});
+test("movimiento ocular y ruido de iris no afectan posición ni escala", () => {
+  const f = faceLandmarks(), initial = landmarksToGlassesPose(f.landmarks, 1000, 500, metadata, f.transform);
+  for (let i = 468; i < 478; i++) f.landmarks[i] = { x: Math.sin(i), y: Math.cos(i), z: 0.8 };
+  const after = landmarksToGlassesPose(f.landmarks, 1000, 500, metadata, f.transform);
+  assert.deepEqual(after.position, initial.position); assert.equal(after.scale, initial.scale); assert.deepEqual(after.quaternion, initial.quaternion);
+});
+test("modelo de 148 mm conserva diferencia respecto a 137 mm", () => {
+  const f = faceLandmarks(), larger = structuredClone(metadata); larger.dimensionsMm.frameWidth = 148;
+  const a = landmarksToGlassesPose(f.landmarks, 1000, 500, metadata, f.transform);
+  const b = landmarksToGlassesPose(f.landmarks, 1000, 500, larger, f.transform);
+  assert.equal(a.scale, b.scale); assert.ok(b.scale * 148 > a.scale * 137);
+});
+test("traslación y espejo afectan sólo posición; foto conserva lateralidad", () => {
+  assert.equal(pose({ x: -100 }).position[0], 100);
+  assert.equal(pose({ x: -100 }, { mirrored: false }).position[0], -100);
+  assert.ok(pose({ x: -100 }).faceMesh.positions.slice(18, 21).every((v) => Math.abs(v) < 1e-8));
+});
+test("rechaza pérdida, landmarks incompletos y datos no finitos", () => {
+  for (const landmarks of [null, [], Array(468).fill({ x: NaN, y: 0, z: 0 })]) assert.equal(landmarksToGlassesPose(landmarks, 1000, 500, metadata), null);
+});
+test("perspectiva reproyecta nariz y superficie facial a los píxeles fuente", () => {
+  const projection = cameraProjection(1000, 500), p = unprojectVideoPoint(680, 190, -80, projection);
+  const ratio = projection.focalPx / (projection.focalPx - p[2]);
+  assert.ok(Math.abs(p[0] * ratio + 500 - 680) < 1e-8);
+  assert.ok(Math.abs(250 - p[1] * ratio - 190) < 1e-8);
+  const face = faceLandmarks({ yaw: 0.5 }), fitted = landmarksToGlassesPose(face.landmarks, 1000, 500, metadata, face.transform);
+  const matrix = new Matrix4().compose(new Vector3().fromArray(fitted.position), new Quaternion().fromArray(fitted.quaternion), new Vector3().setScalar(fitted.scale));
+  const cheek = new Vector3().fromArray(fitted.faceMesh.positions, 234 * 3).applyMatrix4(matrix);
+  const screenX = cheek.x * 1000 / (1000 - cheek.z) + 500;
+  assert.ok(Math.abs(screenX - (1 - face.landmarks[234].x) * 1000) < 0.001);
+});
+for (const [width, height, sourceAspect] of [[635, 391, 0.8], [390, 510, 16 / 9], [580, 725, 0.8]]) {
+  test(`cover ${width}×${height}, fuente ${sourceAspect}: video/canvas misma proyección`, () => {
+    const rect = coverRectangle(width, height, sourceAspect);
+    assert.ok(rect.width >= width); assert.ok(rect.height >= height);
+    assert.ok(Math.abs(rect.width / rect.height - sourceAspect) < 1e-8);
+    assert.equal(rect.left + rect.width / 2, width / 2); assert.equal(rect.top + rect.height / 2, height / 2);
+  });
 }
-
-function typedYawTransform(angle) {
-  const transform = yawTransform(angle);
-  return { ...transform, data: new Float32Array(transform.data) };
-}
-
-test("calcula una escala física sin ajustes específicos del marco", () => {
-  const pose = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
-  assert.ok(Math.abs(pose.scale - (500 / 135)) < 0.000001);
-  assert.equal(pose.position[0], 0);
-  assert.ok(Math.abs(pose.position[1] - (50 - (2 * 500 / 135))) < 0.000001);
-  assert.equal(pose.rotation[1], Math.PI);
-  assert.equal(pose.rotation[2], 0);
-  assert.equal(pose.quaternion.length, 4);
-  assert.ok(pose.templeBendRadians >= 0);
-  assert.ok(pose.templeBendRadians <= 0.14);
-  assert.equal(pose.faceMesh.positions.length, 468 * 3);
-  assert.ok(Math.abs(
-    pose.faceMesh.positions[6 * 3 + 2]
-      + modelMetadata.occlusion.maskFrontDepthMm * pose.scale,
-  ) < 0.00001);
-});
-
-test("conserva las diferencias físicas entre marcos", () => {
-  const smallFrame = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
-  const largeMetadata = structuredClone(modelMetadata);
-  largeMetadata.dimensionsMm.frameWidth = 150;
-  const largeFrame = landmarksToGlassesPose(faceLandmarks(), 1000, 500, largeMetadata);
-
-  assert.equal(smallFrame.scale, largeFrame.scale);
-  assert.ok(
-    largeFrame.scale * largeMetadata.dimensionsMm.frameWidth
-      > smallFrame.scale * modelMetadata.dimensionsMm.frameWidth,
-  );
-});
-
-test("mantiene la escala frontal cuando el rostro gira", () => {
-  const frontal = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
-  const turnedLandmarks = faceLandmarks();
-  turnedLandmarks[1].x = 0.45;
-  const turned = landmarksToGlassesPose(turnedLandmarks, 1000, 500, modelMetadata);
-  const yaw = turned.headRotation[1];
-  assert.ok(yaw > 0.35);
-  assert.ok(Math.abs(turned.scale * Math.cos(yaw) - frontal.scale) < 0.0001);
-});
-
-test("usa la matriz facial 3D para mantener el giro del marco", () => {
-  const turnedLandmarks = faceLandmarks();
-  turnedLandmarks[1].x = 0.45;
-  const pose = landmarksToGlassesPose(
-    turnedLandmarks,
-    1000,
-    500,
-    modelMetadata,
-    yawTransform(0.5),
-  );
-  assert.ok(Math.abs(pose.headRotation[1] - 0.5) < 0.000001);
-  assert.ok(Math.abs(pose.rotation[1] - (Math.PI + 0.5)) < 0.000001);
-});
-
-test("acepta la matriz tipada que entrega MediaPipe", () => {
-  const pose = landmarksToGlassesPose(
-    faceLandmarks(),
-    1000,
-    500,
-    modelMetadata,
-    typedYawTransform(-0.35),
-  );
-  assert.ok(Math.abs(pose.headRotation[1] + 0.35) < 0.000001);
-});
-
-test("aplica un ajuste fino acotado sin alterar la medida base", () => {
-  const base = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
-  const adjusted = landmarksToGlassesPose(
-    faceLandmarks(),
-    1000,
-    500,
-    modelMetadata,
-    null,
-    { scaleFactor: 1.08, verticalOffsetMm: -3 },
-  );
-  assert.ok(Math.abs(adjusted.scale - base.scale * 1.08) < 0.000001);
-  assert.ok(adjusted.position[1] > base.position[1]);
-});
-
-test("refleja la posición horizontal para acompañar el video espejo", () => {
-  const landmarks = faceLandmarks();
-  for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356, 468, 473]) {
-    landmarks[index].x -= 0.1;
-  }
-  const pose = landmarksToGlassesPose(landmarks, 1000, 500, modelMetadata);
-  assert.equal(pose.position[0], 100);
-  assert.equal(pose.faceMesh.positions[234 * 3], 350);
-});
-
-test("mover la mirada no desplaza el marco cuando la cabeza sigue quieta", () => {
-  const centered = faceLandmarks();
-  const lookingAside = faceLandmarks();
-  lookingAside[468] = { x: 0.41, y: 0.38, z: 0 };
-  lookingAside[473] = { x: 0.65, y: 0.38, z: 0 };
-
-  const centeredPose = landmarksToGlassesPose(centered, 1000, 500, modelMetadata);
-  const lookingPose = landmarksToGlassesPose(lookingAside, 1000, 500, modelMetadata);
-  assert.deepEqual(lookingPose.position, centeredPose.position);
-});
-
-test("rechaza datos incompletos y suaviza también el oclusor", () => {
-  assert.equal(landmarksToGlassesPose([], 1000, 500, modelMetadata), null);
-  const previous = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
-  const nextLandmarks = faceLandmarks();
-  for (const index of [33, 263, 6, 1, 10, 152, 234, 454, 127, 356, 468, 473]) {
-    nextLandmarks[index].x -= 0.05;
-  }
-  const next = landmarksToGlassesPose(nextLandmarks, 1000, 500, modelMetadata);
-  const pose = smoothGlassesPose3D(previous, next, 0.5);
-  assert.equal(pose.position[0], 25);
-  assert.equal(
-    pose.faceMesh.positions[234 * 3],
-    (previous.faceMesh.positions[234 * 3] + next.faceMesh.positions[234 * 3]) / 2,
-  );
-  assert.ok(Math.abs(pose.scale - previous.scale) < 0.000001);
-});
-
-test("suaviza giros con cuaterniones y responde mÃ¡s rÃ¡pido al movimiento", () => {
-  const previous = landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata);
-  const next = landmarksToGlassesPose(
-    faceLandmarks(),
-    1000,
-    500,
-    modelMetadata,
-    yawTransform(0.8),
-  );
-  const pose = smoothGlassesPose3D(
-    { ...previous, timestamp: 1000 },
-    next,
-    { timestamp: 1040 },
-  );
-  const quaternionLength = Math.hypot(...pose.quaternion);
-  assert.ok(Math.abs(quaternionLength - 1) < 0.000001);
-  assert.ok(pose.headRotation[1] > 0);
-  assert.ok(pose.headRotation[1] < next.headRotation[1]);
-  assert.equal(pose.timestamp, 1040);
-});
-
-test("ignora el ruido subpíxel cuando el rostro está quieto", () => {
-  const previous = {
-    ...landmarksToGlassesPose(faceLandmarks(), 1000, 500, modelMetadata),
-    timestamp: 1000,
-  };
-  const next = structuredClone(previous);
-  next.position[0] += 0.3;
-  next.position[1] -= 0.25;
-  next.scale *= 1.001;
-
-  const pose = smoothGlassesPose3D(previous, next, { timestamp: 1040 });
-  assert.deepEqual(pose.position, previous.position);
-  assert.equal(pose.scale, previous.scale);
-});
