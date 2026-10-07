@@ -262,6 +262,10 @@
 
 .trackingDiagnostics { min-width: 0; grid-column: 1 / -1; }
 .trackingDiagnostics pre { max-height: 320px; overflow: auto; font-size: 11px; }
+.trackingTable { max-height: 380px; overflow: auto; margin-top: 10px; }
+.trackingTable table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.trackingTable th, .trackingTable td { padding: 4px; border-bottom: 1px solid #d9e1df; text-align: left; overflow-wrap: anywhere; }
+.trackingTable th { font-weight: 500; width: 60%; }
 
 .viewerPlaceholder {
   z-index: 7;

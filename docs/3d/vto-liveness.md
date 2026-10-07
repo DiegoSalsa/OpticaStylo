@@ -2,6 +2,8 @@
 
 Fecha: 2026-10-07. Rama: `provadorv2`. Referencia aprobada: `9b6af11df2f298f1655633bb824a2c98bdae4c12`.
 
+Este informe describe la intervención de liveness en `ab3e5be`. La optimización posterior de resolución, rendimiento y diagnóstico de escala se documenta en [vto-mobile-structure.md](./vto-mobile-structure.md).
+
 La corrección está lista para una nueva prueba humana en un teléfono físico. La causa temporal se reproduce con pruebas deterministas; estas pruebas no permiten asegurar que sea la única causa del parpadeo observado en ese teléfono.
 
 ## Causa comprobada

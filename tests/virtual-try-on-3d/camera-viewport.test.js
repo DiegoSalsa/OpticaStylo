@@ -70,6 +70,7 @@ test("constraints móviles no fuerzan altura, ratio, zoom ni APIs no soportadas"
     const { video } = cameraStreamConstraints("user", true, supported);
     assert.equal(video.height, undefined); assert.equal(video.aspectRatio, undefined);
     assert.equal(video.zoom, undefined); assert.equal(video.width.ideal, 1280);
+    assert.deepEqual(video.frameRate, { ideal: 30, max: 30 });
     assert.deepEqual(video.resizeMode, supported.resizeMode ? { ideal: "none" } : undefined);
   }
 });

@@ -7,6 +7,7 @@ import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
 import { TrackingDiagnostics, measureVideoInference } from "@/virtual-try-on-3d/tracking-diagnostics";
+import { AdaptiveTrackingQuality, trackingPerformanceBudget } from "@/virtual-try-on-3d/tracking-quality";
 import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 import { COMPACT_CAMERA_MEDIA_QUERY } from "@/virtual-try-on-3d/camera-viewport";
@@ -373,6 +374,7 @@ export default function Glasses3DOverlay() {
 
         const timeline = new TrackingTimeline(), filter = new PoseFilter();
         const diagnostics = new TrackingDiagnostics(), poseDiagnostics = { reason: null };
+        let quality = null, lastSourceSize = null, previousCameraFrames = 0, previousBusyDrops = 0;
         poseFilterRef.current = filter;
         let previousFaceState = false, renderFrames = 0;
         const metricsStarted = performance.now();
@@ -388,15 +390,21 @@ export default function Glasses3DOverlay() {
             cameraFps: timeline.cameraFrames / seconds, schedulingFps: renderFrames / seconds,
             inferenceFps: timeline.inferences / seconds, processingMs: timeline.durationMs,
             droppedFrames: timeline.dropped,
+            busyDroppedFrames: timeline.busyDropped,
+            ...quality?.metrics(),
             resultDeliveryIntervalMs: timeline.lastDeliveryIntervalMs,
             smoothedResultDeliveryIntervalMs: timeline.deliveryIntervalMs,
             ...diagnostics.metrics(filter.metrics(timestamp)),
           });
+          const metrics = debugMetricsRef.current;
+          metrics.performanceBudget = diagnostics.values.inferenceCount < 16 ? "warming-up"
+            : trackingPerformanceBudget(metrics.recentRenderFps, metrics.recentInferenceFps, metrics.deliveryP95Ms);
           animationFrameRef.current = requestAnimationFrame(renderFrame);
         };
         animationFrameRef.current = requestAnimationFrame(renderFrame);
         cancelVideoLoopRef.current = startVideoFrameLoop(video, (now, mediaTime, captureTime) => {
-          if (!timeline.observe(mediaTime) || !faceLandmarkerRef.current || !modelMetadataRef.current || !timeline.begin(now)) return;
+          if (!timeline.observe(mediaTime) || !faceLandmarkerRef.current || !modelMetadataRef.current
+            || !timeline.begin(now, quality?.minimumIntervalMs ?? 0)) return;
           const metadata = modelMetadataRef.current;
           const started = performance.now();
           // RVFC's display time is an estimate; never allow a future sample timestamp.
@@ -404,7 +412,8 @@ export default function Glasses3DOverlay() {
           const infer = async () => {
             let result, inferenceError = null, sdkExecutionTimeMs = 0;
             try {
-              const measured = await measureVideoInference(faceLandmarkerRef.current, video, now);
+              const measured = await measureVideoInference(faceLandmarkerRef.current, video, now,
+                () => performance.now(), { maxDimension: quality?.profile.maxDimension });
               result = measured.result; sdkExecutionTimeMs = measured.sdkExecutionTimeMs;
             } catch (error) {
               inferenceError = error;
@@ -414,9 +423,22 @@ export default function Glasses3DOverlay() {
             const deliveredAt = performance.now(), duration = deliveredAt - started;
             if (cameraRequestRef.current !== requestId || !runningRef.current) return;
             diagnostics.recordInference(result, inferenceError, sdkExecutionTimeMs);
+            diagnostics.recordDelivery(deliveredAt);
+            quality?.observe({ sdkMs: sdkExecutionTimeMs, deliveryMs: deliveredAt - timeline.lastDeliveredAt,
+              busyDropRatio: (timeline.busyDropped - previousBusyDrops) / Math.max(1, timeline.cameraFrames - previousCameraFrames),
+              now: deliveredAt });
+            previousCameraFrames = timeline.cameraFrames; previousBusyDrops = timeline.busyDropped;
             if (!timeline.finish(now, duration, deliveredAt) || metadata !== modelMetadataRef.current) {
               diagnostics.values.discardedResultCount++; return;
             }
+            // A result belongs to the input orientation at capture, even if the
+            // device rotates before its worker reply. Never fit it to new dimensions.
+            if (result && (result.sourceWidth !== video.videoWidth || result.sourceHeight !== video.videoHeight)) {
+              diagnostics.values.discardedResultCount++; return;
+            }
+            const sourceSize = `${video.videoWidth}x${video.videoHeight}`;
+            if (lastSourceSize && lastSourceSize !== sourceSize) filter.reset();
+            lastSourceSize = sourceSize;
             let pose = null;
             try {
               pose = landmarksToGlassesPose(result?.faceLandmarks?.[0], video.videoWidth,
@@ -427,6 +449,7 @@ export default function Glasses3DOverlay() {
               debugMetricsRef.current.lastPoseError = error.message;
             }
             diagnostics.recordPose(pose, poseDiagnostics.reason);
+            if (pose) Object.assign(debugMetricsRef.current, poseDiagnostics);
             const receivedAt = performance.now();
             filter.update(pose, sampledAt, receivedAt, timeline.expectedDeliveryInterval(receivedAt));
             diagnostics.values.totalProcessingTimeMs = performance.now() - started;
@@ -442,6 +465,10 @@ export default function Glasses3DOverlay() {
           return;
         }
         if (tracking) {
+          quality = new AdaptiveTrackingQuality({ compact: compactLayout, backend: tracking.backend });
+          // The worker already has one-in-flight backpressure. Extra CPU
+          // headroom can otherwise turn a 62ms worker into only 10Hz at 30Hz capture.
+          if (compactLayout && tracking.backend === "worker") timeline.computeHeadroom = 1;
           debugMetricsRef.current.backend = tracking.backend;
           faceLandmarkerRef.current = tracking.landmarker;
           setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
