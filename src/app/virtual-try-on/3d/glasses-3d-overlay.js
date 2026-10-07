@@ -8,6 +8,8 @@ import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
 import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
+import { COMPACT_CAMERA_MEDIA_QUERY } from "@/virtual-try-on-3d/camera-viewport";
+import { cameraStreamConstraints } from "@/virtual-try-on-3d/camera-stream";
 
 import Glasses3DInterface from "./glasses-3d-interface";
 import { createFaceTracking } from "./face-tracking";
@@ -43,6 +45,7 @@ export default function Glasses3DOverlay() {
   const photoImageRef = useRef(null);
   const photoInputRef = useRef(null);
   const streamRef = useRef(null);
+  const cameraConstraintsRef = useRef(null);
   const faceLandmarkerRef = useRef(null);
   const animationFrameRef = useRef(null);
   const runningRef = useRef(false);
@@ -105,8 +108,10 @@ export default function Glasses3DOverlay() {
     cancelVideoLoopRef.current = null;
     for (const track of streamRef.current?.getTracks?.() ?? []) track.stop();
     streamRef.current = null;
+    cameraConstraintsRef.current = null;
     if (videoRef.current) {
       videoRef.current.onresize = null;
+      videoRef.current.onloadedmetadata = null;
       videoRef.current.srcObject = null;
     }
     faceLandmarkerRef.current?.close?.();
@@ -324,22 +329,14 @@ export default function Glasses3DOverlay() {
       setCaptureMessage("");
       setStatusMessage("Esperando que autorices el uso de la cámara…");
 
-      const isMobilePortrait = window.matchMedia(
-        "(max-width: 768px) and (orientation: portrait)",
-      ).matches;
+      const compactLayout = window.matchMedia(COMPACT_CAMERA_MEDIA_QUERY).matches;
       const trackingPromise = createFaceTracking().catch(() => null);
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: requestedFacingMode },
-            aspectRatio: { ideal: isMobilePortrait ? 0.75 : 16 / 9 },
-            height: { ideal: isMobilePortrait ? 960 : 720 },
-            width: { ideal: isMobilePortrait ? 720 : 1280 },
-            frameRate: { ideal: 60, max: 60 },
-          },
-        });
+        const constraints = cameraStreamConstraints(requestedFacingMode, compactLayout,
+          navigator.mediaDevices.getSupportedConstraints?.());
+        cameraConstraintsRef.current = constraints;
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (cameraRequestRef.current !== requestId) {
           for (const track of stream.getTracks()) track.stop();
@@ -352,6 +349,7 @@ export default function Glasses3DOverlay() {
         const video = videoRef.current;
         video.srcObject = stream;
         const syncDimensions = () => {
+          if (cameraRequestRef.current !== requestId || streamRef.current !== stream) return;
           if (video.videoWidth > 0 && video.videoHeight > 0) {
             setCameraAspectRatio(video.videoWidth / video.videoHeight);
             setVideoDimensions({
@@ -361,6 +359,7 @@ export default function Glasses3DOverlay() {
           }
         };
         video.onresize = syncDimensions;
+        video.onloadedmetadata = syncDimensions;
         await video.play();
         if (cameraRequestRef.current !== requestId) {
           for (const track of stream.getTracks()) track.stop();
@@ -575,6 +574,7 @@ export default function Glasses3DOverlay() {
         cameraAspectRatio,
         cameraStatus,
         cameraVisual,
+        cameraConstraintsRef,
         captureTryOn,
         cartMessage,
         catalogSearch,
@@ -607,6 +607,7 @@ export default function Glasses3DOverlay() {
         setSelectedModel,
         startCamera,
         stopCamera,
+        streamRef,
         updateFitAdjustment,
         videoDimensions,
         videoRef,

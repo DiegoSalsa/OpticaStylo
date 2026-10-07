@@ -245,6 +245,24 @@
   transform: translate(-50%, -50%);
 }
 
+.mediaLayer[data-fit-mode="contain"] {
+  display: grid;
+  place-items: center;
+}
+
+.mediaLayer[data-fit-mode="contain"] .videoElement,
+.mediaLayer[data-fit-mode="contain"] .photoElement {
+  object-fit: contain;
+}
+
+.mediaLayer[data-fit-mode="contain"] .focusGuide,
+.mediaLayer[data-fit-mode="contain"] .faceOval {
+  max-height: 82%;
+}
+
+.trackingDiagnostics { min-width: 0; grid-column: 1 / -1; }
+.trackingDiagnostics pre { max-height: 320px; overflow: auto; font-size: 11px; }
+
 .viewerPlaceholder {
   z-index: 7;
   display: grid;
@@ -619,7 +637,7 @@
   .addButton { grid-column: 1 / -1; }
 }
 
-@media (max-width: 780px) {
+@media (max-width: 780px), (pointer: coarse) and (hover: none) {
   .page { padding: 0 10px 30px; }
   .experience { grid-template-columns: minmax(0, 1fr); min-height: 0; border-radius: 0 0 16px 16px; }
   .viewerPanel { grid-row: 1; align-self: start; padding: 13px; }
