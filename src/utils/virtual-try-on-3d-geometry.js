@@ -1,34 +1,14 @@
-import { Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { Euler, Quaternion, Vector3 } from "three";
 import { runtimeFittingMetadata } from "../virtual-try-on-3d/model-runtime.js";
 import { fitTemples } from "../virtual-try-on-3d/temple-fitting.js";
 import { cameraProjection, unprojectVideoPoint } from "../virtual-try-on-3d/camera-projection.js";
 import { PoseFilter } from "../virtual-try-on-3d/pose-filter.js";
+import { resolveFaceOrientation } from "../virtual-try-on-3d/face-orientation.js";
 
 const REFERENCE_FACE_WIDTH_MM = 135;
 const FACE_MESH_COUNT = 468;
 const finite = (p) => p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z ?? 0);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-
-function headQuaternion(landmarks, width, height, transform, mirrored, projection) {
-  const matrix = new Matrix4(), data = transform?.data;
-  if (data?.length === 16 && Array.from(data).every(Number.isFinite)) {
-    // MediaPipe MatrixData is Eigen column-major. Remove uniform metric scale,
-    // then conjugate by the screen reflection S: R_display = S R S.
-    matrix.fromArray(data);
-    matrix.extractRotation(matrix);
-    const e = matrix.elements;
-    if (mirrored) for (const i of [1, 2, 4, 8]) e[i] *= -1;
-    if (matrix.determinant() > 0.5) return new Quaternion().setFromRotationMatrix(matrix).normalize();
-  }
-  const point = (i) => new Vector3().fromArray(unprojectVideoPoint(landmarks[i].x * width,
-    landmarks[i].y * height, -((landmarks[i].z ?? 0) - (landmarks[6].z ?? 0)) * width, projection));
-  const x = point(263).sub(point(33)).normalize(), yRaw = point(10).sub(point(152)).normalize();
-  const z = x.clone().cross(yRaw).normalize(), y = z.clone().cross(x).normalize();
-  if (z.lengthSq() < 0.5) return null;
-  matrix.makeBasis(x, y, z);
-  if (mirrored) for (const i of [1, 2, 4, 8]) matrix.elements[i] *= -1;
-  return new Quaternion().setFromRotationMatrix(matrix).normalize();
-}
 
 /** Anatomy, orientation and physical size are separate estimates. Iris values
  * never participate, so looking sideways cannot move or resize the glasses.
@@ -45,23 +25,32 @@ export function landmarksToGlassesPose(landmarks, width, height, metadata, trans
   if (!landmarks.slice(0, FACE_MESH_COUNT).every(finite)) return reject("invalid-landmarks");
   const mirrored = adjustment?.mirrored ?? true;
   const projection = cameraProjection(width, height, adjustment?.focalPx ?? width);
-  const quaternion = headQuaternion(landmarks, width, height, transform, mirrored, projection);
+  const orientation = resolveFaceOrientation(landmarks, width, height, transform, mirrored, projection);
+  const quaternion = orientation.quaternion;
+  if (diagnostics) Object.assign(diagnostics, orientation.metrics, { videoWidth: width, videoHeight: height });
   if (!quaternion) return reject("invalid-quaternion");
   const bridge = landmarks[6], mirror = (x) => (mirrored ? 1 - x : x) * width;
   const eyeDistance = Math.hypot((landmarks[263].x - landmarks[33].x) * width,
     (landmarks[263].y - landmarks[33].y) * height);
   if (eyeDistance < 8) return reject("eye-distance");
   const headX = new Vector3(1, 0, 0).applyQuaternion(quaternion);
-  const projectionLength = Math.max(0.35, Math.hypot(headX.x, headX.y));
+  const projectionLength = Math.max(0.35, orientation.correctionProjection ?? Math.hypot(headX.x, headX.y));
   const cheek = (index) => {
     const lm = landmarks[index];
     return unprojectVideoPoint(mirror(lm.x), lm.y * height, -((lm.z ?? 0) - (bridge.z ?? 0)) * width, projection);
   };
   const leftCheek = cheek(234), rightCheek = cheek(454);
-  const faceWidth = Math.hypot(rightCheek[0] - leftCheek[0], rightCheek[1] - leftCheek[1]) / projectionLength;
+  const rawCheekWidthPx = Math.hypot((landmarks[454].x - landmarks[234].x) * width,
+    (landmarks[454].y - landmarks[234].y) * height);
+  const unprojectedCheekWidthPx = Math.hypot(rightCheek[0] - leftCheek[0], rightCheek[1] - leftCheek[1]);
+  const faceWidth = unprojectedCheekWidthPx / projectionLength;
   if (faceWidth < eyeDistance) return reject("face-width");
   const pixelsPerMm = faceWidth / (adjustment?.faceWidthMm ?? REFERENCE_FACE_WIDTH_MM);
   const scale = pixelsPerMm * clamp(adjustment?.scaleFactor ?? 1, 0.88, 1.12);
+  if (diagnostics) Object.assign(diagnostics, { rawCheekWidthPx, unprojectedCheekWidthPx,
+    correctedFaceWidthPx: faceWidth, projectionLength, correctionFactor: 1 / projectionLength,
+    pixelsPerMm, poseScale: scale, eyeDistancePx: eyeDistance, focalPx: projection.focalPx,
+    horizontalFovDegrees: 2 * Math.atan(width / (2 * projection.focalPx)) * 180 / Math.PI });
   const position = [mirror(bridge.x) - width / 2,
     height / 2 - bridge.y * height - clamp(adjustment?.verticalOffsetMm ?? 0, -6, 6) * pixelsPerMm, 0];
   const inverse = quaternion.clone().invert();
