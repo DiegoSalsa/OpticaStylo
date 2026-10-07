@@ -1,0 +1,52 @@
+[
+  {
+    "modelIndex": 0,
+    "pitch": -25,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 0,\n  \"pitch\": -25,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367453,\n  \"rightOpeningDegrees\": 5.548160247113735,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.85067341541211\n}"
+  },
+  {
+    "modelIndex": 0,
+    "pitch": 25,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 0,\n  \"pitch\": 25,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367418,\n  \"rightOpeningDegrees\": 5.548160247113715,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.85093466728927\n}"
+  },
+  {
+    "modelIndex": 0,
+    "zoom": 0.7,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 0,\n  \"pitch\": 0,\n  \"zoom\": 0.7,\n  \"leftOpeningDegrees\": 5.548160256367465,\n  \"rightOpeningDegrees\": 5.548160247113723,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.85062371609644\n}"
+  },
+  {
+    "modelIndex": 0,
+    "zoom": 1.3,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 0,\n  \"pitch\": 0,\n  \"zoom\": 1.3,\n  \"leftOpeningDegrees\": 5.548160256367414,\n  \"rightOpeningDegrees\": 5.548160247113694,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.850865048348005\n}"
+  },
+  {
+    "modelIndex": 0,
+    "moving": true,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": -39.15489783052042,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367414,\n  \"rightOpeningDegrees\": 5.548160247113694,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.85101277165778\n}"
+  },
+  {
+    "modelIndex": 1,
+    "pitch": -25,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 0,\n  \"pitch\": -25,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988886,\n  \"rightOpeningDegrees\": 2.386652296988886,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.841161167548606\n}"
+  },
+  {
+    "modelIndex": 1,
+    "pitch": 25,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 0,\n  \"pitch\": 25,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.38665229698886,\n  \"rightOpeningDegrees\": 2.386652296988886,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.84156284156614\n}"
+  },
+  {
+    "modelIndex": 1,
+    "zoom": 0.7,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 0,\n  \"pitch\": 0,\n  \"zoom\": 0.7,\n  \"leftOpeningDegrees\": 2.3866522969889,\n  \"rightOpeningDegrees\": 2.3866522969888733,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.841095067277905\n}"
+  },
+  {
+    "modelIndex": 1,
+    "zoom": 1.3,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 0,\n  \"pitch\": 0,\n  \"zoom\": 1.3,\n  \"leftOpeningDegrees\": 2.38665229698886,\n  \"rightOpeningDegrees\": 2.38665229698886,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.84147686441048\n}"
+  },
+  {
+    "modelIndex": 1,
+    "moving": true,
+    "result": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 41.30148081345049,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988846,\n  \"rightOpeningDegrees\": 2.386652296988846,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.841442762710756\n}"
+  }
+]
