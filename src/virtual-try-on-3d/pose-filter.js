@@ -1,7 +1,10 @@
 import { Quaternion, Vector3 } from "three";
 
 export const MAX_PREDICTION_MS = 25;
-export const MAX_RESULT_AGE_MS = 180;
+export const MIN_TRACKING_GRACE_MS = 180; // Preserve the approved fast-device dropout window.
+export const MAX_TRACKING_GRACE_MS = 800; // Bound a frozen pose to less than one second.
+const GRACE_DELIVERY_INTERVALS = 3; // Two missed deliveries plus the next expected result.
+const PREDICTION_FADE_MS = 50;
 const TAU = 2 * Math.PI;
 const ANGULAR_PREDICTION_NOISE_RADIANS = 0.006; // Sub-degree noise must not drive angular extrapolation.
 const alpha = (cutoff, dt) => 1 - Math.exp(-TAU * cutoff * dt);
@@ -33,18 +36,71 @@ export class PoseFilter {
     this.reset();
   }
   reset() {
-    this.lastTimestamp = -Infinity; this.lastSeen = -Infinity; this.pose = null;
+    this.lastMeasurementTimestamp = -Infinity;
+    this.lastReceivedTimestamp = -Infinity;
+    this.lastValidMeasurementTimestamp = -Infinity;
+    this.lastValidReceivedTimestamp = -Infinity;
+    this.deliveryIntervalMs = 0;
+    this.currentGraceMs = MIN_TRACKING_GRACE_MS;
+    this.trackingState = "SEARCHING";
+    this.latestResultHadPose = false;
+    this.poseAcceptedCount = 0; this.poseRejectedCount = 0;
+    this.temporaryMissCount = 0; this.visibilityTimeoutCount = 0;
+    this.poseRejectReason = null;
+    this.resetMotion();
+  }
+  resetMotion() {
+    this.pose = null;
     this.position = [0, 1, 2].map(() => new OneEuroFilter(2.5, 0.12));
     this.scale = new OneEuroFilter(1.5, 3);
     this.temples = [new OneEuroFilter(4, 8), new OneEuroFilter(4, 8)];
     this.velocity = [0, 0, 0]; this.angularSpeed = 0; this.rotationAlpha = 1;
     this.rawPosition = [0, 0, 0]; this.output = { position: [0, 0, 0], quaternion: [0, 0, 0, 1], templeBends: [0, 0] };
   }
-  update(pose, timestamp) {
-    if (!Number.isFinite(timestamp) || timestamp <= this.lastTimestamp) return false;
-    if (!pose) { this.lastTimestamp = timestamp; this.velocity.fill(0); this.angularSpeed = 0; return true; }
-    if (timestamp - this.lastSeen > MAX_RESULT_AGE_MS) this.reset();
-    const initial = !this.pose, dt = initial ? 1 / 30 : clamp((timestamp - this.lastSeen) / 1000, 0.001, 0.2);
+  setExpectedDeliveryInterval(intervalMs) {
+    if (Number.isFinite(intervalMs) && intervalMs >= 0) {
+      this.currentGraceMs = clamp(Math.max(this.deliveryIntervalMs, intervalMs)
+        * GRACE_DELIVERY_INTERVALS, MIN_TRACKING_GRACE_MS, MAX_TRACKING_GRACE_MS);
+    }
+  }
+  expire(now) {
+    if (this.pose && now - this.lastValidReceivedTimestamp > this.currentGraceMs) {
+      this.resetMotion();
+      this.latestResultHadPose = false;
+      this.trackingState = "LOST";
+      this.visibilityTimeoutCount++;
+    }
+  }
+  // Measurement time drives motion; receipt time drives liveness. Defaults keep
+  // synchronous/fixture callers compatible without inventing a second clock.
+  update(pose, measurementTimestamp, receivedTimestamp = measurementTimestamp, expectedIntervalMs = 0) {
+    const reject = (reason) => { this.poseRejectedCount++; this.poseRejectReason = reason; return false; };
+    if (!Number.isFinite(measurementTimestamp) || !Number.isFinite(receivedTimestamp)
+      || receivedTimestamp < measurementTimestamp) return reject("invalid-timestamps");
+    if (measurementTimestamp <= this.lastMeasurementTimestamp) return reject("stale-measurement");
+    if (receivedTimestamp < this.lastReceivedTimestamp) return reject("stale-receipt");
+    // Include the just-observed SDK cost before expiring. A synchronous fallback
+    // can block RAF, so it could not report its growing in-flight cost earlier.
+    this.setExpectedDeliveryInterval(Math.max(expectedIntervalMs, receivedTimestamp - measurementTimestamp));
+    this.expire(receivedTimestamp);
+    const interval = receivedTimestamp - this.lastReceivedTimestamp;
+    if (Number.isFinite(interval) && interval > 0) {
+      this.deliveryIntervalMs = this.deliveryIntervalMs ? this.deliveryIntervalMs * 0.8 + interval * 0.2 : interval;
+    }
+    this.setExpectedDeliveryInterval(Math.max(expectedIntervalMs, Number.isFinite(interval) ? interval : 0,
+      receivedTimestamp - measurementTimestamp));
+    this.lastMeasurementTimestamp = measurementTimestamp;
+    this.lastReceivedTimestamp = receivedTimestamp;
+    this.latestResultHadPose = Boolean(pose);
+    this.poseRejectReason = null;
+    if (!pose) {
+      if (this.pose) { this.temporaryMissCount++; this.trackingState = "TRACKING_GRACE"; }
+      // Hold filters and dynamic state; suppress prediction instead of resetting
+      // velocity/quaternion/scale/temples on an isolated miss.
+      return true;
+    }
+    const initial = !this.pose;
+    const dt = initial ? 1 / 30 : Math.max(0.001, (measurementTimestamp - this.lastValidMeasurementTimestamp) / 1000);
     for (let i = 0; i < 3; i++) {
       const difference = initial ? 0 : pose.position[i] - this.rawPosition[i];
       const speed = difference / dt;
@@ -69,14 +125,21 @@ export class PoseFilter {
       // Collision clearance is a lower bound. Do not smooth through the head.
       this.temples[i].value = Math.max(required, filtered);
     }
-    this.pose = pose; this.lastTimestamp = this.lastSeen = timestamp; return true;
+    this.pose = pose;
+    this.lastValidMeasurementTimestamp = measurementTimestamp;
+    this.lastValidReceivedTimestamp = receivedTimestamp;
+    this.trackingState = "TRACKING"; this.poseAcceptedCount++;
+    return true;
   }
   sample(now) {
-    if (!this.pose || now - this.lastSeen > MAX_RESULT_AGE_MS) return null;
-    const horizon = clamp(now - this.lastSeen, 0, MAX_PREDICTION_MS) / 1000;
+    this.expire(now);
+    if (!this.pose) return null;
+    const measurementAge = Math.max(0, now - this.lastValidMeasurementTimestamp);
+    const horizon = clamp(measurementAge, 0, MAX_PREDICTION_MS) / 1000;
     // Fade prediction after the short useful horizon; never continue flying
     // during camera stalls/loss. Maximum excursion is 12 camera pixels / 0.1 rad.
-    const confidence = clamp(1 - Math.max(0, now - this.lastSeen - MAX_PREDICTION_MS) / 50, 0, 1);
+    const confidence = this.latestResultHadPose
+      ? clamp(1 - Math.max(0, measurementAge - MAX_PREDICTION_MS) / PREDICTION_FADE_MS, 0, 1) : 0;
     const out = this.output;
     for (let i = 0; i < 3; i++) out.position[i] = this.position[i].value + clamp(this.velocity[i] * horizon, -12, 12) * confidence;
     this.deltaQ.setFromAxisAngle(this.axis, Math.min(0.1, this.angularSpeed * horizon) * confidence);
@@ -85,11 +148,22 @@ export class PoseFilter {
     out.headRotation = this.pose.headRotation; out.projection = this.pose.projection;
     out.templeFit = this.pose.templeFit;
     out.templeBends[0] = this.temples[0].value; out.templeBends[1] = this.temples[1].value;
-    out.timestamp = this.lastSeen;
+    out.timestamp = this.lastValidMeasurementTimestamp;
     return out;
   }
   metrics(now) {
-    return { resultAgeMs: this.pose ? now - this.lastSeen : null,
+    const measurementAgeMs = Number.isFinite(this.lastValidMeasurementTimestamp) ? Math.max(0, now - this.lastValidMeasurementTimestamp) : null;
+    return { resultAgeMs: measurementAgeMs, measurementAgeMs,
+      timeSinceLastValidResultMs: Number.isFinite(this.lastValidReceivedTimestamp) ? Math.max(0, now - this.lastValidReceivedTimestamp) : null,
+      measurementTimestamp: Number.isFinite(this.lastMeasurementTimestamp) ? this.lastMeasurementTimestamp : null,
+      receivedTimestamp: Number.isFinite(this.lastReceivedTimestamp) ? this.lastReceivedTimestamp : null,
+      lastValidMeasurementTimestamp: Number.isFinite(this.lastValidMeasurementTimestamp) ? this.lastValidMeasurementTimestamp : null,
+      lastValidReceivedTimestamp: Number.isFinite(this.lastValidReceivedTimestamp) ? this.lastValidReceivedTimestamp : null,
+      currentGraceMs: this.currentGraceMs, trackingState: this.trackingState,
+      poseAcceptedCount: this.poseAcceptedCount, poseFilterRejectedCount: this.poseRejectedCount,
+      poseFilterRejectReason: this.poseRejectReason, temporaryMissCount: this.temporaryMissCount,
+      visibilityTimeoutCount: this.visibilityTimeoutCount,
+      predictionEnabled: Boolean(this.pose && this.latestResultHadPose && measurementAgeMs < MAX_PREDICTION_MS + PREDICTION_FADE_MS),
       facialSpeedPxPerSecond: Math.hypot(...this.velocity), angularSpeedRadPerSecond: this.angularSpeed,
       positionAlpha: this.position[0].lastAlpha, rotationAlpha: this.rotationAlpha, scaleAlpha: this.scale.lastAlpha };
   }

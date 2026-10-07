@@ -67,8 +67,12 @@ test("ruido angular pequeño no genera predicción al refrescar entre mediciones
 test("predicción acotada, pérdida oculta y recuperación reinicia velocidad", () => {
   const filter = new PoseFilter(); filter.update(measurement(0), 0); filter.update(measurement(100), 33);
   assert.ok(filter.sample(58).position[0] <= 112);
-  filter.update(null, 66); assert.equal(filter.metrics(66).facialSpeedPxPerSecond, 0);
+  const previousSpeed = filter.metrics(66).facialSpeedPxPerSecond;
+  filter.update(null, 66);
+  assert.equal(filter.metrics(66).facialSpeedPxPerSecond, previousSpeed);
+  assert.equal(filter.metrics(66).predictionEnabled, false);
   assert.equal(filter.sample(214), null);
+  assert.equal(filter.metrics(214).facialSpeedPxPerSecond, 0);
   filter.update(measurement(-80), 250); assert.equal(filter.sample(250).position[0], -80);
 });
 test("escala se estabiliza separado de traslación y cada patilla conserva clearance", () => {

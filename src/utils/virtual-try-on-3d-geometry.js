@@ -33,17 +33,24 @@ function headQuaternion(landmarks, width, height, transform, mirrored, projectio
 /** Anatomy, orientation and physical size are separate estimates. Iris values
  * never participate, so looking sideways cannot move or resize the glasses.
  * V2 bridgeSeat=(0,0,0) is aligned to nose landmark 6, a rigid nasal structure. */
-export function landmarksToGlassesPose(landmarks, width, height, metadata, transform = null, adjustment = null) {
-  if (!metadata || !landmarks || width <= 0 || height <= 0 || landmarks.length < FACE_MESH_COUNT
-    || !landmarks.slice(0, FACE_MESH_COUNT).every(finite)) return null;
+export function landmarksToGlassesPose(landmarks, width, height, metadata, transform = null, adjustment = null, diagnostics = null) {
+  const reject = (reason) => { if (diagnostics) diagnostics.reason = reason; return null; };
+  if (diagnostics) diagnostics.reason = null;
+  // Same rejection conditions and thresholds; expose their cause without
+  // weakening validation or changing any anatomical/orientation calculation.
+  if (!metadata) return reject("missing-metadata");
+  if (!landmarks) return reject("no-landmarks");
+  if (width <= 0 || height <= 0) return reject("invalid-video-dimensions");
+  if (landmarks.length < FACE_MESH_COUNT) return reject("landmark-count");
+  if (!landmarks.slice(0, FACE_MESH_COUNT).every(finite)) return reject("invalid-landmarks");
   const mirrored = adjustment?.mirrored ?? true;
   const projection = cameraProjection(width, height, adjustment?.focalPx ?? width);
   const quaternion = headQuaternion(landmarks, width, height, transform, mirrored, projection);
-  if (!quaternion) return null;
+  if (!quaternion) return reject("invalid-quaternion");
   const bridge = landmarks[6], mirror = (x) => (mirrored ? 1 - x : x) * width;
   const eyeDistance = Math.hypot((landmarks[263].x - landmarks[33].x) * width,
     (landmarks[263].y - landmarks[33].y) * height);
-  if (eyeDistance < 8) return null;
+  if (eyeDistance < 8) return reject("eye-distance");
   const headX = new Vector3(1, 0, 0).applyQuaternion(quaternion);
   const projectionLength = Math.max(0.35, Math.hypot(headX.x, headX.y));
   const cheek = (index) => {
@@ -52,7 +59,7 @@ export function landmarksToGlassesPose(landmarks, width, height, metadata, trans
   };
   const leftCheek = cheek(234), rightCheek = cheek(454);
   const faceWidth = Math.hypot(rightCheek[0] - leftCheek[0], rightCheek[1] - leftCheek[1]) / projectionLength;
-  if (faceWidth < eyeDistance) return null;
+  if (faceWidth < eyeDistance) return reject("face-width");
   const pixelsPerMm = faceWidth / (adjustment?.faceWidthMm ?? REFERENCE_FACE_WIDTH_MM);
   const scale = pixelsPerMm * clamp(adjustment?.scaleFactor ?? 1, 0.88, 1.12);
   const position = [mirror(bridge.x) - width / 2,

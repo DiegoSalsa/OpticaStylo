@@ -41,7 +41,23 @@ function TrackingDiagnostics({ metricsRef, videoRef, streamRef, cameraConstraint
         visibleSourceFraction: viewer && layer && layer.width && layer.height
           ? Math.min(1, viewer.width / layer.width) * Math.min(1, viewer.height / layer.height) : null,
       };
-      if (outputRef.current) outputRef.current.textContent = JSON.stringify(metricsRef.current, null, 2);
+      if (outputRef.current) {
+        // Put the tracking diagnosis before the longer camera capability dump,
+        // so a phone can show the failure stage without scrolling past it.
+        const m = metricsRef.current;
+        outputRef.current.textContent = JSON.stringify({
+          backend: m.backend, trackingState: m.trackingState,
+          inferenceCount: m.inferenceCount, faceResultCount: m.faceResultCount,
+          noFaceResultCount: m.noFaceResultCount, poseAcceptedCount: m.poseAcceptedCount,
+          poseRejectedCount: m.poseRejectedCount, poseRejectReason: m.poseRejectReason,
+          temporaryMissCount: m.temporaryMissCount, visibilityTimeoutCount: m.visibilityTimeoutCount,
+          measurementAgeMs: m.measurementAgeMs, timeSinceLastValidResultMs: m.timeSinceLastValidResultMs,
+          currentGraceMs: m.currentGraceMs, inferenceDurationMs: m.inferenceDurationMs,
+          smoothedInferenceDurationMs: m.smoothedInferenceDurationMs,
+          resultDeliveryIntervalMs: m.resultDeliveryIntervalMs, totalProcessingTimeMs: m.totalProcessingTimeMs,
+          ...m,
+        }, null, 2);
+      }
     }, 500);
     return () => window.clearInterval(timer);
   }, [metricsRef, videoRef, streamRef, cameraConstraintsRef, viewerRef, mediaLayerRef, fitMode]);

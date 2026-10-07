@@ -6,6 +6,7 @@ export class TrackingTimeline {
     this.inFlight = false; this.lastMediaTime = -1; this.lastStarted = -Infinity;
     this.lastAccepted = -Infinity; this.durationMs = 0; this.intervalMs = 0;
     this.cameraFrames = 0; this.inferences = 0; this.dropped = 0;
+    this.lastDeliveredAt = -Infinity; this.deliveryIntervalMs = 0; this.lastDeliveryIntervalMs = 0;
   }
   observe(mediaTime) {
     if (!Number.isFinite(mediaTime) || mediaTime <= this.lastMediaTime) return false;
@@ -18,7 +19,7 @@ export class TrackingTimeline {
     }
     this.inFlight = true; this.lastStarted = timestamp; return true;
   }
-  finish(timestamp, durationMs) {
+  finish(timestamp, durationMs, receivedTimestamp = timestamp + durationMs) {
     if (!this.inFlight || timestamp !== this.lastStarted) { this.dropped++; return false; }
     this.inFlight = false; this.inferences++;
     this.durationMs = this.durationMs ? this.durationMs * 0.8 + durationMs * 0.2 : durationMs;
@@ -26,7 +27,23 @@ export class TrackingTimeline {
     // when inference is cheap. No backlog and no fixed 25 Hz ceiling.
     this.intervalMs = this.durationMs * 1.15;
     if (timestamp <= this.lastAccepted) { this.dropped++; return false; }
-    this.lastAccepted = timestamp; return true;
+    this.lastAccepted = timestamp;
+    if (Number.isFinite(receivedTimestamp) && receivedTimestamp >= this.lastDeliveredAt) {
+      const interval = receivedTimestamp - this.lastDeliveredAt;
+      if (Number.isFinite(interval) && interval > 0) {
+        this.lastDeliveryIntervalMs = interval;
+        this.deliveryIntervalMs = this.deliveryIntervalMs ? this.deliveryIntervalMs * 0.8 + interval * 0.2 : interval;
+      }
+      this.lastDeliveredAt = receivedTimestamp;
+    }
+    return true;
+  }
+  expectedDeliveryInterval(now) {
+    // Bootstrap from compute cost, then observe actual receipt cadence. A worker
+    // taking longer than usual is observable while in flight; extend liveness
+    // within its hard cap without changing acquisition cadence or prediction.
+    const pending = this.inFlight && Number.isFinite(now) ? Math.max(0, now - this.lastStarted) * 1.15 : 0;
+    return Math.max(this.intervalMs, this.deliveryIntervalMs, this.lastDeliveryIntervalMs, pending);
   }
 }
 

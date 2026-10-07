@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "9b6af11df2f298f1655633bb824a2c98bdae4c12",
+  "description": "Trayectorias de posición, quaternion, escala y patillas del filtro aprobado; 181 renders durante 3s, capturas cada 33ms.",
+  "digests": {
+    "15": "a838179829ad7850b18119b329228de39242c80ddee2986e5433cceae14b9e21",
+    "20": "46e457ed850a4b08d25517ae817bfc83f2da2698b8f93ab05a30e075d11faf8d",
+    "30": "6f5a14d84d7569864a723acadc655a62d906247bde342c201ea95431495927cf"
+  }
+}

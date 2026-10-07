@@ -6,6 +6,7 @@ import { BUILT_IN_3D_GLASSES } from "@/constants/virtual-try-on";
 import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
+import { TrackingDiagnostics, measureVideoInference } from "@/virtual-try-on-3d/tracking-diagnostics";
 import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 import { COMPACT_CAMERA_MEDIA_QUERY } from "@/virtual-try-on-3d/camera-viewport";
@@ -371,11 +372,13 @@ export default function Glasses3DOverlay() {
         setStatusMessage("Cámara activa. Preparando el seguimiento facial…");
 
         const timeline = new TrackingTimeline(), filter = new PoseFilter();
+        const diagnostics = new TrackingDiagnostics(), poseDiagnostics = { reason: null };
         poseFilterRef.current = filter;
         let previousFaceState = false, renderFrames = 0;
         const metricsStarted = performance.now();
         const renderFrame = (timestamp) => {
           if (!runningRef.current || cameraRequestRef.current !== requestId) return;
+          filter.setExpectedDeliveryInterval(timeline.expectedDeliveryInterval(timestamp));
           poseRef.current = filter.sample(timestamp);
           const detected = Boolean(poseRef.current);
           if (detected !== previousFaceState) { previousFaceState = detected; setFaceDetected(detected); }
@@ -384,7 +387,10 @@ export default function Glasses3DOverlay() {
           Object.assign(debugMetricsRef.current, {
             cameraFps: timeline.cameraFrames / seconds, schedulingFps: renderFrames / seconds,
             inferenceFps: timeline.inferences / seconds, processingMs: timeline.durationMs,
-            droppedFrames: timeline.dropped, ...filter.metrics(timestamp),
+            droppedFrames: timeline.dropped,
+            resultDeliveryIntervalMs: timeline.lastDeliveryIntervalMs,
+            smoothedResultDeliveryIntervalMs: timeline.deliveryIntervalMs,
+            ...diagnostics.metrics(filter.metrics(timestamp)),
           });
           animationFrameRef.current = requestAnimationFrame(renderFrame);
         };
@@ -396,18 +402,36 @@ export default function Glasses3DOverlay() {
           // RVFC's display time is an estimate; never allow a future sample timestamp.
           const sampledAt = Math.min(now, captureTime);
           const infer = async () => {
-            let result;
-            try { result = await faceLandmarkerRef.current.detectForVideo(video, now); }
-            catch (error) { if (cameraRequestRef.current === requestId && runningRef.current) debugMetricsRef.current.lastError = error.message; }
-            const duration = performance.now() - started;
+            let result, inferenceError = null, sdkExecutionTimeMs = 0;
+            try {
+              const measured = await measureVideoInference(faceLandmarkerRef.current, video, now);
+              result = measured.result; sdkExecutionTimeMs = measured.sdkExecutionTimeMs;
+            } catch (error) {
+              inferenceError = error;
+              sdkExecutionTimeMs = performance.now() - started;
+              if (cameraRequestRef.current === requestId && runningRef.current) debugMetricsRef.current.lastError = error.message;
+            }
+            const deliveredAt = performance.now(), duration = deliveredAt - started;
             if (cameraRequestRef.current !== requestId || !runningRef.current) return;
-            if (!timeline.finish(now, duration) || metadata !== modelMetadataRef.current) return;
-            debugMetricsRef.current.inferenceMs = result?.inferenceDurationMs ?? duration;
-            debugMetricsRef.current.approximateLatencyMs = performance.now() - sampledAt;
-            const pose = landmarksToGlassesPose(result?.faceLandmarks?.[0], video.videoWidth,
-              video.videoHeight, metadata, result?.facialTransformationMatrixes?.[0],
-              { ...fitAdjustmentRef.current, mirrored: true });
-            filter.update(pose, sampledAt);
+            diagnostics.recordInference(result, inferenceError, sdkExecutionTimeMs);
+            if (!timeline.finish(now, duration, deliveredAt) || metadata !== modelMetadataRef.current) {
+              diagnostics.values.discardedResultCount++; return;
+            }
+            let pose = null;
+            try {
+              pose = landmarksToGlassesPose(result?.faceLandmarks?.[0], video.videoWidth,
+                video.videoHeight, metadata, result?.facialTransformationMatrixes?.[0],
+                { ...fitAdjustmentRef.current, mirrored: true }, poseDiagnostics);
+            } catch (error) {
+              poseDiagnostics.reason = "pose-exception";
+              debugMetricsRef.current.lastPoseError = error.message;
+            }
+            diagnostics.recordPose(pose, poseDiagnostics.reason);
+            const receivedAt = performance.now();
+            filter.update(pose, sampledAt, receivedAt, timeline.expectedDeliveryInterval(receivedAt));
+            diagnostics.values.totalProcessingTimeMs = performance.now() - started;
+            debugMetricsRef.current.inferenceMs = sdkExecutionTimeMs;
+            debugMetricsRef.current.approximateLatencyMs = receivedAt - sampledAt;
           };
           void infer();
         });
