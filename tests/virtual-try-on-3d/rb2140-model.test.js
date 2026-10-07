@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { Box3, MeshPhysicalMaterial, Vector3 } from "three";
+import { canonicalModelMatrix } from "../../src/virtual-try-on-3d/model-runtime.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { BUILT_IN_3D_GLASSES, RB2140_3D_GLASSES } from "../../src/constants/virtual-try-on.js";
@@ -53,22 +54,23 @@ test("los roles de ajuste existen y las inscripciones se mueven con su patilla",
   assert.ok(metadata.nodes.bridge.includes("FRAME_FRONT"));
 });
 
-test("conserva las medidas nativas y deja todo el frente delante de la máscara", () => {
-  const { millimetersPerUnit, offsetRaw, modelYawOffsetDegrees } = metadata.normalization;
+test("conserva medidas, texturas y geometría con puente como origen físico", () => {
+  const { millimetersPerUnit } = metadata.normalization;
   assert.equal(millimetersPerUnit, 1000);
-  assert.equal(modelYawOffsetDegrees, 0);
-  const offset = new Vector3().fromArray(offsetRaw);
+  assert.equal(metadata.schemaVersion, 2);
+  assert.equal(metadata.normalization.modelYawOffsetDegrees, undefined);
+  const matrix = canonicalModelMatrix(metadata);
   const front = new Box3().setFromObject(gltf.scene.getObjectByName("FRAME_FRONT"));
   assert.ok(Math.abs(front.getSize(new Vector3()).x * 1000 - metadata.dimensionsMm.frameWidth) < 1e-6);
-  front.translate(offset);
-  assert.ok(front.min.z * 1000 > -metadata.occlusion.maskFrontDepthMm);
-  assert.ok(Math.abs(front.max.z) < 1e-9);
+  front.applyMatrix4(matrix);
+  assert.ok(front.min.z > -metadata.occlusion.maskFrontDepthMm);
+  assert.deepEqual(metadata.anchors.bridgeSeat.position, [0, 0, 0]);
   for (const side of ["LEFT", "RIGHT"]) {
     const lens = new Box3().setFromObject(gltf.scene.getObjectByName(`LENS_${side}`));
     assert.ok(Math.abs(lens.getSize(new Vector3()).x * 1000 - 50) < 0.001);
-    const temple = new Box3().setFromObject(gltf.scene.getObjectByName(`TEMPLE_${side}`)).translate(offset);
-    assert.ok(temple.min.z * 1000 < -metadata.occlusion.templeStartDepthMm);
-    assert.ok(temple.max.z * 1000 > -metadata.occlusion.maskFrontDepthMm);
+    const temple = new Box3().setFromObject(gltf.scene.getObjectByName(`TEMPLE_${side}`)).applyMatrix4(matrix);
+    assert.ok(temple.min.z < -metadata.occlusion.maskFrontDepthMm);
+    assert.ok(temple.max.z > -metadata.occlusion.maskFrontDepthMm);
   }
 });
 
