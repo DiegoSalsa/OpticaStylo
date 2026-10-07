@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "ab3e5bef3d644cce553687a712f52b544e3cac6e",
+  "description": "30 poses por modelo, rostro canónico, yaw/pitch/mirror; pose, mesh y patillas completas redondeadas a 1e-8.",
+  "digests": {
+    "Harley-Davidson_HD0896_001_V4_definitivo": "1a70c61aa2d76b6edf5265006002a31314a39f4058d0a8a074eff8409dce4060",
+    "RB2140-901-50-v2.19": "2f93d7b4c1b566d1b3d0cae030aed8a00cb75f6ccf5211096629ad9746d7cc06"
+  }
+}
