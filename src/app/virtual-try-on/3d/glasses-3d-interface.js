@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { formatClp } from "@/utils/store-client";
 import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-projection";
@@ -13,6 +13,13 @@ import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-pro
 import styles from "./virtual-try-on-3d.module.css";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
+const compactQuery = "(max-width: 780px)";
+function subscribeCompact(listener) {
+  const query = window.matchMedia(compactQuery);
+  query.addEventListener("change", listener);
+  return () => query.removeEventListener("change", listener);
+}
+const readCompact = () => window.matchMedia(compactQuery).matches;
 
 function TrackingDiagnostics({ metricsRef }) {
   const outputRef = useRef(null);
@@ -22,7 +29,7 @@ function TrackingDiagnostics({ metricsRef }) {
     }, 500);
     return () => window.clearInterval(timer);
   }, [metricsRef]);
-  return <details><summary>Diagnóstico de seguimiento</summary><pre><output ref={outputRef} aria-label="Métricas de tracking" /></pre></details>;
+  return <details><summary>Diagnóstico de seguimiento</summary><pre style={{ maxWidth: "100%", overflowX: "auto" }}><output ref={outputRef} aria-label="Métricas de tracking" /></pre></details>;
 }
 
 export default function Glasses3DInterface({ model }) {
@@ -70,6 +77,7 @@ export default function Glasses3DInterface({ model }) {
     viewerState,
   } = model;
   const projection = cameraProjection(videoDimensions.width, videoDimensions.height);
+  const compact = useSyncExternalStore(subscribeCompact, readCompact, () => false);
   const viewerRef = useRef(null);
   const [viewerSize, setViewerSize] = useState({ width: 0, height: 0 });
   const [occlusionEnabled, setOcclusionEnabled] = useState(true);
@@ -81,9 +89,16 @@ export default function Glasses3DInterface({ model }) {
     if (viewerRef.current) observer.observe(viewerRef.current);
     return () => observer.disconnect();
   }, []);
-  // Both camera pixels and WebGL use exactly this cover rectangle. Centering
-  // only horizontally fails for portrait sources on a wide/short mobile viewer.
+  // Desktop retains the approved cover rectangle. Compact viewer gets its
+  // height from source aspect, so media fills it without a second fit equation.
   const { width: coverWidth, height: coverHeight } = coverRectangle(viewerSize.width, viewerSize.height, projection.aspect);
+  useEffect(() => {
+    const width = compact ? viewerSize.width : coverWidth, height = compact ? viewerSize.height : coverHeight;
+    debugMetricsRef.current.layout = { compact, sourceAspect: projection.aspect,
+      viewerWidth: viewerSize.width, viewerHeight: viewerSize.height, viewerAspect: viewerSize.width / viewerSize.height,
+      mediaWidth: width, mediaHeight: height, mediaAspect: width / height };
+    debugMetricsRef.current.graphics = { dpr: compact ? 1 : [1, 1.5], environmentResolution: compact ? 64 : 128, antialias: true };
+  }, [compact, coverWidth, coverHeight, debugMetricsRef, projection.aspect, viewerSize]);
 
   return (
     <section className={styles.experience} aria-label="Probador virtual 3D">
@@ -187,7 +202,7 @@ export default function Glasses3DInterface({ model }) {
               : undefined
           }
         >
-          <div className={styles.mediaLayer} style={coverWidth ? { width: coverWidth, height: coverHeight } : undefined}>
+          <div className={styles.mediaLayer} style={compact ? { width: "100%", height: "100%" } : coverWidth ? { width: coverWidth, height: coverHeight } : undefined}>
           <video
             className={styles.videoElement}
             ref={videoRef}
@@ -221,7 +236,7 @@ export default function Glasses3DInterface({ model }) {
             <Canvas
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
-              dpr={[1, 1.5]}
+              dpr={compact ? 1 : [1, 1.5]}
               gl={{
                 alpha: true,
                 antialias: true,
@@ -246,7 +261,7 @@ export default function Glasses3DInterface({ model }) {
               <hemisphereLight args={["#ffffff", "#52635e", 1.05]} />
               <directionalLight position={[250, 320, 480]} intensity={1.7} />
               <directionalLight position={[-280, 40, 260]} intensity={0.65} />
-              <Environment resolution={128}>
+              <Environment resolution={compact ? 64 : 128}>
                 <Lightformer
                   color="#ffffff"
                   form="rect"

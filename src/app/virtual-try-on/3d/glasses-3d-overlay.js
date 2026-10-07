@@ -6,6 +6,8 @@ import { BUILT_IN_3D_GLASSES } from "@/constants/virtual-try-on";
 import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
+import { TrackingPerformance } from "@/virtual-try-on-3d/tracking-performance";
+import { cameraCaptureConstraints } from "@/virtual-try-on-3d/camera-capture";
 import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 
@@ -289,6 +291,7 @@ export default function Glasses3DOverlay() {
       }
     }
     poseRef.current = nextPose;
+    if (nextPose) debugMetricsRef.current.scale = nextPose.diagnostics;
     setFaceDetected(Boolean(nextPose));
     setStatusMessage(
       nextPose
@@ -324,22 +327,11 @@ export default function Glasses3DOverlay() {
       setCaptureMessage("");
       setStatusMessage("Esperando que autorices el uso de la cámara…");
 
-      const isMobilePortrait = window.matchMedia(
-        "(max-width: 768px) and (orientation: portrait)",
-      ).matches;
+      const compact = window.matchMedia("(max-width: 780px)").matches;
       const trackingPromise = createFaceTracking().catch(() => null);
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: requestedFacingMode },
-            aspectRatio: { ideal: isMobilePortrait ? 0.75 : 16 / 9 },
-            height: { ideal: isMobilePortrait ? 960 : 720 },
-            width: { ideal: isMobilePortrait ? 720 : 1280 },
-            frameRate: { ideal: 60, max: 60 },
-          },
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(cameraCaptureConstraints(compact, requestedFacingMode));
 
         if (cameraRequestRef.current !== requestId) {
           for (const track of stream.getTracks()) track.stop();
@@ -349,15 +341,26 @@ export default function Glasses3DOverlay() {
         }
 
         streamRef.current = stream;
+        const settings = stream.getVideoTracks()[0]?.getSettings?.() ?? {};
+        debugMetricsRef.current.camera = { width: settings.width, height: settings.height, frameRate: settings.frameRate,
+          aspectRatio: settings.aspectRatio, facingMode: settings.facingMode, compact };
         const video = videoRef.current;
         video.srcObject = stream;
         const syncDimensions = () => {
           if (video.videoWidth > 0 && video.videoHeight > 0) {
+            const previous = debugMetricsRef.current.source;
+            if (previous && (previous.width !== video.videoWidth || previous.height !== video.videoHeight)) {
+              // Clear the old pixel space at resize, before WebGL can remount.
+              poseFilterRef.current?.reset(); poseRef.current = null;
+              debugMetricsRef.current.scale = null; debugMetricsRef.current.lastPoseValid = false;
+              setFaceDetected(false);
+            }
             setCameraAspectRatio(video.videoWidth / video.videoHeight);
             setVideoDimensions({
               width: video.videoWidth,
               height: video.videoHeight,
             });
+            debugMetricsRef.current.source = { width: video.videoWidth, height: video.videoHeight, aspect: video.videoWidth / video.videoHeight };
           }
         };
         video.onresize = syncDimensions;
@@ -371,9 +374,10 @@ export default function Glasses3DOverlay() {
         setCameraStatus("ready");
         setStatusMessage("Cámara activa. Preparando el seguimiento facial…");
 
-        const timeline = new TrackingTimeline(), filter = new PoseFilter();
+        const timeline = new TrackingTimeline(compact ? 1 : 1.15), filter = new PoseFilter();
+        let performanceProfile = null, lastSourceWidth = 0, lastSourceHeight = 0;
         poseFilterRef.current = filter;
-        let previousFaceState = false, renderFrames = 0;
+        let previousFaceState = false, renderFrames = 0, lastMetricsAt = -Infinity;
         const metricsStarted = performance.now();
         const renderFrame = (timestamp) => {
           if (!runningRef.current || cameraRequestRef.current !== requestId) return;
@@ -381,33 +385,51 @@ export default function Glasses3DOverlay() {
           const detected = Boolean(poseRef.current);
           if (detected !== previousFaceState) { previousFaceState = detected; setFaceDetected(detected); }
           renderFrames++;
-          const seconds = Math.max(0.001, (timestamp - metricsStarted) / 1000);
-          Object.assign(debugMetricsRef.current, {
-            cameraFps: timeline.cameraFrames / seconds, schedulingFps: renderFrames / seconds,
-            inferenceFps: timeline.inferences / seconds, processingMs: timeline.durationMs,
-            droppedFrames: timeline.dropped, ...filter.metrics(timestamp),
-          });
+          if (timestamp - lastMetricsAt >= 500) {
+            const seconds = Math.max(0.001, (timestamp - metricsStarted) / 1000);
+            Object.assign(debugMetricsRef.current, {
+              cameraFps: timeline.cameraFrames / seconds, schedulingFps: renderFrames / seconds,
+              inferenceFps: timeline.inferences / seconds, processingMs: timeline.durationMs,
+              droppedFrames: timeline.dropped, ...filter.metrics(timestamp),
+            });
+            lastMetricsAt = timestamp;
+          }
           animationFrameRef.current = requestAnimationFrame(renderFrame);
         };
         animationFrameRef.current = requestAnimationFrame(renderFrame);
         cancelVideoLoopRef.current = startVideoFrameLoop(video, (now, mediaTime, captureTime) => {
-          if (!timeline.observe(mediaTime) || !faceLandmarkerRef.current || !modelMetadataRef.current || !timeline.begin(now)) return;
+          if (!timeline.observe(mediaTime) || !faceLandmarkerRef.current || !modelMetadataRef.current || !timeline.begin(now, performanceProfile?.minIntervalMs ?? 0)) return;
           const metadata = modelMetadataRef.current;
           const started = performance.now();
           // RVFC's display time is an estimate; never allow a future sample timestamp.
           const sampledAt = Math.min(now, captureTime);
           const infer = async () => {
             let result;
-            try { result = await faceLandmarkerRef.current.detectForVideo(video, now); }
+            try { result = await faceLandmarkerRef.current.detectForVideo(video, now, { maxDimension: performanceProfile?.maxDimension ?? Infinity }); }
             catch (error) { if (cameraRequestRef.current === requestId && runningRef.current) debugMetricsRef.current.lastError = error.message; }
             const duration = performance.now() - started;
             if (cameraRequestRef.current !== requestId || !runningRef.current) return;
             if (!timeline.finish(now, duration) || metadata !== modelMetadataRef.current) return;
             debugMetricsRef.current.inferenceMs = result?.inferenceDurationMs ?? duration;
             debugMetricsRef.current.approximateLatencyMs = performance.now() - sampledAt;
-            const pose = landmarksToGlassesPose(result?.faceLandmarks?.[0], video.videoWidth,
-              video.videoHeight, metadata, result?.facialTransformationMatrixes?.[0],
+            const deliveredAt = performance.now();
+            performanceProfile?.record(result, deliveredAt, deliveredAt - sampledAt, debugMetricsRef.current.renderFps);
+            if (performanceProfile) Object.assign(debugMetricsRef.current, performanceProfile.metrics());
+            if (!result) { filter.update(null, sampledAt); return; }
+            debugMetricsRef.current.trackingInput = { width: result.trackingWidth, height: result.trackingHeight, preprocessingMs: result.preprocessingMs };
+            // A late result from before camera rotation belongs to another pixel
+            // space. Discard it; do not feed it to the new renderer/filter.
+            if (result.sourceWidth !== video.videoWidth || result.sourceHeight !== video.videoHeight) return;
+            if (lastSourceWidth && (lastSourceWidth !== result.sourceWidth || lastSourceHeight !== result.sourceHeight)) filter.reset();
+            lastSourceWidth = result.sourceWidth; lastSourceHeight = result.sourceHeight;
+            const pose = landmarksToGlassesPose(result.faceLandmarks?.[0], result.sourceWidth,
+              result.sourceHeight, metadata, result.facialTransformationMatrixes?.[0],
               { ...fitAdjustmentRef.current, mirrored: true });
+            if (pose) debugMetricsRef.current.scale = pose.diagnostics;
+            debugMetricsRef.current.lastPoseValid = Boolean(pose);
+            debugMetricsRef.current.poseGraceMs = 180;
+            // Retain the approved capture-age limit. Slow delivery does not buy
+            // an extended grace period or renew an already stale measurement.
             filter.update(pose, sampledAt);
           };
           void infer();
@@ -420,6 +442,7 @@ export default function Glasses3DOverlay() {
         }
         if (tracking) {
           debugMetricsRef.current.backend = tracking.backend;
+          performanceProfile = new TrackingPerformance(compact, tracking.backend);
           faceLandmarkerRef.current = tracking.landmarker;
           setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
           setTrackingReady(true);
