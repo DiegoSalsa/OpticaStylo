@@ -33,7 +33,6 @@ export default function Glasses3DInterface({ model }) {
     cameraAspectRatio,
     cameraStatus,
     mobileCamera,
-    cameraVisual,
     captureTryOn,
     cartMessage,
     catalogSearch,
@@ -62,7 +61,6 @@ export default function Glasses3DInterface({ model }) {
     rendererCanvasRef,
     resetFitAdjustment,
     selectedModel,
-    setCameraVisual,
     setCatalogSearch,
     setPhotoLoaded,
     setSelectedModel,
@@ -141,48 +139,6 @@ export default function Glasses3DInterface({ model }) {
             </li>
           </ol>
         </section>
-        <section
-          className={styles.adjustmentCard}
-          aria-labelledby="visual-adjustments-title"
-        >
-          <p className={styles.panelTitle} id="visual-adjustments-title">
-            Ajustes visuales
-          </p>
-          <label>
-            <span>Brillo</span>
-            <output>{cameraVisual.brightness}%</output>
-            <input
-              aria-label="Brillo de la cámara"
-              max="125"
-              min="75"
-              onChange={(event) =>
-                setCameraVisual((current) => ({
-                  ...current,
-                  brightness: Number(event.target.value),
-                }))
-              }
-              type="range"
-              value={cameraVisual.brightness}
-            />
-          </label>
-          <label>
-            <span>Contraste</span>
-            <output>{cameraVisual.contrast}%</output>
-            <input
-              aria-label="Contraste de la cámara"
-              max="125"
-              min="75"
-              onChange={(event) =>
-                setCameraVisual((current) => ({
-                  ...current,
-                  contrast: Number(event.target.value),
-                }))
-              }
-              type="range"
-              value={cameraVisual.contrast}
-            />
-          </label>
-        </section>
         <p className={styles.guidePrivacy}>
           <span aria-hidden="true">●</span> El video no se guarda ni sale de tu
           dispositivo.
@@ -207,9 +163,6 @@ export default function Glasses3DInterface({ model }) {
             muted
             playsInline
             data-hidden={cameraStatus !== "ready"}
-            style={{
-              filter: `brightness(${cameraVisual.brightness}%) contrast(${cameraVisual.contrast}%)`,
-            }}
           />
 
           {photoUrl && (
@@ -222,9 +175,6 @@ export default function Glasses3DInterface({ model }) {
               onLoad={() => setPhotoLoaded(true)}
               sizes="(max-width: 780px) 100vw, 55vw"
               src={photoUrl}
-              style={{
-                filter: `brightness(${cameraVisual.brightness}%) contrast(${cameraVisual.contrast}%)`,
-              }}
               unoptimized
             />
           )}
@@ -450,6 +400,7 @@ export default function Glasses3DInterface({ model }) {
           {cartMessage && (
             <p className={styles.cartMessage} role="status">
               {cartMessage}
+              {cartMessage.startsWith("Marco agregado al carrito.") && <>{" "}<Link href="/carrito">Ver carrito y configurar receta</Link></>}
             </p>
           )}
         </article>

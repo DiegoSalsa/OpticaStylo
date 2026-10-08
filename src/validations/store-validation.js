@@ -137,12 +137,17 @@ export function validateCartItemsInput(input) {
     };
   });
   if (
-    new Set(items.map((item) => `${item.productId}:${item.mountFrameProductId ?? ""}`)).size
+    new Set(items.map((item) => item.productId)).size
     !== items.length
   ) {
     fail("No puede repetir un producto en la misma solicitud.");
   }
-  return { items };
+  const replaceFrameProductId = input.replaceFrameProductId == null
+    ? null : uuid(input.replaceFrameProductId, "montura a configurar");
+  if (replaceFrameProductId && !items.some((item) => item.productId === replaceFrameProductId && !item.mountFrameProductId)) {
+    fail("Debe incluir el marco cuya configuración desea modificar.");
+  }
+  return { items, replaceFrameProductId };
 }
 
 function buyer(value) {

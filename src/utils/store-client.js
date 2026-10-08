@@ -9,11 +9,28 @@ export async function readStoreResponse(response) {
   return payload.data;
 }
 
-export async function ensureStoreCart() {
-  const response = await fetch("/api/store/cart", { cache: "no-store" });
-  if (response.ok) return readStoreResponse(response);
-  if (response.status !== 404) return readStoreResponse(response);
-  return readStoreResponse(await fetch("/api/store/cart", { method: "POST" }));
+let pendingCart = null;
+export const STORE_CART_CHANGED_EVENT = "opticastylo:cart-changed";
+export function announceStoreCartChange(cart) {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(STORE_CART_CHANGED_EVENT, { detail: cart }));
+  return cart;
+}
+export async function ensureStoreCart({ forShopping = false } = {}) {
+  // Compartir la creación entre montajes concurrentes evita rotar la cookie
+  // mientras otro componente ya está guardando productos.
+  if (!pendingCart) pendingCart = (async () => {
+    const response = await fetch("/api/store/cart", { cache: "no-store" });
+    if (response.ok) return readStoreResponse(response);
+    if (response.status !== 404) return readStoreResponse(response);
+    return readStoreResponse(await fetch("/api/store/cart", { method: "POST" }));
+  })().finally(() => { pendingCart = null; });
+  const cart = await pendingCart;
+  if (forShopping && cart.status !== "ACTIVE") {
+    if (!pendingCart) pendingCart = fetch("/api/store/cart", { method: "POST" })
+      .then(readStoreResponse).finally(() => { pendingCart = null; });
+    return pendingCart;
+  }
+  return cart;
 }
 
 export const formatClp = (value) => new Intl.NumberFormat("es-CL", {

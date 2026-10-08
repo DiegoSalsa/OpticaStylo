@@ -36,7 +36,7 @@ function createCameraFile(video) {
   });
 }
 
-export default function PrescriptionImageInput({ disabled, hasStoredImage, image, onImageChange }) {
+export default function PrescriptionImageInput({ disabled, hasStoredImage, storedImageVersion, image, onImageChange }) {
   const [source, setSource] = useState("FILE");
   const [cameraStatus, setCameraStatus] = useState("idle");
   const [cameraMessage, setCameraMessage] = useState("");
@@ -138,7 +138,7 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, image
     {source === "FILE" && <label className="prescription-file-picker"><span><Icon name="file" size={18} />Seleccionar imagen</span><input accept={PRESCRIPTION_IMAGE_ACCEPT} disabled={disabled} onChange={selectImage} type="file" /></label>}
 
     {previewUrl && <div className="prescription-image-preview"><Image alt="Vista previa de la receta seleccionada" height={52} src={previewUrl} unoptimized width={52} /><div><strong>{image.name}</strong><span>{Math.ceil(image.size / 1024)} KiB · lista para leer</span></div><button disabled={disabled} onClick={() => onImageChange(null)} type="button">Quitar</button></div>}
-    {!image && hasStoredImage && <p className="prescription-current-image">Ya hay una imagen de receta guardada. Puedes conservarla o reemplazarla.</p>}
+    {!image && hasStoredImage && <div className="prescription-image-preview"><Image alt="Receta guardada de forma privada" height={120} src={`/api/store/cart/prescription/image?v=${encodeURIComponent(storedImageVersion ?? "")}`} unoptimized width={180} /><p className="prescription-current-image">Imagen guardada. Puedes conservarla o reemplazarla.</p></div>}
     <small className="prescription-image-help">La lectura automática usa JPEG, PNG o WEBP. HEIC y HEIF se guardan como respaldo y puedes completar sus datos manualmente.</small>
   </div>;
 }

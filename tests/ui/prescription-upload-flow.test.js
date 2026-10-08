@@ -17,6 +17,6 @@ test("la galería no fuerza la cámara y ambas fuentes inician la lectura", asyn
   assert.match(imageInput, /await onImageChange\(capturedImage\)/);
   assert.match(imageInput, /void onImageChange\(file\)/);
   assert.match(cart, /async function handlePrescriptionImageChange\(image\)/);
-  assert.match(cart, /await uploadAndReadPrescriptionImage\(image\)/);
+  assert.match(cart, /await readStoredPrescriptionImage\(\)/);
   assert.match(cart, /onImageChange=\{handlePrescriptionImageChange\}/);
 });

@@ -1,6 +1,6 @@
-import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
+import { authenticateCustomerRequest, getStoreOrderToken } from "@/auth/store-session";
 import { getStoreOrder } from "@/services/store-service";
-import { createSuccessResponse } from "@/utils/api-response";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 
 // GET /api/store/orders/[orderId]/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
     const account = await authenticateCustomerRequest(request, { optional: true });
     const { orderId } = await params;
     return createSuccessResponse(await getStoreOrder(
-      orderId, getStoreCartToken(request), account,
+      orderId, getStoreOrderToken(request, orderId), account,
     ));
   });
 }
