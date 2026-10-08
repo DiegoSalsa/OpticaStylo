@@ -400,6 +400,7 @@ export default function Glasses3DInterface({ model }) {
           {cartMessage && (
             <p className={styles.cartMessage} role="status">
               {cartMessage}
+              {cartMessage.startsWith("Marco agregado al carrito.") && <>{" "}<Link href="/carrito">Ver carrito y configurar receta</Link></>}
             </p>
           )}
         </article>
