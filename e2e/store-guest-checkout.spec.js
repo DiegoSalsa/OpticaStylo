@@ -21,6 +21,7 @@ async function openFrame(page, lensName = "Cristal monofocal de prueba") {
   await page.getByRole("radio", { name: new RegExp(lensName) }).check();
   await page.getByRole("button", { name: "Agregar al carrito" }).click();
   await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByRole("heading", { name: "Receta óptica obligatoria" })).toBeVisible();
 }
 async function fillPrescription(page) {
@@ -70,6 +71,7 @@ test("invitado: receta manual, recarga, navegación, edición y pedido completo"
   await page.getByRole("radio", { name: /Cristal filtro azul de prueba/ }).check();
   await page.getByRole("button", { name: "Guardar configuración" }).click();
   await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByText("Cristal monofocal de prueba", { exact: true })).toHaveCount(0);
   await expect(page.locator('[name="rightSphere"]')).toHaveValue("-1.12");
   const order = await createOrder(page);
@@ -105,6 +107,7 @@ test("invitado: accesorio sin receta, pedido ajeno denegado y nueva compra conse
   await page.goto(`/tienda/${ids.accessory}`);
   await page.getByRole("button", { name: "Agregar al carrito" }).click();
   await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByRole("heading", { name: "Receta óptica obligatoria" })).toHaveCount(0);
   const order = await createOrder(page);
   const alien = await browser.newContext();
@@ -113,6 +116,7 @@ test("invitado: accesorio sin receta, pedido ajeno denegado y nueva compra conse
   await page.goto(`/tienda/${ids.accessory}`);
   await page.getByRole("button", { name: "Agregar al carrito" }).click();
   await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByText("Estuche de prueba", { exact: true })).toBeVisible();
   await page.goto(`/checkout/mercado-pago/pending?orderId=${order.id}`);
   await expect(page.getByText(`N.º ${order.saleNumber}`, { exact: true })).toBeVisible();
