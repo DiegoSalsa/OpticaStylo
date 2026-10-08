@@ -1,0 +1,58 @@
+{
+  "source": "imagen adjunta cargada en memoria; no copiada al repositorio",
+  "synthetic": true,
+  "videoWidth": 1280,
+  "videoHeight": 720,
+  "backend": "worker",
+  "detection": {
+    "inferenceAttempts": 1294,
+    "inferencesCompleted": 1293,
+    "inferencesWithFace": 363,
+    "inferencesWithoutFace": 930,
+    "mediaPipeErrors": 0,
+    "poseConversionRejections": 0,
+    "poseConversionErrors": 0,
+    "trackingInitializationErrors": 0,
+    "discardedResolutionChanges": 1
+  },
+  "inferenceFps": 22.103713218842685,
+  "inferenceMs": 21.100000008940697,
+  "presentation": {
+    "sourceWidth": 1280,
+    "sourceHeight": 720,
+    "sourceAspect": 1.7777777777777777,
+    "viewerWidth": 359.20001220703125,
+    "viewerHeight": 202.0500030517578,
+    "viewerAspect": 1.7777778113421625,
+    "media": {
+      "width": 359.20001220703125,
+      "height": 202.05000686645508,
+      "left": 0,
+      "top": -0.0000019073486328125
+    },
+    "cssPixelsPerSourcePixel": 0.2806250095367432,
+    "visibleSource": {
+      "x": 0,
+      "y": 0.000006796787770131958,
+      "width": 1280,
+      "height": 719.9999864064245
+    },
+    "visibleFraction": 0.999999981120034,
+    "croppedFraction": 1.8879966035001416e-8,
+    "magnificationVsFullWidth": 1,
+    "fullFrameVisible": true,
+    "videoRectangle": {
+      "x": 8.006250381469727,
+      "y": 170.65625,
+      "width": 359.1875,
+      "height": 202.03750610351562
+    },
+    "canvasRectangle": {
+      "x": 8.006250381469727,
+      "y": 170.65625,
+      "width": 359.1875,
+      "height": 202.03750610351562
+    },
+    "alignmentErrorPx": 0
+  }
+}

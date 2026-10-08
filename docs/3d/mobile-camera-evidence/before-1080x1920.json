@@ -1,0 +1,169 @@
+{
+  "build": {
+    "commit": "6f1878724a6aaad5173de1547e5c9ed7e8f9b2ae",
+    "branch": "provadorv2-mobile-camera",
+    "dirty": true,
+    "builtAt": "2026-10-08T01:56:30.915Z",
+    "deployment": null
+  },
+  "cameraStatus": "ready",
+  "videoWidth": 1080,
+  "videoHeight": 1920,
+  "detection": {
+    "inferenceAttempts": 733,
+    "inferencesCompleted": 732,
+    "inferencesWithFace": 0,
+    "inferencesWithoutFace": 732,
+    "mediaPipeErrors": 0,
+    "poseConversionRejections": 0,
+    "poseConversionErrors": 0,
+    "trackingInitializationErrors": 0
+  },
+  "camera": {
+    "profile": "mobile-flexible",
+    "requestedFacingMode": "user",
+    "supportedConstraints": {
+      "facingMode": true,
+      "frameRate": true,
+      "resizeMode": true
+    },
+    "attempts": [
+      {
+        "requested": {
+          "audio": false,
+          "video": {
+            "facingMode": {
+              "ideal": "user"
+            },
+            "frameRate": {
+              "ideal": 30
+            },
+            "resizeMode": {
+              "ideal": "none"
+            }
+          }
+        },
+        "received": {
+          "aspectRatio": 1.7777777777777777,
+          "frameRate": 30,
+          "height": 720,
+          "resizeMode": "none",
+          "width": 1280
+        }
+      }
+    ],
+    "adjustments": [],
+    "synthetic": true,
+    "settings": {
+      "aspectRatio": 0.5625,
+      "frameRate": 30,
+      "height": 1920,
+      "resizeMode": "none",
+      "width": 1080
+    },
+    "capabilities": {
+      "aspectRatio": {
+        "max": 1280,
+        "min": 0.001388888888888889
+      },
+      "facingMode": [],
+      "frameRate": {
+        "max": 30,
+        "min": 0
+      },
+      "height": {
+        "max": 720,
+        "min": 1
+      },
+      "resizeMode": [
+        "none",
+        "crop-and-scale"
+      ],
+      "width": {
+        "max": 1280,
+        "min": 1
+      }
+    },
+    "appliedConstraints": {},
+    "capabilitiesAvailable": true,
+    "actualFacingMode": null,
+    "trackState": "live",
+    "zoom": {
+      "current": null,
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    "requestedConstraints": {
+      "audio": false,
+      "video": {
+        "facingMode": {
+          "ideal": "user"
+        },
+        "frameRate": {
+          "ideal": 30
+        },
+        "resizeMode": {
+          "ideal": "none"
+        }
+      }
+    },
+    "facingModeMismatch": false,
+    "browserReportsCrop": false,
+    "videoWidth": 1080,
+    "videoHeight": 1920
+  },
+  "presentation": {
+    "sourceWidth": 1080,
+    "sourceHeight": 1920,
+    "sourceAspect": 0.5625,
+    "viewerWidth": 359.20001220703125,
+    "viewerHeight": 490,
+    "viewerAspect": 0.7330612494021046,
+    "media": {
+      "width": 359.20001220703125,
+      "height": 638.5777994791666,
+      "left": 0,
+      "top": -74.28889973958331
+    },
+    "cssPixelsPerSourcePixel": 0.3325926038953993,
+    "visibleSource": {
+      "x": 0,
+      "y": 223.36305398705514,
+      "width": 1080,
+      "height": 1473.2738920258896
+    },
+    "visibleFraction": 0.7673301520968175,
+    "croppedFraction": 0.23266984790318246,
+    "magnificationVsFullWidth": 1,
+    "fullFrameVisible": false,
+    "videoRectangle": {
+      "x": 8.006250381469727,
+      "y": 1082.8250732421875,
+      "width": 359.1875,
+      "height": 638.5499877929688
+    },
+    "canvasRectangle": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "alignmentErrorPx": 1082.8250732421875
+  },
+  "cameraFps": 24.992152222733782,
+  "schedulingFps": 50.32236254316638,
+  "inferenceFps": 17.6756091082523,
+  "processingMs": 43.39502324857989,
+  "droppedFrames": 282,
+  "resultAgeMs": null,
+  "facialSpeedPxPerSecond": 0,
+  "angularSpeedRadPerSecond": 0,
+  "positionAlpha": 1,
+  "rotationAlpha": 1,
+  "scaleAlpha": 1,
+  "backend": "worker",
+  "renderFps": 55.06271030795901,
+  "inferenceMs": 14.100000008940697,
+  "approximateLatencyMs": 21.599999994039536
+}
