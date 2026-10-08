@@ -3,9 +3,9 @@ import { runtimeFittingMetadata } from "../virtual-try-on-3d/model-runtime.js";
 import { fitTemples } from "../virtual-try-on-3d/temple-fitting.js";
 import { cameraProjection, unprojectVideoPoint } from "../virtual-try-on-3d/camera-projection.js";
 import { PoseFilter } from "../virtual-try-on-3d/pose-filter.js";
-import { compareScales } from "../virtual-try-on-3d/scale-comparison.js";
+import { compareScales, REFERENCE_FACE_WIDTH_MM } from "../virtual-try-on-3d/scale-comparison.js";
+import { measureIrisScale, physicalScale } from "../virtual-try-on-3d/physical-scale.js";
 
-const REFERENCE_FACE_WIDTH_MM = 135;
 const FACE_MESH_COUNT = 468;
 const finite = (p) => p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z ?? 0);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -31,10 +31,11 @@ function headQuaternion(landmarks, width, height, transform, mirrored, projectio
   return new Quaternion().setFromRotationMatrix(matrix).normalize();
 }
 
-/** Anatomy, orientation and physical size are separate estimates. Iris values
- * never participate, so looking sideways cannot move or resize the glasses.
+/** Anatomy, orientation and physical size are separate estimates. Only iris
+ * diameters participate in size. Iris never changes the bridge or quaternion.
  * V2 bridgeSeat=(0,0,0) is aligned to nose landmark 6, a rigid nasal structure. */
-export function landmarksToGlassesPose(landmarks, width, height, metadata, transform = null, adjustment = null) {
+export function landmarksToGlassesPose(landmarks, width, height, metadata, transform = null, adjustment = null,
+  scaleEstimator = null, timestamp = null) {
   if (!metadata || !landmarks || width <= 0 || height <= 0 || landmarks.length < FACE_MESH_COUNT
     || !landmarks.slice(0, FACE_MESH_COUNT).every(finite)) return null;
   const mirrored = adjustment?.mirrored ?? true;
@@ -55,16 +56,32 @@ export function landmarksToGlassesPose(landmarks, width, height, metadata, trans
   const unprojectedFaceWidthPx = Math.hypot(rightCheek[0] - leftCheek[0], rightCheek[1] - leftCheek[1]);
   const faceWidth = unprojectedFaceWidthPx / projectionLength;
   if (faceWidth < eyeDistance) return null;
-  const pixelsPerMm = faceWidth / (adjustment?.faceWidthMm ?? REFERENCE_FACE_WIDTH_MM);
   const scaleDiagnostics = compareScales(landmarks, width, height, transform, {
     unprojectedFaceWidthPx, projectionLength, correctedFaceWidthPx: faceWidth,
     referenceFaceWidthMm: adjustment?.faceWidthMm ?? REFERENCE_FACE_WIDTH_MM,
     frameWidthMm: metadata.dimensionsMm.frameWidth,
     scaleFactor: clamp(adjustment?.scaleFactor ?? 1, 0.88, 1.12),
   });
+  const iris = measureIrisScale(landmarks, width, height);
+  const faceScale = scaleDiagnostics.v2ScalePxPerMm;
+  const scaleMode = ["historical", "v2"].includes(adjustment?.scaleMode) ? adjustment.scaleMode : "physical";
+  const estimate = scaleMode === "physical"
+    ? scaleEstimator?.update(faceScale, iris, width, timestamp) ?? physicalScale(faceScale, iris)
+    : { pixelsPerMm: scaleMode === "historical" ? scaleDiagnostics.v1BlendedScalePxPerMm : faceScale,
+      irisWeight: scaleMode === "historical" && scaleDiagnostics.v1IrisScalePxPerMm !== null ? 0.45 : 0, scaleSource: scaleMode };
+  const pixelsPerMm = estimate.pixelsPerMm;
+  Object.assign(scaleDiagnostics, iris, estimate, {
+    scaleMode, correctedScalePxPerMm: pixelsPerMm,
+    ratioCorrectedToOld: pixelsPerMm / scaleDiagnostics.v1BlendedScalePxPerMm,
+    estimatedFaceWidthMm: iris.irisScalePxPerMm === null ? null : faceWidth / iris.irisScalePxPerMm,
+    correctedEstimatedFrameWidthPx: metadata.dimensionsMm.frameWidth * pixelsPerMm * scaleDiagnostics.scaleFactor,
+  });
   const scale = pixelsPerMm * clamp(adjustment?.scaleFactor ?? 1, 0.88, 1.12);
+  scaleDiagnostics.finalScalePxPerMm = scale;
+  scaleDiagnostics.finalFrameWidthPx = scale * metadata.dimensionsMm.frameWidth;
   const position = [mirror(bridge.x) - width / 2,
-    height / 2 - bridge.y * height - clamp(adjustment?.verticalOffsetMm ?? 0, -6, 6) * pixelsPerMm, 0];
+    // Even a nonzero debug offset keeps V2's placement channel independent of iris.
+    height / 2 - bridge.y * height - clamp(adjustment?.verticalOffsetMm ?? 0, -6, 6) * faceScale, 0];
   const inverse = quaternion.clone().invert();
   const nosePosition = new Vector3().fromArray(position);
   const positions = new Float32Array(FACE_MESH_COUNT * 3);
