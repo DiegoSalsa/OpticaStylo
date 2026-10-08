@@ -1,0 +1,169 @@
+{
+  "build": {
+    "commit": "6f1878724a6aaad5173de1547e5c9ed7e8f9b2ae",
+    "branch": "provadorv2-mobile-camera",
+    "dirty": true,
+    "builtAt": "2026-10-08T01:56:30.915Z",
+    "deployment": null
+  },
+  "cameraStatus": "ready",
+  "videoWidth": 1280,
+  "videoHeight": 720,
+  "detection": {
+    "inferenceAttempts": 1546,
+    "inferencesCompleted": 1546,
+    "inferencesWithFace": 0,
+    "inferencesWithoutFace": 1546,
+    "mediaPipeErrors": 0,
+    "poseConversionRejections": 0,
+    "poseConversionErrors": 0,
+    "trackingInitializationErrors": 0
+  },
+  "camera": {
+    "profile": "mobile-flexible",
+    "requestedFacingMode": "user",
+    "supportedConstraints": {
+      "facingMode": true,
+      "frameRate": true,
+      "resizeMode": true
+    },
+    "attempts": [
+      {
+        "requested": {
+          "audio": false,
+          "video": {
+            "facingMode": {
+              "ideal": "user"
+            },
+            "frameRate": {
+              "ideal": 30
+            },
+            "resizeMode": {
+              "ideal": "none"
+            }
+          }
+        },
+        "received": {
+          "aspectRatio": 1.7777777777777777,
+          "frameRate": 30,
+          "height": 720,
+          "resizeMode": "none",
+          "width": 1280
+        }
+      }
+    ],
+    "adjustments": [],
+    "synthetic": true,
+    "settings": {
+      "aspectRatio": 1.7777777777777777,
+      "frameRate": 30,
+      "height": 720,
+      "resizeMode": "none",
+      "width": 1280
+    },
+    "capabilities": {
+      "aspectRatio": {
+        "max": 1280,
+        "min": 0.001388888888888889
+      },
+      "facingMode": [],
+      "frameRate": {
+        "max": 30,
+        "min": 0
+      },
+      "height": {
+        "max": 720,
+        "min": 1
+      },
+      "resizeMode": [
+        "none",
+        "crop-and-scale"
+      ],
+      "width": {
+        "max": 1280,
+        "min": 1
+      }
+    },
+    "appliedConstraints": {},
+    "capabilitiesAvailable": true,
+    "actualFacingMode": null,
+    "trackState": "live",
+    "zoom": {
+      "current": null,
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    "requestedConstraints": {
+      "audio": false,
+      "video": {
+        "facingMode": {
+          "ideal": "user"
+        },
+        "frameRate": {
+          "ideal": 30
+        },
+        "resizeMode": {
+          "ideal": "none"
+        }
+      }
+    },
+    "facingModeMismatch": false,
+    "browserReportsCrop": false,
+    "videoWidth": 1280,
+    "videoHeight": 720
+  },
+  "presentation": {
+    "sourceWidth": 1280,
+    "sourceHeight": 720,
+    "sourceAspect": 1.7777777777777777,
+    "viewerWidth": 359.20001220703125,
+    "viewerHeight": 202.0500030517578,
+    "viewerAspect": 1.7777778113421625,
+    "media": {
+      "width": 359.20001220703125,
+      "height": 202.05000686645508,
+      "left": 0,
+      "top": -0.0000019073486328125
+    },
+    "cssPixelsPerSourcePixel": 0.2806250095367432,
+    "visibleSource": {
+      "x": 0,
+      "y": 0.000006796787770131958,
+      "width": 1280,
+      "height": 719.9999864064245
+    },
+    "visibleFraction": 0.999999981120034,
+    "croppedFraction": 1.8879966035001416e-8,
+    "magnificationVsFullWidth": 1,
+    "fullFrameVisible": true,
+    "videoRectangle": {
+      "x": 8.006250381469727,
+      "y": 732.2562866210938,
+      "width": 359.1875,
+      "height": 202.03750610351562
+    },
+    "canvasRectangle": {
+      "x": 8.006250381469727,
+      "y": 732.2562866210938,
+      "width": 359.1875,
+      "height": 202.03750610351562
+    },
+    "alignmentErrorPx": 0
+  },
+  "cameraFps": 29.771124350726538,
+  "schedulingFps": 59.95648697130589,
+  "inferenceFps": 27.844015877932986,
+  "processingMs": 19.271026135631605,
+  "droppedFrames": 103,
+  "resultAgeMs": null,
+  "facialSpeedPxPerSecond": 0,
+  "angularSpeedRadPerSecond": 0,
+  "positionAlpha": 1,
+  "rotationAlpha": 1,
+  "scaleAlpha": 1,
+  "backend": "worker",
+  "renderFps": 59.98177539532472,
+  "inferenceMs": 10.699999988079071,
+  "approximateLatencyMs": 12.099999999998545
+}
