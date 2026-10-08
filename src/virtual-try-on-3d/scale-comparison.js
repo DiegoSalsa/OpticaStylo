@@ -39,6 +39,7 @@ export function historicalScale(landmarks, width, height, transform = null) {
   const bounded = v1IrisScalePxPerMm === null ? null
     : clamp(v1IrisScalePxPerMm, v1FaceScalePxPerMm * 0.72, v1FaceScalePxPerMm * 1.38);
   return { projectedFaceWidthPx, v1FaceScalePxPerMm, v1IrisScalePxPerMm,
+    v1IrisDiameterPxLeft: diameters[1], v1IrisDiameterPxRight: diameters[0],
     irisDiameterPxLeft: diameters[1], irisDiameterPxRight: diameters[0],
     v1BlendedScalePxPerMm: bounded === null ? v1FaceScalePxPerMm
       : v1FaceScalePxPerMm * 0.55 + bounded * 0.45 };

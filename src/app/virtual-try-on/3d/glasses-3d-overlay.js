@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { BUILT_IN_3D_GLASSES } from "@/constants/virtual-try-on";
 import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
+import { PhysicalScaleEstimator } from "@/virtual-try-on-3d/physical-scale";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
 import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
@@ -49,6 +50,9 @@ export default function Glasses3DOverlay() {
   const cancelVideoLoopRef = useRef(null);
   const poseFilterRef = useRef(null);
   const debugMetricsRef = useRef({});
+  const scaleEstimatorRef = useRef(null);
+  const scaleSamplesRef = useRef([]);
+  const scaleModeRef = useRef("physical");
   const cameraRequestRef = useRef(0);
   const poseRef = useRef(null);
   const modelMetadataRef = useRef(null);
@@ -86,11 +90,28 @@ export default function Glasses3DOverlay() {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const debugMode = useSyncExternalStore(subscribeDebug,
     () => new URLSearchParams(window.location.search).get("vtoDebug") === "1", () => false);
+  const requestedScaleMode = useSyncExternalStore(subscribeDebug, () => {
+    const query = new URLSearchParams(window.location.search), mode = query.get("vtoScale");
+    return query.get("vtoDebug") === "1" && ["historical", "v2"].includes(mode) ? mode : "physical";
+  }, () => "physical");
+  const [selectedScaleMode, setSelectedScaleMode] = useState(null);
+  const scaleMode = debugMode ? selectedScaleMode ?? requestedScaleMode : "physical";
+  useEffect(() => { scaleModeRef.current = scaleMode; scaleEstimatorRef.current?.reset(); }, [scaleMode]);
+  const changeScaleMode = useCallback((mode) => { setSelectedScaleMode(mode); }, []);
+  const recordScaleDiagnostics = useCallback((pose, timestamp) => {
+    if (!pose) return;
+    Object.assign(debugMetricsRef.current, pose.scaleDiagnostics, { scaleSampleTimestamp: timestamp });
+    if (debugMode) {
+      scaleSamplesRef.current.push({ ...pose.scaleDiagnostics, timestamp });
+      if (scaleSamplesRef.current.length > 300) scaleSamplesRef.current.shift();
+    }
+  }, [debugMode]);
 
   useEffect(() => {
     if (!debugMode) return;
     const debug = { snapshot: () => ({ ...debugMetricsRef.current }),
-      pose: () => poseRef.current };
+      pose: () => poseRef.current,
+      scaleSamples: () => structuredClone(scaleSamplesRef.current) };
     window.__OPTICA_STYLO_VTO__ = debug;
     return () => { if (window.__OPTICA_STYLO_VTO__ === debug) delete window.__OPTICA_STYLO_VTO__; };
   }, [debugMode]);
@@ -115,6 +136,8 @@ export default function Glasses3DOverlay() {
     poseFilterRef.current = null;
     poseRef.current = null;
     debugMetricsRef.current = {};
+    scaleEstimatorRef.current = null;
+    scaleSamplesRef.current = [];
   }, []);
 
   useEffect(() => releaseResources, [releaseResources]);
@@ -282,21 +305,21 @@ export default function Glasses3DOverlay() {
           height,
           modelMetadataRef.current,
           faceTransform,
-          { ...fitAdjustmentRef.current, mirrored: false },
+          { ...fitAdjustmentRef.current, mirrored: false, scaleMode },
         );
       } catch {
         nextPose = null;
       }
     }
     poseRef.current = nextPose;
-    if (nextPose) Object.assign(debugMetricsRef.current, nextPose.scaleDiagnostics);
+    recordScaleDiagnostics(nextPose, performance.now());
     setFaceDetected(Boolean(nextPose));
     setStatusMessage(
       nextPose
         ? "Foto lista. Puedes guardar la simulación."
         : "No encontramos un rostro de frente. Prueba con otra foto.",
     );
-  }, [cameraStatus, fitAdjustment, modelMetadata, photoLoaded, photoUrl, trackingReady]);
+  }, [cameraStatus, fitAdjustment, modelMetadata, photoLoaded, photoUrl, trackingReady, scaleMode, recordScaleDiagnostics]);
 
   const startCamera = useCallback(
     async (requestedFacingMode = facingMode) => {
@@ -374,6 +397,7 @@ export default function Glasses3DOverlay() {
 
         const timeline = new TrackingTimeline(), filter = new PoseFilter();
         poseFilterRef.current = filter;
+        scaleEstimatorRef.current = new PhysicalScaleEstimator();
         let previousFaceState = false, renderFrames = 0;
         const metricsStarted = performance.now();
         const renderFrame = (timestamp) => {
@@ -408,8 +432,10 @@ export default function Glasses3DOverlay() {
             debugMetricsRef.current.approximateLatencyMs = performance.now() - sampledAt;
             const pose = landmarksToGlassesPose(result?.faceLandmarks?.[0], video.videoWidth,
               video.videoHeight, metadata, result?.facialTransformationMatrixes?.[0],
-              { ...fitAdjustmentRef.current, mirrored: true });
-            if (pose) Object.assign(debugMetricsRef.current, pose.scaleDiagnostics);
+              { ...fitAdjustmentRef.current, mirrored: true, scaleMode: scaleModeRef.current },
+              scaleEstimatorRef.current, sampledAt);
+            if (!pose) scaleEstimatorRef.current?.reset();
+            recordScaleDiagnostics(pose, sampledAt);
             filter.update(pose, sampledAt);
           };
           void infer();
@@ -445,7 +471,7 @@ export default function Glasses3DOverlay() {
         setStatusMessage(cameraErrorMessage(error));
       }
     },
-    [facingMode, releaseResources],
+    [facingMode, releaseResources, recordScaleDiagnostics],
   );
 
   const updateFitAdjustment = useCallback((property, delta) => {
@@ -588,6 +614,8 @@ export default function Glasses3DOverlay() {
         fitAdjustment,
         debugMode,
         debugMetricsRef,
+        scaleMode,
+        changeScaleMode,
         poseFilterRef,
         handleModelReady,
         handlePhotoSelected,

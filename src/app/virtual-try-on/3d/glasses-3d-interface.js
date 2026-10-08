@@ -43,6 +43,8 @@ export default function Glasses3DInterface({ model }) {
     fitAdjustment,
     debugMode,
     debugMetricsRef,
+    scaleMode,
+    changeScaleMode,
     poseFilterRef,
     handleModelReady,
     handlePhotoSelected,
@@ -89,6 +91,11 @@ export default function Glasses3DInterface({ model }) {
     <section className={styles.experience} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
         {debugMode && <><TrackingDiagnostics metricsRef={debugMetricsRef} />
+          <label>Estimador de escala <select value={scaleMode} onChange={(event) => changeScaleMode(event.target.value)}>
+            <option value="physical">V2 con escala física</option>
+            <option value="historical">Escala histórica V1 (55/45)</option>
+            <option value="v2">Escala V2 original</option>
+          </select></label>
           <label><input type="checkbox" checked={occlusionEnabled} onChange={(e) => setOcclusionEnabled(e.target.checked)} />Oclusión facial</label></>}
         <div className={styles.cameraState} data-active={cameraActive}>
           <span aria-hidden="true" />

@@ -13,6 +13,9 @@ export function scaleFace({ faceWidthMm = 155, pixelsPerMm = 2, ...motion } = {}
     face.landmarks[b] = point(0, -radius);
     face.landmarks[c] = point(-radius, 0);
     face.landmarks[d] = point(0, radius);
+    const lids = center === 468 ? [159, 145] : [386, 374];
+    face.landmarks[lids[0]] = point(0, -radius * 0.75);
+    face.landmarks[lids[1]] = point(0, radius * 0.75);
   }
   return face;
 }

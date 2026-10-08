@@ -46,3 +46,17 @@ test("oldScale=2, v2Scale=2.5 registra sobredimensión exacta de 25%", () => {
   near(metrics.oldEstimatedFrameWidthPx, 274);
   near(metrics.v2EstimatedFrameWidthPx, 342.5);
 });
+
+for (const mode of ["fallback-yaw", "typed-transform", "missing-iris", "one-iris"]) {
+  test(`comparador histórico conserva el caso ${mode}`, () => {
+    const { landmarks, transform } = scaleFace({ yaw: 0.5 });
+    const matrix = mode === "fallback-yaw" ? null : mode === "typed-transform"
+      ? { data: new Float32Array(transform.data) } : transform;
+    if (mode === "missing-iris") for (let i = 468; i < 478; i++) landmarks[i] = undefined;
+    if (mode === "one-iris") landmarks[475] = undefined;
+    const before = oldPose(landmarks, 1000, 500, metadata, matrix);
+    const p = landmarksToGlassesPose(landmarks, 1000, 500, metadata, matrix);
+    near(p.scaleDiagnostics.v1BlendedScalePxPerMm, before.scale);
+    near(p.scaleDiagnostics.v2ScalePxPerMm, currentV2Pose(landmarks, 1000, 500, metadata, matrix).scale);
+  });
+}
