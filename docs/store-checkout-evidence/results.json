@@ -1,0 +1,162 @@
+{
+  "verifiedAt": "2026-10-08T04:48:46.312Z",
+  "baseCommit": "4f409af75e03165e72bea345f8870d8753550598",
+  "branch": "fix/store-guest-checkout-vto-ui",
+  "unit": {
+    "passed": 695,
+    "skipped": 1,
+    "failed": 0
+  },
+  "integration": {
+    "passed": 11,
+    "failed": 0
+  },
+  "eslint": "passed",
+  "prisma": "valid",
+  "productionBuild": "passed",
+  "browser": "Microsoft Edge Chromium",
+  "e2e": {
+    "passed": 12,
+    "failed": 0,
+    "flaky": 0,
+    "scenarios": [
+      {
+        "title": "invitado: receta manual, recarga, navegación, edición y pedido completo",
+        "project": "desktop",
+        "status": "expected",
+        "durationMs": 19230
+      },
+      {
+        "title": "invitado: imagen privada, vista previa, reemplazo y confirmación sin extracción",
+        "project": "desktop",
+        "status": "expected",
+        "durationMs": 18388
+      },
+      {
+        "title": "invitado: accesorio sin receta, pedido ajeno denegado y nueva compra conserva acceso al anterior",
+        "project": "desktop",
+        "status": "expected",
+        "durationMs": 10430
+      },
+      {
+        "title": "invitado: carrito visitado antes de agregar y elección visible de receta o solo marco",
+        "project": "desktop",
+        "status": "expected",
+        "durationMs": 9640
+      },
+      {
+        "title": "VTO: dos badges, navegación al modelo correcto y sin ajustes visuales",
+        "project": "desktop",
+        "status": "expected",
+        "durationMs": 7658
+      },
+      {
+        "title": "cliente autenticado: registro público, receta y pedido propio",
+        "project": "desktop",
+        "status": "expected",
+        "durationMs": 18485
+      },
+      {
+        "title": "invitado: receta manual, recarga, navegación, edición y pedido completo",
+        "project": "mobile",
+        "status": "expected",
+        "durationMs": 14611
+      },
+      {
+        "title": "invitado: imagen privada, vista previa, reemplazo y confirmación sin extracción",
+        "project": "mobile",
+        "status": "expected",
+        "durationMs": 17795
+      },
+      {
+        "title": "invitado: accesorio sin receta, pedido ajeno denegado y nueva compra conserva acceso al anterior",
+        "project": "mobile",
+        "status": "expected",
+        "durationMs": 10896
+      },
+      {
+        "title": "invitado: carrito visitado antes de agregar y elección visible de receta o solo marco",
+        "project": "mobile",
+        "status": "expected",
+        "durationMs": 10347
+      },
+      {
+        "title": "VTO: dos badges, navegación al modelo correcto y sin ajustes visuales",
+        "project": "mobile",
+        "status": "expected",
+        "durationMs": 7908
+      },
+      {
+        "title": "cliente autenticado: registro público, receta y pedido propio",
+        "project": "mobile",
+        "status": "expected",
+        "durationMs": 19202
+      }
+    ]
+  },
+  "sandbox": {
+    "sandboxPreference": "created",
+    "provider": "MERCADO_PAGO",
+    "amountCents": 70000,
+    "duplicateCreated": false,
+    "checkoutHost": "www.mercadopago.cl",
+    "charged": false
+  },
+  "modifiedFiles": [
+    "e2e/store-guest-checkout.spec.js",
+    "eslint.config.mjs",
+    "next.config.mjs",
+    "package-lock.json",
+    "package.json",
+    "playwright.config.mjs",
+    "scripts/run-store-e2e.mjs",
+    "scripts/seed-store-e2e.mjs",
+    "scripts/verify-store-sandbox-checkout.mjs",
+    "src/app/api/store/cart/checkout/route.js",
+    "src/app/api/store/cart/items/[productId]/route.js",
+    "src/app/api/store/cart/items/route.js",
+    "src/app/api/store/cart/prescription/confirm/route.js",
+    "src/app/api/store/cart/prescription/extract/route.js",
+    "src/app/api/store/cart/prescription/image/route.js",
+    "src/app/api/store/cart/prescription/manual/route.js",
+    "src/app/api/store/cart/route.js",
+    "src/app/api/store/orders/[orderId]/checkout/route.js",
+    "src/app/api/store/orders/[orderId]/route.js",
+    "src/app/api/store/orders/route.js",
+    "src/app/carrito/cart-experience.js",
+    "src/app/carrito/cart.css",
+    "src/app/carrito/prescription-image-input.js",
+    "src/app/checkout/mercado-pago/[result]/result-experience.js",
+    "src/app/tienda/[productId]/product-detail.js",
+    "src/app/tienda/catalog-browser.js",
+    "src/app/virtual-try-on/3d/glasses-3d-interface.js",
+    "src/app/virtual-try-on/3d/glasses-3d-overlay.js",
+    "src/app/virtual-try-on/3d/virtual-try-on-3d.module.css",
+    "src/auth/store-session.js",
+    "src/components/store/featured-products.js",
+    "src/db/retry-transaction.js",
+    "src/repositories/public-request-rate-limit-repository.js",
+    "src/repositories/store-repository.js",
+    "src/repositories/virtual-try-on-3d-repository.js",
+    "src/services/bundled-try-on-models.js",
+    "src/services/store-catalog-service.js",
+    "src/services/store-service.js",
+    "src/services/virtual-try-on-3d-catalog-service.js",
+    "src/utils/store-cart-draft.js",
+    "src/utils/store-client.js",
+    "src/utils/store-response.js",
+    "src/utils/store-test-data.js",
+    "src/validations/store-validation.js",
+    "tests/db/retry-transaction.test.js",
+    "tests/fixtures/notebook-approved-fingerprints.json",
+    "tests/integration/store-guest-checkout.test.js",
+    "tests/services/bundled-try-on-models.test.js",
+    "tests/services/store-catalog-service.test.js",
+    "tests/ui/prescription-upload-flow.test.js",
+    "tests/utils/store-cart-draft.test.js",
+    "tests/utils/store-client.test.js",
+    "tests/utils/store-test-data.test.js",
+    "tests/validations/store-validation.test.js",
+    "tests/virtual-try-on-3d/mobile-camera.test.js"
+  ]
+}

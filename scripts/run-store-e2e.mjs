@@ -25,7 +25,12 @@ function run(args, extraEnv = {}) {
 try {
   await admin.$executeRawUnsafe(`CREATE SCHEMA "${schema}"`);
   console.log(`Pruebas en esquema aislado: ${schema}. Los datos existentes no se modifican.`);
-  await run(["node_modules/prisma/build/index.js", "migrate", "deploy"]);
+  // Este esquema aleatorio acaba de crearse y tiene un único migrador. El lock
+  // global de Migrate puede quedar retenido por el pooler entre ejecuciones;
+  // omitirlo aquí no cambia los locks del checkout ni las migraciones reales.
+  await run(["node_modules/prisma/build/index.js", "migrate", "deploy"], {
+    PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK: "true",
+  });
   await mkdir("tmp/store-e2e", { recursive: true });
   await writeFile("tmp/store-e2e/isolated-env.json", JSON.stringify({ schema }));
   await run(["node_modules/next/dist/bin/next", "build"], { NODE_ENV: "production" });

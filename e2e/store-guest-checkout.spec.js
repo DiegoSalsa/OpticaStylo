@@ -170,7 +170,7 @@ test("VTO: dos badges, navegación al modelo correcto y sin ajustes visuales", a
   await page.screenshot({ path: `tmp/store-e2e/${test.info().project.name}-vto.png`, fullPage: true });
   await page.getByRole("button", { name: "Agregar al carrito", exact: true }).click();
   await expect(page.getByText("Marco agregado al carrito.", { exact: false })).toBeVisible();
-  await page.getByRole("link", { name: "Carrito", exact: true }).first().click();
+  await page.getByRole("link", { name: "Ver carrito y configurar receta", exact: true }).click();
   await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByText("Ray-Ban RB2140", { exact: true })).toBeVisible();
   await expect(page.getByRole("radio", { name: /No necesito receta — comprar solo el marco/ })).toBeChecked();
