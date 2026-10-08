@@ -47,7 +47,9 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   if (!ready) throw new Error("El servidor de pruebas no inició.");
-  await run(["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs"]);
+  await run(["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs",
+    ...(process.env.STORE_E2E_GREP ? ["--grep", process.env.STORE_E2E_GREP] : []),
+  ]);
 } finally {
   if (server && server.exitCode === null) {
     server.kill();

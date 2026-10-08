@@ -7,7 +7,7 @@ import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 import { PhysicalScaleEstimator } from "@/virtual-try-on-3d/physical-scale";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
-import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
+import { announceStoreCartChange, ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 import { acquireCamera, cameraTrackSnapshot, mobileCameraEnvironment } from "@/virtual-try-on-3d/camera-acquisition";
 import { createDetectionDiagnostics, recordDetectionResult } from "@/virtual-try-on-3d/detection-diagnostics";
@@ -580,7 +580,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       const currentItem = cart.items.find(
         (item) => item.productId === selectedModel.productId,
       );
-      await readStoreResponse(
+      const savedCart = await readStoreResponse(
         await fetch("/api/store/cart/items", {
           body: JSON.stringify({
             items: [
@@ -594,7 +594,8 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
           method: "POST",
         }),
       );
-      setCartMessage("Marco agregado al carrito.");
+      announceStoreCartChange(savedCart);
+      setCartMessage("Marco agregado al carrito. Allí puedes elegir cristales y adjuntar tu receta si corresponde.");
     } catch (error) {
       setCartMessage(error.message);
     } finally {

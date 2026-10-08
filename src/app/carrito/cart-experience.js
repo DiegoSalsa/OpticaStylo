@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import Icon from "@/components/ui/icon";
 import {
@@ -10,7 +10,7 @@ import {
   cartRequiresPrescription,
   itemRequiresPrescription,
 } from "@/utils/prescription-requirement";
-import { ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-client";
+import { ensureStoreCart, formatClp, readStoreResponse, STORE_CART_CHANGED_EVENT } from "@/utils/store-client";
 
 import { opticalData, prescriptionFields, readCartDraft, writeCartDraft } from "@/utils/store-cart-draft";
 
@@ -45,6 +45,8 @@ export default function CartExperience() {
   const [fields, setFields] = useState(() => prescriptionFields(null));
   const [prescriptionDirty, setPrescriptionDirty] = useState(false);
   const [buyerDraft, setBuyerDraft] = useState({});
+  const cartIdRef = useRef(null);
+  const refreshRevisionRef = useRef(0);
   const prescriptionRequired = useMemo(
     () => cartRequiresPrescription(cart?.items),
     [cart],
@@ -52,21 +54,52 @@ export default function CartExperience() {
   const prescriptionReady = cartHasReadyPrescription(cart, cart?.items);
 
   useEffect(() => {
-    ensureStoreCart()
-      .then((data) => {
+    let active = true;
+    function hydrate(data) {
+      if (!active) return;
+      if (cartIdRef.current === data.id) {
         setCart(data);
-        const draft = readCartDraft(window.sessionStorage, data);
-        setPrescriptionMode(draft?.prescriptionMode ?? data.externalPrescription?.source ?? "IMAGE");
-        setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
-        setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
-        setPrescriptionDirty(draft?.prescriptionDirty ?? false);
-        setBuyerDraft(draft?.buyer ?? { ...data.buyer, notes: data.fulfillment?.notes ?? "" });
         setStatus("ready");
+        return;
+      }
+      cartIdRef.current = data.id;
+      setCart(data);
+      const draft = readCartDraft(window.sessionStorage, data);
+      setPrescriptionMode(draft?.prescriptionMode ?? data.externalPrescription?.source ?? "IMAGE");
+      setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
+      setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
+      setPrescriptionDirty(draft?.prescriptionDirty ?? false);
+      setBuyerDraft(draft?.buyer ?? { ...data.buyer, notes: data.fulfillment?.notes ?? "" });
+      setStatus("ready");
+    }
+    function refresh() {
+      const revision = ++refreshRevisionRef.current;
+      ensureStoreCart().then((data) => {
+        if (revision === refreshRevisionRef.current) hydrate(data);
       })
       .catch((requestError) => {
+        if (!active || revision !== refreshRevisionRef.current) return;
         setError(requestError.message);
         setStatus("error");
       });
+    }
+    function changed(event) {
+      refreshRevisionRef.current += 1;
+      hydrate(event.detail);
+    }
+    function returned() {
+      if (["/carrito", "/checkout"].includes(window.location.pathname)) refresh();
+    }
+    window.addEventListener(STORE_CART_CHANGED_EVENT, changed);
+    window.addEventListener("popstate", returned);
+    window.addEventListener("pageshow", returned);
+    refresh();
+    return () => {
+      active = false;
+      window.removeEventListener(STORE_CART_CHANGED_EVENT, changed);
+      window.removeEventListener("popstate", returned);
+      window.removeEventListener("pageshow", returned);
+    };
   }, []);
 
   useEffect(() => {
@@ -90,6 +123,22 @@ export default function CartExperience() {
     } finally {
       setStatus("ready");
     }
+  }
+
+  async function chooseFramesOnly() {
+    setError(""); setNotice(""); setStatus("saving");
+    try {
+      let current = cart;
+      for (const frame of cart.items.filter((item) => item.category === "FRAME")) {
+        current = await readStoreResponse(await fetch("/api/store/cart/items", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ replaceFrameProductId: frame.productId, items: [{ productId: frame.productId, quantity: frame.quantity }] }),
+        }));
+      }
+      setCart(current);
+      setNotice("Compra solo de marcos. Retiramos los cristales y actualizamos el total; no necesitas receta.");
+    } catch (requestError) { setError(requestError.message); }
+    finally { setStatus("ready"); }
   }
 
   async function readStoredPrescriptionImage() {
@@ -166,7 +215,7 @@ export default function CartExperience() {
             phone: form.get("phone"),
             rut: form.get("rut"),
           },
-          clinicalPrescriptionId: null,
+          clinicalPrescriptionId: cart.clinicalPrescriptionId,
           fulfillment: { method: "PICKUP", notes: form.get("notes") || null },
         }),
         headers: { "Content-Type": "application/json" },
@@ -176,6 +225,10 @@ export default function CartExperience() {
       const result = await readStoreResponse(await fetch("/api/store/cart/checkout", {
         method: "POST",
       }));
+      const completedCart = { ...configured, status: "CHECKED_OUT", saleId: result.order.id };
+      setCart(completedCart);
+      setStatus("ready");
+      writeCartDraft(window.sessionStorage, completedCart, {});
       if (result.payment?.checkoutUrl) window.location.assign(result.payment.checkoutUrl);
       else router.push(`/checkout/mercado-pago/pending?orderId=${result.order.id}`);
     } catch (requestError) {
@@ -215,6 +268,15 @@ export default function CartExperience() {
           <h2>Productos</h2>
           {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong>{item.category === "FRAME" && <Link href={`/tienda/${item.productId}?editCart=1`}>Modificar cristales</Link>}<small>{item.sku}{itemRequiresPrescription(item) ? " · Receta obligatoria" : ""}</small>{mountName(item, cart.items) && <small>Para: {mountName(item, cart.items)}</small>}</div><div className="cart-quantity"><button disabled={status === "saving"} onClick={() => update(item, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button disabled={status === "saving" || item.quantity >= 100} onClick={() => update(item, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" disabled={status === "saving"} onClick={() => update(item, 0)} type="button">×</button></div>)}
         </article>
+
+        {cart.items.some((item) => item.category === "FRAME") && <article className="cart-card">
+          <h2>¿Necesitas receta?</h2>
+          <fieldset className="lens-options"><legend>Elige cómo comprar tus marcos</legend>
+            <label className="lens-option"><input checked={!cart.items.some((item) => item.mountFrameProductId)} disabled={status === "saving"} name="cartPrescriptionChoice" onChange={chooseFramesOnly} type="radio" /><span><strong>No necesito receta — comprar solo el marco</strong><small>Esta opción retira los cristales del carrito. El total se actualiza.</small></span></label>
+            <label className="lens-option"><input checked={prescriptionRequired} disabled={status === "saving"} name="cartPrescriptionChoice" onChange={() => router.push(`/tienda/${cart.items.find((item) => item.category === "FRAME").productId}?editCart=1`)} type="radio" /><span><strong>Necesito cristales con receta</strong><small>{prescriptionRequired ? "Adjunta tu receta o ingresa sus valores en el bloque siguiente." : "Configura los cristales de tu marco para adjuntar o ingresar una receta."}</small></span></label>
+          </fieldset>
+          {!prescriptionRequired && cart.items.some((item) => item.mountFrameProductId) && <p className="card-lead">Los cristales seleccionados no requieren receta.</p>}
+        </article>}
 
         {prescriptionRequired && <article className="cart-card prescription-card">
           <div className="cart-card-heading">

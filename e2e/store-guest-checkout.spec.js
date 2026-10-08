@@ -20,7 +20,6 @@ async function openFrame(page, lensName = "Cristal monofocal de prueba") {
   await expect(page.getByRole("heading", { name: "Harley-Davidson HD0896", exact: true })).toBeVisible();
   await page.getByRole("radio", { name: new RegExp(lensName) }).check();
   await page.getByRole("button", { name: "Agregar al carrito" }).click();
-  await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
   await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByRole("heading", { name: "Receta óptica obligatoria" })).toBeVisible();
 }
@@ -63,14 +62,15 @@ test("invitado: receta manual, recarga, navegación, edición y pedido completo"
   await expect(page.getByRole("button", { name: "Continuar a Mercado Pago" })).toBeDisabled();
   await page.getByRole("button", { name: "Guardar receta obligatoria" }).click();
   await expect(page.getByText("Receta lista", { exact: true })).toBeVisible();
-  await page.goto("/tienda");
-  await page.goto("/carrito");
+  await page.getByRole("navigation", { name: "Migas de pan" }).getByRole("link", { name: "Catálogo", exact: true }).click();
+  await expect(page).toHaveURL(/\/tienda$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.locator('[name="rightSphere"]')).toHaveValue("-1.12");
   await page.getByRole("link", { name: "Modificar cristales" }).click();
   await expect(page.getByRole("radio", { name: /Cristal monofocal de prueba/ })).toBeChecked();
   await page.getByRole("radio", { name: /Cristal filtro azul de prueba/ }).check();
   await page.getByRole("button", { name: "Guardar configuración" }).click();
-  await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
   await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByText("Cristal monofocal de prueba", { exact: true })).toHaveCount(0);
   await expect(page.locator('[name="rightSphere"]')).toHaveValue("-1.12");
@@ -80,6 +80,11 @@ test("invitado: receta manual, recarga, navegación, edición y pedido completo"
   expect(order.items.find((i) => i.productId === ids.otherLens).mount.frameProductId).toBe(ids.frame);
   const stored = await prisma.external_prescriptions.findUnique({ where: { id: order.externalPrescription.id } });
   expect(stored.confirmed_data.pupillaryDistance).toBe(62.25);
+  await page.getByRole("link", { name: "Ver mi pedido", exact: true }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
+  await expect(page.getByRole("heading", { name: "Tu pedido ya fue creado" })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`/checkout/mercado-pago/pending\\?orderId=${order.id}`));
   await page.screenshot({ path: `tmp/store-e2e/${test.info().project.name}-manual-order.png`, fullPage: true });
 });
 
@@ -106,7 +111,6 @@ test("invitado: imagen privada, vista previa, reemplazo y confirmación sin extr
 test("invitado: accesorio sin receta, pedido ajeno denegado y nueva compra conserva acceso al anterior", async ({ page, browser }) => {
   await page.goto(`/tienda/${ids.accessory}`);
   await page.getByRole("button", { name: "Agregar al carrito" }).click();
-  await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
   await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByRole("heading", { name: "Receta óptica obligatoria" })).toHaveCount(0);
   const order = await createOrder(page);
@@ -115,15 +119,46 @@ test("invitado: accesorio sin receta, pedido ajeno denegado y nueva compra conse
   await alien.close();
   await page.goto(`/tienda/${ids.accessory}`);
   await page.getByRole("button", { name: "Agregar al carrito" }).click();
-  await page.getByRole("link", { name: "Ver carrito", exact: true }).click();
   await expect(page).toHaveURL(/\/carrito$/);
   await expect(page.getByText("Estuche de prueba", { exact: true })).toBeVisible();
   await page.goto(`/checkout/mercado-pago/pending?orderId=${order.id}`);
   await expect(page.getByText(`N.º ${order.saleNumber}`, { exact: true })).toBeVisible();
 });
 
+test("invitado: carrito visitado antes de agregar y elección visible de receta o solo marco", async ({ page }) => {
+  await page.goto("/carrito");
+  await expect(page.getByRole("heading", { name: "Tu carrito está vacío" })).toBeVisible();
+  await page.getByRole("link", { name: "Ver catálogo", exact: true }).click();
+  await page.getByRole("link", { name: "Harley-Davidson HD0896", exact: true }).click();
+  await expect(page.getByRole("radio", { name: /No necesito receta — solo marco/ })).toBeChecked();
+  await page.getByRole("button", { name: "Agregar al carrito" }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
+  await expect(page.getByText("Harley-Davidson HD0896", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tu carrito está vacío" })).toHaveCount(0);
+  await expect(page.getByRole("radio", { name: /No necesito receta — comprar solo el marco/ })).toBeChecked();
+  await page.getByRole("radio", { name: /Necesito cristales con receta/ }).click();
+  await expect(page).toHaveURL(new RegExp(`/tienda/${ids.frame}\\?editCart=1`));
+  await page.getByRole("radio", { name: /Cristal monofocal de prueba/ }).check();
+  await page.getByRole("button", { name: "Guardar configuración" }).click();
+  await expect(page).toHaveURL(/\/carrito$/);
+  await expect(page.getByRole("button", { name: "Adjuntar imagen", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ingresar manualmente", exact: true })).toBeVisible();
+  await expect(page.locator('input[type="file"]')).toHaveCount(1);
+  await expect(page.getByRole("radio", { name: /Necesito cristales con receta/ })).toBeChecked();
+  await page.screenshot({ path: `tmp/store-e2e/${test.info().project.name}-recipe-options.png`, fullPage: true });
+  await page.getByRole("radio", { name: /No necesito receta — comprar solo el marco/ }).click();
+  await expect(page.getByText("Cristal monofocal de prueba", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Receta óptica obligatoria" })).toHaveCount(0);
+  await expect(page.locator(".cart-summary dd").last()).toHaveText(/50[.]000/);
+  await page.reload();
+  await expect(page.getByRole("radio", { name: /No necesito receta — comprar solo el marco/ })).toBeChecked();
+  await expect(page.getByText("Harley-Davidson HD0896", { exact: true })).toBeVisible();
+});
+
 test("VTO: dos badges, navegación al modelo correcto y sin ajustes visuales", async ({ page }) => {
-  await page.goto("/tienda");
+  await page.goto("/carrito");
+  await expect(page.getByRole("heading", { name: "Tu carrito está vacío" })).toBeVisible();
+  await page.getByRole("link", { name: "Ver catálogo", exact: true }).click();
   await expect(page.getByText("Prueba virtual", { exact: true })).toHaveCount(2);
   for (const [id, sku] of [[ids.frame, "HD0896-001"], [ids.rayban, "RB2140-901-50"]]) {
     await page.goto(`/tienda/${id}`);
@@ -133,6 +168,12 @@ test("VTO: dos badges, navegación al modelo correcto y sin ajustes visuales", a
     await expect(page.getByRole("slider", { name: /Brillo|Contraste/ })).toHaveCount(0);
   }
   await page.screenshot({ path: `tmp/store-e2e/${test.info().project.name}-vto.png`, fullPage: true });
+  await page.getByRole("button", { name: "Agregar al carrito", exact: true }).click();
+  await expect(page.getByText("Marco agregado al carrito.", { exact: false })).toBeVisible();
+  await page.getByRole("link", { name: "Carrito", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/carrito$/);
+  await expect(page.getByText("Ray-Ban RB2140", { exact: true })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /No necesito receta — comprar solo el marco/ })).toBeChecked();
 });
 
 test("cliente autenticado: registro público, receta y pedido propio", async ({ page }) => {

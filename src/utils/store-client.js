@@ -10,6 +10,11 @@ export async function readStoreResponse(response) {
 }
 
 let pendingCart = null;
+export const STORE_CART_CHANGED_EVENT = "opticastylo:cart-changed";
+export function announceStoreCartChange(cart) {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(STORE_CART_CHANGED_EVENT, { detail: cart }));
+  return cart;
+}
 export async function ensureStoreCart({ forShopping = false } = {}) {
   // Compartir la creación entre montajes concurrentes evita rotar la cookie
   // mientras otro componente ya está guardando productos.
