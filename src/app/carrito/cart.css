@@ -120,6 +120,43 @@
   line-height: 1.5;
   margin: 0;
 }
+.cart-card .lens-options {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.cart-card .lens-options legend {
+  color: var(--color-text-soft);
+  font-size: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+.cart-card .lens-option {
+  align-items: flex-start;
+  background: #f1f8f6;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+}
+.cart-card .lens-option:has(input:checked) {
+  background: #e4f8f2;
+  border-color: var(--color-primary);
+}
+.cart-card .lens-option input {
+  accent-color: var(--color-primary-dark);
+  margin: 0.2rem 0 0;
+}
+.cart-card .lens-option strong,
+.cart-card .lens-option small {
+  display: block;
+  line-height: 1.5;
+}
+.cart-card .lens-option strong { font-size: 0.8rem; }
+.cart-card .lens-option small { color: var(--color-text-soft); font-size: 0.72rem; }
 .mode-toggle {
   background: #eff5f3;
   border-radius: 10px;
