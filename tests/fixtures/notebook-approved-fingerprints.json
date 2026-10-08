@@ -19,5 +19,6 @@
     "public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.glb": "fb78ef8a562e9e0d6ba176da6362aea4e6036347f9c874e88a8028bfa7f4bc8d",
     "public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json": "f2009567fdc71cfa839988bf4c49dea226e16ecc5ac3e4b83ba278c1eabfddb5"
   },
-  "desktopCssPrefixSha256": "b32e93736a632062c8795727bdad7f52cf1a4b97bdaf2a54408543533d2a1599"
+  "desktopCssPrefixSha256": "b32e93736a632062c8795727bdad7f52cf1a4b97bdaf2a54408543533d2a1599",
+  "desktopCssWithoutVisualAdjustmentsSha256": "8122376d84154a7f0081959d4dbce39487afba8382db9b08d34ecc4f5e9f062b"
 }

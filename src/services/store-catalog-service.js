@@ -2,6 +2,7 @@ import { getMockAvailability } from "../integrations/inventory/mock-inventory-ga
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import { findProductById, listProducts } from "../repositories/product-repository.js";
 import { getProductPresentation } from "../config/product-presentations.js";
+import { listPublished3dModels } from "../repositories/virtual-try-on-3d-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import {
@@ -9,7 +10,7 @@ import {
 } from "../validations/product-validation.js";
 import { validateStoreProductId } from "../validations/store-validation.js";
 
-function publicProduct(product, availabilityProvider, images = []) {
+function publicProduct(product, availabilityProvider, images = [], model = null) {
   const presentation = getProductPresentation(product.sku);
   return {
     availability: availabilityProvider(product),
@@ -23,6 +24,10 @@ function publicProduct(product, availabilityProvider, images = []) {
     sku: product.sku,
     specifications: presentation.specifications,
     unitPriceCents: product.unitPriceCents,
+    virtualTryOn: model ? {
+      assetId: model.assetId,
+      url: `/virtual-try-on/3d?productId=${product.id}`,
+    } : null,
   };
 }
 
@@ -51,12 +56,15 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
     },
   );
   const availability = dependencies.getAvailability ?? getMockAvailability;
+  const models = result.items.some((product) => product.category === "FRAME")
+    ? await (dependencies.list3dModels ?? listPublished3dModels)() : [];
+  const modelsByProduct = new Map(models.map((model) => [model.productId, model]));
   const images = groupImagesByProduct(await (
     dependencies.listProductImages ?? listActiveProductImages
   )(result.items.map((product) => product.id)));
   const items = result.items
     .filter((product) => includeTestData || !product.isTestData)
-    .map((product) => publicProduct(product, availability, images.get(product.id)));
+    .map((product) => publicProduct(product, availability, images.get(product.id), modelsByProduct.get(product.id)));
   return { ...result, items };
 }
 
@@ -77,10 +85,12 @@ export async function getStoreProduct(productId, dependencies = {}) {
   }
   const availability = dependencies.getAvailability ?? getMockAvailability;
   const images = await (dependencies.listProductImages ?? listActiveProductImages)([product.id]);
+  const models = product.category === "FRAME"
+    ? await (dependencies.list3dModels ?? listPublished3dModels)() : [];
   const presentation = publicProduct(product, availability, images.map((image) => ({
     alt: image.alt,
     url: image.url,
-  })));
+  })), models.find((model) => model.productId === product.id));
   if (product.category !== "FRAME") return presentation;
   const lenses = await (dependencies.listProducts ?? listProducts)({
     category: "PRESCRIPTION_LENS",
