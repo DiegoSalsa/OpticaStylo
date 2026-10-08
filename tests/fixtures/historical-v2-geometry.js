@@ -1,9 +1,9 @@
+// Frozen 7290abcfdd898b06a77416a5499e958370fb088c; only relative import paths changed. Test-only.
 import { Euler, Matrix4, Quaternion, Vector3 } from "three";
-import { runtimeFittingMetadata } from "../virtual-try-on-3d/model-runtime.js";
-import { fitTemples } from "../virtual-try-on-3d/temple-fitting.js";
-import { cameraProjection, unprojectVideoPoint } from "../virtual-try-on-3d/camera-projection.js";
-import { PoseFilter } from "../virtual-try-on-3d/pose-filter.js";
-import { compareScales } from "../virtual-try-on-3d/scale-comparison.js";
+import { runtimeFittingMetadata } from "../../src/virtual-try-on-3d/model-runtime.js";
+import { fitTemples } from "../../src/virtual-try-on-3d/temple-fitting.js";
+import { cameraProjection, unprojectVideoPoint } from "../../src/virtual-try-on-3d/camera-projection.js";
+import { PoseFilter } from "../../src/virtual-try-on-3d/pose-filter.js";
 
 const REFERENCE_FACE_WIDTH_MM = 135;
 const FACE_MESH_COUNT = 468;
@@ -52,16 +52,9 @@ export function landmarksToGlassesPose(landmarks, width, height, metadata, trans
     return unprojectVideoPoint(mirror(lm.x), lm.y * height, -((lm.z ?? 0) - (bridge.z ?? 0)) * width, projection);
   };
   const leftCheek = cheek(234), rightCheek = cheek(454);
-  const unprojectedFaceWidthPx = Math.hypot(rightCheek[0] - leftCheek[0], rightCheek[1] - leftCheek[1]);
-  const faceWidth = unprojectedFaceWidthPx / projectionLength;
+  const faceWidth = Math.hypot(rightCheek[0] - leftCheek[0], rightCheek[1] - leftCheek[1]) / projectionLength;
   if (faceWidth < eyeDistance) return null;
   const pixelsPerMm = faceWidth / (adjustment?.faceWidthMm ?? REFERENCE_FACE_WIDTH_MM);
-  const scaleDiagnostics = compareScales(landmarks, width, height, transform, {
-    unprojectedFaceWidthPx, projectionLength, correctedFaceWidthPx: faceWidth,
-    referenceFaceWidthMm: adjustment?.faceWidthMm ?? REFERENCE_FACE_WIDTH_MM,
-    frameWidthMm: metadata.dimensionsMm.frameWidth,
-    scaleFactor: clamp(adjustment?.scaleFactor ?? 1, 0.88, 1.12),
-  });
   const scale = pixelsPerMm * clamp(adjustment?.scaleFactor ?? 1, 0.88, 1.12);
   const position = [mirror(bridge.x) - width / 2,
     height / 2 - bridge.y * height - clamp(adjustment?.verticalOffsetMm ?? 0, -6, 6) * pixelsPerMm, 0];
@@ -93,7 +86,7 @@ export function landmarksToGlassesPose(landmarks, width, height, metadata, trans
   const templeFit = fitTemples(fittingMetadata, proxy, targets);
   const euler = new Euler().setFromQuaternion(quaternion, "XYZ");
   return { position, quaternion: quaternion.toArray(), rotation: [euler.x, euler.y, euler.z],
-    headRotation: [euler.x, euler.y, euler.z], scale, projection, scaleDiagnostics,
+    headRotation: [euler.x, euler.y, euler.z], scale, projection,
     faceMesh: { positions, local: true }, templeFit,
     templeBendRadians: Math.max(templeFit.left.bendRadians, templeFit.right.bendRadians) };
 }

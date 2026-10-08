@@ -1,0 +1,68 @@
+{
+  "source": "Local MediaPipe IMAGE detection on screenshot camera-region crops, before changing rendered V2 scale. No original webcam landmarks available.",
+  "videoWidth": 814,
+  "videoHeight": 458,
+  "crops": [
+    [
+      241,
+      107,
+      1055,
+      565
+    ],
+    [
+      184,
+      115,
+      998,
+      573
+    ]
+  ],
+  "adjustment": {
+    "scaleFactor": 1,
+    "verticalOffsetMm": 0
+  },
+  "warning": "Existing virtual glasses and reflections may affect iris detection. These are not live PC acceptance measurements. Pixel values use screenshot resolution.",
+  "historicalCommit": "f06fa1317c4c1e3aa438f64dc0cdc30c5c4bd57d",
+  "v2Commit": "7290abcfdd898b06a77416a5499e958370fb088c",
+  "samples": [
+    {
+      "screenshot": "2026-10-07 212134",
+      "projectedFaceWidthPx": 184.9637169692814,
+      "v1FaceScalePxPerMm": 1.3701666172519849,
+      "v1IrisScalePxPerMm": 1.2272429035750285,
+      "v1BlendedScalePxPerMm": 1.3058509460973546,
+      "unprojectedFaceWidthPx": 210.66898625523686,
+      "projectionLength": 0.9999643566026919,
+      "correctedFaceWidthPx": 210.67649548126877,
+      "irisDiametersPx": [
+        15.432788505015665,
+        14.439557974580921,
+        15.8337828033481,
+        14.277925969074746
+      ],
+      "eyeOpeningPxRight": 9.06110167814578,
+      "eyeOpeningPxLeft": 9.322303296931397,
+      "v2ScalePxPerMm": 1.5605666331945836,
+      "ratioV2ToOld": 1.195057244365039
+    },
+    {
+      "screenshot": "2026-10-07 212121",
+      "projectedFaceWidthPx": 184.1489307635547,
+      "v1FaceScalePxPerMm": 1.364074237426639,
+      "v1IrisScalePxPerMm": 1.2869852810213376,
+      "v1BlendedScalePxPerMm": 1.3293842070442534,
+      "unprojectedFaceWidthPx": 209.17670456142218,
+      "projectionLength": 0.9999899230567724,
+      "correctedFaceWidthPx": 209.17881244443961,
+      "irisDiametersPx": [
+        16.25659822082422,
+        15.173640342316245,
+        16.173208620538478,
+        14.94181523358305
+      ],
+      "eyeOpeningPxRight": 11.14562026047184,
+      "eyeOpeningPxLeft": 11.07691041912032,
+      "v2ScalePxPerMm": 1.5494726847736269,
+      "ratioV2ToOld": 1.1655567115685217
+    }
+  ]
+}

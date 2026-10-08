@@ -289,6 +289,7 @@ export default function Glasses3DOverlay() {
       }
     }
     poseRef.current = nextPose;
+    if (nextPose) Object.assign(debugMetricsRef.current, nextPose.scaleDiagnostics);
     setFaceDetected(Boolean(nextPose));
     setStatusMessage(
       nextPose
@@ -408,6 +409,7 @@ export default function Glasses3DOverlay() {
             const pose = landmarksToGlassesPose(result?.faceLandmarks?.[0], video.videoWidth,
               video.videoHeight, metadata, result?.facialTransformationMatrixes?.[0],
               { ...fitAdjustmentRef.current, mirrored: true });
+            if (pose) Object.assign(debugMetricsRef.current, pose.scaleDiagnostics);
             filter.update(pose, sampledAt);
           };
           void infer();
