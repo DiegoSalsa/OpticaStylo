@@ -196,8 +196,8 @@ const fingerprints = JSON.parse(readFileSync(new URL("../fixtures/notebook-appro
 for (const [path, hash] of Object.entries(fingerprints.sha256)) test(`notebook aprobado: fingerprint ${path}`, () => {
   assert.equal(createHash("sha256").update(readFileSync(new URL(`../../${path}`, import.meta.url))).digest("hex"), hash);
 });
-test("notebook aprobado: todas las reglas CSS desktop anteriores al breakpoint móvil permanecen idénticas", () => {
+test("notebook aprobado: las reglas CSS desktop se conservan salvo el bloque de ajustes visuales eliminado", () => {
   const css = readFileSync(new URL("../../src/app/virtual-try-on/3d/virtual-try-on-3d.module.css", import.meta.url), "utf8")
     .replaceAll("\r\n", "\n").split("@media (max-width: 780px)")[0];
-  assert.equal(createHash("sha256").update(css).digest("hex"), fingerprints.desktopCssPrefixSha256);
+  assert.equal(createHash("sha256").update(css).digest("hex"), fingerprints.desktopCssWithoutVisualAdjustmentsSha256);
 });

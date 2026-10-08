@@ -58,6 +58,11 @@ const ERRORS = Object.freeze({
     "Los cristales deben estar asociados a un marco incluido en el carrito.",
     409,
   ],
+  LENS_MOUNT_CONFLICT: [
+    "STORE_LENS_MOUNT_CONFLICT",
+    "Este cristal ya está asociado a otro marco del carrito. Elija otra opción o complete esa compra primero.",
+    409,
+  ],
   CART_NOT_ACTIVE: ["CART_NOT_ACTIVE", "El carrito ya no está activo.", 409],
   CART_NOT_FOUND: ["CART_NOT_FOUND", "No se encontró un carrito accesible.", 404],
   CLINICAL_PRESCRIPTION_NOT_AVAILABLE: [
@@ -168,6 +173,7 @@ export async function putStoreCartItems(token, account, input, dependencies = {}
     credentials.tokenHash,
     credentials.accountId,
     items.items,
+    items.replaceFrameProductId,
   ));
 }
 
@@ -321,6 +327,7 @@ function publicOrder(sale) {
   return {
     balanceCents: sale.balanceCents,
     createdAt: sale.createdAt,
+    customer: sale.customer,
     externalPrescription: sale.externalPrescription,
     fulfillment: sale.fulfillment,
     id: sale.id,
@@ -344,20 +351,29 @@ export async function checkoutCart(token, account, dependencies = {}) {
   );
   if (result.reason) throwReason(result.reason);
   const sale = await (dependencies.findSaleById ?? findSaleById)(result.saleId);
-  const payment = await (
-    dependencies.createMercadoPagoCheckout ?? createStoreMercadoPagoCheckout
-  )(result.saleId, dependencies.mercadoPagoDependencies ?? {});
-  return { order: publicOrder(sale), payment };
+  try {
+    const payment = await (
+      dependencies.createMercadoPagoCheckout ?? createStoreMercadoPagoCheckout
+    )(result.saleId, dependencies.mercadoPagoDependencies ?? {});
+    return { order: publicOrder(sale), payment };
+  } catch (error) {
+    // El pedido ya está confirmado en la base. Un error del proveedor no lo revierte.
+    if (!(error instanceof AppError) || ![
+      "PAYMENT_PROVIDER_UNAVAILABLE", "PAYMENT_PROVIDER_NOT_CONFIGURED",
+      "PAYMENT_PRODUCTION_LOCKED", "INVALID_PUBLIC_APP_URL",
+      "PAYMENT_ATTEMPT_REQUIRES_REVIEW",
+    ].includes(error.code)) throw error;
+    return {
+      order: publicOrder(sale), payment: null,
+      paymentError: { code: error.code, message: "Tu pedido fue creado. No pudimos iniciar el pago; puedes reintentarlo desde el estado del pedido." },
+    };
+  }
 }
 
 export async function getStoreOrder(orderId, token, account, dependencies = {}) {
   const id = validateStoreOrderId(orderId);
-  if (account) {
-    const ids = await (dependencies.listOrders ?? listStoreOrders)(account.id);
-    if (!ids.includes(id)) {
-      throw new AppError({ code: "STORE_ORDER_NOT_FOUND", message: "No se encontró el pedido.", status: 404 });
-    }
-  } else {
+  const ownedByAccount = account && (await (dependencies.listOrders ?? listStoreOrders)(account.id)).includes(id);
+  if (!ownedByAccount) {
     const cart = await getStoreCart(token, account, dependencies);
     if (cart.saleId !== id) {
       throw new AppError({ code: "STORE_ORDER_NOT_FOUND", message: "No se encontró el pedido.", status: 404 });

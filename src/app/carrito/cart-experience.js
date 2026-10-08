@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import Icon from "@/components/ui/icon";
 import {
@@ -9,28 +10,12 @@ import {
   cartRequiresPrescription,
   itemRequiresPrescription,
 } from "@/utils/prescription-requirement";
-import { ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-client";
+import { ensureStoreCart, formatClp, readStoreResponse, STORE_CART_CHANGED_EVENT } from "@/utils/store-client";
+
+import { opticalData, prescriptionFields, readCartDraft, writeCartDraft } from "@/utils/store-cart-draft";
 
 import PrescriptionImageInput from "./prescription-image-input";
 
-function opticalData(form) {
-  const value = (name, nullable = false) => {
-    const raw = form.get(name);
-    return nullable && raw === "" ? null : Number(raw);
-  };
-  const eye = (prefix) => ({
-    addition: value(`${prefix}Addition`, true),
-    axis: value(`${prefix}Axis`, true),
-    cylinder: value(`${prefix}Cylinder`),
-    sphere: value(`${prefix}Sphere`),
-  });
-  return {
-    fulfillmentNotes: form.get("fulfillmentNotes") || null,
-    leftEye: eye("left"),
-    pupillaryDistance: value("pupillaryDistance", true),
-    rightEye: eye("right"),
-  };
-}
 
 const EMPTY_PRESCRIPTION_DRAFT = Object.freeze({
   confidence: "LOW",
@@ -41,9 +26,6 @@ const EMPTY_PRESCRIPTION_DRAFT = Object.freeze({
   warnings: Object.freeze([]),
 });
 
-function fieldValue(value) {
-  return value ?? "";
-}
 
 function mountName(item, items) {
   if (!item.mountFrameProductId) return null;
@@ -52,6 +34,7 @@ function mountName(item, items) {
 }
 
 export default function CartExperience() {
+  const router = useRouter();
   const [cart, setCart] = useState(null);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
@@ -59,6 +42,11 @@ export default function CartExperience() {
   const [prescriptionMode, setPrescriptionMode] = useState("IMAGE");
   const [prescriptionDraft, setPrescriptionDraft] = useState(null);
   const [prescriptionImage, setPrescriptionImage] = useState(null);
+  const [fields, setFields] = useState(() => prescriptionFields(null));
+  const [prescriptionDirty, setPrescriptionDirty] = useState(false);
+  const [buyerDraft, setBuyerDraft] = useState({});
+  const cartIdRef = useRef(null);
+  const refreshRevisionRef = useRef(0);
   const prescriptionRequired = useMemo(
     () => cartRequiresPrescription(cart?.items),
     [cart],
@@ -66,17 +54,57 @@ export default function CartExperience() {
   const prescriptionReady = cartHasReadyPrescription(cart, cart?.items);
 
   useEffect(() => {
-    ensureStoreCart()
-      .then((data) => {
+    let active = true;
+    function hydrate(data) {
+      if (!active) return;
+      if (cartIdRef.current === data.id) {
         setCart(data);
-        setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
         setStatus("ready");
+        return;
+      }
+      cartIdRef.current = data.id;
+      setCart(data);
+      const draft = readCartDraft(window.sessionStorage, data);
+      setPrescriptionMode(draft?.prescriptionMode ?? data.externalPrescription?.source ?? "IMAGE");
+      setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
+      setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
+      setPrescriptionDirty(draft?.prescriptionDirty ?? false);
+      setBuyerDraft(draft?.buyer ?? { ...data.buyer, notes: data.fulfillment?.notes ?? "" });
+      setStatus("ready");
+    }
+    function refresh() {
+      const revision = ++refreshRevisionRef.current;
+      ensureStoreCart().then((data) => {
+        if (revision === refreshRevisionRef.current) hydrate(data);
       })
       .catch((requestError) => {
+        if (!active || revision !== refreshRevisionRef.current) return;
         setError(requestError.message);
         setStatus("error");
       });
+    }
+    function changed(event) {
+      refreshRevisionRef.current += 1;
+      hydrate(event.detail);
+    }
+    function returned() {
+      if (["/carrito", "/checkout"].includes(window.location.pathname)) refresh();
+    }
+    window.addEventListener(STORE_CART_CHANGED_EVENT, changed);
+    window.addEventListener("popstate", returned);
+    window.addEventListener("pageshow", returned);
+    refresh();
+    return () => {
+      active = false;
+      window.removeEventListener(STORE_CART_CHANGED_EVENT, changed);
+      window.removeEventListener("popstate", returned);
+      window.removeEventListener("pageshow", returned);
+    };
   }, []);
+
+  useEffect(() => {
+    if (cart) writeCartDraft(window.sessionStorage, cart, { fields, buyer: buyerDraft, prescriptionDirty, prescriptionMode });
+  }, [cart, fields, buyerDraft, prescriptionDirty, prescriptionMode]);
 
   async function update(item, quantity) {
     setError("");
@@ -84,13 +112,10 @@ export default function CartExperience() {
     try {
       const response = quantity < 1
         ? await fetch(`/api/store/cart/items/${item.productId}`, { method: "DELETE" })
-        : await fetch(`/api/store/cart/items/${item.productId}`, {
-          body: JSON.stringify({
-            mountFrameProductId: item.mountFrameProductId,
-            quantity,
-          }),
+        : await fetch("/api/store/cart/items", {
+          body: JSON.stringify({ items: [item, ...(item.category === "FRAME" ? cart.items.filter((line) => line.mountFrameProductId === item.productId) : [])].map((line) => ({ productId: line.productId, mountFrameProductId: line.mountFrameProductId, quantity })) }),
           headers: { "Content-Type": "application/json" },
-          method: "PUT",
+          method: "POST",
         });
       setCart(await readStoreResponse(response));
     } catch (requestError) {
@@ -100,94 +125,77 @@ export default function CartExperience() {
     }
   }
 
-  async function uploadAndReadPrescriptionImage(image) {
-    const upload = new FormData();
-    upload.set("image", image);
-    const uploadedCart = await readStoreResponse(await fetch("/api/store/cart/prescription/image", {
-      body: upload,
-      method: "PUT",
-    }));
-    setCart(uploadedCart);
-    setPrescriptionImage(null);
-    setPrescriptionDraft(null);
-    const extraction = await readStoreResponse(await fetch("/api/store/cart/prescription/extract", {
-      method: "POST",
-    }));
+  async function chooseFramesOnly() {
+    setError(""); setNotice(""); setStatus("saving");
+    try {
+      let current = cart;
+      for (const frame of cart.items.filter((item) => item.category === "FRAME")) {
+        current = await readStoreResponse(await fetch("/api/store/cart/items", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ replaceFrameProductId: frame.productId, items: [{ productId: frame.productId, quantity: frame.quantity }] }),
+        }));
+      }
+      setCart(current);
+      setNotice("Compra solo de marcos. Retiramos los cristales y actualizamos el total; no necesitas receta.");
+    } catch (requestError) { setError(requestError.message); }
+    finally { setStatus("ready"); }
+  }
+
+  async function readStoredPrescriptionImage() {
+    const extraction = await readStoreResponse(await fetch("/api/store/cart/prescription/extract", { method: "POST" }));
     setCart(extraction.cart);
     setPrescriptionDraft(extraction.extraction.data);
-    setNotice("Completamos los valores sugeridos. Revisa cada uno antes de confirmar la receta.");
+    setFields(prescriptionFields(extraction.extraction.data));
+    setPrescriptionDirty(true);
+    setNotice("Revisa cada valor sugerido antes de confirmar la receta.");
   }
 
   async function handlePrescriptionImageChange(image) {
-    if (!image) {
-      setPrescriptionImage(null);
-      return;
-    }
-    setError("");
-    setNotice("Leyendo la receta…");
-    setPrescriptionImage(image);
-    setStatus("saving");
+    if (!image) { setPrescriptionImage(null); return; }
+    setError(""); setNotice("Guardando la imagen…"); setPrescriptionImage(image); setStatus("saving");
     try {
-      await uploadAndReadPrescriptionImage(image);
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setStatus("ready");
-    }
+      const upload = new FormData(); upload.set("image", image);
+      const uploadedCart = await readStoreResponse(await fetch("/api/store/cart/prescription/image", { body: upload, method: "PUT" }));
+      setCart(uploadedCart); setPrescriptionImage(null); setPrescriptionDraft(null);
+      setFields(prescriptionFields(null)); setPrescriptionDirty(true);
+      setNotice("Imagen guardada de forma privada. Leyendo los valores…");
+      try { await readStoredPrescriptionImage(); }
+      catch (requestError) {
+        setNotice("La imagen está guardada. Puedes completar y confirmar sus valores manualmente.");
+        setError(requestError.message);
+      }
+    } catch (requestError) { setNotice(""); setError(requestError.message); }
+    finally { setStatus("ready"); }
   }
 
   async function savePrescription(event) {
-    event.preventDefault();
-    setError("");
-    setNotice("");
-    setStatus("saving");
+    event.preventDefault(); setError(""); setNotice(""); setStatus("saving");
     const form = new FormData(event.currentTarget);
     try {
-      if (prescriptionMode === "IMAGE") {
-        const hasNewImage = prescriptionImage instanceof File && prescriptionImage.size > 0;
-        let currentCart = cart;
-        if (!hasNewImage && !currentCart.externalPrescription?.hasImage) {
-          throw new Error("Adjunta una imagen o toma una foto de la receta para continuar.");
-        }
-        if (hasNewImage) {
-          await uploadAndReadPrescriptionImage(prescriptionImage);
-          return;
-        }
-        const currentDraft = prescriptionDraft ?? currentCart.externalPrescription?.extractedData;
-        if (!currentDraft) {
-          const extraction = await readStoreResponse(await fetch("/api/store/cart/prescription/extract", {
-            method: "POST",
-          }));
-          setCart(extraction.cart);
-          setPrescriptionDraft(extraction.extraction.data);
-          setNotice("Revisa cada valor sugerido antes de confirmar la receta. La lectura automática no la aprueba.");
-          return;
-        }
-        setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/confirm", {
-          body: JSON.stringify(opticalData(form)),
-          headers: { "Content-Type": "application/json" },
-          method: "PATCH",
-        })));
-        setPrescriptionDraft(null);
-      } else {
-        setCart(await readStoreResponse(await fetch("/api/store/cart/prescription/manual", {
-          body: JSON.stringify(opticalData(form)),
-          headers: { "Content-Type": "application/json" },
-          method: "PUT",
-        })));
-      }
-      setNotice("Receta guardada como datos pendientes de revisión al preparar el lente.");
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setStatus("ready");
-    }
+      const imageMode = prescriptionMode === "IMAGE";
+      if (imageMode && !cart.externalPrescription?.hasImage) throw new Error("Primero adjunta la imagen de tu receta.");
+      const saved = await readStoreResponse(await fetch(imageMode ? "/api/store/cart/prescription/confirm" : "/api/store/cart/prescription/manual", {
+        body: JSON.stringify(opticalData(form)), headers: { "Content-Type": "application/json" }, method: imageMode ? "PATCH" : "PUT",
+      }));
+      setCart(saved); setFields(prescriptionFields(saved.externalPrescription.confirmedData));
+      setPrescriptionDraft(null); setPrescriptionDirty(false);
+      setNotice("Receta guardada. Sus valores se revisarán al preparar el lente.");
+    } catch (requestError) { setError(requestError.message); }
+    finally { setStatus("ready"); }
+  }
+
+  async function retryPrescriptionReading() {
+    setStatus("saving"); setError("");
+    try { await readStoredPrescriptionImage(); }
+    catch (requestError) { setError(requestError.message); }
+    finally { setStatus("ready"); }
   }
 
   function enableManualImageReview() {
     setError("");
     setNotice("Completa y confirma los valores manualmente. La imagen se conservará como respaldo privado.");
     setPrescriptionDraft(EMPTY_PRESCRIPTION_DRAFT);
+    setPrescriptionDirty(true);
   }
 
   async function checkout(event) {
@@ -207,7 +215,7 @@ export default function CartExperience() {
             phone: form.get("phone"),
             rut: form.get("rut"),
           },
-          clinicalPrescriptionId: null,
+          clinicalPrescriptionId: cart.clinicalPrescriptionId,
           fulfillment: { method: "PICKUP", notes: form.get("notes") || null },
         }),
         headers: { "Content-Type": "application/json" },
@@ -217,10 +225,19 @@ export default function CartExperience() {
       const result = await readStoreResponse(await fetch("/api/store/cart/checkout", {
         method: "POST",
       }));
+      const completedCart = { ...configured, status: "CHECKED_OUT", saleId: result.order.id };
+      setCart(completedCart);
+      setStatus("ready");
+      writeCartDraft(window.sessionStorage, completedCart, {});
       if (result.payment?.checkoutUrl) window.location.assign(result.payment.checkoutUrl);
-      else setNotice(`Pedido N.º ${result.order.saleNumber} creado. El pago requiere configuración de Mercado Pago.`);
+      else router.push(`/checkout/mercado-pago/pending?orderId=${result.order.id}`);
     } catch (requestError) {
       setError(requestError.message);
+      // El checkout puede haber confirmado el pedido antes de fallar la conexión.
+      try {
+        const current = await readStoreResponse(await fetch("/api/store/cart", { cache: "no-store" }));
+        setCart(current);
+      } catch { /* Mantener el error original y permitir reintentar. */ }
       setStatus("ready");
     }
   }
@@ -234,7 +251,7 @@ export default function CartExperience() {
   }
 
   if (cart?.status === "CHECKED_OUT") {
-    return <main className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href="/checkout/mercado-pago/pending">Ver estado del pago</Link><Link className="button button--secondary" href="/tienda">Volver al catálogo</Link></div></div></main>;
+    return <main className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href={`/checkout/mercado-pago/pending?orderId=${cart.saleId}`}>Ver estado del pago</Link><Link className="button button--secondary" href="/tienda">Volver al catálogo</Link></div></div></main>;
   }
 
   if (!cart?.items.length) {
@@ -249,8 +266,17 @@ export default function CartExperience() {
       <section className="cart-content">
         <article className="cart-card">
           <h2>Productos</h2>
-          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong><small>{item.sku}{itemRequiresPrescription(item) ? " · Receta obligatoria" : ""}</small>{mountName(item, cart.items) && <small>Para: {mountName(item, cart.items)}</small>}</div><div className="cart-quantity"><button onClick={() => update(item, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button onClick={() => update(item, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" onClick={() => update(item, 0)} type="button">×</button></div>)}
+          {cart.items.map((item) => <div className="cart-line" key={item.productId}><span className="cart-product-icon"><Icon name={item.category === "FRAME" ? "eye" : "package"} /></span><div><strong>{item.name}</strong>{item.category === "FRAME" && <Link href={`/tienda/${item.productId}?editCart=1`}>Modificar cristales</Link>}<small>{item.sku}{itemRequiresPrescription(item) ? " · Receta obligatoria" : ""}</small>{mountName(item, cart.items) && <small>Para: {mountName(item, cart.items)}</small>}</div><div className="cart-quantity"><button disabled={status === "saving"} onClick={() => update(item, item.quantity - 1)} type="button">−</button><span>{item.quantity}</span><button disabled={status === "saving" || item.quantity >= 100} onClick={() => update(item, item.quantity + 1)} type="button">+</button></div><b>{formatClp(item.lineTotalCents)}</b><button aria-label={`Eliminar ${item.name}`} className="remove-line" disabled={status === "saving"} onClick={() => update(item, 0)} type="button">×</button></div>)}
         </article>
+
+        {cart.items.some((item) => item.category === "FRAME") && <article className="cart-card">
+          <h2>¿Necesitas receta?</h2>
+          <fieldset className="lens-options"><legend>Elige cómo comprar tus marcos</legend>
+            <label className="lens-option"><input checked={!cart.items.some((item) => item.mountFrameProductId)} disabled={status === "saving"} name="cartPrescriptionChoice" onChange={chooseFramesOnly} type="radio" /><span><strong>No necesito receta — comprar solo el marco</strong><small>Esta opción retira los cristales del carrito. El total se actualiza.</small></span></label>
+            <label className="lens-option"><input checked={prescriptionRequired} disabled={status === "saving"} name="cartPrescriptionChoice" onChange={() => router.push(`/tienda/${cart.items.find((item) => item.category === "FRAME").productId}?editCart=1`)} type="radio" /><span><strong>Necesito cristales con receta</strong><small>{prescriptionRequired ? "Adjunta tu receta o ingresa sus valores en el bloque siguiente." : "Configura los cristales de tu marco para adjuntar o ingresar una receta."}</small></span></label>
+          </fieldset>
+          {!prescriptionRequired && cart.items.some((item) => item.mountFrameProductId) && <p className="card-lead">Los cristales seleccionados no requieren receta.</p>}
+        </article>}
 
         {prescriptionRequired && <article className="cart-card prescription-card">
           <div className="cart-card-heading">
@@ -262,41 +288,34 @@ export default function CartExperience() {
           </div>
 
           <>
-            <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} onClick={() => { setPrescriptionMode("MANUAL"); setPrescriptionDraft(null); }} type="button">Ingresar manualmente</button></div>
-            <form className="prescription-form" key={prescriptionDraft ? JSON.stringify(prescriptionDraft) : "sin-borrador"} onSubmit={savePrescription}>
-              {prescriptionMode === "IMAGE" && <PrescriptionImageInput disabled={status === "saving"} hasStoredImage={cart.externalPrescription?.hasImage} image={prescriptionImage} onImageChange={handlePrescriptionImageChange} />}
-              {prescriptionMode === "IMAGE" && !prescriptionDraft && !cart.externalPrescription?.extractedData && cart.externalPrescription?.hasImage && <button className="button button--secondary field-full" onClick={enableManualImageReview} type="button">Completar valores manualmente</button>}
-              {prescriptionMode === "IMAGE" && prescriptionDraft && <div className="inline-success field-full"><strong>Lectura automática: {prescriptionDraft.confidence === "HIGH" ? "confianza alta" : prescriptionDraft.confidence === "MEDIUM" ? "confianza media" : "confianza baja"}.</strong><span> Revisa todos los campos antes de confirmar.</span>{prescriptionDraft.warnings?.length > 0 && <ul>{prescriptionDraft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}</div>}
-              <h3>Ojo derecho</h3><span />
-              <label className="field"><span>Esfera</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.sphere)} name="rightSphere" required step="0.25" type="number" /></label>
-              <label className="field"><span>Cilindro</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.cylinder)} name="rightCylinder" required step="0.25" type="number" /></label>
-              <label className="field"><span>Eje</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.axis)} max="180" min="0" name="rightAxis" type="number" /></label>
-              <label className="field"><span>Adición</span><input defaultValue={fieldValue(prescriptionDraft?.rightEye?.addition)} name="rightAddition" step="0.25" type="number" /></label>
-              <h3>Ojo izquierdo</h3><span />
-              <label className="field"><span>Esfera</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.sphere)} name="leftSphere" required step="0.25" type="number" /></label>
-              <label className="field"><span>Cilindro</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.cylinder)} name="leftCylinder" required step="0.25" type="number" /></label>
-              <label className="field"><span>Eje</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.axis)} max="180" min="0" name="leftAxis" type="number" /></label>
-              <label className="field"><span>Adición</span><input defaultValue={fieldValue(prescriptionDraft?.leftEye?.addition)} name="leftAddition" step="0.25" type="number" /></label>
-              <label className="field"><span>Distancia pupilar</span><input defaultValue={fieldValue(prescriptionDraft?.pupillaryDistance)} name="pupillaryDistance" step="0.5" type="number" /></label>
-              <label className="field field-wide"><span>Indicaciones</span><input defaultValue={fieldValue(prescriptionDraft?.fulfillmentNotes)} name="fulfillmentNotes" placeholder="Ej: Tratamiento antirreflejo" /></label>
-              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">{prescriptionMode === "IMAGE" && (prescriptionDraft ?? cart.externalPrescription?.extractedData) ? "Confirmar valores revisados" : prescriptionMode === "IMAGE" && cart.externalPrescription?.hasImage ? "Leer receta guardada" : prescriptionMode === "IMAGE" ? "Subir y leer receta" : "Guardar receta obligatoria"}</button>
-            </form>
+            <div className="mode-toggle"><button className={prescriptionMode === "IMAGE" ? "active" : ""} disabled={status === "saving"} onClick={() => setPrescriptionMode("IMAGE")} type="button">Adjuntar imagen</button><button className={prescriptionMode === "MANUAL" ? "active" : ""} disabled={status === "saving"} onClick={() => setPrescriptionMode("MANUAL")} type="button">Ingresar manualmente</button></div>
+            {prescriptionMode === "IMAGE" && <PrescriptionImageInput disabled={status === "saving"} hasStoredImage={cart.externalPrescription?.hasImage} storedImageVersion={cart.externalPrescription?.updatedAt} image={prescriptionImage} onImageChange={handlePrescriptionImageChange} />}
+            {prescriptionMode === "IMAGE" && cart.externalPrescription?.hasImage && <div className="mode-toggle"><button disabled={status === "saving"} onClick={retryPrescriptionReading} type="button">Volver a leer imagen</button><button disabled={status === "saving"} onClick={enableManualImageReview} type="button">Completar valores manualmente</button></div>}
+            {(prescriptionMode === "MANUAL" || cart.externalPrescription?.hasImage) && <form className="prescription-form" onChange={() => setPrescriptionDirty(true)} onSubmit={savePrescription}>
+              {prescriptionMode === "IMAGE" && prescriptionDraft && <div className="inline-success field-full"><strong>Valores sugeridos: revisión obligatoria.</strong>{prescriptionDraft.warnings?.length > 0 && <ul>{prescriptionDraft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}</div>}
+              {[{ prefix: "right", name: "Ojo derecho" }, { prefix: "left", name: "Ojo izquierdo" }].map(({ prefix, name }) => <fieldset className="prescription-eye field-full" key={prefix}><legend>{name}</legend>{[{ key: "Sphere", label: "Esfera", required: true }, { key: "Cylinder", label: "Cilindro", required: true }, { key: "Axis", label: "Eje", required: fields[prefix + "Cylinder"] !== "" && Number(fields[prefix + "Cylinder"]) !== 0 }, { key: "Addition", label: "Adición (si corresponde)" }].map(({ key, label, required }) => <label className="field" key={key}><span>{label}</span><input aria-label={name + " — " + label} max={key === "Axis" ? 180 : undefined} min={key === "Axis" ? 0 : undefined} name={prefix + key} onChange={(event) => setFields((current) => ({ ...current, [prefix + key]: event.target.value }))} required={required} step={key === "Axis" ? "1" : "0.01"} type="number" value={fields[prefix + key]} /></label>)}</fieldset>)}
+              <label className="field"><span>Distancia pupilar (opcional)</span><input name="pupillaryDistance" min="0.01" onChange={(event) => setFields((current) => ({ ...current, pupillaryDistance: event.target.value }))} step="0.01" type="number" value={fields.pupillaryDistance} /></label>
+              <label className="field field-wide"><span>Indicaciones</span><input name="fulfillmentNotes" maxLength={1000} onChange={(event) => setFields((current) => ({ ...current, fulfillmentNotes: event.target.value }))} placeholder="Ej: Tratamiento antirreflejo" value={fields.fulfillmentNotes} /></label>
+              <button className="button button--secondary field-full" disabled={status === "saving"} type="submit">{prescriptionMode === "IMAGE" ? "Confirmar valores revisados" : "Guardar receta obligatoria"}</button>
+            </form>}
+            {error && <p className="inline-error" role="alert">{error}</p>}
+            {notice && <p className="inline-success" role="status">{notice}</p>}
           </>
         </article>}
 
         <article className="cart-card">
           <h2>Datos para la compra</h2>
           <p className="card-lead">Puedes continuar como invitado. Las compras online se preparan para retiro en tienda.</p>
-          <form className="buyer-form" onSubmit={checkout}>
-            <label className="field"><span>RUT</span><input defaultValue={cart.buyer?.rut} name="rut" placeholder="12.345.678-5" required /></label>
-            <label className="field"><span>Nombres</span><input defaultValue={cart.buyer?.firstNames} name="firstNames" placeholder="Nombres" required /></label>
-            <label className="field"><span>Apellidos</span><input defaultValue={cart.buyer?.lastNames} name="lastNames" placeholder="Apellidos" required /></label>
-            <label className="field"><span>Teléfono</span><input defaultValue={cart.buyer?.phone} name="phone" placeholder="+56 9 1234 5678" required /></label>
-            <label className="field"><span>Correo</span><input defaultValue={cart.buyer?.email} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
-            <label className="field"><span>Dirección de contacto</span><input defaultValue={cart.buyer?.address} name="address" placeholder="Dirección" required /></label>
+          <form className="buyer-form" onChange={(event) => setBuyerDraft(Object.fromEntries(new FormData(event.currentTarget)))} onSubmit={checkout}>
+            <label className="field"><span>RUT</span><input defaultValue={buyerDraft.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
+            <label className="field"><span>Nombres</span><input defaultValue={buyerDraft.firstNames ?? ""} name="firstNames" placeholder="Nombres" required /></label>
+            <label className="field"><span>Apellidos</span><input defaultValue={buyerDraft.lastNames ?? ""} name="lastNames" placeholder="Apellidos" required /></label>
+            <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>
+            <label className="field"><span>Correo</span><input defaultValue={buyerDraft.email ?? ""} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
+            <label className="field"><span>Dirección de contacto</span><input defaultValue={buyerDraft.address ?? ""} name="address" placeholder="Dirección" required /></label>
             <div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en tienda</strong><span>Sucursal por confirmar con el local después de la compra.</span></div></div>
-            <label className="field field-full"><span>Notas opcionales</span><textarea name="notes" placeholder="Ej: Entregar en horario de oficina" rows="3" /></label>
-            <button className="button button--primary field-full" disabled={status === "saving"} type="submit">Continuar a Mercado Pago</button>
+            <label className="field field-full"><span>Notas opcionales</span><textarea defaultValue={buyerDraft.notes ?? ""} name="notes" placeholder="Ej: Entregar en horario de oficina" rows="3" /></label>
+            <button className="button button--primary field-full" disabled={status === "saving" || (prescriptionRequired && (!prescriptionReady || prescriptionDirty))} type="submit">Continuar a Mercado Pago</button>{prescriptionRequired && (!prescriptionReady || prescriptionDirty) && <p className="field-full">Guarda y confirma la receta antes de continuar.</p>}
           </form>
         </article>
       </section>

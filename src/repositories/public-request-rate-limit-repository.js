@@ -1,8 +1,9 @@
 import { prisma } from "../db/prisma.js";
+import { retryTransaction } from "../db/retry-transaction.js";
 
 export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const now = new Date();
     const current = await client.public_request_rate_limits.findUnique({
       where: { bucket_subject_hash: { bucket, subject_hash: subjectHash } },

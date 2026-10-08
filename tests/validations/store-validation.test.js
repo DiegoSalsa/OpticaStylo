@@ -81,6 +81,7 @@ test("valida productos distintos y vincula cristales al marco en el carrito", ()
       { mountFrameProductId: first, productId: second, quantity: 2 },
     ],
   }), {
+    replaceFrameProductId: null,
     items: [
       { mountFrameProductId: null, productId: first, quantity: 1 },
       { mountFrameProductId: first, productId: second, quantity: 2 },

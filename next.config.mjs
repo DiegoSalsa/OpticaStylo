@@ -27,6 +27,10 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 // Exponer la configuración de Next.js, imágenes remotas y la raíz usada por Turbopack
 const nextConfig = {
+  distDir: process.env.OPTICASTYLO_BUILD_DIR ?? ".next",
+  outputFileTracingIncludes: {
+    "/api/store/**": ["./public/virtual-try-on/models/*.glb", "./public/virtual-try-on/models/*.tryon.json"],
+  },
   env: {
     NEXT_PUBLIC_VTO_COMMIT: vtoBuild.commit,
     NEXT_PUBLIC_VTO_BRANCH: vtoBuild.branch,

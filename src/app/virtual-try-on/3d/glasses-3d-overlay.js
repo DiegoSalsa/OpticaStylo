@@ -7,7 +7,7 @@ import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 import { PhysicalScaleEstimator } from "@/virtual-try-on-3d/physical-scale";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
-import { ensureStoreCart, readStoreResponse } from "@/utils/store-client";
+import { announceStoreCartChange, ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
 import { acquireCamera, cameraTrackSnapshot, mobileCameraEnvironment } from "@/virtual-try-on-3d/camera-acquisition";
 import { createDetectionDiagnostics, recordDetectionResult } from "@/virtual-try-on-3d/detection-diagnostics";
@@ -89,10 +89,6 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const [selectedModel, setSelectedModel] = useState(BUILT_IN_3D_GLASSES[0]);
   const [fitAdjustment, setFitAdjustment] = useState(DEFAULT_FIT_ADJUSTMENT);
   const [captureMessage, setCaptureMessage] = useState("");
-  const [cameraVisual, setCameraVisual] = useState({
-    brightness: 100,
-    contrast: 100,
-  });
   const [catalogSearch, setCatalogSearch] = useState("");
   const [facingMode, setFacingMode] = useState("user");
   const [cartMessage, setCartMessage] = useState("");
@@ -186,7 +182,10 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         });
         const payload = await response.json();
         if (response.ok && payload.success && payload.data.length > 0) {
-          setModels([...BUILT_IN_3D_GLASSES, ...payload.data]);
+          setModels([...BUILT_IN_3D_GLASSES.filter((model) => !payload.data.some((published) => published.sku === model.sku)), ...payload.data]);
+          const productId = new URLSearchParams(window.location.search).get("productId");
+          const requestedModel = payload.data.find((model) => model.productId === productId);
+          if (requestedModel) setSelectedModel(requestedModel);
         }
       } catch (error) {
         if (error?.name !== "AbortError") {
@@ -577,11 +576,11 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     setIsAddingToCart(true);
     setCartMessage("");
     try {
-      const cart = await ensureStoreCart();
+      const cart = await ensureStoreCart({ forShopping: true });
       const currentItem = cart.items.find(
         (item) => item.productId === selectedModel.productId,
       );
-      await readStoreResponse(
+      const savedCart = await readStoreResponse(
         await fetch("/api/store/cart/items", {
           body: JSON.stringify({
             items: [
@@ -595,7 +594,8 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
           method: "POST",
         }),
       );
-      setCartMessage("Marco agregado al carrito.");
+      announceStoreCartChange(savedCart);
+      setCartMessage("Marco agregado al carrito. Allí puedes elegir cristales y adjuntar tu receta si corresponde.");
     } catch (error) {
       setCartMessage(error.message);
     } finally {
@@ -635,7 +635,6 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         cameraAspectRatio,
         mobileCamera,
         cameraStatus,
-        cameraVisual,
         captureTryOn,
         cartMessage,
         catalogSearch,
@@ -664,7 +663,6 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         rendererCanvasRef,
         resetFitAdjustment,
         selectedModel,
-        setCameraVisual,
         setCatalogSearch,
         setPhotoLoaded,
         setSelectedModel,
