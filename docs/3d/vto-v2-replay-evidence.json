@@ -1,0 +1,86 @@
+[
+  {
+    "modelIndex": 0,
+    "angle": -45,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": -45,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367429,\n  \"rightOpeningDegrees\": 5.548160247113679,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.9241775712364\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw--45.png"
+  },
+  {
+    "modelIndex": 0,
+    "angle": -30,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": -30,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367445,\n  \"rightOpeningDegrees\": 5.548160247113711,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.60296352582884\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw--30.png"
+  },
+  {
+    "modelIndex": 0,
+    "angle": -15,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": -15,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367434,\n  \"rightOpeningDegrees\": 5.548160247113699,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.61794895650585\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw--15.png"
+  },
+  {
+    "modelIndex": 0,
+    "angle": 0,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 0,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367434,\n  \"rightOpeningDegrees\": 5.548160247113699,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.624246184571184\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw-0.png"
+  },
+  {
+    "modelIndex": 0,
+    "angle": 15,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 15,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.54816025636741,\n  \"rightOpeningDegrees\": 5.548160247113723,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.61229708032877\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw-15.png"
+  },
+  {
+    "modelIndex": 0,
+    "angle": 30,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 30,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367402,\n  \"rightOpeningDegrees\": 5.5481602471136755,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.61881855617507\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw-30.png"
+  },
+  {
+    "modelIndex": 0,
+    "angle": 45,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"rb2140-901-50-v2.19\",\n  \"yaw\": 45,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 5.548160256367429,\n  \"rightOpeningDegrees\": 5.548160247113727,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.64641263303073\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-0-yaw-45.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": -45,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": -45,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988886,\n  \"rightOpeningDegrees\": 2.3866522969888324,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 59.24392885887892\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw--45.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": -30,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": -30,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.3866522969889,\n  \"rightOpeningDegrees\": 2.3866522969888733,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 58.33834874431752\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw--30.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": -15,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": -15,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988886,\n  \"rightOpeningDegrees\": 2.38665229698886,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 58.392788826164875\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw--15.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": 0,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 0,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988886,\n  \"rightOpeningDegrees\": 2.38665229698886,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 58.420083306384434\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw-0.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": 15,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 15,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988846,\n  \"rightOpeningDegrees\": 2.3866522969889,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 58.44618674269423\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw-15.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": 30,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 30,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.386652296988846,\n  \"rightOpeningDegrees\": 2.386652296988846,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 58.46609477125851\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw-30.png"
+  },
+  {
+    "modelIndex": 1,
+    "angle": 45,
+    "replayText": "{\n  \"synthetic\": true,\n  \"loadedModel\": \"harley-davidson-hd0896-001-v4\",\n  \"yaw\": 45,\n  \"pitch\": 0,\n  \"zoom\": 1,\n  \"leftOpeningDegrees\": 2.3866522969888733,\n  \"rightOpeningDegrees\": 2.3866522969889,\n  \"leftLimited\": false,\n  \"rightLimited\": false,\n  \"renderedFps\": 58.49569921525673\n}",
+    "replayFile": "C:/Users/diego/OneDrive/Desktop/opticastylo/tmp/vto-validation/replay/model-1-yaw-45.png"
+  }
+]

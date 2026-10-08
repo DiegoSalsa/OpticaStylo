@@ -236,12 +236,13 @@
   transition: opacity 180ms ease;
 }
 
-.threeCanvas[data-cropped="true"] {
-  right: auto;
+.mediaLayer {
+  position: absolute;
   left: 50%;
-  width: auto !important;
-  aspect-ratio: var(--overlay-aspect-ratio);
-  transform: translateX(-50%);
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
 }
 
 .viewerPlaceholder {
@@ -622,7 +623,7 @@
   .page { padding: 0 10px 30px; }
   .experience { grid-template-columns: minmax(0, 1fr); min-height: 0; border-radius: 0 0 16px 16px; }
   .viewerPanel { grid-row: 1; align-self: start; padding: 13px; }
-  .viewer { height: clamp(380px, 60svh, 510px); min-height: 0; aspect-ratio: auto; }
+  .viewer { width: 100%; height: auto; min-height: 0; flex-shrink: 0; aspect-ratio: var(--camera-aspect-ratio, var(--viewer-fallback-aspect)); }
   .guidePanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 13px; border-right: 0; border-top: 1px solid #dce1df; }
   .guidePrivacy { grid-column: 1 / -1; margin: 0 2px; }
   .controlsPanel { border-top: 1px solid #dce1df; border-left: 0; }
@@ -634,8 +635,7 @@
   .page { padding-inline: 0; }
   .experience { border-right: 0; border-left: 0; border-radius: 0; }
   .viewerPanel { padding: 10px 8px 13px; }
-  .viewer { --viewer-fallback-aspect: 3 / 4; min-height: 390px; border-radius: 14px; }
-  .viewer { height: clamp(365px, 62svh, 490px); }
+  .viewer { --viewer-fallback-aspect: 3 / 4; border-radius: 14px; }
   .viewerDock { gap: 5px; padding: 0; }
   .dockButton,
   .captureButton { min-height: 35px; padding: 0 9px; font-size: 0.56rem; }
@@ -653,3 +653,15 @@
   .focusGuide,
   .faceOval { transition: none; }
 }
+
+/* Phones also retain their complete source in landscape above 780px.
+   Desktop keeps the approved three-column layout and cover mapping. */
+.experience[data-mobile-camera="true"] { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+.experience[data-mobile-camera="true"] .viewerPanel { grid-row: 1; align-self: start; }
+.experience[data-mobile-camera="true"] .viewer { width: 100%; height: auto; min-height: 0; flex-shrink: 0; aspect-ratio: var(--camera-aspect-ratio, var(--viewer-fallback-aspect)); }
+
+.cameraDiagnostics { width: min(1320px, 100%); margin: 12px auto; padding: 12px; border: 1px solid #94c9bb; border-radius: 10px; color: #173a30; background: #f0faf6; font: 13px/1.5 system-ui, sans-serif; overflow-wrap: anywhere; }
+.cameraDiagnostics p { margin: 6px 0; }
+.cameraDiagnostics pre { max-height: 360px; overflow: auto; font-size: 11px; white-space: pre-wrap; }
+.cameraDiagnostics summary { cursor: pointer; }
+.originalFrame { display: block; width: min(100%, 420px); height: auto; margin-top: 8px; }

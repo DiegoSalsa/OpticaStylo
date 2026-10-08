@@ -1,0 +1,15 @@
+{
+  "source": "public/virtual-try-on/models/RB2140-901-50-v2.19.glb",
+  "output": "public/virtual-try-on/models/RB2140-901-50-v2.19.tryon.json",
+  "identity": {
+    "modelId": "rb2140-901-50-v2.19",
+    "name": "Ray-Ban Original Wayfarer RB2140",
+    "sku": "RB2140-901-50"
+  },
+  "dimensionsMm": {
+    "frameWidth": 147.85990119,
+    "lensWidth": 50,
+    "bridgeWidth": 22,
+    "templeLength": 150
+  }
+}
