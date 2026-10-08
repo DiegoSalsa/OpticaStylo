@@ -11,6 +11,7 @@ import { formatClp } from "@/utils/store-client";
 import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-projection";
 
 import styles from "./virtual-try-on-3d.module.css";
+import CameraDiagnostics from "./camera-diagnostics";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
 
@@ -31,6 +32,7 @@ export default function Glasses3DInterface({ model }) {
     cameraActive,
     cameraAspectRatio,
     cameraStatus,
+    mobileCamera,
     cameraVisual,
     captureTryOn,
     cartMessage,
@@ -88,7 +90,10 @@ export default function Glasses3DInterface({ model }) {
   const { width: coverWidth, height: coverHeight } = coverRectangle(viewerSize.width, viewerSize.height, projection.aspect);
 
   return (
-    <section className={styles.experience} aria-label="Probador virtual 3D">
+    <>
+    {debugMode && <CameraDiagnostics videoRef={videoRef} viewerRef={viewerRef} rendererCanvasRef={rendererCanvasRef}
+      metricsRef={debugMetricsRef} cameraStatus={cameraStatus} dimensions={videoDimensions} />}
+    <section className={styles.experience} data-mobile-camera={mobileCamera} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
         {debugMode && <><TrackingDiagnostics metricsRef={debugMetricsRef} />
           <label>Estimador de escala <select value={scaleMode} onChange={(event) => changeScaleMode(event.target.value)}>
@@ -580,5 +585,6 @@ export default function Glasses3DInterface({ model }) {
         </Link>
       </aside>
     </section>
+    </>
   );
 }
