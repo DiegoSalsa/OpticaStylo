@@ -31,6 +31,12 @@ try {
   await run(["node_modules/next/dist/bin/next", "build"], { NODE_ENV: "production" });
   await run(["--test", "tests/integration/store-guest-checkout.test.js"], { NODE_ENV: "test" });
   await run(["scripts/seed-store-e2e.mjs"], { NODE_ENV: "test" });
+  if (process.env.MERCADO_PAGO_MODE === "sandbox" && process.env.MERCADO_PAGO_ACCESS_TOKEN
+    && process.env.MERCADO_PAGO_PRODUCTION_ENABLED !== "true") {
+    await run(["scripts/verify-store-sandbox-checkout.mjs"], {
+      NODE_ENV: "test", MERCADO_PAGO_ACCESS_TOKEN: process.env.MERCADO_PAGO_ACCESS_TOKEN,
+    });
+  }
   server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", "3107"], {
     env: { ...env, NODE_ENV: "production" }, stdio: "inherit",
   });

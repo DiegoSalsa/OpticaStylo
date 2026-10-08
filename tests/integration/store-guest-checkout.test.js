@@ -96,6 +96,14 @@ test("integración PostgreSQL real: compra invitada y autenticada", { skip: !pro
       assert.equal(result.order.totalCents, 60000);
       assert.equal(result.order.externalPrescription, null);
     });
+    await t.test("checkout simultáneo confirma un único pedido y una sola notificación", async () => {
+      const { token } = await createStoreCart(null);
+      await putStoreCartItems(token, null, { items: [{ productId: ids.accessory, quantity: 1 }] });
+      await updateStoreCart(token, null, configuration);
+      const results = await Promise.all([checkoutCart(token, null), checkoutCart(token, null)]);
+      assert.equal(results[0].order.id, results[1].order.id);
+      assert.equal(await prisma.transactional_email_outbox.count({ where: { sale_id: results[0].order.id, template_code: "ORDER_CONFIRMED" } }), 1);
+    });
     await t.test("rechaza reasignación silenciosa del mismo cristal a otro marco", async () => {
       const { token } = await createStoreCart(null);
       await putStoreCartItems(token, null, { items: lensItems() });

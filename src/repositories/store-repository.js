@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
@@ -79,6 +80,7 @@ async function loadCart(client, tokenHash, accountId = null) {
 }
 
 async function lockActiveCart(client, tokenHash, accountId) {
+  await client.$queryRaw`SELECT id FROM store_carts WHERE token_hash = ${tokenHash} FOR UPDATE`;
   const cart = await client.store_carts.findFirst({
     where: { token_hash: tokenHash, OR: [{ customer_account_id: null }, { customer_account_id: accountId }] },
   });
@@ -89,7 +91,7 @@ async function lockActiveCart(client, tokenHash, accountId) {
 
 export async function createOrRotateStoreCart(tokenHash, accountId, expiresAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const existing = accountId ? await client.store_carts.findFirst({
       where: { customer_account_id: accountId, status: "ACTIVE" },
     }) : null;
@@ -113,7 +115,7 @@ export async function upsertStoreCartItem(tokenHash, accountId, productId, quant
 
 export async function upsertStoreCartItems(tokenHash, accountId, items, replaceFrameProductId = null) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const productIds = [...new Set(items.flatMap((item) => [item.productId, item.mountFrameProductId].filter(Boolean)))];
@@ -168,7 +170,7 @@ export async function upsertStoreCartItems(tokenHash, accountId, items, replaceF
 // Eliminar o cancelar remove tienda carrito item de forma controlada y consistente
 export async function removeStoreCartItem(tokenHash, accountId, productId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const removed = await client.store_cart_items.deleteMany({ where: { cart_id: locked.cart.id, product_id: productId } });
@@ -187,7 +189,7 @@ function cloudinaryAsset(row) {
 
 export async function configureStoreCart(tokenHash, accountId, configuration) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     // Mantener el bloqueo también en la capa de persistencia si un consumidor omite el validador público.
@@ -228,7 +230,7 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
 
 export async function saveManualExternalPrescription(tokenHash, accountId, data, confirmedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const existing = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
@@ -254,7 +256,7 @@ export async function saveManualExternalPrescription(tokenHash, accountId, data,
 
 export async function saveExternalPrescriptionImage(tokenHash, accountId, image) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const existing = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
@@ -278,7 +280,7 @@ export async function saveExternalPrescriptionImage(tokenHash, accountId, image)
 
 export async function confirmExternalPrescription(tokenHash, accountId, data, confirmedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const updated = await client.external_prescriptions.updateMany({
@@ -292,7 +294,7 @@ export async function confirmExternalPrescription(tokenHash, accountId, data, co
 
 export async function claimCartPrescriptionExtraction(tokenHash, accountId, provider) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const prescription = await client.external_prescriptions.findFirst({ where: { cart_id: locked.cart.id, source: "IMAGE" } });
@@ -318,7 +320,7 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
 
 export async function completeCartPrescriptionExtraction(tokenHash, accountId, provider, data) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const updated = await client.external_prescriptions.updateMany({
@@ -332,7 +334,7 @@ export async function completeCartPrescriptionExtraction(tokenHash, accountId, p
 
 export async function failCartPrescriptionExtraction(tokenHash, accountId, provider) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { reason: locked.reason };
     await client.external_prescriptions.updateMany({
@@ -370,7 +372,8 @@ async function ensureGuestCustomer(client, buyer) {
 
 export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM store_carts WHERE token_hash = ${tokenHash} FOR UPDATE`;
     const cart = await client.store_carts.findFirst({
       include: cartInclude,
       where: { token_hash: tokenHash, OR: [{ customer_account_id: null }, { customer_account_id: accountId }] },
