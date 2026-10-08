@@ -89,10 +89,6 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const [selectedModel, setSelectedModel] = useState(BUILT_IN_3D_GLASSES[0]);
   const [fitAdjustment, setFitAdjustment] = useState(DEFAULT_FIT_ADJUSTMENT);
   const [captureMessage, setCaptureMessage] = useState("");
-  const [cameraVisual, setCameraVisual] = useState({
-    brightness: 100,
-    contrast: 100,
-  });
   const [catalogSearch, setCatalogSearch] = useState("");
   const [facingMode, setFacingMode] = useState("user");
   const [cartMessage, setCartMessage] = useState("");
@@ -186,7 +182,10 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         });
         const payload = await response.json();
         if (response.ok && payload.success && payload.data.length > 0) {
-          setModels([...BUILT_IN_3D_GLASSES, ...payload.data]);
+          setModels([...BUILT_IN_3D_GLASSES.filter((model) => !payload.data.some((published) => published.sku === model.sku)), ...payload.data]);
+          const productId = new URLSearchParams(window.location.search).get("productId");
+          const requestedModel = payload.data.find((model) => model.productId === productId);
+          if (requestedModel) setSelectedModel(requestedModel);
         }
       } catch (error) {
         if (error?.name !== "AbortError") {
@@ -577,7 +576,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     setIsAddingToCart(true);
     setCartMessage("");
     try {
-      const cart = await ensureStoreCart();
+      const cart = await ensureStoreCart({ forShopping: true });
       const currentItem = cart.items.find(
         (item) => item.productId === selectedModel.productId,
       );
@@ -635,7 +634,6 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         cameraAspectRatio,
         mobileCamera,
         cameraStatus,
-        cameraVisual,
         captureTryOn,
         cartMessage,
         catalogSearch,
@@ -664,7 +662,6 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         rendererCanvasRef,
         resetFitAdjustment,
         selectedModel,
-        setCameraVisual,
         setCatalogSearch,
         setPhotoLoaded,
         setSelectedModel,

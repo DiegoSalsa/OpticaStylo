@@ -7,6 +7,11 @@ test("habilita datos de prueba fuera de producción", () => {
   assert.equal(canUseStoreTestData({ NODE_ENV: "development" }), true);
 });
 
+test("permite los cristales de prueba en previews sin publicarlos en producción", () => {
+  assert.equal(canUseStoreTestData({ NODE_ENV: "production", VERCEL_ENV: "preview" }), true);
+  assert.equal(canUseStoreTestData({ NODE_ENV: "production", VERCEL_ENV: "production", STORE_INCLUDE_TEST_DATA: "true" }), false);
+});
+
 test("requiere habilitación explícita para datos de prueba en producción", () => {
   assert.equal(canUseStoreTestData({ NODE_ENV: "production" }), false);
   assert.equal(canUseStoreTestData({

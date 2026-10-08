@@ -50,6 +50,7 @@ async function loadCart(client, tokenHash, accountId = null) {
     include: cartInclude,
     where: {
       token_hash: tokenHash,
+      expires_at: { gt: new Date() },
       OR: [{ customer_account_id: null }, { customer_account_id: accountId }],
     },
   });
@@ -110,7 +111,7 @@ export async function upsertStoreCartItem(tokenHash, accountId, productId, quant
   return upsertStoreCartItems(tokenHash, accountId, [{ mountFrameProductId, productId, quantity }]);
 }
 
-export async function upsertStoreCartItems(tokenHash, accountId, items) {
+export async function upsertStoreCartItems(tokenHash, accountId, items, replaceFrameProductId = null) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
@@ -136,6 +137,20 @@ export async function upsertStoreCartItems(tokenHash, accountId, items) {
       } else if (!item.mountFrameProductId || products.get(item.mountFrameProductId)?.category !== "FRAME" || !frameIds.has(item.mountFrameProductId)) {
         return { cart: null, reason: "LENS_MOUNT_REQUIRED" };
       }
+      if (product.category === "PRESCRIPTION_LENS") {
+        const existing = await client.store_cart_items.findUnique({
+          where: { cart_id_product_id: { cart_id: locked.cart.id, product_id: item.productId } },
+        });
+        if (existing && existing.mounted_on_product_id !== item.mountFrameProductId) {
+          return { cart: null, reason: "LENS_MOUNT_CONFLICT" };
+        }
+      }
+    }
+    if (replaceFrameProductId) {
+      if (products.get(replaceFrameProductId)?.category !== "FRAME") return { cart: null, reason: "LENS_MOUNT_REQUIRED" };
+      await client.store_cart_items.deleteMany({
+        where: { cart_id: locked.cart.id, mounted_on_product_id: replaceFrameProductId },
+      });
     }
     for (const item of items) await client.store_cart_items.upsert({
       create: {
@@ -332,7 +347,7 @@ export async function findCartPrescriptionImage(tokenHash, accountId) {
   const row = await prisma.external_prescriptions.findFirst({
     where: {
       source: "IMAGE",
-      store_carts: { token_hash: tokenHash, OR: [{ customer_account_id: null }, { customer_account_id: accountId }] },
+      store_carts: { token_hash: tokenHash, expires_at: { gt: new Date() }, OR: [{ customer_account_id: null }, { customer_account_id: accountId }] },
     },
   });
   return row ? {
@@ -361,6 +376,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       where: { token_hash: tokenHash, OR: [{ customer_account_id: null }, { customer_account_id: accountId }] },
     });
     if (!cart) return { reason: "CART_NOT_FOUND", saleId: null };
+    if (cart.expires_at <= checkedOutAt) return { reason: "CART_NOT_ACTIVE", saleId: null };
     if (cart.status === "CHECKED_OUT") return { reason: null, saleId: cart.sale_id };
     if (cart.status !== "ACTIVE" || cart.expires_at <= checkedOutAt) return { reason: "CART_NOT_ACTIVE", saleId: null };
     if (["buyer_rut", "buyer_first_names", "buyer_last_names", "buyer_phone", "buyer_email", "buyer_address", "fulfillment_method"].some((field) => !cart[field])) {

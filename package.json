@@ -25,7 +25,8 @@
     "payments:preflight": "node scripts/mercado-pago-preflight.mjs",
     "users:bootstrap-admin": "node scripts/bootstrap-admin.mjs",
     "users:create-sales": "node scripts/create-sales-user.mjs",
-    "demo:prepare": "node scripts/prepare-demo-data.mjs"
+    "demo:prepare": "node scripts/prepare-demo-data.mjs",
+    "test:store:e2e": "node scripts/run-store-e2e.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -48,6 +49,7 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "prisma": "^6.19.3"

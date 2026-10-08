@@ -1,7 +1,7 @@
 // Capa HTTP para store/cart/prescription/manual/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
 import { putManualPrescription } from "@/services/store-service";
-import { createSuccessResponse } from "@/utils/api-response";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 

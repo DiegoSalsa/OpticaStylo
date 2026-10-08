@@ -1,6 +1,6 @@
 import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
 import { deleteStoreCartItem, putStoreCartItem } from "@/services/store-service";
-import { createSuccessResponse } from "@/utils/api-response";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 

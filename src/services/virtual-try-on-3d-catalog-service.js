@@ -1,7 +1,7 @@
 import {
   findPublic3dModelFile,
   findPublic3dModelMetadata,
-  listActive3dModels,
+  listPublished3dModels,
 } from "../repositories/virtual-try-on-3d-repository.js";
 import { AppError } from "../utils/app-error.js";
 
@@ -17,7 +17,7 @@ function notFound() {
 }
 
 export async function getPublic3dModels(dependencies = {}) {
-  return (dependencies.listModels ?? listActive3dModels)();
+  return (dependencies.listModels ?? listPublished3dModels)();
 }
 export async function getPublic3dModelFile(assetId, dependencies = {}) {
   const file = await (dependencies.findFile ?? findPublic3dModelFile)(id(assetId));

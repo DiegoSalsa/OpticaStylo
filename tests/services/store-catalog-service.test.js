@@ -16,6 +16,18 @@ const product = {
   unitPriceCents: 5000,
 };
 
+test("solo vincula productos presentes en el catálogo VTO publicado", async () => {
+  const compatible = { ...product, category: "FRAME", id: "00000000-0000-4000-8000-000000000002" };
+  const result = await getStoreProducts(new URLSearchParams(), {
+    listProducts: async () => ({ items: [product, compatible, { ...compatible, id: "00000000-0000-4000-8000-000000000003" }] }),
+    listProductImages: async () => [],
+    list3dModels: async () => [{ assetId: "published", productId: compatible.id }],
+  });
+  assert.equal(result.items[0].virtualTryOn, null);
+  assert.equal(result.items[1].virtualTryOn.url, `/virtual-try-on/3d?productId=${compatible.id}`);
+  assert.equal(result.items[2].virtualTryOn, null);
+});
+
 test("fuerza el catálogo público a mostrar solo activos", async () => {
   const query = new URLSearchParams("isActive=false");
   const result = await getStoreProducts(query, {
@@ -69,6 +81,7 @@ test("oculta los cristales como productos independientes en la tienda", async ()
 
 test("incluye la galería y ficha del modelo HD0896-001", async () => {
   const result = await getStoreProduct(product.id, {
+    list3dModels: async () => [],
     findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
     listProductImages: async () => [],
     listProducts: async (filters) => {
