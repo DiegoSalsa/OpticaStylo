@@ -1,0 +1,23 @@
+{
+  "commit": "6f1878724a6aaad5173de1547e5c9ed7e8f9b2ae",
+  "sha256": {
+    "src/virtual-try-on-3d/physical-scale.js": "7f6eb482c77fab89fa21b3c127dac3cfa74646186ed44791bfb554df4842aec6",
+    "src/utils/virtual-try-on-3d-geometry.js": "6a886db69b090e11ffa49477c9749c258060c830faeb50d800961de97b32399c",
+    "src/virtual-try-on-3d/pose-filter.js": "d545f3d2f3a928b26540120d30c8a92a4cf8c13ad6345e78c8059f628ca9c555",
+    "src/virtual-try-on-3d/tracking-timeline.js": "5fe07192a6b33fb3f604dc1778f7cb6316e890a263c8c6e0e5486f1355e4153e",
+    "src/virtual-try-on-3d/temple-fitting.js": "b8cf4ba59c37ab9646b25201a01d3bb6a543f7b29285633a6beb63e365f1eb01",
+    "src/virtual-try-on-3d/model-runtime.js": "1df376e89781bf7e9d729a57d0cc0b9c85eac269b009af6145cbc5694bb28a80",
+    "src/virtual-try-on-3d/model-contract.js": "79ad4df5e7468ba754bc196f7b760a9ddf31d96534b990fd01a4232f9fadd84a",
+    "src/virtual-try-on-3d/model-importer.js": "5479a674571e3cee88466c61f7e5a9a8f537e4b6b6822953f8afb54d94b44f62",
+    "src/virtual-try-on-3d/camera-projection.js": "60f015ad0b45fd2920863c97a3e5cc13968c4127772d7478f54994a802a3ce84",
+    "src/app/virtual-try-on/3d/face-tracking.js": "228028cff9318cd3544d9a82ba9a1b0d12305505e4595d6f778efa804ab3d240",
+    "src/app/virtual-try-on/3d/face-tracking-core.js": "653d023d7cc98190f9214c8be741042eae9357bc2c13323d928ab80bf51df13c",
+    "src/app/virtual-try-on/3d/face-tracking.worker.js": "a23c1108b3df63954819c0ad7783e8cf765431831cebb3110257d7ea75085615",
+    "src/app/virtual-try-on/3d/glasses-model.js": "da7c93d7a9d92629c84c3740d974a86c981b995f5ea7b1ccffdcbc520618fb27",
+    "public/virtual-try-on/models/RB2140-901-50-v2.19.glb": "2c30f78bef6c2ae29eb42348fdb80e0852236ecaece3b38b5b7caf3b089b3ac6",
+    "public/virtual-try-on/models/RB2140-901-50-v2.19.tryon.json": "73f81a8ad59611c25a3ccae69a17cc0ed9fe85caa2ffc27e45e4e583e895049a",
+    "public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.glb": "fb78ef8a562e9e0d6ba176da6362aea4e6036347f9c874e88a8028bfa7f4bc8d",
+    "public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json": "f2009567fdc71cfa839988bf4c49dea226e16ecc5ac3e4b83ba278c1eabfddb5"
+  },
+  "desktopCssPrefixSha256": "b32e93736a632062c8795727bdad7f52cf1a4b97bdaf2a54408543533d2a1599"
+}

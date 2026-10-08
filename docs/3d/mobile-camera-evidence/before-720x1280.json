@@ -1,0 +1,169 @@
+{
+  "build": {
+    "commit": "6f1878724a6aaad5173de1547e5c9ed7e8f9b2ae",
+    "branch": "provadorv2-mobile-camera",
+    "dirty": true,
+    "builtAt": "2026-10-08T01:56:30.915Z",
+    "deployment": null
+  },
+  "cameraStatus": "ready",
+  "videoWidth": 720,
+  "videoHeight": 1280,
+  "detection": {
+    "inferenceAttempts": 729,
+    "inferencesCompleted": 729,
+    "inferencesWithFace": 0,
+    "inferencesWithoutFace": 729,
+    "mediaPipeErrors": 0,
+    "poseConversionRejections": 0,
+    "poseConversionErrors": 0,
+    "trackingInitializationErrors": 0
+  },
+  "camera": {
+    "profile": "mobile-flexible",
+    "requestedFacingMode": "user",
+    "supportedConstraints": {
+      "facingMode": true,
+      "frameRate": true,
+      "resizeMode": true
+    },
+    "attempts": [
+      {
+        "requested": {
+          "audio": false,
+          "video": {
+            "facingMode": {
+              "ideal": "user"
+            },
+            "frameRate": {
+              "ideal": 30
+            },
+            "resizeMode": {
+              "ideal": "none"
+            }
+          }
+        },
+        "received": {
+          "aspectRatio": 1.7777777777777777,
+          "frameRate": 30,
+          "height": 720,
+          "resizeMode": "none",
+          "width": 1280
+        }
+      }
+    ],
+    "adjustments": [],
+    "synthetic": true,
+    "settings": {
+      "aspectRatio": 0.5625,
+      "frameRate": 30,
+      "height": 1280,
+      "resizeMode": "none",
+      "width": 720
+    },
+    "capabilities": {
+      "aspectRatio": {
+        "max": 1280,
+        "min": 0.001388888888888889
+      },
+      "facingMode": [],
+      "frameRate": {
+        "max": 30,
+        "min": 0
+      },
+      "height": {
+        "max": 720,
+        "min": 1
+      },
+      "resizeMode": [
+        "none",
+        "crop-and-scale"
+      ],
+      "width": {
+        "max": 1280,
+        "min": 1
+      }
+    },
+    "appliedConstraints": {},
+    "capabilitiesAvailable": true,
+    "actualFacingMode": null,
+    "trackState": "live",
+    "zoom": {
+      "current": null,
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    "requestedConstraints": {
+      "audio": false,
+      "video": {
+        "facingMode": {
+          "ideal": "user"
+        },
+        "frameRate": {
+          "ideal": 30
+        },
+        "resizeMode": {
+          "ideal": "none"
+        }
+      }
+    },
+    "facingModeMismatch": false,
+    "browserReportsCrop": false,
+    "videoWidth": 720,
+    "videoHeight": 1280
+  },
+  "presentation": {
+    "sourceWidth": 720,
+    "sourceHeight": 1280,
+    "sourceAspect": 0.5625,
+    "viewerWidth": 359.20001220703125,
+    "viewerHeight": 490,
+    "viewerAspect": 0.7330612494021046,
+    "media": {
+      "width": 359.20001220703125,
+      "height": 638.5777994791666,
+      "left": 0,
+      "top": -74.28889973958331
+    },
+    "cssPixelsPerSourcePixel": 0.498888905843099,
+    "visibleSource": {
+      "x": 0,
+      "y": 148.90870265803673,
+      "width": 720,
+      "height": 982.1825946839264
+    },
+    "visibleFraction": 0.7673301520968175,
+    "croppedFraction": 0.23266984790318246,
+    "magnificationVsFullWidth": 1,
+    "fullFrameVisible": false,
+    "videoRectangle": {
+      "x": 8.006250381469727,
+      "y": 1082.8250732421875,
+      "width": 359.1875,
+      "height": 638.5499877929688
+    },
+    "canvasRectangle": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "alignmentErrorPx": 1082.8250732421875
+  },
+  "cameraFps": 25.131177876711813,
+  "schedulingFps": 50.55686174416635,
+  "inferenceFps": 17.89123893762003,
+  "processingMs": 60.674654780939036,
+  "droppedFrames": 275,
+  "resultAgeMs": null,
+  "facialSpeedPxPerSecond": 0,
+  "angularSpeedRadPerSecond": 0,
+  "positionAlpha": 1,
+  "rotationAlpha": 1,
+  "scaleAlpha": 1,
+  "backend": "worker",
+  "renderFps": 54.806845643847765,
+  "inferenceMs": 17.5,
+  "approximateLatencyMs": 53.39999999702559
+}

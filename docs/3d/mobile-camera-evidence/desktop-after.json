@@ -1,0 +1,181 @@
+{
+  "build": {
+    "commit": "6f1878724a6aaad5173de1547e5c9ed7e8f9b2ae",
+    "branch": "provadorv2-mobile-camera",
+    "dirty": true,
+    "builtAt": "2026-10-08T01:56:30.915Z",
+    "deployment": null
+  },
+  "cameraStatus": "ready",
+  "videoWidth": 1280,
+  "videoHeight": 720,
+  "detection": {
+    "inferenceAttempts": 1,
+    "inferencesCompleted": 0,
+    "inferencesWithFace": 0,
+    "inferencesWithoutFace": 0,
+    "mediaPipeErrors": 0,
+    "poseConversionRejections": 0,
+    "poseConversionErrors": 0,
+    "trackingInitializationErrors": 0
+  },
+  "camera": {
+    "profile": "desktop-approved",
+    "requestedFacingMode": "user",
+    "supportedConstraints": {
+      "facingMode": true,
+      "frameRate": true,
+      "resizeMode": true
+    },
+    "attempts": [
+      {
+        "requested": {
+          "audio": false,
+          "video": {
+            "facingMode": {
+              "ideal": "user"
+            },
+            "aspectRatio": {
+              "ideal": 1.7777777777777777
+            },
+            "height": {
+              "ideal": 720
+            },
+            "width": {
+              "ideal": 1280
+            },
+            "frameRate": {
+              "ideal": 60,
+              "max": 60
+            }
+          }
+        },
+        "received": {
+          "aspectRatio": 1.7777777777777777,
+          "frameRate": 30,
+          "height": 720,
+          "resizeMode": "none",
+          "width": 1280
+        }
+      }
+    ],
+    "adjustments": [],
+    "synthetic": true,
+    "settings": {
+      "aspectRatio": 1.7777777777777777,
+      "frameRate": 30,
+      "height": 720,
+      "resizeMode": "none",
+      "width": 1280
+    },
+    "capabilities": {
+      "aspectRatio": {
+        "max": 1280,
+        "min": 0.001388888888888889
+      },
+      "facingMode": [],
+      "frameRate": {
+        "max": 30,
+        "min": 0
+      },
+      "height": {
+        "max": 720,
+        "min": 1
+      },
+      "resizeMode": [
+        "none",
+        "crop-and-scale"
+      ],
+      "width": {
+        "max": 1280,
+        "min": 1
+      }
+    },
+    "appliedConstraints": {},
+    "capabilitiesAvailable": true,
+    "actualFacingMode": null,
+    "trackState": "live",
+    "zoom": {
+      "current": null,
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    "requestedConstraints": {
+      "audio": false,
+      "video": {
+        "facingMode": {
+          "ideal": "user"
+        },
+        "aspectRatio": {
+          "ideal": 1.7777777777777777
+        },
+        "height": {
+          "ideal": 720
+        },
+        "width": {
+          "ideal": 1280
+        },
+        "frameRate": {
+          "ideal": 60,
+          "max": 60
+        }
+      }
+    },
+    "facingModeMismatch": false,
+    "browserReportsCrop": false,
+    "videoWidth": 1280,
+    "videoHeight": 720
+  },
+  "presentation": {
+    "sourceWidth": 1280,
+    "sourceHeight": 720,
+    "sourceAspect": 1.7777777777777777,
+    "viewerWidth": 652.7000122070312,
+    "viewerHeight": 367.13751220703125,
+    "viewerAspect": 1.7778080160846366,
+    "media": {
+      "width": 652.7000122070312,
+      "height": 367.1437568664551,
+      "left": 0,
+      "top": -0.0031223297119140625
+    },
+    "cssPixelsPerSourcePixel": 0.5099218845367431,
+    "visibleSource": {
+      "x": 0,
+      "y": 0.006123152989895021,
+      "width": 1280,
+      "height": 719.9877536940203
+    },
+    "visibleFraction": 0.9999829912416949,
+    "croppedFraction": 0.000017008758305125937,
+    "magnificationVsFullWidth": 1,
+    "fullFrameVisible": true,
+    "videoRectangle": {
+      "x": 299.3062438964844,
+      "y": 249.97500610351562,
+      "width": 652.6875,
+      "height": 367.125
+    },
+    "canvasRectangle": {
+      "x": 299.3062438964844,
+      "y": 249.97500610351562,
+      "width": 652.6875,
+      "height": 367.125
+    },
+    "alignmentErrorPx": 0
+  },
+  "cameraFps": 25.722200237284163,
+  "schedulingFps": 57.380292837018516,
+  "inferenceFps": 0,
+  "processingMs": 0,
+  "droppedFrames": 4,
+  "resultAgeMs": null,
+  "facialSpeedPxPerSecond": 0,
+  "angularSpeedRadPerSecond": 0,
+  "positionAlpha": 1,
+  "rotationAlpha": 1,
+  "scaleAlpha": 1,
+  "renderFps": 67.1336835942784,
+  "backend": "worker"
+}

@@ -1,3 +1,5 @@
+import { TEMPLE_BEND_TRANSITION_MM } from "./temple-fitting.js";
+
 function injectAfter(source, marker, addition) {
   return source.includes(marker)
     ? source.replace(marker, `${marker}\n${addition}`)
@@ -9,16 +11,22 @@ export function prepareTempleMaterial(material, geometry) {
     bendRadians: { value: 0 },
     bendStart: { value: geometry.bendStart },
     bendDirection: { value: geometry.bendDirection },
+    side: { value: geometry.side ?? 0 },
+    transition: { value: TEMPLE_BEND_TRANSITION_MM },
   };
   material.userData.tryOnTempleUniforms = uniforms;
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTryOnTempleBend = uniforms.bendRadians;
     shader.uniforms.uTryOnTempleBendStart = uniforms.bendStart;
     shader.uniforms.uTryOnTempleBendDirection = uniforms.bendDirection;
+    shader.uniforms.uTryOnTempleSide = uniforms.side;
+    shader.uniforms.uTryOnTempleTransition = uniforms.transition;
     shader.vertexShader = `
       uniform float uTryOnTempleBend;
       uniform float uTryOnTempleBendStart;
       uniform float uTryOnTempleBendDirection;
+      uniform float uTryOnTempleSide;
+      uniform float uTryOnTempleTransition;
     ${shader.vertexShader}`;
     shader.vertexShader = injectAfter(
       shader.vertexShader,
@@ -27,11 +35,23 @@ export function prepareTempleMaterial(material, geometry) {
         float tryOnBendDistance = max(
           0.0, uTryOnTempleBendDirection * (position.z - uTryOnTempleBendStart)
         );
-        transformed.x += sign(position.x) * tan(uTryOnTempleBend) * tryOnBendDistance;
+        float tryOnSide = uTryOnTempleSide == 0.0 ? sign(position.x) : uTryOnTempleSide;
+        transformed.x += tryOnSide * tan(uTryOnTempleBend)
+          * tryOnBendDistance * tryOnBendDistance / (tryOnBendDistance + uTryOnTempleTransition);
       `,
     );
+    // Inverse transpose of the X/Z shear keeps specular highlights attached to
+    // the deformed surface (front vertices and hinge have zero derivative).
+    shader.vertexShader = injectAfter(shader.vertexShader, "#include <beginnormal_vertex>", `
+      float tryOnNormalD = max(0.0, uTryOnTempleBendDirection * (position.z - uTryOnTempleBendStart));
+      float tryOnNormalSide = uTryOnTempleSide == 0.0 ? sign(position.x) : uTryOnTempleSide;
+      float tryOnSlope = tryOnNormalSide * tan(uTryOnTempleBend) * uTryOnTempleBendDirection
+        * tryOnNormalD * (tryOnNormalD + 2.0 * uTryOnTempleTransition)
+        / pow(tryOnNormalD + uTryOnTempleTransition, 2.0);
+      objectNormal.z -= tryOnSlope * objectNormal.x;
+    `);
   };
-  material.customProgramCacheKey = () => "optica-stylo-temple-v3";
+  material.customProgramCacheKey = () => "optica-stylo-temple-v4";
   material.needsUpdate = true;
   return uniforms;
 }

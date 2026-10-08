@@ -1,0 +1,22 @@
+{
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "note": "CPU benchmark con fixtures; no mide MediaPipe, cámara ni rendimiento móvil.",
+  "models": {
+    "Harley-Davidson_HD0896_001_V4_definitivo": {
+      "poseFitFilterP50Ms": 0.0484,
+      "poseFitFilterP95Ms": 0.1263,
+      "importMs": 217.5228,
+      "syntheticQuietRmsPx": 0.0718
+    },
+    "RB2140-901-50-v2.19": {
+      "poseFitFilterP50Ms": 0.0861,
+      "poseFitFilterP95Ms": 0.2139,
+      "importMs": 348.7626,
+      "syntheticQuietRmsPx": 0.0718
+    }
+  }
+}

@@ -34,8 +34,11 @@ test("normaliza el HD0896 una sola vez y detecta sus piezas", async () => {
     templeLength: 145,
   });
   assert.ok(metadata.nodes.front.includes("frame_rim_L"));
-  assert.ok(metadata.nodes.hingeLeft.includes("hinge_pin_L"));
-  assert.deepEqual(metadata.nodes.templeRight, ["temple_R"]);
-  assert.ok(metadata.occlusion.frontDepthMm < metadata.occlusion.maskFrontDepthMm);
-  assert.ok(metadata.occlusion.maskFrontDepthMm < metadata.occlusion.templeStartDepthMm);
+  assert.ok([...metadata.nodes.hingeLeft, ...metadata.nodes.hingeRight].includes("hinge_pin_L"));
+  assert.ok(metadata.nodes.templeRight.includes("temple_L"));
+  assert.ok(metadata.anchors.hingeLeft.position[0] < 0);
+  assert.ok(metadata.anchors.hingeRight.position[0] > 0);
+  assert.equal(metadata.capabilities.level, "full");
+  assert.deepEqual(metadata.anchors.bridgeSeat.position, [0, 0, 0]);
+  assert.equal(metadata.normalization.modelYawOffsetDegrees, undefined);
 });

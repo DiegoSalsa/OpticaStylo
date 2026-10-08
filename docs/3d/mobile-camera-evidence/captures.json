@@ -1,0 +1,20 @@
+[
+  {
+    "flow": "video",
+    "format": "PNG",
+    "size": [
+      1280,
+      720
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "flow": "local-photo",
+    "format": "PNG",
+    "size": [
+      814,
+      458
+    ],
+    "mode": "RGBA"
+  }
+]

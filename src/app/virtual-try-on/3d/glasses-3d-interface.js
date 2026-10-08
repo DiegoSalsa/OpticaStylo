@@ -5,13 +5,26 @@ import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { formatClp } from "@/utils/store-client";
+import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-projection";
 
 import styles from "./virtual-try-on-3d.module.css";
+import CameraDiagnostics from "./camera-diagnostics";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
+
+function TrackingDiagnostics({ metricsRef }) {
+  const outputRef = useRef(null);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (outputRef.current) outputRef.current.textContent = JSON.stringify(metricsRef.current, null, 2);
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [metricsRef]);
+  return <details><summary>Diagnóstico de seguimiento</summary><pre><output ref={outputRef} aria-label="Métricas de tracking" /></pre></details>;
+}
 
 export default function Glasses3DInterface({ model }) {
   const {
@@ -19,6 +32,7 @@ export default function Glasses3DInterface({ model }) {
     cameraActive,
     cameraAspectRatio,
     cameraStatus,
+    mobileCamera,
     cameraVisual,
     captureTryOn,
     cartMessage,
@@ -29,8 +43,11 @@ export default function Glasses3DInterface({ model }) {
     faceMeshTriangleIndices,
     filteredModels,
     fitAdjustment,
-    halfHeight,
-    halfWidth,
+    debugMode,
+    debugMetricsRef,
+    scaleMode,
+    changeScaleMode,
+    poseFilterRef,
     handleModelReady,
     handlePhotoSelected,
     isAddingToCart,
@@ -56,10 +73,35 @@ export default function Glasses3DInterface({ model }) {
     videoRef,
     viewerState,
   } = model;
+  const projection = cameraProjection(videoDimensions.width, videoDimensions.height);
+  const viewerRef = useRef(null);
+  const [viewerSize, setViewerSize] = useState({ width: 0, height: 0 });
+  const [occlusionEnabled, setOcclusionEnabled] = useState(true);
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setViewerSize({ width, height });
+    });
+    if (viewerRef.current) observer.observe(viewerRef.current);
+    return () => observer.disconnect();
+  }, []);
+  // Both camera pixels and WebGL use exactly this cover rectangle. Centering
+  // only horizontally fails for portrait sources on a wide/short mobile viewer.
+  const { width: coverWidth, height: coverHeight } = coverRectangle(viewerSize.width, viewerSize.height, projection.aspect);
 
   return (
-    <section className={styles.experience} aria-label="Probador virtual 3D">
+    <>
+    {debugMode && <CameraDiagnostics videoRef={videoRef} viewerRef={viewerRef} rendererCanvasRef={rendererCanvasRef}
+      metricsRef={debugMetricsRef} cameraStatus={cameraStatus} dimensions={videoDimensions} />}
+    <section className={styles.experience} data-mobile-camera={mobileCamera} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
+        {debugMode && <><TrackingDiagnostics metricsRef={debugMetricsRef} />
+          <label>Estimador de escala <select value={scaleMode} onChange={(event) => changeScaleMode(event.target.value)}>
+            <option value="physical">V2 con escala física</option>
+            <option value="historical">Escala histórica V1 (55/45)</option>
+            <option value="v2">Escala V2 original</option>
+          </select></label>
+          <label><input type="checkbox" checked={occlusionEnabled} onChange={(e) => setOcclusionEnabled(e.target.checked)} />Oclusión facial</label></>}
         <div className={styles.cameraState} data-active={cameraActive}>
           <span aria-hidden="true" />
           <div>
@@ -95,7 +137,7 @@ export default function Glasses3DInterface({ model }) {
             </li>
             <li>
               <span>3.</span>
-              <p>Usa los controles para ajustar visualmente.</p>
+              <p>Gira la cabeza para revisar el calce.</p>
             </li>
           </ol>
         </section>
@@ -148,6 +190,7 @@ export default function Glasses3DInterface({ model }) {
       </aside>
       <div className={styles.viewerPanel}>
         <div
+          ref={viewerRef}
           className={styles.viewer}
           data-status={viewerState}
           style={
@@ -156,6 +199,7 @@ export default function Glasses3DInterface({ model }) {
               : undefined
           }
         >
+          <div className={styles.mediaLayer} style={coverWidth ? { width: coverWidth, height: coverHeight } : undefined}>
           <video
             className={styles.videoElement}
             ref={videoRef}
@@ -189,7 +233,6 @@ export default function Glasses3DInterface({ model }) {
             <Canvas
               key={`${videoDimensions.width}x${videoDimensions.height}`}
               className={styles.threeCanvas}
-              data-cropped={Boolean(cameraAspectRatio)}
               dpr={[1, 1.5]}
               gl={{
                 alpha: true,
@@ -201,18 +244,14 @@ export default function Glasses3DInterface({ model }) {
                 rendererCanvasRef.current = gl.domElement;
                 gl.toneMappingExposure = 1.1;
               }}
-              orthographic
               camera={{
-                left: -halfWidth,
-                right: halfWidth,
-                top: halfHeight,
-                bottom: -halfHeight,
-                near: -2000,
-                far: 2000,
-                position: [0, 0, 500],
+                fov: projection.fovDegrees,
+                aspect: projection.aspect,
+                near: 1,
+                far: projection.focalPx * 5,
+                position: [0, 0, projection.focalPx],
               }}
               style={{
-                "--overlay-aspect-ratio": cameraAspectRatio ?? undefined,
                 pointerEvents: "none",
               }}
             >
@@ -255,11 +294,15 @@ export default function Glasses3DInterface({ model }) {
                     modelUrl={selectedModel.modelUrl}
                     onReady={handleModelReady}
                     poseRef={poseRef}
+                    poseFilterRef={poseFilterRef}
+                    debugMetricsRef={debugMetricsRef}
+                    occlusionEnabled={occlusionEnabled}
                   />
                 )}
               </Suspense>
             </Canvas>
           )}
+          </div>
 
           <div className={styles.focusGuide} aria-hidden="true">
             <span />
@@ -334,6 +377,9 @@ export default function Glasses3DInterface({ model }) {
         <div className={styles.cameraControls}>
           <p>Controles de cámara</p>
           <div className={styles.viewerDock}>
+            <button className={styles.dockButton} onClick={openPhotoCapture} type="button">
+              Usar foto
+            </button>
             <button
               className={styles.dockButton}
               disabled={cameraStatus === "loading"}
@@ -470,7 +516,7 @@ export default function Glasses3DInterface({ model }) {
             </p>
           )}
         </div>
-        <div className={styles.fitCard}>
+        {debugMode && <div className={styles.fitCard}>
           <div>
             <p className={styles.panelTitle}>Ajuste fino</p>
             <p>
@@ -527,7 +573,7 @@ export default function Glasses3DInterface({ model }) {
           >
             Restablecer ajuste
           </button>
-        </div>
+        </div>}
         {!selectedModel.isDemo && (
           <p className={styles.licenseNote}>
             Activo con licencia {selectedModel.licenseCode}
@@ -539,5 +585,6 @@ export default function Glasses3DInterface({ model }) {
         </Link>
       </aside>
     </section>
+    </>
   );
 }
