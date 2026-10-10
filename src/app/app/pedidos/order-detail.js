@@ -31,7 +31,7 @@ export default function OrderDetail({ saleId, onClose }) {
         <div><dt>Fecha</dt><dd>{new Date(sale.createdAt).toLocaleString("es-CL")}</dd></div>
         <div><dt>Estado</dt><dd>{labels[sale.status] ?? sale.status}</dd></div>
         <div><dt>Origen</dt><dd>{sale.origin === "ONLINE" ? "WEB" : "POS"}</dd></div>
-        <div><dt>Cliente</dt><dd>{sale.customer ? `${sale.customer.firstNames} ${sale.customer.lastNames}` : "Sin cliente registrado"}</dd></div>
+        <div><dt>Cliente</dt><dd>{sale.customer ? [sale.customer.firstNames, sale.customer.lastNames].filter(Boolean).join(" ") : "Sin cliente registrado"}</dd></div>
         {sale.customer && <><div><dt>RUT</dt><dd>{sale.customer.rut}</dd></div><div><dt>Correo</dt><dd>{sale.customer.email}</dd></div><div><dt>Teléfono</dt><dd>{sale.customer.phone}</dd></div></>}
       </dl>
       <h3>Productos y configuraciones comerciales</h3>

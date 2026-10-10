@@ -179,7 +179,7 @@ export default function CustomersPage() {
                 >
                   <span className="management-avatar">
                     {customer.firstNames.slice(0, 1)}
-                    {customer.lastNames.slice(0, 1)}
+                    {customer.lastNames?.slice(0, 1)}
                   </span>
                   <span>
                     <strong>
@@ -213,7 +213,7 @@ export default function CustomersPage() {
                   </p>
                   <h2>
                     {selectedId
-                      ? `${form.firstNames} ${form.lastNames}`
+                      ? [form.firstNames, form.lastNames].filter(Boolean).join(" ")
                       : "Nuevo cliente"}
                   </h2>
                 </div>
@@ -225,7 +225,7 @@ export default function CustomersPage() {
                 <label className="field">
                   <span>Nombres</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, firstNames: event.target.value })
@@ -238,64 +238,64 @@ export default function CustomersPage() {
                 <label className="field">
                   <span>Apellidos</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, lastNames: event.target.value })
                     }
                     required
                     placeholder="Apellidos del cliente"
-                    value={form.lastNames}
+                    value={form.lastNames ?? ""}
                   />
                 </label>
                 <label className="field">
                   <span>RUT</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, rut: event.target.value })
                     }
                     placeholder="12.345.678-5"
                     required
-                    value={form.rut}
+                    value={form.rut ?? ""}
                   />
                 </label>
                 <label className="field">
                   <span>Teléfono</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, phone: event.target.value })
                     }
                     placeholder="+56912345678"
                     required
-                    value={form.phone}
+                    value={form.phone ?? ""}
                   />
                 </label>
                 <label className="field field-wide">
                   <span>Correo</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, email: event.target.value })
                     }
                     required
                     placeholder="nombre@correo.cl"
                     type="email"
-                    value={form.email}
+                    value={form.email ?? ""}
                   />
                 </label>
                 <label className="field field-wide">
                   <span>Dirección comercial</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="500"
                     onChange={(event) =>
                       setForm({ ...form, address: event.target.value })
                     }
                     required
                     placeholder="Dirección"
-                    value={form.address}
+                    value={form.address ?? ""}
                   />
                 </label>
               </div>

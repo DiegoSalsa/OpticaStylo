@@ -86,7 +86,7 @@ export default function ProductCatalogInterface({ model }) {
             </button>
           </form>
           <div className="directory-filters">
-            <label className="field"><span>Categoría del listado</span><select value={list.filters.category ?? ""} onChange={(event) => list.setFilters({ category: event.target.value })}><option value="">Todas las categorías</option>{CATEGORIES.map(([code,label]) => <option value={code} key={code}>{label}</option>)}</select></label>
+            <label className="field"><span>Categoría del listado</span><select value={list.filters.category ?? ""} onChange={(event) => list.setFilters({ category: event.target.value })}><option value="">Todas</option>{CATEGORIES.map(([code,label]) => <option value={code} key={code}>{label}</option>)}</select></label>
             <label className="field"><span>Estado del listado</span><select value={list.filters.isActive ?? ""} onChange={(event) => list.setFilters({ isActive: event.target.value })}><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></label>
           </div>
           {list.status === "loading" ? (
@@ -171,7 +171,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field field-wide">
                   <span>Nombre comercial</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="200"
                     onChange={(event) =>
                       setForm({ ...form, name: event.target.value })
@@ -184,7 +184,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field">
                   <span>SKU</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="80"
                     onChange={(event) =>
                       setForm({
@@ -200,7 +200,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field">
                   <span>Categoría</span>
                   <select
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) => {
                       const category = event.target.value;
                       setForm({
@@ -224,7 +224,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field field-wide">
                   <span>Precio publicado (CLP)</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     inputMode="numeric"
                     min="1"
                     onChange={(event) =>
@@ -244,7 +244,7 @@ export default function ProductCatalogInterface({ model }) {
               <label className="active-switch">
                 <input
                   checked={form.requiresPrescription}
-                  disabled={!canManage || form.category !== "PRESCRIPTION_LENS"}
+                  disabled={!canManage || status === "saving" || form.category !== "PRESCRIPTION_LENS"}
                   onChange={(event) =>
                     setForm({
                       ...form,
@@ -263,7 +263,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="active-switch">
                   <input
                     checked={form.isActive}
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, isActive: event.target.checked })
                     }
@@ -345,6 +345,8 @@ export default function ProductCatalogInterface({ model }) {
                         <span>Imagen</span>
                         <input
                           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                          aria-label="Imagen del producto"
+                          aria-describedby="product-image-file-help"
                           onChange={(event) =>
                             setImageFile(event.target.files?.[0] ?? null)
                           }
@@ -353,7 +355,7 @@ export default function ProductCatalogInterface({ model }) {
                           key={`${selectedId}:${fileRevision}`}
                           type="file"
                         />
-                        <small>
+                        <small id="product-image-file-help">
                           JPEG, PNG, WEBP, HEIC o HEIF; máximo 4 MiB.
                         </small>
                       </label>

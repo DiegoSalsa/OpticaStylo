@@ -194,8 +194,11 @@
 .order-fulfillment { font-size: .8rem; }
 .orders-views { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
 .orders-views [aria-pressed="true"] { background: #073a32; color: #fff; }
+.orders-views .app-button[aria-pressed="false"] { background: #edf8f5; border: 1px solid #a8c4ba; color: #073a32; }
 .orders-search, .orders-search input, .order-column { min-width: 0; }
 .order-card { overflow-wrap: anywhere; }
+.order-card > p, .order-column-empty, .orders-footnote { color: #536763; }
+.orders-search:focus-within { outline: 2px solid #278c72; outline-offset: 2px; }
 .order-detail-button { background: #edf8f5; border: 1px solid #a8c4ba; border-radius: 8px; color: #073a32; cursor: pointer; font: inherit; margin-top: .6rem; min-height: 40px; width: 100%; }
 .order-advance:disabled { cursor: wait; opacity: .6; }
 .order-detail { background: #fff; border: 1px solid #a8c4ba; border-radius: 16px; color: #073a32; max-height: 85dvh; max-width: 760px; padding: 1.3rem; width: calc(100% - 2rem); }

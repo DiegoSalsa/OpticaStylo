@@ -254,7 +254,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Nombres</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, firstNames: event.target.value })
@@ -267,7 +267,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Apellidos</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, lastNames: event.target.value })
@@ -280,7 +280,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>RUT</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, rut: event.target.value })
                     }
@@ -292,7 +292,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Fecha de nacimiento</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     max={new Date().toISOString().slice(0, 10)}
                     onChange={(event) =>
                       setForm({ ...form, birthDate: event.target.value })
@@ -305,7 +305,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Teléfono</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, phone: event.target.value })
                     }
@@ -317,7 +317,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Correo</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, email: event.target.value })
                     }
@@ -330,7 +330,7 @@ export default function PatientsPage() {
                 <label className="field field-wide">
                   <span>Dirección</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="500"
                     onChange={(event) =>
                       setForm({ ...form, address: event.target.value })
@@ -348,7 +348,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Nombres</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("firstNames", event.target.value)
                         }
@@ -360,7 +360,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Apellidos</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("lastNames", event.target.value)
                         }
@@ -372,7 +372,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>RUT</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("rut", event.target.value)
                         }
@@ -384,7 +384,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Parentesco</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("relationship", event.target.value)
                         }
@@ -396,7 +396,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Teléfono</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("phone", event.target.value)
                         }
@@ -408,7 +408,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Correo</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("email", event.target.value)
                         }

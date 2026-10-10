@@ -1,3 +1,5 @@
+@import "../../components/internal/resource-directory.css";
+
 .management-layout {
   display: grid;
   gap: 1rem;
@@ -85,11 +87,11 @@
   white-space: nowrap;
 }
 .management-item strong {
-  font-size: 0.78rem;
+  font-size: 0.9rem;
 }
 .management-item small {
   color: var(--color-text-soft);
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   margin-top: 0.16rem;
 }
 .status-dot {

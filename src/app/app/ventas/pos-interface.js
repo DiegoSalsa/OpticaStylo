@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import Icon from "@/components/ui/icon";
 import Pagination from "@/components/internal/pagination";
+import "@/components/internal/resource-directory.css";
 import CashRegisterPanel from "./cash-register-panel";
 import PosCatalogPanel from "./pos-catalog-panel";
 import PosTicketPanel from "./pos-ticket-panel";

@@ -247,7 +247,7 @@ export default function UsersPage() {
                 <label className="field">
                   <span>Nombre</span>
                   <input
-                    disabled={!canUpdate && Boolean(selectedId)}
+                    disabled={status === "saving" || (!canUpdate && Boolean(selectedId))}
                     maxLength="100"
                     onChange={(event) =>
                       setForm({ ...form, firstName: event.target.value })
@@ -260,7 +260,7 @@ export default function UsersPage() {
                 <label className="field">
                   <span>Apellido</span>
                   <input
-                    disabled={!canUpdate && Boolean(selectedId)}
+                    disabled={status === "saving" || (!canUpdate && Boolean(selectedId))}
                     maxLength="100"
                     onChange={(event) =>
                       setForm({ ...form, lastName: event.target.value })
@@ -273,7 +273,7 @@ export default function UsersPage() {
                 <label className="field field-wide">
                   <span>Correo</span>
                   <input
-                    disabled={!canUpdate && Boolean(selectedId)}
+                    disabled={status === "saving" || (!canUpdate && Boolean(selectedId))}
                     onChange={(event) =>
                       setForm({ ...form, email: event.target.value })
                     }
@@ -291,7 +291,7 @@ export default function UsersPage() {
                   </span>
                   <input
                     autoComplete="new-password"
-                    disabled={!canUpdate && Boolean(selectedId)}
+                    disabled={status === "saving" || (!canUpdate && Boolean(selectedId))}
                     minLength="15"
                     onChange={(event) =>
                       setForm({ ...form, password: event.target.value })
@@ -314,7 +314,7 @@ export default function UsersPage() {
                     <input
                       checked={form.roles.includes(code)}
                       disabled={
-                        !actor?.permissions.includes("users.assign_roles")
+                        status === "saving" || !actor?.permissions.includes("users.assign_roles")
                       }
                       onChange={() => toggleRole(code)}
                       type="checkbox"
@@ -328,7 +328,7 @@ export default function UsersPage() {
                   <input
                     checked={form.isActive}
                     disabled={
-                      !actor?.permissions.includes("users.deactivate") ||
+                      status === "saving" || !actor?.permissions.includes("users.deactivate") ||
                       selectedId === actor.userId
                     }
                     onChange={(event) =>

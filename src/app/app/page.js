@@ -15,7 +15,7 @@ const modules = [
 ];
 
 function localDay(value = new Date()) { return new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(value); }
-function customerLabel(sale) { return sale.customer ? `${sale.customer.firstNames} ${sale.customer.lastNames}` : "Sin cliente registrado"; }
+function customerLabel(sale) { return sale.customer ? [sale.customer.firstNames, sale.customer.lastNames].filter(Boolean).join(" ") : "Sin cliente registrado"; }
 
 export default function InternalHomePage() {
   const actor = useInternalActor();

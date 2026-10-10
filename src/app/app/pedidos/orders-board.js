@@ -19,7 +19,7 @@ const columns = [
 ];
 const nextStatus = { PAID: "IN_PREPARATION", IN_PREPARATION: "READY", READY: "DELIVERED" };
 const nextLabel = { PAID: "Iniciar preparación", IN_PREPARATION: "Marcar listo", READY: "Marcar entregado" };
-function customerLabel(sale) { return sale.customer ? `${sale.customer.firstNames} ${sale.customer.lastNames}` : "Sin cliente registrado"; }
+function customerLabel(sale) { return sale.customer ? [sale.customer.firstNames, sale.customer.lastNames].filter(Boolean).join(" ") : "Sin cliente registrado"; }
 function inView(column, view) { return view === "active" ? ["PENDING", "PAID", "IN_PREPARATION", "READY"].includes(column.code) : view === "delivered" ? column.code === "DELIVERED" : true; }
 
 function OrderColumn({ column, endpoint, refresh, canUpdate, pendingIds, advance, showDetail, hasFilters }) {
