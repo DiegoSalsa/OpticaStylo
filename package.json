@@ -26,7 +26,8 @@
     "users:bootstrap-admin": "node scripts/bootstrap-admin.mjs",
     "users:create-sales": "node scripts/create-sales-user.mjs",
     "demo:prepare": "node scripts/prepare-demo-data.mjs",
-    "test:store:e2e": "node scripts/run-store-e2e.mjs"
+    "test:store:e2e": "node scripts/run-store-e2e.mjs",
+    "test:management:e2e": "node scripts/run-management-e2e.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

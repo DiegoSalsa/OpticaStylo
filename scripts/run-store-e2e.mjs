@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { loadProjectEnvironment } from "./load-environment.mjs";
 
 loadProjectEnvironment();
+const managementSuite = process.env.STORE_E2E_SUITE === "management";
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL es necesaria para crear el esquema aislado de pruebas.");
 const schema = `stylo_e2e_${randomBytes(8).toString("hex")}`;
 const databaseUrl = new URL(process.env.DATABASE_URL);
@@ -34,9 +35,9 @@ try {
   await mkdir("tmp/store-e2e", { recursive: true });
   await writeFile("tmp/store-e2e/isolated-env.json", JSON.stringify({ schema }));
   await run(["node_modules/next/dist/bin/next", "build"], { NODE_ENV: "production" });
-  await run(["--test", "tests/integration/store-guest-checkout.test.js"], { NODE_ENV: "test" });
+  await run(["--test", managementSuite ? "tests/integration/management-pagination.test.js" : "tests/integration/store-guest-checkout.test.js"], { NODE_ENV: "test" });
   await run(["scripts/seed-store-e2e.mjs"], { NODE_ENV: "test" });
-  if (process.env.MERCADO_PAGO_MODE === "sandbox" && process.env.MERCADO_PAGO_ACCESS_TOKEN
+  if (!managementSuite && process.env.MERCADO_PAGO_MODE === "sandbox" && process.env.MERCADO_PAGO_ACCESS_TOKEN
     && process.env.MERCADO_PAGO_PRODUCTION_ENABLED !== "true") {
     await run(["scripts/verify-store-sandbox-checkout.mjs"], {
       NODE_ENV: "test", MERCADO_PAGO_ACCESS_TOKEN: process.env.MERCADO_PAGO_ACCESS_TOKEN,
@@ -53,6 +54,7 @@ try {
   }
   if (!ready) throw new Error("El servidor de pruebas no inició.");
   await run(["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs",
+    ...(managementSuite ? ["management-pagination.spec.js", "--project", "desktop"] : []),
     ...(process.env.STORE_E2E_GREP ? ["--grep", process.env.STORE_E2E_GREP] : []),
   ]);
 } finally {
