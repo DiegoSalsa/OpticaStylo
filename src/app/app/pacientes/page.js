@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   readResponse,
   useInternalActor,
 } from "@/components/internal/internal-shell";
+import Pagination from "@/components/internal/pagination";
+import usePaginatedResource from "@/components/internal/use-paginated-resource";
+import { createRequestGate } from "@/utils/pagination";
 import Icon from "@/components/ui/icon";
 import "../management.css";
 import "./patients.css";
@@ -37,82 +40,48 @@ function isMinor(birthDate) {
 
 export default function PatientsPage() {
   const actor = useInternalActor();
-  const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
   const [form, setForm] = useState(EMPTY);
   const [selectedId, setSelectedId] = useState(null);
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState("ready");
   const [notice, setNotice] = useState(null);
   const canManage = actor?.permissions.includes("patients.manage_basic");
   const minor = useMemo(() => isMinor(form.birthDate), [form.birthDate]);
-  const requestPatients = useCallback(
-    async (signal) =>
-      readResponse(
-        await fetch(
-          `/api/patients?search=${encodeURIComponent(submitted)}&pageSize=100`,
-          { cache: "no-store", signal },
-        ),
-      ),
-    [submitted],
-  );
-
-  useEffect(() => {
-    if (!actor?.permissions.includes("patients.read_basic")) return;
-    const controller = new AbortController();
-    requestPatients(controller.signal)
-      .then((data) => {
-        setItems(data.items);
-        setStatus("ready");
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setNotice({ kind: "error", text: error.message });
-          setStatus("error");
-        }
-      });
-    return () => controller.abort();
-  }, [actor, requestPatients]);
+  const list = usePaginatedResource("/api/patients", { enabled: Boolean(actor?.permissions.includes("patients.read_basic")) });
+  const { items } = list;
+  const detailGate = useRef(createRequestGate());
+  const saving = useRef(false);
+  useEffect(() => { const gate = detailGate.current; return () => gate.cancel(); }, []);
 
   async function select(patient) {
+    if (saving.current) return;
+    const request = detailGate.current.begin();
     setSelectedId(patient.id);
+    setForm(EMPTY);
     setStatus("loading-detail");
     setNotice(null);
     try {
-      const detail = await readResponse(
-        await fetch(`/api/patients/${patient.id}`, { cache: "no-store" }),
-      );
-      setForm({
-        ...detail,
-        guardian: detail.guardian ? { ...detail.guardian } : null,
-      });
+      const detail = await readResponse(await fetch(`/api/patients/${patient.id}`, { cache: "no-store", signal: request.signal }));
+      if (!request.isCurrent()) return;
+      setForm({ ...detail, guardian: detail.guardian ? { ...detail.guardian } : null });
       setStatus("ready");
     } catch (error) {
+      if (!request.isCurrent()) return;
       setNotice({ kind: "error", text: error.message });
-      setStatus("ready");
+      setStatus("detail-error");
     }
   }
   function reset() {
+    if (saving.current) return;
+    detailGate.current.cancel();
+    setStatus("ready");
     setSelectedId(null);
     setForm(EMPTY);
     setNotice(null);
   }
-  async function search(event) {
+  function search(event) {
     event.preventDefault();
-    const normalized = query.trim();
-    setStatus("loading");
-    if (normalized !== submitted) {
-      setSubmitted(normalized);
-      return;
-    }
-    try {
-      const data = await requestPatients();
-      setItems(data.items);
-      setStatus("ready");
-    } catch (error) {
-      setNotice({ kind: "error", text: error.message });
-      setStatus("error");
-    }
+    list.setFilters({ search: query.trim() });
   }
   function setGuardian(field, value) {
     setForm((current) => ({
@@ -122,6 +91,8 @@ export default function PatientsPage() {
   }
   async function submit(event) {
     event.preventDefault();
+    if (saving.current || status !== "ready") return;
+    saving.current = true;
     setStatus("saving");
     setNotice(null);
     const payload = {
@@ -147,8 +118,7 @@ export default function PatientsPage() {
       );
       setSelectedId(saved.id);
       setForm(saved);
-      const data = await requestPatients();
-      setItems(data.items);
+      list.reload();
       setStatus("ready");
       setNotice({
         kind: "success",
@@ -159,6 +129,8 @@ export default function PatientsPage() {
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
       setStatus("ready");
+    } finally {
+      saving.current = false;
     }
   }
   if (actor && !actor.permissions.includes("patients.read_basic"))
@@ -182,6 +154,7 @@ export default function PatientsPage() {
         {canManage && (
           <button
             className="app-button app-button--primary"
+            disabled={status === "saving"}
             onClick={reset}
             type="button"
           >
@@ -191,6 +164,7 @@ export default function PatientsPage() {
       </header>
       {notice && (
         <p
+          role={notice.kind === "error" ? "alert" : "status"}
           className={
             notice.kind === "error" ? "inline-error" : "inline-success"
           }
@@ -212,10 +186,10 @@ export default function PatientsPage() {
               Buscar
             </button>
           </form>
-          {status === "loading" ? (
+          {list.status === "loading" ? (
             <p className="directory-state">Cargando pacientes…</p>
-          ) : !items.length ? (
-            <p className="directory-state">No hay pacientes registrados.</p>
+          ) : list.status === "error" ? null : !items.length ? (
+            <p className="directory-state">{list.filters.search ? "No hay coincidencias para esta búsqueda." : "No hay pacientes registrados."}</p>
           ) : (
             <div className="management-list">
               {items.map((patient) => (
@@ -226,6 +200,7 @@ export default function PatientsPage() {
                       : "management-item"
                   }
                   key={patient.id}
+                  disabled={status === "saving"}
                   onClick={() => select(patient)}
                   type="button"
                 >
@@ -245,10 +220,13 @@ export default function PatientsPage() {
               ))}
             </div>
           )}
+          <Pagination {...list} label="pacientes" />
         </section>
         <section className="app-card management-editor">
           {status === "loading-detail" ? (
             <p className="directory-state">Cargando ficha básica…</p>
+          ) : status === "detail-error" ? (
+            <p className="inline-error" role="alert">No se pudo cargar la selección. Vuelve a seleccionarla para reintentar.</p>
           ) : !selectedId && !canManage ? (
             <div className="directory-state">
               Selecciona un paciente para revisar sus datos básicos.
@@ -276,7 +254,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Nombres</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, firstNames: event.target.value })
@@ -289,7 +267,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Apellidos</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, lastNames: event.target.value })
@@ -302,7 +280,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>RUT</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, rut: event.target.value })
                     }
@@ -314,7 +292,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Fecha de nacimiento</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     max={new Date().toISOString().slice(0, 10)}
                     onChange={(event) =>
                       setForm({ ...form, birthDate: event.target.value })
@@ -327,7 +305,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Teléfono</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, phone: event.target.value })
                     }
@@ -339,7 +317,7 @@ export default function PatientsPage() {
                 <label className="field">
                   <span>Correo</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, email: event.target.value })
                     }
@@ -352,7 +330,7 @@ export default function PatientsPage() {
                 <label className="field field-wide">
                   <span>Dirección</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="500"
                     onChange={(event) =>
                       setForm({ ...form, address: event.target.value })
@@ -370,7 +348,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Nombres</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("firstNames", event.target.value)
                         }
@@ -382,7 +360,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Apellidos</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("lastNames", event.target.value)
                         }
@@ -394,7 +372,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>RUT</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("rut", event.target.value)
                         }
@@ -406,7 +384,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Parentesco</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("relationship", event.target.value)
                         }
@@ -418,7 +396,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Teléfono</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("phone", event.target.value)
                         }
@@ -430,7 +408,7 @@ export default function PatientsPage() {
                     <label className="field">
                       <span>Correo</span>
                       <input
-                        disabled={!canManage}
+                        disabled={!canManage || status === "saving"}
                         onChange={(event) =>
                           setGuardian("email", event.target.value)
                         }

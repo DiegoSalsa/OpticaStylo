@@ -17,6 +17,7 @@ import {
   PRESCRIPTION_READER_IMAGE_TYPES,
 } from "./pos-form-model";
 import useResourceSearch from "./use-resource-search";
+import usePaginatedResource from "@/components/internal/use-paginated-resource";
 
 const money = MONEY_FORMATTER;
 
@@ -70,8 +71,12 @@ export default function PosExperience() {
   const [newCustomer, setNewCustomer] = useState(false);
   const [newPatient, setNewPatient] = useState(false);
   const [patientBirthDate, setPatientBirthDate] = useState("");
-  const [quotations, setQuotations] = useState([]);
+  const [quotationQuery, setQuotationQuery] = useState("");
   const [showQuotations, setShowQuotations] = useState(false);
+  const quotationList = usePaginatedResource("/api/sales?status=QUOTATION", {
+    enabled: showQuotations && Boolean(actor?.permissions.includes("sales.read")),
+  });
+  const loadingQuotation = useRef(false);
   const [receipt, setReceipt] = useState(null);
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [cashRegister, setCashRegister] = useState(null);
@@ -353,25 +358,14 @@ export default function PosExperience() {
     }
   }
 
-  async function loadQuotations() {
+  function loadQuotations() {
     setShowQuotations(true);
-    setPending(true);
-    setError("");
-    try {
-      const data = await readResponse(
-        await fetch("/api/sales?status=QUOTATION&pageSize=100", {
-          cache: "no-store",
-        }),
-      );
-      setQuotations(data.items);
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setPending(false);
-    }
+    quotationList.reload();
   }
 
   async function loadQuotation(id) {
+    if (pending || loadingQuotation.current) return;
+    loadingQuotation.current = true;
     setPending(true);
     setError("");
     try {
@@ -405,6 +399,7 @@ export default function PosExperience() {
     } catch (requestError) {
       setError(requestError.message);
     } finally {
+      loadingQuotation.current = false;
       setPending(false);
     }
   }
@@ -781,7 +776,9 @@ export default function PosExperience() {
         productSearch,
         products,
         quantity,
-        quotations,
+        quotationList,
+        quotationQuery,
+        setQuotationQuery,
         readExternalPrescriptionImage,
         receipt,
         registerPayment,

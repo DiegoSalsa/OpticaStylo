@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   readResponse,
   useInternalActor,
 } from "@/components/internal/internal-shell";
+import usePaginatedResource from "@/components/internal/use-paginated-resource";
+import { createRequestGate } from "@/utils/pagination";
 import ProductCatalogInterface from "./product-catalog-interface";
 import "../management.css";
 
@@ -32,70 +34,58 @@ const money = new Intl.NumberFormat("es-CL", {
 
 export default function ProductsPage() {
   const actor = useInternalActor();
-  const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
   const [form, setForm] = useState(EMPTY);
   const [imageAlt, setImageAlt] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [images, setImages] = useState([]);
   const [imageStatus, setImageStatus] = useState("idle");
   const [selectedId, setSelectedId] = useState(null);
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState("ready");
   const [notice, setNotice] = useState(null);
   const canManage = actor?.permissions.includes("products.manage");
-  const requestProducts = useCallback(
-    async (signal) =>
-      readResponse(
-        await fetch(
-          `/api/products?search=${encodeURIComponent(submitted)}&pageSize=100`,
-          { cache: "no-store", signal },
-        ),
-      ),
-    [submitted],
-  );
+  const list = usePaginatedResource("/api/products", { enabled: Boolean(actor?.permissions.includes("products.read")) });
+  const { items } = list;
+  const imageGate = useRef(createRequestGate());
+  const saving = useRef(false);
+  const imageBusy = useRef(false);
+  const [imageError, setImageError] = useState("");
+  const [fileRevision, setFileRevision] = useState(0);
+  useEffect(() => { const gate = imageGate.current; return () => gate.cancel(); }, []);
 
   const loadImages = useCallback(async (productId) => {
+    const request = imageGate.current.begin();
+    setImageStatus("loading");
+    setImageError("");
     try {
-      const data = await readResponse(
-        await fetch(`/api/products/${productId}/images`, {
-          cache: "no-store",
-        }),
-      );
+      const data = await readResponse(await fetch(`/api/products/${productId}/images`, { cache: "no-store", signal: request.signal }));
+      if (!request.isCurrent()) return;
       setImages(data);
+      setImageStatus("idle");
     } catch (error) {
-      setNotice({ kind: "error", text: error.message });
+      if (!request.isCurrent()) return;
+      setImageError(error.message);
+      setImageStatus("error");
     }
   }, []);
 
-  useEffect(() => {
-    if (!actor?.permissions.includes("products.read")) return;
-    const controller = new AbortController();
-    requestProducts(controller.signal)
-      .then((data) => {
-        setItems(data.items);
-        setStatus("ready");
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setNotice({ kind: "error", text: error.message });
-          setStatus("error");
-        }
-      });
-    return () => controller.abort();
-  }, [actor, requestProducts]);
-
   function select(product) {
+    if (saving.current || imageBusy.current) return;
     setSelectedId(product.id);
     setForm({ ...product, unitPriceCents: String(product.unitPriceCents) });
     setImages([]);
     setImageAlt("");
     setImageFile(null);
+    setFileRevision((value) => value + 1);
     setNotice(null);
     void loadImages(product.id);
   }
 
   function reset() {
+    if (saving.current || imageBusy.current) return;
+    imageGate.current.cancel();
+    setImageStatus("idle");
+    setImageError("");
     setSelectedId(null);
     setForm(EMPTY);
     setImages([]);
@@ -104,26 +94,15 @@ export default function ProductsPage() {
     setNotice(null);
   }
 
-  async function search(event) {
+  function search(event) {
     event.preventDefault();
-    const normalized = query.trim();
-    setStatus("loading");
-    if (normalized !== submitted) {
-      setSubmitted(normalized);
-      return;
-    }
-    try {
-      const data = await requestProducts();
-      setItems(data.items);
-      setStatus("ready");
-    } catch (error) {
-      setNotice({ kind: "error", text: error.message });
-      setStatus("error");
-    }
+    list.setFilters({ search: query.trim() });
   }
 
   async function submit(event) {
     event.preventDefault();
+    if (!canManage || saving.current) return;
+    saving.current = true;
     setStatus("saving");
     setNotice(null);
     try {
@@ -146,9 +125,8 @@ export default function ProductsPage() {
       );
       setSelectedId(saved.id);
       setForm({ ...saved, unitPriceCents: String(saved.unitPriceCents) });
-      void loadImages(saved.id);
-      const data = await requestProducts();
-      setItems(data.items);
+      if (!selectedId) void loadImages(saved.id);
+      list.reload();
       setStatus("ready");
       setNotice({
         kind: "success",
@@ -159,12 +137,15 @@ export default function ProductsPage() {
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
       setStatus("ready");
+    } finally {
+      saving.current = false;
     }
   }
 
   async function uploadImage(event) {
     event.preventDefault();
-    if (!selectedId || !imageFile) return;
+    if (!canManage || !selectedId || !imageFile || imageBusy.current || imageStatus !== "idle") return;
+    imageBusy.current = true;
     setImageStatus("uploading");
     setNotice(null);
     const payload = new FormData();
@@ -180,17 +161,21 @@ export default function ProductsPage() {
       setImages((current) => [...current, created]);
       setImageAlt("");
       setImageFile(null);
+      setFileRevision((value) => value + 1);
       setImageStatus("idle");
       setNotice({ kind: "success", text: "Imagen guardada en Cloudinary." });
     } catch (error) {
       setImageStatus("idle");
       setNotice({ kind: "error", text: error.message });
+    } finally {
+      imageBusy.current = false;
     }
   }
 
   // Eliminar o cancelar remove imagen de forma controlada y consistente
   async function removeImage(imageId) {
-    if (!selectedId) return;
+    if (!canManage || !selectedId || imageBusy.current || imageStatus !== "idle") return;
+    imageBusy.current = true;
     setImageStatus(`removing:${imageId}`);
     setNotice(null);
     try {
@@ -204,6 +189,7 @@ export default function ProductsPage() {
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
     } finally {
+      imageBusy.current = false;
       setImageStatus("idle");
     }
   }
@@ -220,6 +206,10 @@ export default function ProductsPage() {
   return (
     <ProductCatalogInterface
       model={{
+        list,
+        imageError,
+        fileRevision,
+        retryImages: () => loadImages(selectedId),
         CATEGORIES,
         canManage,
         form,
