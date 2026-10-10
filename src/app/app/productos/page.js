@@ -76,6 +76,7 @@ export default function ProductsPage() {
     setImages([]);
     setImageAlt("");
     setImageFile(null);
+    setFileRevision((value) => value + 1);
     setNotice(null);
     void loadImages(product.id);
   }
