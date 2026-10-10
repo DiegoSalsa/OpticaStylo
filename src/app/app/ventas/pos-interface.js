@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import Icon from "@/components/ui/icon";
+import Pagination from "@/components/internal/pagination";
 import CashRegisterPanel from "./cash-register-panel";
 import PosCatalogPanel from "./pos-catalog-panel";
 import PosTicketPanel from "./pos-ticket-panel";
@@ -14,7 +15,9 @@ export default function PosInterface({ model }) {
     loadQuotations,
     money,
     pending,
-    quotations,
+    quotationList,
+    quotationQuery,
+    setQuotationQuery,
     reset,
     setCashRegister,
     setShowQuotations,
@@ -70,11 +73,15 @@ export default function PosInterface({ model }) {
               Cerrar
             </button>
           </div>
-          {pending ? (
+          <form className="directory-search" onSubmit={(event) => { event.preventDefault(); quotationList.setFilters({ search: quotationQuery.trim() }); }}>
+            <input aria-label="Buscar cotizaciones" maxLength={100} placeholder="N.º de cotización o cliente" value={quotationQuery} onChange={(event) => setQuotationQuery(event.target.value)} />
+            <button className="app-button" type="submit">Buscar</button>
+          </form>
+          {quotationList.status === "loading" ? (
             <p className="quotation-empty">Cargando cotizaciones…</p>
-          ) : quotations.length ? (
+          ) : quotationList.status === "error" ? null : quotationList.items.length ? (
             <div className="quotation-list">
-              {quotations.map((quotation) => (
+              {quotationList.items.map((quotation) => (
                 <article key={quotation.id}>
                   <div>
                     <strong>Cotización N.º {quotation.saleNumber}</strong>
@@ -90,6 +97,7 @@ export default function PosInterface({ model }) {
                   <b>{money.format(quotation.totalCents)}</b>
                   <button
                     className="app-button app-button--primary"
+                    disabled={pending}
                     onClick={() => loadQuotation(quotation.id)}
                     type="button"
                   >
@@ -99,8 +107,9 @@ export default function PosInterface({ model }) {
               ))}
             </div>
           ) : (
-            <p className="quotation-empty">No hay cotizaciones abiertas.</p>
+            <p className="quotation-empty">{quotationList.filters.search ? "No hay cotizaciones coincidentes." : "No hay cotizaciones abiertas."}</p>
           )}
+          <Pagination {...quotationList} label="cotizaciones" />
         </section>
       )}
       {canSell && <CashRegisterPanel onChange={setCashRegister} />}
