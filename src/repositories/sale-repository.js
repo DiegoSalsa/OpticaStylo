@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { rutSearchValues } from "../utils/rut-search.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import {
   consumeDiscountAuthorizationWithClient,
@@ -55,7 +56,13 @@ export function saleListWhere({ customerId, origin, search = "", status, view } 
     else where.status = status;
   }
   if (!search) return where;
-  const compactRut = search.replace(/[.\s-]/g, "");
+  const number = search.replace(/^#\s*/, "");
+  // Short numeric queries identify a sale number; matching them inside every
+  // customer's RUT would drown the exact order in unrelated results.
+  if (/^\d{1,18}$/.test(number) && (search.startsWith("#") || number.length < 7)) {
+    return { ...where, OR: [{ sale_number: BigInt(number) }] };
+  }
+  const ruts = rutSearchValues(search);
   const contains = (value) => ({ contains: value, mode: "insensitive" });
   const customerTerms = search.split(/\s+/).map((term) => ({ OR: [
     { first_names: contains(term) }, { last_names: contains(term) },
@@ -63,11 +70,10 @@ export function saleListWhere({ customerId, origin, search = "", status, view } 
   const cartTerms = search.split(/\s+/).map((term) => ({ OR: [
     { buyer_first_names: contains(term) }, { buyer_last_names: contains(term) },
   ] }));
-  const number = search.replace(/^#\s*/, "");
   where.OR = [
     ...(/^\d{1,18}$/.test(number) ? [{ sale_number: BigInt(number) }] : []),
-    { customers: { is: { OR: [{ AND: customerTerms }, ...(compactRut ? [{ rut: contains(compactRut) }] : [])] } } },
-    { store_carts: { is: { OR: [{ AND: cartTerms }, ...(compactRut ? [{ buyer_rut: contains(compactRut) }, { buyer_rut: contains(search) }] : [])] } } },
+    { customers: { is: { OR: [{ AND: customerTerms }, ...ruts.map((rut) => ({ rut: contains(rut) }))] } } },
+    { store_carts: { is: { OR: [{ AND: cartTerms }, ...ruts.map((rut) => ({ buyer_rut: contains(rut) }))] } } },
   ];
   return where;
 }

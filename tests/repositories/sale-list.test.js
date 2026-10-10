@@ -5,13 +5,14 @@ import { countSalesByStatus, listSales, saleListInclude, saleListWhere } from ".
 test("Prisma busca por número, nombre completo y RUT del cliente o carrito invitado", () => {
   const byNumber = saleListWhere({search:"#123"});
   assert.equal(byNumber.OR[0].sale_number,123n);
+  assert.deepEqual(saleListWhere({search:"1"}).OR,[{sale_number:1n}]);
   const byName = saleListWhere({search:"Ana Pérez"});
   assert.equal(byName.OR[0].customers.is.OR[0].AND.length,2);
   assert.equal(byName.OR[1].store_carts.is.OR[0].AND.length,2);
   const byRut = saleListWhere({search:"12.345.678-5"});
-  assert.equal(byRut.OR[0].customers.is.OR[1].rut.contains,"123456785");
-  assert.equal(byRut.OR[1].store_carts.is.OR[1].buyer_rut.contains,"123456785");
-  assert.equal(saleListWhere({search:"---"}).OR[0].customers.is.OR.length,1);
+  assert.ok(byRut.OR[0].customers.is.OR.some((value)=>value.rut?.contains === "12345678-5"));
+  assert.ok(byRut.OR[1].store_carts.is.OR.some((value)=>value.buyer_rut?.contains === "123456785"));
+  assert.ok(saleListWhere({search:"---"}).OR[0].customers.is.OR.every((value)=>value.rut?.contains !== ""));
 });
 test("origen, vista y estado se intersectan; no amplían la vista activa", () => {
   const where = saleListWhere({origin:"ONLINE",view:"active",status:"READY"});
