@@ -10,6 +10,7 @@ import {
   changeSaleStatus as changeSaleStatusRepository,
   confirmSale as confirmSaleRepository,
   createSale as createSaleRepository,
+  countSalesByStatus,
   findReceiptBySaleId,
   findSaleById,
   issueSaleReceipt as issueSaleReceiptRepository,
@@ -166,6 +167,11 @@ export async function getSale(saleId, actor, dependencies = {}) {
 export async function getSaleList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
   return (dependencies.listSales ?? listSales)(validateSaleListQuery(searchParams));
+}
+
+export async function getSaleSummary(searchParams, actor, dependencies = {}) {
+  requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  return (dependencies.countSalesByStatus ?? countSalesByStatus)(validateSaleListQuery(searchParams));
 }
 
 export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {

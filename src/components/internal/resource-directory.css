@@ -19,6 +19,7 @@
   padding: 0.78rem 0;
   width: 100%;
 }
+.directory-search:focus-within { outline: 2px solid #278c72; outline-offset: 2px; }
 .directory-search .app-button {
   border-radius: 9px;
   margin: 0.25rem;

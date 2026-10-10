@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   readResponse,
   useInternalActor,
 } from "@/components/internal/internal-shell";
+import Pagination from "@/components/internal/pagination";
+import usePaginatedResource from "@/components/internal/use-paginated-resource";
+import { createRequestGate } from "@/utils/pagination";
 import Icon from "@/components/ui/icon";
 import "../management.css";
 
@@ -20,79 +23,52 @@ const EMPTY = {
 
 export default function CustomersPage() {
   const actor = useInternalActor();
-  const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
   const [form, setForm] = useState(EMPTY);
   const [selectedId, setSelectedId] = useState(null);
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState("ready");
   const [notice, setNotice] = useState(null);
   const canManage = actor?.permissions.includes("customers.manage");
-  const requestCustomers = useCallback(
-    async (signal) =>
-      readResponse(
-        await fetch(
-          `/api/customers?search=${encodeURIComponent(submitted)}&pageSize=100`,
-          { cache: "no-store", signal },
-        ),
-      ),
-    [submitted],
-  );
-  useEffect(() => {
-    if (!actor?.permissions.includes("customers.read")) return;
-    const controller = new AbortController();
-    requestCustomers(controller.signal)
-      .then((data) => {
-        setItems(data.items);
-        setStatus("ready");
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setNotice({ kind: "error", text: error.message });
-          setStatus("error");
-        }
-      });
-    return () => controller.abort();
-  }, [actor, requestCustomers]);
+  const list = usePaginatedResource("/api/customers", { enabled: Boolean(actor?.permissions.includes("customers.read")) });
+  const { items } = list;
+  const detailGate = useRef(createRequestGate());
+  const saving = useRef(false);
+  useEffect(() => { const gate = detailGate.current; return () => gate.cancel(); }, []);
+
   async function select(customer) {
+    if (saving.current) return;
+    const request = detailGate.current.begin();
     setSelectedId(customer.id);
+    setForm(EMPTY);
     setStatus("loading-detail");
+    setNotice(null);
     try {
-      const detail = await readResponse(
-        await fetch(`/api/customers/${customer.id}`, { cache: "no-store" }),
-      );
+      const detail = await readResponse(await fetch(`/api/customers/${customer.id}`, { cache: "no-store", signal: request.signal }));
+      if (!request.isCurrent()) return;
       setForm(detail);
       setStatus("ready");
-      setNotice(null);
     } catch (error) {
+      if (!request.isCurrent()) return;
       setNotice({ kind: "error", text: error.message });
-      setStatus("ready");
+      setStatus("detail-error");
     }
   }
   function reset() {
+    if (saving.current) return;
+    detailGate.current.cancel();
+    setStatus("ready");
     setSelectedId(null);
     setForm(EMPTY);
     setNotice(null);
   }
-  async function search(event) {
+  function search(event) {
     event.preventDefault();
-    const normalized = query.trim();
-    setStatus("loading");
-    if (normalized !== submitted) {
-      setSubmitted(normalized);
-      return;
-    }
-    try {
-      const data = await requestCustomers();
-      setItems(data.items);
-      setStatus("ready");
-    } catch (error) {
-      setNotice({ kind: "error", text: error.message });
-      setStatus("error");
-    }
+    list.setFilters({ search: query.trim() });
   }
   async function submit(event) {
     event.preventDefault();
+    if (saving.current || status !== "ready") return;
+    saving.current = true;
     setStatus("saving");
     setNotice(null);
     const payload = {
@@ -116,8 +92,7 @@ export default function CustomersPage() {
       );
       setSelectedId(saved.id);
       setForm(saved);
-      const data = await requestCustomers();
-      setItems(data.items);
+      list.reload();
       setStatus("ready");
       setNotice({
         kind: "success",
@@ -128,6 +103,8 @@ export default function CustomersPage() {
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
       setStatus("ready");
+    } finally {
+      saving.current = false;
     }
   }
   if (actor && !actor.permissions.includes("customers.read"))
@@ -150,6 +127,7 @@ export default function CustomersPage() {
         {canManage && (
           <button
             className="app-button app-button--primary"
+            disabled={status === "saving"}
             onClick={reset}
             type="button"
           >
@@ -159,6 +137,7 @@ export default function CustomersPage() {
       </header>
       {notice && (
         <p
+          role={notice.kind === "error" ? "alert" : "status"}
           className={
             notice.kind === "error" ? "inline-error" : "inline-success"
           }
@@ -180,10 +159,10 @@ export default function CustomersPage() {
               Buscar
             </button>
           </form>
-          {status === "loading" ? (
+          {list.status === "loading" ? (
             <p className="directory-state">Cargando clientes…</p>
-          ) : !items.length ? (
-            <p className="directory-state">No hay clientes registrados.</p>
+          ) : list.status === "error" ? null : !items.length ? (
+            <p className="directory-state">{list.filters.search ? "No hay coincidencias para esta búsqueda." : "No hay clientes registrados."}</p>
           ) : (
             <div className="management-list">
               {items.map((customer) => (
@@ -194,12 +173,13 @@ export default function CustomersPage() {
                       : "management-item"
                   }
                   key={customer.id}
+                  disabled={status === "saving"}
                   onClick={() => select(customer)}
                   type="button"
                 >
                   <span className="management-avatar">
                     {customer.firstNames.slice(0, 1)}
-                    {customer.lastNames.slice(0, 1)}
+                    {customer.lastNames?.slice(0, 1)}
                   </span>
                   <span>
                     <strong>
@@ -213,10 +193,13 @@ export default function CustomersPage() {
               ))}
             </div>
           )}
+          <Pagination {...list} label="clientes" />
         </section>
         <section className="app-card management-editor">
           {status === "loading-detail" ? (
             <p className="directory-state">Cargando cliente…</p>
+          ) : status === "detail-error" ? (
+            <p className="inline-error" role="alert">No se pudo cargar la selección. Vuelve a seleccionarla para reintentar.</p>
           ) : !selectedId && !canManage ? (
             <p className="directory-state">
               Selecciona un cliente para revisar sus datos.
@@ -230,7 +213,7 @@ export default function CustomersPage() {
                   </p>
                   <h2>
                     {selectedId
-                      ? `${form.firstNames} ${form.lastNames}`
+                      ? [form.firstNames, form.lastNames].filter(Boolean).join(" ")
                       : "Nuevo cliente"}
                   </h2>
                 </div>
@@ -242,7 +225,7 @@ export default function CustomersPage() {
                 <label className="field">
                   <span>Nombres</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, firstNames: event.target.value })
@@ -255,64 +238,64 @@ export default function CustomersPage() {
                 <label className="field">
                   <span>Apellidos</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="150"
                     onChange={(event) =>
                       setForm({ ...form, lastNames: event.target.value })
                     }
                     required
                     placeholder="Apellidos del cliente"
-                    value={form.lastNames}
+                    value={form.lastNames ?? ""}
                   />
                 </label>
                 <label className="field">
                   <span>RUT</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, rut: event.target.value })
                     }
                     placeholder="12.345.678-5"
                     required
-                    value={form.rut}
+                    value={form.rut ?? ""}
                   />
                 </label>
                 <label className="field">
                   <span>Teléfono</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, phone: event.target.value })
                     }
                     placeholder="+56912345678"
                     required
-                    value={form.phone}
+                    value={form.phone ?? ""}
                   />
                 </label>
                 <label className="field field-wide">
                   <span>Correo</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, email: event.target.value })
                     }
                     required
                     placeholder="nombre@correo.cl"
                     type="email"
-                    value={form.email}
+                    value={form.email ?? ""}
                   />
                 </label>
                 <label className="field field-wide">
                   <span>Dirección comercial</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="500"
                     onChange={(event) =>
                       setForm({ ...form, address: event.target.value })
                     }
                     required
                     placeholder="Dirección"
-                    value={form.address}
+                    value={form.address ?? ""}
                   />
                 </label>
               </div>

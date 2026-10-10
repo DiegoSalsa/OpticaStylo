@@ -273,6 +273,10 @@ export function validateSaleListQuery(searchParams) {
   const rawStatus = searchParams.get("status");
   const status = rawStatus ? rawStatus.trim().toUpperCase() : null;
   const rawCustomerId = searchParams.get("customerId");
+  const search = (searchParams.get("search") ?? "").trim().replace(/\s+/g, " ");
+  const rawOrigin = (searchParams.get("origin") ?? "").trim().toUpperCase();
+  const origin = ({ WEB: "ONLINE", POS: "IN_STORE" })[rawOrigin] ?? (rawOrigin || null);
+  const view = searchParams.get("view") || null;
 
   if (!Number.isInteger(page) || page < 1) fail("La página no es válida.");
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > MAX_PAGE_SIZE) {
@@ -280,11 +284,17 @@ export function validateSaleListQuery(searchParams) {
   }
   if (status && !SALE_STATUSES.includes(status))
     fail("El estado no es válido.");
+  if (search.length > 100) fail("La búsqueda no puede superar 100 caracteres.");
+  if (origin && !["ONLINE", "IN_STORE"].includes(origin)) fail("El origen no es válido.");
+  if (view && !["active", "delivered", "history"].includes(view)) fail("La vista de pedidos no es válida.");
 
   return {
     customerId: rawCustomerId ? validateSaleId(rawCustomerId, "cliente") : null,
     page,
     pageSize,
+    origin,
+    search,
     status,
+    view,
   };
 }

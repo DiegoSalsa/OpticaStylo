@@ -2,10 +2,15 @@
 
 import Image from "next/image";
 
+import Pagination from "@/components/internal/pagination";
 import Icon from "@/components/ui/icon";
 
 export default function ProductCatalogInterface({ model }) {
   const {
+    list,
+    imageError,
+    fileRevision,
+    retryImages,
     CATEGORIES,
     canManage,
     form,
@@ -44,6 +49,7 @@ export default function ProductCatalogInterface({ model }) {
         {canManage && (
           <button
             className="app-button app-button--primary"
+            disabled={status === "saving" || imageStatus === "uploading" || imageStatus.startsWith("removing:")}
             onClick={reset}
             type="button"
           >
@@ -53,6 +59,7 @@ export default function ProductCatalogInterface({ model }) {
       </header>
       {notice && (
         <p
+          role={notice.kind === "error" ? "alert" : "status"}
           className={
             notice.kind === "error" ? "inline-error" : "inline-success"
           }
@@ -78,10 +85,14 @@ export default function ProductCatalogInterface({ model }) {
               Buscar
             </button>
           </form>
-          {status === "loading" ? (
+          <div className="directory-filters">
+            <label className="field"><span>Categoría del listado</span><select value={list.filters.category ?? ""} onChange={(event) => list.setFilters({ category: event.target.value })}><option value="">Todas</option>{CATEGORIES.map(([code,label]) => <option value={code} key={code}>{label}</option>)}</select></label>
+            <label className="field"><span>Estado del listado</span><select value={list.filters.isActive ?? ""} onChange={(event) => list.setFilters({ isActive: event.target.value })}><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></label>
+          </div>
+          {list.status === "loading" ? (
             <p className="directory-state">Cargando productos…</p>
-          ) : !items.length ? (
-            <p className="directory-state">No hay productos registrados.</p>
+          ) : list.status === "error" ? null : !items.length ? (
+            <p className="directory-state">{Object.values(list.filters).some(Boolean) ? "No hay coincidencias para estos filtros." : "No hay productos registrados."}</p>
           ) : (
             <div className="management-list">
               {items.map((product) => (
@@ -92,6 +103,7 @@ export default function ProductCatalogInterface({ model }) {
                       : "management-item"
                   }
                   key={product.id}
+                  disabled={status === "saving" || imageStatus === "uploading" || imageStatus.startsWith("removing:")}
                   onClick={() => select(product)}
                   type="button"
                 >
@@ -126,6 +138,7 @@ export default function ProductCatalogInterface({ model }) {
               ))}
             </div>
           )}
+          <Pagination {...list} label="productos" />
         </section>
         <section className="app-card management-editor">
           {!selectedId && !canManage ? (
@@ -133,7 +146,8 @@ export default function ProductCatalogInterface({ model }) {
               Selecciona un producto para revisar sus datos.
             </div>
           ) : (
-            <form onSubmit={submit}>
+            <>
+            <form aria-label="Editar producto" onSubmit={submit}>
               <div className="editor-heading">
                 <div>
                   <p className="eyebrow">
@@ -157,7 +171,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field field-wide">
                   <span>Nombre comercial</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="200"
                     onChange={(event) =>
                       setForm({ ...form, name: event.target.value })
@@ -170,7 +184,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field">
                   <span>SKU</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     maxLength="80"
                     onChange={(event) =>
                       setForm({
@@ -186,7 +200,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field">
                   <span>Categoría</span>
                   <select
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) => {
                       const category = event.target.value;
                       setForm({
@@ -210,7 +224,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="field field-wide">
                   <span>Precio publicado (CLP)</span>
                   <input
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     inputMode="numeric"
                     min="1"
                     onChange={(event) =>
@@ -230,7 +244,7 @@ export default function ProductCatalogInterface({ model }) {
               <label className="active-switch">
                 <input
                   checked={form.requiresPrescription}
-                  disabled={!canManage || form.category !== "PRESCRIPTION_LENS"}
+                  disabled={!canManage || status === "saving" || form.category !== "PRESCRIPTION_LENS"}
                   onChange={(event) =>
                     setForm({
                       ...form,
@@ -249,7 +263,7 @@ export default function ProductCatalogInterface({ model }) {
                 <label className="active-switch">
                   <input
                     checked={form.isActive}
-                    disabled={!canManage}
+                    disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, isActive: event.target.checked })
                     }
@@ -261,6 +275,20 @@ export default function ProductCatalogInterface({ model }) {
                   </small>
                 </label>
               )}
+              <div className="editor-actions">
+                <button
+                  className="app-button app-button--primary"
+                  disabled={!canManage || status === "saving"}
+                  type="submit"
+                >
+                  {status === "saving"
+                    ? "Guardando…"
+                    : selectedId
+                      ? "Guardar cambios"
+                      : "Crear producto"}
+                </button>
+              </div>
+            </form>
               {selectedId && (
                 <section
                   className="product-image-manager"
@@ -272,6 +300,9 @@ export default function ProductCatalogInterface({ model }) {
                       Las imágenes se almacenan y entregan desde Cloudinary.
                     </p>
                   </div>
+                  {imageStatus === "loading" && <p role="status">Cargando imágenes…</p>}
+                  {imageError && <p className="inline-error" role="alert">{imageError} <button className="app-button" onClick={retryImages} type="button">Reintentar</button></p>}
+                  {imageStatus === "idle" && !images.length && <p>No hay imágenes registradas.</p>}
                   {images.length > 0 && (
                     <div className="product-image-grid">
                       {images.map((image) => (
@@ -306,6 +337,7 @@ export default function ProductCatalogInterface({ model }) {
                   )}
                   {canManage && (
                     <form
+                      aria-label="Subir imagen"
                       className="product-image-upload"
                       onSubmit={uploadImage}
                     >
@@ -313,13 +345,17 @@ export default function ProductCatalogInterface({ model }) {
                         <span>Imagen</span>
                         <input
                           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                          aria-label="Imagen del producto"
+                          aria-describedby="product-image-file-help"
                           onChange={(event) =>
                             setImageFile(event.target.files?.[0] ?? null)
                           }
                           required
+                          disabled={imageStatus === "uploading"}
+                          key={`${selectedId}:${fileRevision}`}
                           type="file"
                         />
-                        <small>
+                        <small id="product-image-file-help">
                           JPEG, PNG, WEBP, HEIC o HEIF; máximo 4 MiB.
                         </small>
                       </label>
@@ -346,20 +382,7 @@ export default function ProductCatalogInterface({ model }) {
                   )}
                 </section>
               )}
-              <div className="editor-actions">
-                <button
-                  className="app-button app-button--primary"
-                  disabled={!canManage || status === "saving"}
-                  type="submit"
-                >
-                  {status === "saving"
-                    ? "Guardando…"
-                    : selectedId
-                      ? "Guardar cambios"
-                      : "Crear producto"}
-                </button>
-              </div>
-            </form>
+            </>
           )}
         </section>
       </div>

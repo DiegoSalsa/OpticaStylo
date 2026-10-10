@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { rutSearchValues } from "../utils/rut-search.js";
 
 function mapCustomer(row) {
   if (!row) return null;
@@ -40,7 +41,7 @@ export async function listCustomers({ page, pageSize, search }) {
     { last_names: { contains: search, mode: "insensitive" } },
     { email: { contains: search, mode: "insensitive" } },
     { phone: { contains: search, mode: "insensitive" } },
-    { rut: { contains: search.replace(/[.\s-]/g, ""), mode: "insensitive" } },
+    ...rutSearchValues(search).map((value) => ({ rut: { contains: value, mode: "insensitive" } })),
   ] } : {};
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   const [items, total] = await prisma.$transaction([
