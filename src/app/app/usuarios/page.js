@@ -160,7 +160,7 @@ export default function UsersPage() {
       )}
       <div className="management-layout">
         <section className="app-card directory-card">
-          <form className="directory-search" onSubmit={search}>
+          <form className="directory-search directory-search--contained" onSubmit={search}>
             <Icon name="search" />
             <input
               aria-label="Buscar usuarios"
