@@ -13,8 +13,9 @@
 .management-layout > *, .directory-search > input { min-width: 0; }
 .management-item:disabled { cursor: default; opacity: .65; }
 .management-item:focus-visible { outline: 3px solid #278c72; outline-offset: 2px; }
-/* Mantener el buscador del catálogo alineado en escritorio */
-.directory-search.product-catalog-search {
+/* Compartir el patrón del catálogo con los buscadores que deben contenerse. */
+.directory-search.product-catalog-search,
+.directory-search.directory-search--contained {
   align-items: center;
   background: #f6faf9;
   border: 1px solid #d4e2df;
@@ -26,11 +27,13 @@
   min-width: 0;
   padding-left: 0.8rem;
 }
-.directory-search.product-catalog-search > .icon {
+.directory-search.product-catalog-search > .icon,
+.directory-search.directory-search--contained > .icon {
   flex: 0 0 auto;
   max-width: none;
 }
-.directory-search.product-catalog-search input {
+.directory-search.product-catalog-search input,
+.directory-search.directory-search--contained input {
   background: transparent;
   border: 0;
   flex: 1 1 auto;
@@ -39,7 +42,8 @@
   padding: 0.78rem 0;
   width: auto;
 }
-.directory-search.product-catalog-search .app-button {
+.directory-search.product-catalog-search .app-button,
+.directory-search.directory-search--contained .app-button {
   border-radius: 9px;
   flex: 0 0 auto;
   margin: 0.25rem;
@@ -274,12 +278,14 @@
   }
 
   /* Adaptar el buscador a pantallas pequeñas */
-  .directory-search.product-catalog-search {
+  .directory-search.product-catalog-search,
+  .directory-search.directory-search--contained {
     flex-wrap: wrap;
     padding: 0.35rem 0.35rem 0.35rem 0.8rem;
   }
 
-  .directory-search.product-catalog-search .app-button {
+  .directory-search.product-catalog-search .app-button,
+  .directory-search.directory-search--contained .app-button {
     flex-basis: 100%;
     margin: 0;
   }

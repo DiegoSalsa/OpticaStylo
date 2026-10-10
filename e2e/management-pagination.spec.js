@@ -257,12 +257,34 @@ test("validación visual 1440, 1280, 390 y 360 sin desbordamiento ni hidratació
   page.on("console",(message)=>{if(message.type()==="error"&&/hydration|cannot be a descendant|nested|validateDOMNesting/i.test(message.text())) errors.push(message.text());});
   for(const width of [1440,1280,390,360]) {
     await page.setViewportSize({width,height:900});
+    let catalogSearch;
     for(const slug of ["productos","clientes","pacientes","usuarios","pedidos","ventas",""]) {
       await page.goto(`/app/${slug}`);
       if(slug==="ventas") {await page.getByRole("button",{name:"Cotizaciones",exact:true}).click();await expect(page.locator(".quotation-list article").first()).toBeVisible();}
       else if(slug==="pedidos") {await page.getByLabel("Estado operativo").selectOption("READY");await expect(page.locator(".order-card")).toHaveCount(1);}
       else if(slug) await expect(page.locator(".management-item").first()).toBeVisible();
       else await expect(page.locator(".dashboard-metric strong").first()).not.toHaveText("Cargando…");
+      if (["productos", "usuarios"].includes(slug)) {
+        const geometry = await page.locator(".directory-search").evaluate((form) => {
+          const rect = form.getBoundingClientRect();
+          const card = form.closest(".directory-card").getBoundingClientRect();
+          const icon = form.querySelector(".icon").getBoundingClientRect();
+          const input = form.querySelector("input").getBoundingClientRect();
+          const button = form.querySelector("button").getBoundingClientRect();
+          const inside = (inner, outer) => inner.left >= outer.left - 1 && inner.right <= outer.right + 1
+            && inner.top >= outer.top - 1 && inner.bottom <= outer.bottom + 1;
+          return {
+            contained: inside(rect, card) && [icon, input, button].every((child) => inside(child, rect)),
+            iconWidth: icon.width,
+            inputTop: Math.round(input.top - rect.top),
+            buttonTop: Math.round(button.top - rect.top),
+            buttonHeight: button.height,
+          };
+        });
+        expect(geometry.contained, `Buscador de ${slug} contenido a ${width}px`).toBe(true);
+        if (slug === "productos") catalogSearch = geometry;
+        else expect(geometry).toEqual(catalogSearch);
+      }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),`${slug} a ${width}px`).toBe(true);
       await page.screenshot({path:`tmp/store-e2e/management-${slug||"dashboard"}-${width}.png`});
     }
