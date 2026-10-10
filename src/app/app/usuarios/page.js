@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   readResponse,
   useInternalActor,
 } from "@/components/internal/internal-shell";
+import Pagination from "@/components/internal/pagination";
+import usePaginatedResource from "@/components/internal/use-paginated-resource";
+import { createRequestGate } from "@/utils/pagination";
 import Icon from "@/components/ui/icon";
 import "../management.css";
 
@@ -25,45 +28,22 @@ const EMPTY = {
 
 export default function UsersPage() {
   const actor = useInternalActor();
-  const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
   const [form, setForm] = useState(EMPTY);
   const [selectedId, setSelectedId] = useState(null);
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState("ready");
   const [notice, setNotice] = useState(null);
   const canCreate = actor?.permissions.includes("users.create");
   const canUpdate = actor?.permissions.includes("users.update");
 
-  const requestUsers = useCallback(
-    async (signal) =>
-      readResponse(
-        await fetch(
-          `/api/users?search=${encodeURIComponent(submitted)}&pageSize=100`,
-          { cache: "no-store", signal },
-        ),
-      ),
-    [submitted],
-  );
-
-  useEffect(() => {
-    if (!actor?.permissions.includes("users.read")) return;
-    const controller = new AbortController();
-    requestUsers(controller.signal)
-      .then((data) => {
-        setItems(data.items);
-        setStatus("ready");
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setNotice({ kind: "error", text: error.message });
-          setStatus("error");
-        }
-      });
-    return () => controller.abort();
-  }, [actor, requestUsers]);
+  const list = usePaginatedResource("/api/users", { enabled: Boolean(actor?.permissions.includes("users.read")) });
+  const { items } = list;
+  const detailGate = useRef(createRequestGate());
+  const saving = useRef(false);
+  useEffect(() => { const gate = detailGate.current; return () => gate.cancel(); }, []);
 
   function select(user) {
+    if (saving.current) return;
     setSelectedId(user.id);
     setForm({
       email: user.email,
@@ -77,6 +57,9 @@ export default function UsersPage() {
   }
 
   function reset() {
+    if (saving.current) return;
+    detailGate.current.cancel();
+    setStatus("ready");
     setSelectedId(null);
     setForm(EMPTY);
     setNotice(null);
@@ -91,26 +74,14 @@ export default function UsersPage() {
     }));
   }
 
-  async function search(event) {
+  function search(event) {
     event.preventDefault();
-    const normalized = query.trim();
-    setStatus("loading");
-    if (normalized !== submitted) {
-      setSubmitted(normalized);
-      return;
-    }
-    try {
-      const data = await requestUsers();
-      setItems(data.items);
-      setStatus("ready");
-    } catch (error) {
-      setNotice({ kind: "error", text: error.message });
-      setStatus("error");
-    }
+    list.setFilters({ search: query.trim() });
   }
-
   async function submit(event) {
     event.preventDefault();
+    if (saving.current || status !== "ready") return;
+    saving.current = true;
     setStatus("saving");
     setNotice(null);
     const payload = {
@@ -139,12 +110,13 @@ export default function UsersPage() {
       });
       setSelectedId(saved.id);
       setForm({ ...saved, password: "" });
-      const data = await requestUsers();
-      setItems(data.items);
+      list.reload();
       setStatus("ready");
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
       setStatus("ready");
+    } finally {
+      saving.current = false;
     }
   }
 
@@ -168,6 +140,7 @@ export default function UsersPage() {
         {canCreate && (
           <button
             className="app-button app-button--primary"
+            disabled={status === "saving"}
             onClick={reset}
             type="button"
           >
@@ -177,6 +150,7 @@ export default function UsersPage() {
       </header>
       {notice && (
         <p
+          role={notice.kind === "error" ? "alert" : "status"}
           className={
             notice.kind === "error" ? "inline-error" : "inline-success"
           }
@@ -198,10 +172,10 @@ export default function UsersPage() {
               Buscar
             </button>
           </form>
-          {status === "loading" ? (
+          {list.status === "loading" ? (
             <p className="directory-state">Cargando usuarios…</p>
-          ) : !items.length ? (
-            <p className="directory-state">No hay usuarios para mostrar.</p>
+          ) : list.status === "error" ? null : !items.length ? (
+            <p className="directory-state">{list.filters.search ? "No hay coincidencias para esta búsqueda." : "No hay usuarios para mostrar."}</p>
           ) : (
             <div className="management-list">
               {items.map((user) => (
@@ -212,6 +186,7 @@ export default function UsersPage() {
                       : "management-item"
                   }
                   key={user.id}
+                  disabled={status === "saving"}
                   onClick={() => select(user)}
                   type="button"
                 >
@@ -236,6 +211,7 @@ export default function UsersPage() {
               ))}
             </div>
           )}
+          <Pagination {...list} label="usuarios" />
         </section>
         <section className="app-card management-editor">
           {!selectedId && !canCreate ? (
