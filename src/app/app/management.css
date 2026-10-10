@@ -7,6 +7,10 @@
   display: grid;
   gap: 0.45rem;
 }
+.directory-filters { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1rem; }
+.management-layout > *, .directory-search > input { min-width: 0; }
+.management-item:disabled { cursor: default; opacity: .65; }
+.management-item:focus-visible { outline: 3px solid #278c72; outline-offset: 2px; }
 /* Mantener el buscador del catálogo alineado en escritorio */
 .directory-search.product-catalog-search {
   align-items: center;
@@ -246,6 +250,7 @@
   }
 }
 @media (max-width: 560px) {
+  .directory-filters { grid-template-columns: 1fr; }
   .role-picker {
     grid-template-columns: 1fr;
   }
