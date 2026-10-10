@@ -21,6 +21,57 @@ const saleInclude = {
   users_sales_discount_authorized_byTousers: true,
 };
 
+// The list preserves its summary contract without loading line items, clinical
+// records, prescription files, receipt payloads or payment provider details.
+export const saleListInclude = {
+  customers: { select: { email: true, first_names: true, last_names: true, phone: true, rut: true } },
+  external_prescriptions: { select: { source: true, status: true } },
+  optical_prescriptions: { select: {
+    id: true, status: true, version: true,
+    clinical_encounters: { select: { patient_id: true, patients: { select: { id: true, first_names: true, last_names: true, rut: true } } } },
+  } },
+  patients: { select: { id: true, first_names: true, last_names: true, rut: true } },
+  sale_payments: { select: { amount_cents: true } },
+  sale_receipts: {
+    orderBy: [{ issued_at: "desc" }, { receipt_number: "desc" }], take: 1,
+    select: { email_status: true, emailed_to: true, id: true, issued_at: true, payment_id: true, receipt_number: true, receipt_type: true },
+  },
+  store_carts: { select: { buyer_email: true, buyer_first_names: true, buyer_last_names: true, buyer_phone: true, buyer_rut: true } },
+  users_sales_discount_authorized_byTousers: { select: { first_name: true, id: true, last_name: true } },
+};
+
+export const ORDER_STATUSES = ["PENDING", "PAID", "IN_PREPARATION", "READY", "DELIVERED", "CANCELLED"];
+
+export function saleListWhere({ customerId, origin, search = "", status, view } = {}) {
+  const statuses = view === "active" ? ["PENDING", "PAID", "IN_PREPARATION", "READY"]
+    : view === "delivered" ? ["DELIVERED"] : view === "history" ? ORDER_STATUSES : null;
+  const where = {
+    ...(customerId ? { customer_id: customerId } : {}),
+    ...(origin ? { origin } : {}),
+    ...(statuses ? { status: { in: statuses } } : {}),
+  };
+  if (status) {
+    if (statuses) where.AND = [{ status }];
+    else where.status = status;
+  }
+  if (!search) return where;
+  const compactRut = search.replace(/[.\s-]/g, "");
+  const contains = (value) => ({ contains: value, mode: "insensitive" });
+  const customerTerms = search.split(/\s+/).map((term) => ({ OR: [
+    { first_names: contains(term) }, { last_names: contains(term) },
+  ] }));
+  const cartTerms = search.split(/\s+/).map((term) => ({ OR: [
+    { buyer_first_names: contains(term) }, { buyer_last_names: contains(term) },
+  ] }));
+  const number = search.replace(/^#\s*/, "");
+  where.OR = [
+    ...(/^\d{1,18}$/.test(number) ? [{ sale_number: BigInt(number) }] : []),
+    { customers: { is: { OR: [{ AND: customerTerms }, ...(compactRut ? [{ rut: contains(compactRut) }] : [])] } } },
+    { store_carts: { is: { OR: [{ AND: cartTerms }, ...(compactRut ? [{ buyer_rut: contains(compactRut) }, { buyer_rut: contains(search) }] : [])] } } },
+  ];
+  return where;
+}
+
 function mapReceipt(row) {
   return row ? {
     emailError: row.email_error, emailProviderId: row.email_provider_id,
@@ -42,7 +93,7 @@ function mapSale(row, details = true) {
   const base = {
     balanceCents: totalCents - paidCents, cancellationReason: row.cancellation_reason,
     cancelledAt: row.cancelled_at, createdAt: row.created_at,
-    customer: row.customer_id ? {
+    customer: row.customer_id || cart ? {
       email: cart?.buyer_email ?? customer?.email,
       firstNames: cart?.buyer_first_names ?? customer?.first_names,
       id: row.customer_id, lastNames: cart?.buyer_last_names ?? customer?.last_names,
@@ -402,17 +453,28 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function listSales({ customerId, page, pageSize, status }) {
-  const where = { ...(customerId ? { customer_id: customerId } : {}), ...(status ? { status } : {}) };
+export async function listSales(query, client = prisma) {
+  const { page, pageSize } = query;
+  const where = saleListWhere(query);
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  const [items, total] = await prisma.$transaction([
-    prisma.sales.findMany({
-      include: saleInclude, orderBy: [{ created_at: "desc" }, { sale_number: "desc" }],
+  const [items, total] = await client.$transaction([
+    client.sales.findMany({
+      include: saleListInclude, orderBy: [{ created_at: "desc" }, { sale_number: "desc" }],
       skip: (page - 1) * pageSize, take: pageSize, where,
     }),
-    prisma.sales.count({ where }),
-  ]);
+    client.sales.count({ where }),
+  ], { isolationLevel: "RepeatableRead" });
   return { items: items.map((row) => mapSale(row, false)), page, pageSize, total, totalPages: total ? Math.ceil(total / pageSize) : 0 };
+}
+
+export async function countSalesByStatus(query, client = prisma) {
+  const groups = await client.sales.groupBy({ by: ["status"], _count: { _all: true }, where: saleListWhere(query) });
+  const byStatus = Object.fromEntries(groups.map((group) => [group.status, group._count._all]));
+  return {
+    byStatus,
+    inProcess: ["PAID", "IN_PREPARATION", "READY"].reduce((sum, status) => sum + (byStatus[status] ?? 0), 0),
+    total: groups.reduce((sum, group) => sum + group._count._all, 0),
+  };
 }
 
 export async function listSaleEvents(saleId) {
