@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { retryTransaction } from "../db/retry-transaction.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
 const professionalUser = "users_professional_profiles_user_idTousers";
@@ -118,7 +119,8 @@ export async function getBusyAppointments(professionalId, from, to, excludedAppo
 
 export async function createAppointment(appointmentData, actorUserId, options = {}) {
   // Ejecutar creación, historial y correos dentro de una transacción consistente
-  return prisma.$transaction(async (client) => {
+  // Una carrera serializable debe volver a comprobar el cupo y devolver el conflicto de dominio.
+  return retryTransaction(prisma, async (client) => {
     // Comprobar concurrencia antes de insertar la nueva reserva
     const conflict = await findCollision(client, appointmentData.professionalId, appointmentData.startAt, appointmentData.endAt);
     if (conflict) return { appointment: null, conflict };

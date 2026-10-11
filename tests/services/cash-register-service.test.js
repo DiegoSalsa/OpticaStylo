@@ -64,3 +64,14 @@ test("impide que un profesional clínico opere caja", async () => {
     permissions: [], userId,
   }), (error) => error.code === "INSUFFICIENT_PERMISSIONS");
 });
+
+test("traduce la apertura duplicada de Prisma a un conflicto comercial sin ocultar otros errores", async () => {
+  const duplicate = Object.assign(new Error("Unique constraint"), {code:"P2002"});
+  await assert.rejects(()=>openCashRegister({openingAmountCents:0},ventas,{
+    openCashRegister:async()=>{throw duplicate;},
+  }),(error)=>error.code==="CASH_REGISTER_ALREADY_OPEN"&&error.status===409&&error.cause===duplicate);
+  const unrelated = Object.assign(new Error("Database unavailable"),{code:"P1001"});
+  await assert.rejects(()=>openCashRegister({openingAmountCents:0},ventas,{
+    openCashRegister:async()=>{throw unrelated;},
+  }),(error)=>error===unrelated);
+});

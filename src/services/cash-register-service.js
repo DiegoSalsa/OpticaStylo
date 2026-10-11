@@ -38,7 +38,7 @@ export async function openCashRegister(input, actor, dependencies = {}) {
       actor.userId,
     );
   } catch (error) {
-    if (error?.code === "23505") {
+    if (error?.code === "P2002" || error?.code === "23505") {
       throw new AppError({
         code: "CASH_REGISTER_ALREADY_OPEN",
         message: "Ya existe una caja de prueba abierta.",
