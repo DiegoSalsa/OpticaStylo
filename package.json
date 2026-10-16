@@ -27,7 +27,14 @@
     "users:create-sales": "node scripts/create-sales-user.mjs",
     "demo:prepare": "node scripts/prepare-demo-data.mjs",
     "test:store:e2e": "node scripts/run-store-e2e.mjs",
-    "test:management:e2e": "node scripts/run-management-e2e.mjs"
+    "test:management:e2e": "node scripts/run-management-e2e.mjs",
+    "test:evaluation:unit": "node --test tests/utils/chilean-rut.test.js tests/validations/appointment-validation.test.js tests/services/availability-engine.test.js tests/auth/password.test.js",
+    "test:evaluation:integration": "node scripts/run-evaluation.mjs integration",
+    "test:evaluation:e2e": "node scripts/run-evaluation.mjs e2e",
+    "test:evaluation:ui": "node scripts/run-evaluation.mjs ui",
+    "test:evaluation:server": "node scripts/run-evaluation.mjs server",
+    "test:evaluation:clean": "node scripts/clean-evaluation.mjs",
+    "test:evaluation": "node scripts/run-evaluation.mjs all"
   },
   "engines": {
     "node": ">=20.9.0"
