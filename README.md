@@ -231,7 +231,7 @@ Las pruebas se organizan por ámbito: aplicación, autenticación, configuració
 
 El repositorio no declara Docker como requisito y por eso no se añadieron `Dockerfile` ni `docker-compose.yml`. La incorporación de una imagen reproducible puede evaluarse cuando exista una necesidad de infraestructura concreta.
 
-No se añadió una suite E2E de navegador en esta fase. Para una etapa posterior, la propuesta mínima de Playwright cubre ocho recorridos: login interno, reserva pública, creación y cierre de venta POS, carrito y checkout con retiro, carga y confirmación de receta, cuenta de cliente, vinculación OTP y acceso clínico restringido.
+La [preparación de la segunda evaluación](docs/testing/segunda-evaluacion.md) reúne cuatro áreas unitarias existentes, cuatro pruebas HTTP con PostgreSQL efímero y dos flujos Playwright con login por formulario. Ejecuta `npm run test:evaluation` para verificarlos o `npm run test:evaluation:ui` para demostrarlos en Playwright UI. El entorno de evaluación no requiere `.env` ni credenciales externas. Los escenarios anteriores de tienda y paginación mantienen sus comandos propios.
 
 ## Licencia
 

@@ -1,0 +1,9 @@
+Running 2 tests using 1 worker
+
+  ok 1 [evaluacion-chromium] › e2e\evaluation.spec.js:21:1 › E2E-01 · login administrativo → crear cliente → comprobar persistencia (1.7s)
+  ok 2 [evaluacion-chromium] › e2e\evaluation.spec.js:66:1 › E2E-02 · login administrativo → buscar pedido → detalle → cambiar estado (1.7s)
+
+  2 passed (4.3s)
+waiting for server to shut down.... done
+server stopped
+Limpieza verificada: servidor y PostgreSQL detenidos; clúster sintético eliminado.
