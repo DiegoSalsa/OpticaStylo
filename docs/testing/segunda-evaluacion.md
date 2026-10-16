@@ -48,6 +48,8 @@ npm run lint
 
 ## Demostración frente al profesor
 
+Para preparar la exposición, utiliza el [guion de demostración con qué decir y qué mostrar](guion-demostracion.md).
+
 ```powershell
 npm run test:evaluation:ui
 ```
