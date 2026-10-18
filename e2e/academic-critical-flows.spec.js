@@ -20,7 +20,7 @@ test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/
   await login(page,"administrador");
   await page.goto("/app/agenda");
   const form=page.locator(".internal-booking");
-  await form.getByLabel("Buscar paciente",{exact:true}).fill("PacienteFicticio");
+  await form.getByPlaceholder("RUT o nombre",{exact:true}).fill("PacienteFicticio");
   await form.getByRole("button",{name:"Buscar",exact:true}).click();
   await form.getByLabel("Paciente",{exact:true}).selectOption(ids.patient);
   await form.getByLabel("Profesional",{exact:true}).selectOption(ids.professional);

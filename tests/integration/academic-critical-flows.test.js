@@ -10,6 +10,7 @@ import { createSale, confirmSale, registerSalePayment, issueSaleReceipt, grantDi
 import { openCashRegister, closeCashRegister, registerCashMovement } from "../../src/services/cash-register-service.js";
 import { ids, seedAcademicData } from "../fixtures/academic-data.js";
 import { ids as catalog } from "../../scripts/seed-store-e2e.mjs";
+import { createSuccessResponse } from "../../src/utils/api-response.js";
 
 const currentDate = new Date("2029-12-01T00:00:00Z");
 const dependencies = { currentDate, timeZone: "America/Santiago" };
@@ -92,6 +93,8 @@ test("validación crítica PostgreSQL dedicado: agenda, clínica y POS", {skip:p
       await updateMedicalRecord(ids.patient,{allergies:"Corrección ficticia"},professional);
       const record = await getMedicalRecord(ids.patient,professional);
       assert.equal(record.revisions.length,2);assert.equal(record.revisions[1].allergies,"Sin alergias; dato ficticio");
+      const payload=await createSuccessResponse(record).json();
+      assert.equal(typeof payload.data.revisions[0].id,"string");
     });
     await t.test("CL-04 no finaliza borrador incompleto ni admite adenda prematura",async()=>{
       await rejectsCode(()=>finalizeEncounter(encounter.id,professional,dependencies),"INCOMPLETE_CLINICAL_ENCOUNTER");

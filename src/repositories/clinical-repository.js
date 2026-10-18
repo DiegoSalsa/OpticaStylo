@@ -21,13 +21,14 @@ function mapMedicalRecord(row) {
   } : null;
 }
 
-function mapRevision(row) {
+export function mapMedicalRecordRevision(row) {
   const user = row.professional_profiles[profileUser];
   return {
     allergies: row.allergies, changedFields: row.changed_fields,
     currentMedications: row.current_medications,
     familyOcularHistory: row.family_ocular_history,
-    generalMedicalHistory: row.general_medical_history, id: row.id,
+    // BIGSERIAL debe conservarse como texto para el contrato JSON, sin perder precisión.
+    generalMedicalHistory: row.general_medical_history, id: String(row.id),
     ocularHistory: row.ocular_history, recordedAt: row.recorded_at,
     recordedBy: { firstName: user.first_name, id: row.recorded_by, lastName: user.last_name },
     revision: row.revision,
@@ -90,7 +91,7 @@ export async function listMedicalRecordRevisions(patientId) {
     include: { professional_profiles: { include: { [profileUser]: true } } },
     orderBy: { revision: "desc" }, where: { medical_records: { patient_id: patientId } },
   });
-  return rows.map(mapRevision);
+  return rows.map(mapMedicalRecordRevision);
 }
 
 export async function upsertMedicalRecord(patientId, changes, actorUserId) {
