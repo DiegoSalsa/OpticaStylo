@@ -100,9 +100,12 @@ test("E2E-POS cotización, cantidades, venta y abonos manuales conservan importe
   await page.getByLabel("Referencia o folio obligatorio",{exact:true}).fill("TRANSFERENCIA FICTICIA E2E");
   await page.getByRole("button",{name:"Registrar abono",exact:true}).click();
   await expect(page.getByText("Abono 1",{exact:true})).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Abono registrado y comprobante emitido");
   await expect.poll(async()=>Number((await prisma.sales.findUnique({where:{id:initial.id},include:{sale_payments:true}})).sale_payments.reduce((sum,row)=>sum+Number(row.amount_cents),0))).toBe(4000);
   await page.locator('input[name="amountCents"]').fill("6000");
+  await page.getByLabel("Referencia o folio obligatorio",{exact:true}).fill("SALDO FICTICIO E2E");
   await page.getByRole("button",{name:"Registrar abono",exact:true}).click();
+  await expect(page.getByRole("status")).toContainText("Venta pagada y comprobante emitido");
   await expect(page.locator(".pos-ticket .status-chip").first()).toHaveText("PAID");
   await expect(page.getByRole("link",{name:"Abrir comprobante",exact:true})).toBeVisible();
   const final=await prisma.sales.findUnique({where:{id:initial.id},include:{sale_payments:true,sale_receipts:true}});

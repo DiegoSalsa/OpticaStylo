@@ -1,4 +1,5 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { execute, prepareIsolation, readState, sanitizedEnvironment } from "./academic-isolation.mjs";
 
@@ -34,15 +35,17 @@ if (phase === "prepare") {
     const branch = await execute("git", ["branch", "--show-current"]);
     const suffix = new Date().toISOString().replace(/[:.]/g, "-");
     const log = path.join(state.evidenceDir, `${phase}-${suffix}.log`);
+    const browserReport = path.join(state.evidenceDir, `${phase}-${suffix}-playwright-results.json`);
     try {
       const result = await execute(process.execPath, commands[phase], {
         ...environment, NODE_ENV: phase === "build" ? "production" : "test",
         ACADEMIC_EVIDENCE_DIR: state.evidenceDir,
-        STORE_E2E_REPORT_PATH: path.join(state.evidenceDir,`${phase}-playwright-results.json`),
+        STORE_E2E_REPORT_PATH: browserReport,
       }, log);
       const record = { phase, testedAt: new Date().toISOString(), branch: branch.output.trim(), sha: git.output.trim(),
         workingTree: (await execute("git", ["status", "--porcelain"])).output.trim(),
-        command: `node ${commands[phase].join(" ")}`, code: result.code, durationMs: result.durationMs, log };
+        command: `node ${commands[phase].join(" ")}`, code: result.code, durationMs: result.durationMs, log,
+        ...(/e2e$/.test(phase)?{browserReport}:{}), };
       await writeFile(`${log}.json`, JSON.stringify(record, null, 2));
       console.log(JSON.stringify(record));
       console.log(result.output.slice(-6500));
@@ -79,9 +82,14 @@ if (phase === "prepare") {
     const source = await execute("docker", ["exec", state.container, "psql", "-U", "stylo_test", "-d", state.database, "-Atc", fingerprint]);
     const target = await execute("docker", ["exec", state.container, "psql", "-U", "stylo_test", "-d", restoredDatabase, "-Atc", fingerprint]);
     if (!source.output.trim() || source.output.trim() !== target.output.trim()) throw new Error("La huella restaurada no coincide.");
-    await execute("docker", ["cp", `${state.container}:${dump}`, path.join(state.evidenceDir, "respaldo-sintetico.dump")]);
+    const dumpPath=path.join(state.evidenceDir,"respaldo-sintetico.dump");
+    await execute("docker", ["cp", `${state.container}:${dump}`, dumpPath]);
+    const countsQuery=`SELECT json_build_object('patients',(SELECT count(*) FROM "${state.schema}".patients),'encounters',(SELECT count(*) FROM "${state.schema}".clinical_encounters),'sales',(SELECT count(*) FROM "${state.schema}".sales),'prescriptions',(SELECT count(*) FROM "${state.schema}".optical_prescriptions));`;
+    const counts=await execute("docker",["exec",state.container,"psql","-U","stylo_test","-d",state.database,"-Atc",countsQuery]);
+    const git=await execute("git",["rev-parse","HEAD"]);
     const record = { testedAt: new Date().toISOString(), sourceDatabase: state.database, restoredDatabase,
-      identicalFingerprint: true, fingerprint: source.output.trim(), durationMs: restored.durationMs,
+      sha:git.output.trim(), identicalFingerprint: true, fingerprint: source.output.trim(), durationMs: restored.durationMs,
+      sourceCounts:JSON.parse(counts.output.trim()), dumpSha256:createHash("sha256").update(await readFile(dumpPath)).digest("hex"),
       scope: "Restauración local con datos sintéticos; no demuestra respaldo o recuperación de producción." };
     await writeFile(path.join(state.evidenceDir, "restauracion.json"), JSON.stringify(record, null, 2));
     console.log(JSON.stringify(record));
