@@ -4,8 +4,9 @@
 
 La auditoría del 10 de octubre de 2026 comprobó `origin/main` y el árbol local limpio en
 `921e1be10f3362b21d6ba34e86a638895a11f10b`, después de `git fetch origin`.
-La intervención utiliza la rama `codex/cierre-academico-validacion`; no hace push,
-merge, despliegue ni modificaciones de datos de producción.
+La intervención comenzó en `codex/cierre-academico-validacion`; el usuario confirmó
+conservar su renombrado a `fix/concurrencia-y-validacion` el 18 de octubre. El agente
+no hace push, merge, despliegue ni modificaciones de datos de producción.
 
 Las cifras de la validación de compra invitada en `0e49256` y las de gestión interna
 en `d5f20a0` son resultados históricos independientes. No se suman entre sí ni se
@@ -20,7 +21,10 @@ de evaluación de la contraparte.
   `tmpfs`, base nueva `stylo_academic_<16hex>`, puerto aleatorio publicado solo en
   `127.0.0.1` y schema `stylo_e2e_<16hex>` compatible con los guards existentes.
 - Node.js v24.19.0; Next.js 16.3.8, Prisma 6.19.3 y Playwright 1.64.0 del lockfile.
-  Chromium instalado: lanzamiento headless confirmado, versión 156.0.8078.4.
+  Chromium headless-shell 156.0.8078.4 y Edge 155.0.4283.45 se comprobaron mediante
+  lanzamiento real. El Chrome completo almacenado falló con `spawn UNKNOWN`; las
+  ejecuciones finales utilizaron Edge headless. Los proyectos desktop/mobile son
+  viewports de ese navegador, no dispositivos físicos.
 - El runner no carga el `.env` operativo ni reutiliza su `DATABASE_URL`. Construye
   el entorno desde variables del sistema imprescindibles; define explícitamente
   en vacío las claves del `.env.example`, que prevalecen sobre `.env*` en Next.
@@ -67,7 +71,7 @@ contra un build de producción local: reserva interna, atención/receta/finaliza
 adenda, segregación de roles y cotización/abonos/comprobante. Todos inician sesión
 mediante el formulario y el mecanismo de autenticación vigente. Los fixtures solo
 crean usuarios con roles del baseline y datos sintéticos; no amplían permisos.
-Son recorridos de escritorio Chromium, no prueba en un teléfono físico.
+Son recorridos de escritorio Edge (motor Chromium), no prueba en un teléfono físico.
 
 ## Ejecución
 
@@ -116,6 +120,72 @@ incompatible requiere recuperación o migración correctiva revisada. La documen
 de Taller conserva HTTPS autofirmado provisional, que necesita habilitación adecuada
 antes de operar credenciales, pagos o webhooks externos.
 
-Los resultados de esta intervención se incorporan a continuación únicamente después
-de su ejecución. Ninguna preparación de fixture o inspección está contada como prueba
-aprobada. CI no se confunde con las comprobaciones locales.
+## Resultados comprobados el 18 de octubre de 2026
+
+`origin/main` se volvió a consultar con `git fetch origin` y conservó `921e1be`.
+La rama de validación contiene los cambios separados de main. El build funcional
+final es `990c20897c13d90b7a762d1edb0a3fb056f43c95`; los commits posteriores cambian
+solo tests, harness y documentación, conservando idéntico código de aplicación.
+
+| Comprobación | SHA ejecutado | Aprobadas / fallidas / omitidas | Duración del comando |
+|---|---|---|---|
+| Prisma validate | `183940a` | Aprobado, sin conexión productiva | 2,101 s |
+| ESLint | `183940a` | Aprobado, sin advertencias | 13,842 s |
+| Suite general | `183940a` | 717 / 0 / 3; total 720 | 10,926 s |
+| Integración crítica nueva | `183940a` | 23 / 0 / 0; 22 escenarios y su contenedor | 3,056 s, más preparación aislada |
+| Integración histórica tienda | `3950734` | 10 / 0 / 1; nueve escenarios aprobados, uno omitido y contenedor aprobado | 2,061 s |
+| Integración histórica gestión | `3950734` | 9 / 0 / 0; ocho escenarios y contenedor | 1,296 s |
+| E2E históricos gestión | `1112691` | 18 / 0 / 0 | 49,878 s |
+| E2E históricos tienda | `1112691` | 10 / 0 / 2; desktop/mobile simulados | 52,864 s |
+| E2E nuevos agenda/clínica/roles/POS | `621b01c` | 4 / 0 / 0 | 15,164 s |
+| Build producción | `990c208` | Aprobado | 8,706 s |
+| Restauración sintética | `621b01c` | Aprobada; huellas coincidentes | 1,005 s de pg_restore |
+
+Las tres omisiones de la suite general son sus contenedores PostgreSQL, ejecutados
+por separado con sus propios comandos y cifras. La integración de tienda omite una
+comprobación de almacenamiento real en Cloudinary; el E2E de tienda omite el mismo
+recorrido de imagen en sus dos proyectos. Las omisiones son explícitas: no se
+presenta como comprobado un proveedor externo deshabilitado. No se suman los totales
+de estas suites, porque incluyen diferentes niveles y pruebas contenedoras.
+
+Se corrigieron cuatro defectos reproducidos:
+
+1. Reserva simultánea: la base impedía duplicación, pero el perdedor recibía un
+   `P2034` genérico. La creación de reservas ahora reutiliza el reintento acotado de
+   transacción completa; al revalidar obtiene el conflicto de agenda esperado.
+2. Apertura duplicada de caja: el servicio solo traducía el antiguo SQLSTATE `23505`.
+   Ahora traduce también `P2002` de Prisma a un conflicto 409 y conserva otros errores.
+3. Checkout concurrente: el bloqueo SQL parametrizado podía encapsular `40001` en
+   `P2010`, no reconocido por el helper. Se reintenta exclusivamente esa combinación
+   transitoria; un error SQL no transitorio se sigue propagando. El caso concurrente
+   histórico de PostgreSQL quedó aprobado conservando un único pedido y notificación.
+4. Historial clínico: un identificador `BIGSERIAL` de revisión llegaba como `BigInt`
+   a `Response.json`, causando un HTTP 500 pese a pasar pruebas aisladas de servicio.
+   La proyección entrega el identificador como texto sin pérdida de precisión. Una
+   regresión usa un valor superior a `Number.MAX_SAFE_INTEGER`; CL-03 serializa la
+   respuesta real y el E2E verifica guardar, recargar y consultar la ficha.
+
+Los intentos iniciales también identificaron problemas del entorno/pruebas:
+contaminación entre fixtures, navegador completo sin arranque, selectores de controles
+incorrectos y cuotas de login acumuladas entre repeticiones. Se conservaron sus logs;
+las suites PG ahora crean y eliminan su propio schema dentro de la base local dedicada,
+y cada E2E nuevo limpia únicamente sus cuotas sintéticas bajo guard de aislamiento.
+No se modificaron reglas de autorización, límites productivos ni tests para ocultar
+fallos de aplicación. Los fallos transitorios provocados y recuperados por los casos
+negativos siguen visibles en logs de Prisma; no equivalen a fallos de la suite final.
+
+El ensayo de recuperación creó otra base nueva, restauró el dump y comparó huellas
+de dos pacientes, dos atenciones, una venta y dos recetas sintéticas. El dump incluye
+hashes de usuarios de prueba y se conserva localmente como artefacto privado; no debe
+publicarse ni incorporarse al PDF. El informe público entrega solo resultado, conteos
+y SHA-256 del dump. No acredita respaldos de producción ni metas RTO/RPO.
+
+La captura clínica del 18 de octubre se obtuvo con login normal de profesional y
+datos sintéticos en este build local. El caso de las 10:00 del 19 de octubre fue
+preparado mediante los servicios normales de reserva, llegada, ficha, atención,
+receta y finalización, no como una atención realizada en la empresa. La lectura
+posterior a la corrección se verificó también en el navegador del informe.
+
+El resumen auditable de cada ejecución, con SHA completo y log, está en el directorio
+externo de evidencia. La aceptación PA-01 a PA-16 continúa pendiente. CI no se
+confunde con las comprobaciones locales ni se declara un porcentaje de cobertura.
