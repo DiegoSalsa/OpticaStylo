@@ -6,7 +6,12 @@ import { isolateBrowserNetwork } from "./isolated-network.js";
 
 test.beforeAll(()=>requireAcademicIsolation());
 test.afterAll(async()=>prisma.$disconnect());
-test.beforeEach(async({context})=>isolateBrowserNetwork(context));
+test.beforeEach(async({context})=>{
+  requireAcademicIsolation();
+  // Cada escenario parte de cuotas sintéticas vacías; los límites de producción no cambian.
+  await prisma.public_request_rate_limits.deleteMany();
+  await isolateBrowserNetwork(context);
+});
 async function login(page,profile) {
   const {password}=JSON.parse(await readFile("tmp/academic-validation/demo-credentials.json","utf8"));
   await page.goto("/ingresar");
