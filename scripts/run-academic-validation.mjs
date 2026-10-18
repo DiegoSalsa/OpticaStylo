@@ -55,7 +55,7 @@ if (phase === "prepare") {
       const record = { phase, testedAt: new Date().toISOString(), branch: branch.output.trim(), sha: git.output.trim(),
         workingTree: (await execute("git", ["status", "--porcelain"])).output.trim(),
         command: `node ${commands[phase].join(" ")}`, code: result.code, durationMs: result.durationMs, log,
-        ...(/e2e$/.test(phase)?{browserReport}:{}), ...(transientSchema?{transientSchema}:{}), };
+        ...(["e2e","store-e2e","management-e2e"].includes(phase)?{browserReport}:{}), ...(transientSchema?{transientSchema}:{}), };
       await writeFile(`${log}.json`, JSON.stringify(record, null, 2));
       console.log(JSON.stringify(record));
       console.log(result.output.slice(-6500));
