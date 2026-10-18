@@ -4,7 +4,7 @@
 
 La arquitectura anterior era `Route Handler → Service → Repository → pg → PostgreSQL`. La arquitectura vigente es `Route Handler → Service → Repository → Prisma ORM → PostgreSQL`.
 
-Prisma solo se importa desde `src/db/prisma.js`, repositories y scripts administrativos. Los Route Handlers y Services conservan sus contratos y no acceden directamente al ORM. Se eliminaron `pg`, el pool, los helpers `executeQuery`/`executeTransaction` y el migrador SQL propio. No se usa `$queryRaw`, `$executeRaw` ni sus variantes inseguras.
+Prisma solo se importa desde `src/db/prisma.js`, repositories y scripts administrativos. Los Route Handlers y Services conservan sus contratos y no acceden directamente al ORM. Se eliminaron `pg`, el pool, los helpers `executeQuery`/`executeTransaction` y el migrador SQL propio. El repositorio de tienda conserva dos consultas parametrizadas mediante `$queryRaw` para bloquear el carrito con `SELECT ... FOR UPDATE`; los valores se vinculan como parámetros. Los scripts de aislamiento usan SQL administrativo con nombres aleatorios previamente verificados, únicamente sobre sus bases de prueba.
 
 ## Modelo y decisiones
 
