@@ -23,7 +23,7 @@ export const evaluation = Object.freeze({
 
 export function requireEvaluationDatabase(databaseUrl, schema) {
   const url = new URL(databaseUrl);
-  if (url.protocol !== "postgresql:" || url.hostname !== "127.0.0.1" || url.port !== "55439"
+  if (url.protocol !== "postgresql:" || url.hostname !== "127.0.0.1" || url.port !== String(process.env.EVALUATION_PG_PORT ?? "55439")
     || url.pathname !== "/opticastylo_evaluation" || url.username !== "stylo_test"
     || !/^stylo_e2e_[0-9a-f]{16}$/.test(schema ?? "")
     || url.searchParams.get("schema") !== schema) {

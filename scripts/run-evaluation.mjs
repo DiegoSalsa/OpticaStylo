@@ -15,7 +15,8 @@ const runId = randomBytes(8).toString("hex");
 const runDirectory = path.join(output, `run-${runId}`);
 const pgData = path.join(runDirectory, "postgres");
 const schema = `stylo_e2e_${runId}`;
-const pgPort = 55439;
+const pgPort = Number(process.env.EVALUATION_PG_PORT ?? "55439");
+if (!Number.isInteger(pgPort) || pgPort < 1024 || pgPort > 65535) throw new Error("EVALUATION_PG_PORT debe ser un puerto local válido.");
 const appPort = Number(process.env.EVALUATION_APP_PORT ?? "3117");
 if (!Number.isInteger(appPort) || appPort < 1024 || appPort > 65535 || appPort === pgPort) throw new Error("EVALUATION_APP_PORT debe ser un puerto local válido distinto al de PostgreSQL.");
 const baseURL = `http://127.0.0.1:${appPort}`;
@@ -30,8 +31,8 @@ const osVariables = new Set([
 ]);
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => osVariables.has(key.toLowerCase())));
 Object.assign(env, {
-  DATABASE_URL: databaseUrl, STORE_E2E_SCHEMA: schema, EVALUATION_HTTP_URL: baseURL,
-  STORE_INCLUDE_TEST_DATA: "true",
+  DATABASE_URL: databaseUrl, STORE_E2E_SCHEMA: schema, EVALUATION_HTTP_URL: baseURL, EVALUATION_PG_PORT: String(pgPort),
+  STORE_INCLUDE_TEST_DATA: "true", STORE_E2E_BROWSER_CHANNEL: process.env.STORE_E2E_BROWSER_CHANNEL,
   OPTICASTYLO_BUILD_DIR: "tmp/evaluation/build", NEXT_TELEMETRY_DISABLED: "1",
   NODE_ENV: "production", EMAIL_MODE: "disabled", OPENAI_PRESCRIPTION_READER_ENABLED: "false",
   MERCADO_PAGO_ACCESS_TOKEN: "", MERCADO_PAGO_PRODUCTION_ENABLED: "false",
@@ -143,7 +144,7 @@ try {
   await run(pgExecutable("createdb"), ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "stylo_test", "opticastylo_evaluation"]);
   await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"]);
   await run(process.execPath, ["scripts/seed-evaluation.mjs"]);
-  await writeFile(path.join(output, "runtime.json"), JSON.stringify({ databaseUrl, schema }));
+  await writeFile(path.join(output, "runtime.json"), JSON.stringify({ databaseUrl, schema, appPort, pgPort }));
   runtimeWritten = true;
   await run(process.execPath, ["node_modules/next/dist/bin/next", "build"], { nodeEnv: "production", record: "build-results.txt" });
   server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(appPort)], {
