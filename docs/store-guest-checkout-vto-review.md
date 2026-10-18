@@ -92,7 +92,7 @@ Las capturas de pedidos muestran estados pendientes reales de prueba. No represe
 
 ## Publicación y límites de verificación
 
-La rama se publica para revisión, sin merge a `main`. El SHA y la URL final de Vercel se entregan con el resultado del chat y en el PR.
+La entrega registra el SHA y la URL final de Vercel. Los cambios se validan antes de su integración directa en `main`.
 
 GitHub Actions no inició sus pasos por bloqueo de facturación de la cuenta. El check informa: “The job was not started because your account is locked due to a billing issue.” Las validaciones anteriores se ejecutaron localmente con servicios reales de prueba.
 

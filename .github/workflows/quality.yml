@@ -1,7 +1,6 @@
 name: Calidad
 
 on:
-  pull_request:
   push:
     branches:
       - main
@@ -9,6 +8,7 @@ on:
       - "chore/**"
       - "feature/**"
       - "fix/**"
+      - "test/**"
       - "refactor/**"
 
 permissions:

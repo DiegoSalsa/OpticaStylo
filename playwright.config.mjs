@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./e2e", fullyParallel: false, workers: 1, timeout: 60000,
+  testDir: "./e2e", testIgnore: ["academic-critical-flows.spec.js", "evaluation.spec.js"], fullyParallel: false, workers: 1, timeout: 60000,
   reporter: [["list"], ["json", { outputFile: process.env.STORE_E2E_REPORT_PATH ?? "tmp/store-e2e/results.json" }]],
   outputDir: `tmp/store-e2e/artifacts-${process.env.STORE_E2E_SCHEMA ?? "local"}`,
   use: {

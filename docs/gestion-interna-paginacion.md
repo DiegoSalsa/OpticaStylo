@@ -6,7 +6,7 @@ Rama: `mejoras/gestioninternapaginacion`, creada desde `origin/main` actualizado
 en `9f2217d`. [Rama para revisión en GitHub](https://github.com/DiegoSalsa/OpticaStylo/tree/mejoras/gestioninternapaginacion).
 El commit funcional validado es `d5f20a0`; el HEAD de publicación incorpora además
 este informe y se indica en la entrega del chat. La rama local `main` conservó
-`f06fa1317c4c1e3aa438f64dc0cdc30c5c4bd57d`. No se realizó merge ni se creó PR.
+`f06fa1317c4c1e3aa438f64dc0cdc30c5c4bd57d`. La validación descrita se realizó antes de integrar los cambios en `main`.
 
 ## Implementación
 

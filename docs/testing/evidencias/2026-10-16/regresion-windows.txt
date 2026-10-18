@@ -1,0 +1,40 @@
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/physical-scale.js (1.8371ms)
+✖ notebook aprobado: fingerprint src/utils/virtual-try-on-3d-geometry.js (0.4792ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/pose-filter.js (0.3807ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/tracking-timeline.js (0.3493ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/temple-fitting.js (0.3396ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/model-runtime.js (0.3414ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/model-contract.js (0.4811ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/model-importer.js (0.3743ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/camera-projection.js (0.5507ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/face-tracking.js (0.3977ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/face-tracking-core.js (0.322ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/face-tracking.worker.js (0.2933ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/glasses-model.js (0.3205ms)
+✖ notebook aprobado: fingerprint public/virtual-try-on/models/RB2140-901-50-v2.19.tryon.json (1.8905ms)
+✖ notebook aprobado: fingerprint public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json (1.4055ms)
+✖ snapshots V1/V2 conservan el código original completo (1.8573ms)
+ℹ tests 719
+ℹ suites 0
+ℹ pass 697
+ℹ fail 16
+ℹ cancelled 0
+ℹ skipped 6
+ℹ todo 0
+ℹ duration_ms 8560.6574
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/physical-scale.js (1.8371ms)
+✖ notebook aprobado: fingerprint src/utils/virtual-try-on-3d-geometry.js (0.4792ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/pose-filter.js (0.3807ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/tracking-timeline.js (0.3493ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/temple-fitting.js (0.3396ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/model-runtime.js (0.3414ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/model-contract.js (0.4811ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/model-importer.js (0.3743ms)
+✖ notebook aprobado: fingerprint src/virtual-try-on-3d/camera-projection.js (0.5507ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/face-tracking.js (0.3977ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/face-tracking-core.js (0.322ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/face-tracking.worker.js (0.2933ms)
+✖ notebook aprobado: fingerprint src/app/virtual-try-on/3d/glasses-model.js (0.3205ms)
+✖ notebook aprobado: fingerprint public/virtual-try-on/models/RB2140-901-50-v2.19.tryon.json (1.8905ms)
+✖ notebook aprobado: fingerprint public/virtual-try-on/models/Harley-Davidson_HD0896_001_V4_definitivo.tryon.json (1.4055ms)
+✖ snapshots V1/V2 conservan el código original completo (1.8573ms)

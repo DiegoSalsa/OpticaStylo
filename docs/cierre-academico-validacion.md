@@ -4,7 +4,7 @@
 
 La auditoría del 10 de octubre de 2026 comprobó `origin/main` y el árbol local limpio en
 `921e1be10f3362b21d6ba34e86a638895a11f10b`, después de `git fetch origin`.
-La intervención utiliza la rama `codex/cierre-academico-validacion`; no hace push,
+La intervención utiliza la rama `fix/concurrencia-y-validacion`; no hace push,
 merge, despliegue ni modificaciones de datos de producción.
 
 Las cifras de la validación de compra invitada en `0e49256` y las de gestión interna

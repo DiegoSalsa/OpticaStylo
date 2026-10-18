@@ -114,7 +114,7 @@ flowchart LR
 
 ## Estrategia de control de versiones
 
-El repositorio utiliza una estrategia cercana a Trunk-Based Development. `main` es la rama estable e integrable; cada cambio se desarrolla en una rama corta creada desde `main`, se valida localmente y luego se integra conservando un historial claro. Una vez integrada y confirmada la estabilidad, la rama temporal se elimina para evitar referencias obsoletas.
+El repositorio utiliza una estrategia cercana a Trunk-Based Development. `main` es la rama estable e integrable; cada cambio se desarrolla en una rama corta creada desde `main`, se valida localmente y luego se integra directamente en `main` mediante merge y push, conservando un historial claro. Una vez integrada y confirmada la estabilidad, la rama temporal se elimina para evitar referencias obsoletas.
 
 `testgeneral` se reserva para casos excepcionales, como migraciones o pruebas de infraestructura que necesitan una rama de integración temporal. No representa una línea de desarrollo permanente ni reemplaza a `main`.
 
@@ -205,7 +205,7 @@ npm run build
 npm audit --omit=dev
 ```
 
-El workflow `.github/workflows/quality.yml` ejecuta `npm ci`, generación y validación de Prisma, lint, pruebas y build en cada pull request y en las ramas de desarrollo configuradas. `main` debe exigir este workflow como required check antes de permitir merges; esa protección es una configuración administrativa de GitHub y debe aplicarse desde el repositorio.
+El workflow `.github/workflows/quality.yml` ejecuta `npm ci`, generación y validación de Prisma, lint, pruebas y build en los pushes a `main` y a las ramas de desarrollo configuradas. El trabajo sigue Trunk-Based Development: los cambios se validan localmente antes del merge directo a `main` y su publicación.
 
 El proyecto incluye controles de acceso por permisos, sesiones revocables, cookies `HttpOnly`, limitación de solicitudes, idempotencia, validación de archivos, verificación de webhooks y Prisma Migrate. Los secretos nunca deben versionarse; `.env.example` y `config/universidad.env.example` contienen únicamente nombres y valores de referencia. `CUSTOMER_PATIENT_OTP_SECRET` debe ser independiente de `CRON_SECRET` y tener al menos 32 caracteres.
 
@@ -231,7 +231,7 @@ Las pruebas se organizan por ámbito: aplicación, autenticación, configuració
 
 El repositorio no declara Docker como requisito y por eso no se añadieron `Dockerfile` ni `docker-compose.yml`. La incorporación de una imagen reproducible puede evaluarse cuando exista una necesidad de infraestructura concreta.
 
-No se añadió una suite E2E de navegador en esta fase. Para una etapa posterior, la propuesta mínima de Playwright cubre ocho recorridos: login interno, reserva pública, creación y cierre de venta POS, carrito y checkout con retiro, carga y confirmación de receta, cuenta de cliente, vinculación OTP y acceso clínico restringido.
+La [preparación de la segunda evaluación](docs/testing/segunda-evaluacion.md) reúne cuatro áreas unitarias existentes, cuatro pruebas HTTP con PostgreSQL efímero y dos flujos Playwright con login por formulario. Ejecuta `npm run test:evaluation` para verificarlos o `npm run test:evaluation:ui` para demostrarlos en Playwright UI. El entorno de evaluación no requiere `.env` ni credenciales externas. Los escenarios anteriores de tienda y paginación mantienen sus comandos propios.
 
 ## Licencia
 

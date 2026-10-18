@@ -1,0 +1,27 @@
+✔ genera hashes diferentes para una misma contraseña (538.5895ms)
+✔ verifica la contraseña correcta (453.7213ms)
+✔ rechaza una contraseña incorrecta (428.9756ms)
+✔ rechaza hashes almacenados con formato inválido (0.2751ms)
+✔ rechaza contraseñas vacías (0.4946ms)
+✔ genera cupos en UTC respetando el horario local y la pausa (2.9577ms)
+✔ elimina cupos que se superponen con un bloqueo (0.3342ms)
+✔ una excepción cerrada prevalece sobre la semana habitual (0.087ms)
+✔ no ofrece horas pasadas ni perfiles no reservables (0.2448ms)
+✔ normaliza un RUT chileno válido (1.0399ms)
+✔ acepta el dígito verificador K (0.2385ms)
+✔ rechaza un dígito verificador incorrecto (0.1607ms)
+✔ valida los datos completos de una reserva pública (2.0136ms)
+✔ exige consentimiento para una reserva pública (0.5781ms)
+✔ normaliza los datos de una reserva futura (0.2551ms)
+✔ rechaza una hora sin zona horaria explícita (0.1918ms)
+✔ permite limpiar las notas internas (0.879ms)
+✔ exige motivo para cancelar (0.2189ms)
+✔ valida filtros de agenda de hasta un año (0.2643ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1504.8152

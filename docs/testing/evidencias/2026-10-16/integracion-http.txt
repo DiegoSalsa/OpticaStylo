@@ -1,0 +1,12 @@
+✔ INT-01 · POST /api/auth/login: validación, credenciales, sesión y revocación HTTP (1009.1506ms)
+✔ INT-02 · GET /api/products: 401, 403, filtros y catálogo real 200 (38.8023ms)
+✔ INT-03 · GET /api/patients: 401, 403, paciente sintético y búsqueda vacía (40.3432ms)
+✔ INT-04 · GET /api/appointments: 401, 403, rango, filtro y reserva real 200 (50.442ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1296.4642
