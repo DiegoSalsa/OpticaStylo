@@ -3,6 +3,7 @@ import { prisma } from "../src/db/prisma.js";
 import { requireIsolatedStoreDatabase } from "../scripts/seed-store-e2e.mjs";
 import { adminId, salesUserId, managementId, fixtureRut } from "../tests/fixtures/management-data.js";
 import { createSessionToken, hashSessionToken, SESSION_COOKIE_NAME } from "../src/auth/session-token.js";
+import { isolateBrowserNetwork } from "./isolated-network.js";
 
 test.beforeAll(() => requireIsolatedStoreDatabase());
 test.afterAll(async () => prisma.$disconnect());
@@ -13,7 +14,7 @@ async function authenticate(context, userId = adminId) {
   await prisma.user_sessions.create({ data: {user_id:userId, token_hash:hashSessionToken(token), expires_at:new Date(Date.now()+3600000)} });
   await context.addCookies([{name:SESSION_COOKIE_NAME,value:token,url:process.env.STORE_E2E_BASE_URL,httpOnly:true,sameSite:"Lax"}]);
 }
-test.beforeEach(async ({context}) => authenticate(context));
+test.beforeEach(async ({context}) => {await isolateBrowserNetwork(context);await authenticate(context);});
 async function search(page, name, query) {
   await page.getByRole("textbox",{name}).fill(query);
   await page.locator("form").filter({has:page.getByRole("textbox",{name})}).getByRole("button",{name:"Buscar",exact:true}).click();

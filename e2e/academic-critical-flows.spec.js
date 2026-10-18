@@ -2,16 +2,11 @@ import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { prisma } from "../src/db/prisma.js";
 import { requireAcademicIsolation, ids } from "../tests/fixtures/academic-data.js";
+import { isolateBrowserNetwork } from "./isolated-network.js";
 
 test.beforeAll(()=>requireAcademicIsolation());
 test.afterAll(async()=>prisma.$disconnect());
-test.beforeEach(async({context})=>{
-  await context.route("**/*",async(route)=>{
-    const url=new URL(route.request().url());
-    if(["localhost","127.0.0.1"].includes(url.hostname)) await route.continue();
-    else await route.abort();
-  });
-});
+test.beforeEach(async({context})=>isolateBrowserNetwork(context));
 async function login(page,profile) {
   const {password}=JSON.parse(await readFile("tmp/academic-validation/demo-credentials.json","utf8"));
   await page.goto("/ingresar");

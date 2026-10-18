@@ -23,6 +23,7 @@ export async function sanitizedEnvironment(state) {
     VERCEL_ENV: "preview", DEPLOYMENT_ENVIRONMENT: "academic-isolated", NEXT_TELEMETRY_DISABLED: "1",
     EMAIL_MODE: "disabled", EMAIL_DOMAIN_VERIFIED: "false", OPENAI_PRESCRIPTION_READER_ENABLED: "false",
     MERCADO_PAGO_MODE: "sandbox", MERCADO_PAGO_PRODUCTION_ENABLED: "false",
+    STORE_E2E_EXTERNAL_MEDIA: "disabled",
     CUSTOMER_PATIENT_OTP_SECRET: state.localOtpSecret,
   };
 }

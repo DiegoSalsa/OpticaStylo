@@ -54,7 +54,9 @@ test("integración PostgreSQL real: compra invitada y autenticada", { skip: !pro
       assert.equal((await prisma.external_prescriptions.findUnique({ where: { id: result.order.externalPrescription.id } })).confirmed_data.rightEye.sphere, -1.12);
       assert.equal(result.order.fulfillment.notes, configuration.fulfillment.notes);
     });
-    await t.test("imagen: almacenamiento privado real, extracción fallida, confirmación manual e aislamiento", async () => {
+    await t.test("imagen: almacenamiento privado real, extracción fallida, confirmación manual e aislamiento", {
+      skip: process.env.STORE_E2E_EXTERNAL_MEDIA === "disabled" ? "Cloudinary deshabilitado: esta comprobación requiere almacenamiento externo autorizado." : false,
+    }, async () => {
       const { token } = await createStoreCart(null);
       await putStoreCartItems(token, null, { items: lensItems() });
       const data = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aY1sAAAAASUVORK5CYII=", "base64");

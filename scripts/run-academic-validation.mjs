@@ -16,6 +16,11 @@ if (phase === "prepare") {
     general: ["--test"],
     integration: ["--test", "tests/integration/academic-critical-flows.test.js"],
     management: ["--test", "tests/integration/management-pagination.test.js"],
+    store: ["--test", "tests/integration/store-guest-checkout.test.js"],
+    "seed-store": ["scripts/seed-academic-legacy.mjs", "store"],
+    "seed-management": ["scripts/seed-academic-legacy.mjs", "management"],
+    "store-e2e": ["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs", "store-guest-checkout.spec.js"],
+    "management-e2e": ["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs", "management-pagination.spec.js", "--project", "desktop"],
     build: ["node_modules/next/dist/bin/next", "build"],
     seed: ["scripts/seed-academic-demo.mjs"],
     e2e: ["node_modules/playwright/cli.js", "test", "--config", "playwright.academic.config.mjs"],
@@ -33,6 +38,7 @@ if (phase === "prepare") {
       const result = await execute(process.execPath, commands[phase], {
         ...environment, NODE_ENV: phase === "build" ? "production" : "test",
         ACADEMIC_EVIDENCE_DIR: state.evidenceDir,
+        STORE_E2E_REPORT_PATH: path.join(state.evidenceDir,`${phase}-playwright-results.json`),
       }, log);
       const record = { phase, testedAt: new Date().toISOString(), branch: branch.output.trim(), sha: git.output.trim(),
         workingTree: (await execute("git", ["status", "--porcelain"])).output.trim(),

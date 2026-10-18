@@ -2,9 +2,11 @@ import { test, expect } from "@playwright/test";
 import { prisma } from "../src/db/prisma.js";
 import { ids, requireIsolatedStoreDatabase } from "../scripts/seed-store-e2e.mjs";
 import { getCloudinaryMediaGateway } from "../src/integrations/media/cloudinary-media-gateway.js";
+import { isolateBrowserNetwork } from "./isolated-network.js";
 
 const syntheticImage = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aY1sAAAAASUVORK5CYII=", "base64");
 test.beforeAll(() => requireIsolatedStoreDatabase());
+test.beforeEach(async({context})=>isolateBrowserNetwork(context));
 test.afterEach(async () => {
   // Aislar las cuotas entre escenarios; las acciones del cliente usan solo la tienda pública.
   await prisma.public_request_rate_limits.deleteMany();
@@ -89,6 +91,7 @@ test("invitado: receta manual, recarga, navegación, edición y pedido completo"
 });
 
 test("invitado: imagen privada, vista previa, reemplazo y confirmación sin extracción", async ({ page }) => {
+  test.skip(process.env.STORE_E2E_EXTERNAL_MEDIA === "disabled", "Cloudinary deshabilitado: requiere almacenamiento externo autorizado.");
   await openFrame(page);
   // Antes de cargar no hay campos requeridos que puedan bloquear el archivo.
   await expect(page.locator('.prescription-form input[required]')).toHaveCount(0);
