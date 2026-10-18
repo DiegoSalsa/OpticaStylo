@@ -10,8 +10,17 @@ try {
   const actors = await seedAcademicData();
   const tomorrow = new Date(Date.now()+86400000);
   const date = formatInTimeZone(tomorrow,"America/Santiago","yyyy-MM-dd");
+  let clinicalTime="11:00";
+  if(process.argv[2]==="refresh-e2e") {
+    clinicalTime=null;
+    for(const candidate of ["11:00","12:00","14:00","15:00","16:00","17:00"]) {
+      const startAt=fromZonedTime(`${date}T${candidate}:00`,"America/Santiago");
+      if(!await prisma.appointments.findFirst({where:{professional_id:ids.professional,start_at:startAt}})) {clinicalTime=candidate;break;}
+    }
+    if(!clinicalTime) throw new Error("No queda un cupo sintético para repetir el recorrido; conserve los anteriores.");
+  }
   const created = [];
-  for(const [time,patientId] of [["10:00",ids.patient],["11:00",ids.otherPatient]]) {
+  for(const [time,patientId] of [["10:00",ids.patient],[clinicalTime,ids.otherPatient]]) {
     const startAt=fromZonedTime(`${date}T${time}:00`,"America/Santiago");
     const existing=await prisma.appointments.findFirst({where:{professional_id:ids.professional,start_at:startAt}});
     const appointment=existing??await createAppointment({patientId,professionalId:ids.professional,startAt:startAt.toISOString()},actors.admin);
