@@ -18,7 +18,8 @@ export async function sanitizedEnvironment(state) {
   }
   return { ...environment, DATABASE_URL: state.databaseUrl, ACADEMIC_ISOLATION: "true",
     STORE_E2E_SCHEMA: state.schema, STORE_INCLUDE_TEST_DATA: "true",
-    STORE_E2E_BASE_URL: `http://127.0.0.1:${state.appPort}`, STORE_E2E_BROWSER_CHANNEL: "chromium",
+    STORE_E2E_BASE_URL: `http://127.0.0.1:${state.appPort}`,
+    STORE_E2E_BROWSER_CHANNEL: process.platform === "win32" ? "msedge" : undefined,
     OPTICASTYLO_BUILD_DIR: "tmp/academic-validation/build", APP_TIME_ZONE: "America/Santiago",
     VERCEL_ENV: "preview", DEPLOYMENT_ENVIRONMENT: "academic-isolated", NEXT_TELEMETRY_DISABLED: "1",
     EMAIL_MODE: "disabled", EMAIL_DOMAIN_VERIFIED: "false", OPENAI_PRESCRIPTION_READER_ENABLED: "false",
