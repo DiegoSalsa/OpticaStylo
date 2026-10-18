@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { execute, prepareIsolation, readState, sanitizedEnvironment } from "./academic-isolation.mjs";
 
@@ -24,6 +24,7 @@ if (phase === "prepare") {
     "management-e2e": ["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs", "management-pagination.spec.js", "--project", "desktop"],
     build: ["node_modules/next/dist/bin/next", "build"],
     seed: ["scripts/seed-academic-demo.mjs"],
+    "refresh-e2e": ["scripts/seed-academic-demo.mjs", "refresh-e2e"],
     e2e: ["node_modules/playwright/cli.js", "test", "--config", "playwright.academic.config.mjs"],
   };
   if (phase === "general") {
@@ -36,7 +37,16 @@ if (phase === "prepare") {
     const suffix = new Date().toISOString().replace(/[:.]/g, "-");
     const log = path.join(state.evidenceDir, `${phase}-${suffix}.log`);
     const browserReport = path.join(state.evidenceDir, `${phase}-${suffix}-playwright-results.json`);
+    let transientSchema=null;
     try {
+      // Cada suite PostgreSQL recibe tablas nuevas sin alterar la demostración del servidor.
+      if(["integration","store","management"].includes(phase)) {
+        transientSchema=`stylo_e2e_${randomBytes(8).toString("hex")}`;
+        await execute("docker",["exec",state.container,"psql","-U","stylo_test","-d",state.database,"-v","ON_ERROR_STOP=1","-c",`CREATE SCHEMA "${transientSchema}";`]);
+        const url=new URL(state.databaseUrl);url.searchParams.set("schema",transientSchema);
+        environment.DATABASE_URL=url.href;environment.STORE_E2E_SCHEMA=transientSchema;
+        await execute(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],environment,`${log}.migrations`);
+      }
       const result = await execute(process.execPath, commands[phase], {
         ...environment, NODE_ENV: phase === "build" ? "production" : "test",
         ACADEMIC_EVIDENCE_DIR: state.evidenceDir,
@@ -45,7 +55,7 @@ if (phase === "prepare") {
       const record = { phase, testedAt: new Date().toISOString(), branch: branch.output.trim(), sha: git.output.trim(),
         workingTree: (await execute("git", ["status", "--porcelain"])).output.trim(),
         command: `node ${commands[phase].join(" ")}`, code: result.code, durationMs: result.durationMs, log,
-        ...(/e2e$/.test(phase)?{browserReport}:{}), };
+        ...(/e2e$/.test(phase)?{browserReport}:{}), ...(transientSchema?{transientSchema}:{}), };
       await writeFile(`${log}.json`, JSON.stringify(record, null, 2));
       console.log(JSON.stringify(record));
       console.log(result.output.slice(-6500));
@@ -55,6 +65,11 @@ if (phase === "prepare") {
         command: `node ${commands[phase].join(" ")}`, log }, null, 2));
       console.error(error.result?.output.slice(-10000) ?? error.message);
       process.exitCode = 1;
+    } finally {
+      if(transientSchema) {
+        if(!/^stylo_e2e_[0-9a-f]{16}$/.test(transientSchema)||transientSchema===state.schema) throw new Error("Limpieza de schema no autorizada.");
+        await execute("docker",["exec",state.container,"psql","-U","stylo_test","-d",state.database,"-v","ON_ERROR_STOP=1","-c",`DROP SCHEMA "${transientSchema}" CASCADE;`]);
+      }
     }
   } else if (phase === "reset") {
     // El guard anterior confirma propiedad, host local y nombre exclusivo de esta ejecución.
