@@ -1,3 +1,0 @@
-
-> optica-stylo@0.1.0 lint
-> eslint .
