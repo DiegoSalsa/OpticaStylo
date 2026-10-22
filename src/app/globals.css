@@ -176,6 +176,7 @@ a:focus-visible {
   width: 240px;
 }
 .public-header__search input {
+  min-width: 0;
   background: transparent;
   border: 0;
   color: #2f3334;
@@ -187,6 +188,10 @@ a:focus-visible {
 .public-header__search input::placeholder {
   color: #777b7c;
 }
+.public-header__search button, .mobile-menu__search button { background: transparent; border: 0; color: var(--color-primary-dark); cursor: pointer; display: grid; min-height: 28px; place-items: center; }
+.public-header__search:focus-within, .mobile-menu__search:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.mobile-menu__search { align-items: center; border: 1px solid var(--color-border); border-radius: 10px; display: flex; padding: 0.4rem; }
+.mobile-menu__search input { border: 0; min-width: 0; padding: 0.5rem; width: 100%; }
 .icon-button {
   align-items: center;
   border-radius: 50%;

@@ -5,9 +5,7 @@ import { getProductPresentation } from "../config/product-presentations.js";
 import { listPublished3dModels } from "../repositories/virtual-try-on-3d-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
-import {
-  validateProductListQuery,
-} from "../validations/product-validation.js";
+import { validateStoreCatalogQuery } from "../validations/store-catalog-validation.js";
 import { validateStoreProductId } from "../validations/store-validation.js";
 
 function publicProduct(product, availabilityProvider, images = [], model = null) {
@@ -21,6 +19,7 @@ function publicProduct(product, availabilityProvider, images = [], model = null)
     images: images.length > 0 ? images : presentation.images,
     name: product.name,
     requiresPrescription: product.requiresPrescription,
+    supportsPrescription: product.category === "FRAME",
     sku: product.sku,
     specifications: presentation.specifications,
     unitPriceCents: product.unitPriceCents,
@@ -50,7 +49,7 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
   const includeTestData = canUseTestData(dependencies);
   const result = await (dependencies.listProducts ?? listProducts)(
     {
-      ...validateProductListQuery(publicQuery),
+      ...validateStoreCatalogQuery(publicQuery),
       excludeCategory: "PRESCRIPTION_LENS",
       includeTestData,
     },
