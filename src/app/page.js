@@ -150,10 +150,9 @@ export default function HomePage() {
 
         <section className={styles.products} aria-labelledby="favorites-title">
           <div className={styles.centerHeading}>
-            <h2 id="favorites-title">Los favoritos de la semana</h2>
+            <h2 id="favorites-title">Explora nuestros marcos</h2>
             <p>
-              Seleccionados por nuestros especialistas para brindarte el mejor
-              confort y estilo.
+              Compara los modelos publicados y encuentra una opción para tu estilo.
             </p>
           </div>
           <FeaturedProducts />
@@ -235,10 +234,10 @@ export default function HomePage() {
             <span className={styles.serviceIcon}>
               <Icon name="calendar" size={25} />
             </span>
-            <h3>Evaluación Oftalmológica</h3>
+            <h3>Evaluación visual</h3>
             <p>
-              Agenda tu cita con nuestros especialistas en nuestra sucursal.
-              Evaluación completa para asegurar tu salud visual.
+              Consulta los profesionales y horarios disponibles para reservar
+              tu evaluación visual.
             </p>
             <Link href="/reservar">
               Reserva de hora <Icon name="calendar" size={15} />
@@ -250,10 +249,10 @@ export default function HomePage() {
                 <Icon name="file" size={21} />
               </span>
               <div>
-                <h3>Convenios y Reembolsos</h3>
+                <h3>Comprobantes de compra</h3>
                 <p>
-                  Trabajamos con las principales Isapres y seguros
-                  complementarios. Te ayudamos a gestionar tu reembolso.
+                  Conserva tu comprobante. Si necesitas solicitar un reembolso,
+                  consulta los requisitos y la cobertura directamente con tu aseguradora.
                 </p>
               </div>
             </article>
@@ -264,7 +263,7 @@ export default function HomePage() {
               <div>
                 <h3>Retiro en tienda</h3>
                 <p>
-                  Retira gratis tus lentes en la sucursal que coordinemos
+                  Retira tus lentes en la sucursal que coordinemos
                   después de confirmar tu compra.
                 </p>
               </div>
