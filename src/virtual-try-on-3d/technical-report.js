@@ -12,7 +12,7 @@ export function technicalReport(metrics, build = {}) {
     build: { commit: /^[a-f0-9]{7,40}$/.test(build.commit) ? build.commit : null,
       branch: build.branch === "mejoras-probador" ? build.branch : null },
     ...pickNumbers(metrics, ["cameraFps", "inferenceFps", "renderFps", "processingMs", "inferenceMs",
-      "approximateLatencyMs", "trackingInitializationMs", "firstPoseMs", "recoveryMs", "recoveries", "visualLosses",
+      "approximateLatencyMs", "cameraReadyMs", "trackingInitializationMs", "firstPoseMs", "recoveryMs", "recoveries", "visualLosses",
       "droppedFrames", "rejectedStaleResults", "sourceResolutionChanges", "resultAgeMs", "deliveryAgeMs", "captureAgeBudgetMs",
       "pixelsPerMm", "finalScalePxPerMm", "frameWidthMm", "finalFrameWidthPx", "irisWeight", "irisConsistency",
       "irisAgeMs", "correctedFaceWidthPx", "irisScalePxPerMm", "v2ScalePxPerMm", "ratioCorrectedToOld", "backendFallbacks"]),
