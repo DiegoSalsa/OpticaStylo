@@ -150,7 +150,7 @@ export default function HomePage() {
 
         <section className={styles.products} aria-labelledby="favorites-title">
           <div className={styles.centerHeading}>
-            <h2 id="favorites-title">Explora nuestros marcos</h2>
+            <h2 id="favorites-title">Descubre nuestro catálogo</h2>
             <p>
               Compara los modelos publicados y encuentra una opción para tu estilo.
             </p>
