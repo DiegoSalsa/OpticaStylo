@@ -1,6 +1,8 @@
 const finite = (value) => Number.isFinite(value) ? value : null;
 const pickNumbers = (object, keys) => Object.fromEntries(keys.map((key) => [key, finite(object?.[key])]));
 const enumValue = (value, allowed) => allowed.includes(value) ? value : null;
+const numericConstraint = (value) => typeof value === "number" ? finite(value)
+  : pickNumbers(value, ["min", "max", "step", "ideal", "exact"]);
 
 /** Lista permitida explícita: nunca copiar settings, errores, geometría facial,
  * URLs, identificadores ni objetos desconocidos al informe que sale del equipo. */
@@ -10,7 +12,7 @@ export function technicalReport(metrics, build = {}) {
   return {
     schemaVersion: 1,
     build: { commit: /^[a-f0-9]{7,40}$/.test(build.commit) ? build.commit : null,
-      branch: build.branch === "mejoras-probador" ? build.branch : null },
+      branch: build.branch === "mejoras-probador" ? build.branch : null, dirty: build.dirty === true },
     ...pickNumbers(metrics, ["cameraFps", "inferenceFps", "renderFps", "processingMs", "inferenceMs",
       "approximateLatencyMs", "cameraReadyMs", "trackingInitializationMs", "firstPoseMs", "recoveryMs", "recoveries", "visualLosses",
       "droppedFrames", "rejectedStaleResults", "sourceResolutionChanges", "resultAgeMs", "deliveryAgeMs", "captureAgeBudgetMs",
@@ -30,6 +32,12 @@ export function technicalReport(metrics, build = {}) {
       actualFacingMode: enumValue(camera.actualFacingMode, ["user", "environment", "left", "right"]),
       resizeMode: enumValue(settings.resizeMode, ["none", "crop-and-scale"]),
       zoom: pickNumbers(camera.zoom, ["current", "min", "max", "step"]),
+      supportedConstraints: Object.fromEntries(["width", "height", "frameRate", "aspectRatio", "facingMode", "zoom", "resizeMode"]
+        .map((key) => [key, typeof camera.supportedConstraints?.[key] === "boolean" ? camera.supportedConstraints[key] : null])),
+      capabilities: Object.fromEntries(["width", "height", "frameRate", "aspectRatio", "zoom"]
+        .map((key) => [key, numericConstraint(camera.capabilities?.[key])])),
+      appliedConstraints: Object.fromEntries(["width", "height", "frameRate", "aspectRatio", "zoom"]
+        .map((key) => [key, numericConstraint(camera.appliedConstraints?.[key])])),
       capabilitiesAvailable: camera.capabilitiesAvailable === true,
       intrinsics: "unavailable" },
     projection: { ...pickNumbers(projection, ["width", "height", "focalPx", "fovDegrees", "aspect"]),
