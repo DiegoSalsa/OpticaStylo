@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { VTO_BUILD_IDENTITY } from "@/virtual-try-on-3d/build-identity";
 import { cameraTrackSnapshot } from "@/virtual-try-on-3d/camera-acquisition";
 import { framePresentation } from "@/virtual-try-on-3d/frame-presentation";
+import { technicalReport } from "@/virtual-try-on-3d/technical-report";
 import styles from "./virtual-try-on-3d.module.css";
 
 const rectangle = (element) => {
@@ -12,8 +13,7 @@ const rectangle = (element) => {
   return width > 0 && height > 0 ? { x, y, width, height } : null;
 };
 
-// Mounted exclusively by ?vtoDebug=1. This preview shares the original stream;
-// it neither crops frames nor sends them anywhere nor stops the camera track.
+// Sólo se monta con ?vtoDebug=1; la vista original comparte el stream local.
 export default function CameraDiagnostics({ videoRef, viewerRef, rendererCanvasRef, metricsRef, cameraStatus, dimensions }) {
   const outputRef = useRef(null), summaryRef = useRef(null), rawRef = useRef(null);
   const [showRaw, setShowRaw] = useState(false);
@@ -30,8 +30,9 @@ export default function CameraDiagnostics({ videoRef, viewerRef, rendererCanvasR
       if (camera && video?.srcObject) Object.assign(camera, cameraTrackSnapshot(video.srcObject, camera.supportedConstraints));
       metricsRef.current.presentation = { ...presentation, videoRectangle: videoRect, canvasRectangle: canvasRect, alignmentErrorPx };
       if (outputRef.current) outputRef.current.textContent = JSON.stringify({ build: VTO_BUILD_IDENTITY, cameraStatus,
-        videoWidth: video?.videoWidth ?? 0, videoHeight: video?.videoHeight ?? 0, ...metricsRef.current }, null, 2);
-      if (summaryRef.current) summaryRef.current.textContent = `Frame ${width ?? 0}×${height ?? 0} · fuente visible ${((presentation?.visibleFraction ?? 0) * 100).toFixed(1)}% · cámara real ${camera?.actualFacingMode ?? "no informada"} · zoom ${camera?.zoom?.current ?? "no informado"} · backend ${metricsRef.current.backend ?? "pendiente"}`;
+        videoWidth: video?.videoWidth ?? 0, videoHeight: video?.videoHeight ?? 0, ...technicalReport(metricsRef.current, VTO_BUILD_IDENTITY) }, null, 2);
+      const m = metricsRef.current;
+      if (summaryRef.current) summaryRef.current.textContent = `Frame ${width ?? 0}×${height ?? 0} · visible ${((presentation?.visibleFraction ?? 0) * 100).toFixed(1)}% · cámara solicitada ${camera?.requestedFacingMode ?? "—"} / real ${camera?.actualFacingMode ?? "no informada"} · zoom ${camera?.zoom?.current ?? "no informado"} · ${m.backend ?? "pendiente"} · FPS cámara ${m.cameraFps?.toFixed(1) ?? "—"} / inferencia ${m.inferenceFps?.toFixed(1) ?? "—"} · estado ${m.trackingState ?? "—"} · edad ${m.resultAgeMs?.toFixed(0) ?? "—"} ms · escala ${m.pixelsPerMm?.toFixed(3) ?? "—"} px/mm (estimada, ${m.scaleSource ?? "—"}, ${m.irisConfidence ?? "—"}) · rostro sí/no ${m.detection?.inferencesWithFace ?? 0}/${m.detection?.inferencesWithoutFace ?? 0} · rechazos pose ${m.detection?.poseConversionRejections ?? 0}`;
     };
     update(); const timer = window.setInterval(update, 500);
     return () => window.clearInterval(timer);
@@ -48,6 +49,13 @@ export default function CameraDiagnostics({ videoRef, viewerRef, rendererCanvasR
     <strong>Build: <code>{VTO_BUILD_IDENTITY.commit}</code></strong>
     <p>{VTO_BUILD_IDENTITY.branch} · {VTO_BUILD_IDENTITY.builtAt} · {VTO_BUILD_IDENTITY.dirty ? "con cambios locales" : "commit sin cambios locales"}</p>
     <p ref={summaryRef} />
+    <button type="button" onClick={() => {
+      const blob = new Blob([JSON.stringify(technicalReport(metricsRef.current, VTO_BUILD_IDENTITY), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = url; link.download = "optica-stylo-diagnostico.json"; link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }}>Descargar informe técnico JSON</button>
+    <p>FPS y dimensiones medidos; escala y focal estimadas. Intrínsecos ópticos no disponibles. El informe sólo incluye métricas agregadas y no se envía a servidores.</p>
     <details onToggle={(event) => setShowRaw(event.currentTarget.open)}>
       <summary>Ver frame original completo (local, sin espejo)</summary>
       <video ref={rawRef} className={styles.originalFrame} muted playsInline autoPlay aria-label="Frame original sin recortes" />
