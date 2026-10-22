@@ -178,7 +178,14 @@
 }
 .search svg {
   color: var(--color-text-soft);
+  flex-shrink: 0;
 }
+.search:focus-within { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.testData { color: var(--color-text-soft); font-size: 0.7rem; margin: 0 0 0.5rem; }
+.pagination { align-items: center; display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; margin-top: 1.5rem; }
+.pagination span { font-size: 0.8rem; }
+.pagination button { background: #fff; border: 1px solid var(--color-border); border-radius: 9px; color: var(--color-primary-dark); cursor: pointer; min-height: 42px; padding: 0.6rem 1rem; }
+.pagination button:disabled { cursor: default; opacity: 0.45; }
 .search input {
   background: transparent;
   border: 0;

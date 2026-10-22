@@ -37,21 +37,29 @@ export async function findProductById(productId) {
   return mapProduct(await prisma.products.findUnique({ where: { id: productId } }));
 }
 
-export async function listProducts({ category, excludeCategory = null, includeTestData = true, isActive, page, pageSize, search }) {
+export async function listProducts({ category, excludeCategory = null, includeTestData = true, isActive, page, pageSize, search, sort = "featured", prescription = "all" }) {
   const where = {
     ...(category ? { category } : {}),
     ...(excludeCategory ? { NOT: { category: excludeCategory } } : {}),
     ...(typeof isActive === "boolean" ? { is_active: isActive } : {}),
     ...(!includeTestData ? { is_test_data: false } : {}),
+    // El marco permite configurar cristales; su compra individual nunca exige receta.
+    ...(prescription === "optional" ? { AND: [{ category: "FRAME" }] } : {}),
+    ...(prescription === "not-required" ? { AND: [{ category: { not: "FRAME" } }] } : {}),
     ...(search ? { OR: [
       { sku: { contains: search, mode: "insensitive" } },
       { name: { contains: search, mode: "insensitive" } },
     ] } : {}),
   };
+  // Ordenar todo el catálogo antes de paginar y desempatar por ID evita saltos entre páginas.
+  const orderBy = sort === "price-asc" ? [{ unit_price_cents: "asc" }, { id: "asc" }]
+    : sort === "price-desc" ? [{ unit_price_cents: "desc" }, { id: "asc" }]
+      : sort === "newest" ? [{ created_at: "desc" }, { id: "asc" }]
+        : [{ is_active: "desc" }, { category: "asc" }, { name: "asc" }, { id: "asc" }];
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   const [items, total] = await prisma.$transaction([
     prisma.products.findMany({
-      orderBy: [{ is_active: "desc" }, { category: "asc" }, { name: "asc" }, { id: "asc" }],
+      orderBy,
       skip: (page - 1) * pageSize, take: pageSize, where,
     }),
     prisma.products.count({ where }),

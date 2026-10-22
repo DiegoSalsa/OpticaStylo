@@ -40,6 +40,6 @@ export default function FeaturedProducts() {
       {product.images?.[0] ? <Image alt={product.images[0].alt} className={styles.productImage} fill sizes="(max-width: 560px) 100vw, (max-width: 950px) 50vw, 25vw" src={product.images[0].url} /> : <span className={`${styles.productArt} ${product.category === "FRAME" ? styles.frameArt : styles.otherArt}`} aria-hidden="true">{product.category === "FRAME" ? <><i /><b /><i /></> : <Icon name={product.category === "ACCESSORY" ? "sparkle" : "eye"} size={40} />}</span>}
       {product.virtualTryOn && <span className={styles.badge}><Icon name="eye" size={14} /> Prueba virtual</span>}
     </Link>
-    <div className={styles.body}><p>{categoryNames[product.category] || "Producto"}</p><h3><Link href={`/tienda/${product.id}`}>{product.name}</Link></h3><div><strong>{formatPrice(product.unitPriceCents)}</strong><Link aria-label={`Ver detalle de ${product.name}`} href={`/tienda/${product.id}`}><Icon name="arrow" size={18} /></Link></div></div>
+    <div className={styles.body}><p>{categoryNames[product.category] || "Producto"}{product.isTestData ? " · Producto de prueba" : ""}</p><h3><Link href={`/tienda/${product.id}`}>{product.name}</Link></h3><div><strong>{formatPrice(product.unitPriceCents)}</strong><Link aria-label={`Ver detalle de ${product.name}`} href={`/tienda/${product.id}`}><Icon name="arrow" size={18} /></Link></div></div>
   </article>)}</div>;
 }

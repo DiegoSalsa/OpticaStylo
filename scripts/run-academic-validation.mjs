@@ -18,10 +18,14 @@ if (phase === "prepare") {
     integration: ["--test", "tests/integration/academic-critical-flows.test.js"],
     management: ["--test", "tests/integration/management-pagination.test.js"],
     store: ["--test", "tests/integration/store-guest-checkout.test.js"],
+    catalog: ["--test", "tests/integration/store-catalog.test.js"],
+    reports: ["--test", "tests/integration/report-dates.test.js"],
+    demo: ["scripts/prepare-demo-data.mjs"],
     "seed-store": ["scripts/seed-academic-legacy.mjs", "store"],
     "seed-management": ["scripts/seed-academic-legacy.mjs", "management"],
     "store-e2e": ["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs", "store-guest-checkout.spec.js"],
     "management-e2e": ["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs", "management-pagination.spec.js", "--project", "desktop"],
+    "demo-e2e": ["node_modules/playwright/cli.js", "test", "--config", "playwright.config.mjs", "demo-regression.spec.js", "--project", "desktop"],
     build: ["node_modules/next/dist/bin/next", "build"],
     seed: ["scripts/seed-academic-demo.mjs"],
     "refresh-e2e": ["scripts/seed-academic-demo.mjs", "refresh-e2e"],
@@ -40,7 +44,7 @@ if (phase === "prepare") {
     let transientSchema=null;
     try {
       // Cada suite PostgreSQL recibe tablas nuevas sin alterar la demostración del servidor.
-      if(["integration","store","management"].includes(phase)) {
+      if(["integration","store","management","catalog","reports"].includes(phase)) {
         transientSchema=`stylo_e2e_${randomBytes(8).toString("hex")}`;
         await execute("docker",["exec",state.container,"psql","-U","stylo_test","-d",state.database,"-v","ON_ERROR_STOP=1","-c",`CREATE SCHEMA "${transientSchema}";`]);
         const url=new URL(state.databaseUrl);url.searchParams.set("schema",transientSchema);
@@ -51,11 +55,13 @@ if (phase === "prepare") {
         ...environment, NODE_ENV: phase === "build" ? "production" : "test",
         ACADEMIC_EVIDENCE_DIR: state.evidenceDir,
         STORE_E2E_REPORT_PATH: browserReport,
+        // La preparación manual mantiene fecha configurable y confirmación explícita.
+        ...(phase === "demo" ? { DEMO_DATE: process.env.DEMO_DATE, DEMO_PREPARE_CONFIRM: process.env.DEMO_PREPARE_CONFIRM } : {}),
       }, log);
       const record = { phase, testedAt: new Date().toISOString(), branch: branch.output.trim(), sha: git.output.trim(),
         workingTree: (await execute("git", ["status", "--porcelain"])).output.trim(),
         command: `node ${commands[phase].join(" ")}`, code: result.code, durationMs: result.durationMs, log,
-        ...(["e2e","store-e2e","management-e2e"].includes(phase)?{browserReport}:{}), ...(transientSchema?{transientSchema}:{}), };
+        ...(["e2e","store-e2e","management-e2e","demo-e2e"].includes(phase)?{browserReport}:{}), ...(transientSchema?{transientSchema}:{}), };
       await writeFile(`${log}.json`, JSON.stringify(record, null, 2));
       console.log(JSON.stringify(record));
       console.log(result.output.slice(-6500));

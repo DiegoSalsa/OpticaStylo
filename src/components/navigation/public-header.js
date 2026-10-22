@@ -19,12 +19,13 @@ export default function PublicHeader() {
           {navigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </nav>
         <div className="public-header__actions">
-          <form action="/tienda" className="public-header__search"><Icon name="search" size={15} /><input aria-label="Buscar productos" name="search" placeholder="Buscar marcos y accesorios..." type="search" /></form>
+          <form action="/tienda" className="public-header__search" role="search"><Icon name="search" size={15} /><input aria-label="Buscar productos" maxLength={100} name="search" placeholder="Buscar marcos y accesorios..." type="search" /><button aria-label="Buscar en la tienda" type="submit"><Icon name="arrow" size={16} /></button></form>
           <Link aria-label="Carrito" className="icon-button" href="/carrito"><Icon name="cart" /></Link>
           <Link aria-label="Mi cuenta" className="icon-button" href="/cuenta"><Icon name="account" /></Link>
           <details className="mobile-menu">
             <summary aria-label="Abrir menú"><Icon name="menu" /></summary>
             <nav aria-label="Navegación móvil">
+              <form action="/tienda" className="mobile-menu__search" role="search"><input aria-label="Buscar productos" maxLength={100} name="search" placeholder="Buscar productos..." type="search" /><button aria-label="Buscar en la tienda" type="submit"><Icon name="search" size={18} /></button></form>
               {navigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
               <Link href="/cuenta">Mi cuenta</Link><Link href="/carrito">Carrito</Link>
             </nav>
