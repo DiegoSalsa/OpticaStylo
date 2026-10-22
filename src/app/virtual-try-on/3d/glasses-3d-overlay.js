@@ -344,6 +344,8 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       }
     }
     poseRef.current = nextPose;
+    visibilityRef.current = false;
+    renderedPoseRef.current = null;
     recordScaleDiagnostics(nextPose, performance.now());
     setFaceDetected(false);
     setStatusMessage(
@@ -416,6 +418,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
               // Una resolución distinta invalida coordenadas y calibración de
               // sesión; una inferencia en vuelo se descarta al terminar.
               poseFilterRef.current?.reset(); poseRef.current = null; setFaceDetected(false);
+              visibilityRef.current = false;
               scaleEstimatorRef.current?.reset();
               renderedPoseRef.current = null;
               debugMetricsRef.current.sourceResolutionChanges = (debugMetricsRef.current.sourceResolutionChanges ?? 0) + 1;
