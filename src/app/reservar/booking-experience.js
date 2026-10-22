@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
 import { PUBLIC_BOOKING_CONFIRMATION_NOTE } from "./booking-copy";
 import styles from "./booking.module.css";
@@ -43,6 +43,7 @@ export default function BookingExperience() {
   const [status, setStatus] = useState("loading-professionals");
   const [message, setMessage] = useState("");
   const [confirmation, setConfirmation] = useState(null);
+  const availabilityRequest = useRef(null);
   const selectedProfessional = useMemo(() => professionals.find((item) => item.id === professionalId), [professionalId, professionals]);
   const minor = isMinor(birthDate);
 
@@ -55,13 +56,25 @@ export default function BookingExperience() {
     return () => controller.abort();
   }, []);
 
+  // Cancelar la disponibilidad al salir impide actualizar una reserva desmontada.
+  useEffect(() => () => availabilityRequest.current?.abort(), []);
+
   async function loadSlots(nextProfessionalId, nextDate) {
-    if (!nextProfessionalId || !nextDate) return;
-    setStatus("loading-slots"); setMessage(""); setSelectedSlot(null); setSlots([]);
+    // Invalidar siempre la selección anterior, incluso si se limpia profesional o fecha.
+    availabilityRequest.current?.abort();
+    setMessage(""); setSelectedSlot(null); setSlots([]);
+    if (!nextProfessionalId || !nextDate) { setStatus("ready"); return; }
+    const controller = new AbortController();
+    availabilityRequest.current = controller;
+    setStatus("loading-slots");
     try {
-      const data = await readApi(await fetch(`/api/store/booking/professionals/${nextProfessionalId}/availability?date=${nextDate}`));
-      setSlots(data.slots); setStatus("ready");
-    } catch (error) { setMessage(error.message); setStatus("error-slots"); }
+      const data = await readApi(await fetch(`/api/store/booking/professionals/${nextProfessionalId}/availability?date=${nextDate}`, {
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+      }));
+      if (!controller.signal.aborted) { setSlots(data.slots); setStatus("ready"); }
+    } catch {
+      if (!controller.signal.aborted) { setMessage("No fue posible consultar los horarios. Vuelve a seleccionar la fecha para reintentar."); setStatus("error-slots"); }
+    }
   }
 
   function chooseProfessional(value) { setProfessionalId(value); loadSlots(value, selectedDate); }
