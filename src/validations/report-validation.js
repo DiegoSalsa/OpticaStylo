@@ -1,5 +1,7 @@
 import { AppError } from "../utils/app-error.js";
 import { SALE_STATUSES } from "./sale-validation.js";
+import { formatInTimeZone } from "date-fns-tz";
+import { getZonedDayRange } from "../utils/zoned-date.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 function fail(message) {
@@ -20,7 +22,7 @@ export function validateSalesReportQuery(
   searchParams,
   currentDate = new Date(),
 ) {
-  const defaultTo = currentDate.toISOString().slice(0, 10);
+  const defaultTo = formatInTimeZone(currentDate, "America/Santiago", "yyyy-MM-dd");
   const defaultFromDate = new Date(`${defaultTo}T00:00:00.000Z`);
   defaultFromDate.setUTCDate(defaultFromDate.getUTCDate() - 29);
   const from = date(
@@ -42,7 +44,7 @@ export function validateSalesReportQuery(
     fail("El estado no es válido.");
   if (origin && !["IN_STORE", "ONLINE"].includes(origin))
     fail("El origen no es válido.");
-  const endExclusive = new Date(toDate);
-  endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
-  return { from, fromDate, origin, status, to, toDate: endExclusive };
+  // Los filtros son días civiles de Chile; el corte UTC desplaza ventas nocturnas al día equivocado.
+  return { from, fromDate: getZonedDayRange(from, "America/Santiago").startAt, origin, status, to,
+    toDate: getZonedDayRange(to, "America/Santiago").endAt };
 }

@@ -43,7 +43,8 @@ const monthAgo = () => {
 
 function csvValue(value) {
   const text = String(value ?? "");
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+  // El archivo usa punto y coma: proteger ese separador y los saltos evita desplazar columnas.
+  return /[";\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 function exportCsv(data) {
   const rows = [
@@ -140,7 +141,8 @@ export default function ReportsPage() {
           event.preventDefault();
           setError("");
           setStatus("loading");
-          setApplied(filters);
+          // Una nueva referencia también refresca el mismo período sin dejar la carga pendiente.
+          setApplied({ ...filters });
         }}
       >
         <label className="field">

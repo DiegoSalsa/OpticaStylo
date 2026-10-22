@@ -1,4 +1,4 @@
-import { toZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
 
 import { prisma } from "../db/prisma.js";
 
@@ -25,7 +25,8 @@ export async function getSalesReportData({ fromDate, origin, status, toDate }) {
     statuses.set(sale.status, statusItem);
   }
   for (const sale of included) {
-    const day = toZonedTime(sale.created_at, "America/Santiago").toISOString().slice(0, 10);
+    // Formatear directamente en Santiago evita una segunda conversión con la zona del servidor.
+    const day = formatInTimeZone(sale.created_at, "America/Santiago", "yyyy-MM-dd");
     const dailyItem = daily.get(day) ?? { count: 0, day, totalCents: 0 };
     dailyItem.count += 1;
     dailyItem.totalCents += n(sale.total_cents);

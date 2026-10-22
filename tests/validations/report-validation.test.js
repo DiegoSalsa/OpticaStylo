@@ -13,7 +13,16 @@ test("normaliza filtros acotados de reporte", () => {
   );
   assert.equal(result.origin, "ONLINE");
   assert.equal(result.status, "PAID");
-  assert.equal(result.toDate.toISOString(), "2026-08-21T00:00:00.000Z");
+  // Agosto corresponde al horario de invierno de Chile, cuatro horas detrás de UTC.
+  assert.equal(result.fromDate.toISOString(), "2026-08-01T04:00:00.000Z");
+  assert.equal(result.toDate.toISOString(), "2026-08-21T04:00:00.000Z");
+});
+test("el reporte usa el día local y conserva el cambio al horario de verano", () => {
+  const current = validateSalesReportQuery(new URLSearchParams(), new Date("2026-10-22T01:00:00Z"));
+  assert.equal(current.to, "2026-10-21");
+  const transition = validateSalesReportQuery(new URLSearchParams({ from: "2026-09-05", to: "2026-09-06" }));
+  assert.equal(transition.fromDate.toISOString(), "2026-09-05T04:00:00.000Z");
+  assert.equal(transition.toDate.toISOString(), "2026-09-07T03:00:00.000Z");
 });
 test("rechaza reportes mayores a un año", () =>
   assert.throws(() =>
