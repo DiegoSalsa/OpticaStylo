@@ -557,7 +557,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         setStatusMessage(cameraErrorMessage(error));
       }
     },
-    [facingMode, releaseResources, recordScaleDiagnostics, testDevices, mobileCamera, onTrackingVisibility],
+    [facingMode, releaseResources, recordScaleDiagnostics, testDevices, mobileCamera],
   );
 
   const updateFitAdjustment = useCallback((property, delta) => {
@@ -583,32 +583,30 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     // Ejecutar la composición después del próximo render WebGL: una inferencia
     // recién entregada todavía puede no estar dibujada cuando se pulsa el botón.
     pendingCaptureRef.current = () => {
-    const video = videoRef.current;
-    const photo = photoImageRef.current;
-    const overlay = rendererCanvasRef.current;
-    const media = cameraStatus === "photo" ? photo : video;
-    const currentPose = cameraStatus === "photo" ? poseRef.current : poseFilterRef.current?.sample(performance.now());
-    if (!media || !overlay || !faceDetected || !modelReady || !currentPose || !renderedPoseRef.current
-      || currentPose.timestamp !== renderedPoseRef.current.timestamp) return;
+      const video = videoRef.current;
+      const photo = photoImageRef.current;
+      const overlay = rendererCanvasRef.current;
+      const media = cameraStatus === "photo" ? photo : video;
+      const currentPose = cameraStatus === "photo" ? poseRef.current : poseFilterRef.current?.sample(performance.now());
+      if (!media || !overlay || !faceDetected || !modelReady || !currentPose || !renderedPoseRef.current
+        || currentPose.timestamp !== renderedPoseRef.current.timestamp) return;
 
-    const output = document.createElement("canvas");
-    output.width =
-      cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
-    output.height =
-      cameraStatus === "photo" ? photo.naturalHeight : video.videoHeight;
-    const context = output.getContext("2d");
-    drawTryOnCapture(context, media, overlay, output.width, output.height, cameraStatus !== "photo");
-    output.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `optica-stylo-${selectedModel.sku}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
-      setCaptureMessage("Captura guardada en tu dispositivo.");
-      window.setTimeout(() => setCaptureMessage(""), 3200);
-    }, "image/png");
+      const output = document.createElement("canvas");
+      output.width = cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
+      output.height = cameraStatus === "photo" ? photo.naturalHeight : video.videoHeight;
+      const context = output.getContext("2d");
+      drawTryOnCapture(context, media, overlay, output.width, output.height, cameraStatus !== "photo");
+      output.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `optica-stylo-${selectedModel.sku}.png`;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setCaptureMessage("Captura guardada en tu dispositivo.");
+        window.setTimeout(() => setCaptureMessage(""), 3200);
+      }, "image/png");
     };
   }, [cameraStatus, faceDetected, modelReady, selectedModel.sku]);
 
