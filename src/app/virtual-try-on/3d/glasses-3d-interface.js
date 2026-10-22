@@ -63,6 +63,7 @@ export default function Glasses3DInterface({ model }) {
     rendererCanvasRef,
     renderedPoseRef,
     onTrackingVisibility,
+    pendingCaptureRef,
     resetFitAdjustment,
     selectedModel,
     setCatalogSearch,
@@ -254,7 +255,8 @@ export default function Glasses3DInterface({ model }) {
                   />
                 )}
                 {modelMetadata && <RenderTrackingState poseRef={poseRef} poseFilterRef={poseFilterRef}
-                  renderedPoseRef={renderedPoseRef} debugMetricsRef={debugMetricsRef} onVisibility={onTrackingVisibility} />}
+                  renderedPoseRef={renderedPoseRef} debugMetricsRef={debugMetricsRef} onVisibility={onTrackingVisibility}
+                  pendingCaptureRef={pendingCaptureRef} />}
               </Suspense>
             </Canvas>
           )}

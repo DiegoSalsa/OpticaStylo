@@ -69,6 +69,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const modelReadyRef = useRef(false);
   const renderedPoseRef = useRef(null);
   const visibilityRef = useRef(false);
+  const pendingCaptureRef = useRef(null);
   const rendererCanvasRef = useRef(null);
   const fitAdjustmentRef = useRef(DEFAULT_FIT_ADJUSTMENT);
 
@@ -158,6 +159,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     renderedPoseRef.current = null;
     modelReadyRef.current = false;
     visibilityRef.current = false;
+    pendingCaptureRef.current = null;
     poseFilterRef.current = null;
     poseRef.current = null;
     debugMetricsRef.current = {};
@@ -218,6 +220,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       modelReadyRef.current = false;
       renderedPoseRef.current = null;
       visibilityRef.current = false;
+      pendingCaptureRef.current = null;
       setFaceDetected(false);
       setModelMetadata(null);
       modelMetadataRef.current = null;
@@ -577,6 +580,9 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   }, []);
 
   const captureTryOn = useCallback(() => {
+    // Ejecutar la composición después del próximo render WebGL: una inferencia
+    // recién entregada todavía puede no estar dibujada cuando se pulsa el botón.
+    pendingCaptureRef.current = () => {
     const video = videoRef.current;
     const photo = photoImageRef.current;
     const overlay = rendererCanvasRef.current;
@@ -603,6 +609,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       setCaptureMessage("Captura guardada en tu dispositivo.");
       window.setTimeout(() => setCaptureMessage(""), 3200);
     }, "image/png");
+    };
   }, [cameraStatus, faceDetected, modelReady, selectedModel.sku]);
 
   const changeCamera = useCallback(() => {
@@ -708,6 +715,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         rendererCanvasRef,
         renderedPoseRef,
         onTrackingVisibility,
+        pendingCaptureRef,
         resetFitAdjustment,
         selectedModel,
         setCatalogSearch,
