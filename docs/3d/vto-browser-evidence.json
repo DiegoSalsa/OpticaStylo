@@ -1,0 +1,1761 @@
+{
+  "environment": "Windows Edge headless, synthetic streams and public MediaPipe fixture; not a physical phone",
+  "codeState": "Servidor de desarrollo iniciado en db686b4; incluye cambios hasta 23a4ee9 y la corrección de alineación de fotografía posteriormente registrada. La identidad de build refleja el inicio del servidor; dirty=true identifica las modificaciones locales.",
+  "cases": [
+    {
+      "title": "cámara 360×800: fuente completa, escala física, pérdidas y recuperación",
+      "status": "passed",
+      "durationMs": 6034,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 26.551609690812313,
+        "inferenceFps": 16.594756056757696,
+        "renderFps": 50.25125628307941,
+        "processingMs": 27.914880010652542,
+        "inferenceMs": 22.400000005960464,
+        "approximateLatencyMs": 23.09999998211879,
+        "cameraReadyMs": 20.80000001192093,
+        "trackingInitializationMs": 20.80000001192093,
+        "firstPoseMs": 76.7000000178814,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 2,
+        "rejectedStaleResults": 0,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": 33.19999999999982,
+        "deliveryAgeMs": 9.8000000059601,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": 2.021214050486384,
+        "finalScalePxPerMm": 2.0066203703703707,
+        "frameWidthMm": 137,
+        "finalFrameWidthPx": 274.90699074074075,
+        "irisWeight": 0.9776562500000001,
+        "irisConsistency": 0,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 2.0000000000000004,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.9442971271256212,
+        "backendFallbacks": null,
+        "backend": "main-thread",
+        "trackingState": "stable",
+        "modelVisible": true,
+        "scaleSource": "blend",
+        "irisConfidence": "high",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": 6,
+          "inferencesCompleted": 5,
+          "inferencesWithFace": 5,
+          "inferencesWithoutFace": 0,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": 1280,
+          "height": 720,
+          "frameRate": 30,
+          "aspectRatio": 1.7777777777777777,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 1280,
+          "videoHeight": 720,
+          "requestedFacingMode": "environment",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 720,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.001388888888888889,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 1280,
+          "height": 720,
+          "focalPx": 1280,
+          "fovDegrees": 31.417275658031492,
+          "aspect": 1.7777777777777777,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 1280,
+          "sourceHeight": 720,
+          "viewerWidth": 344,
+          "viewerHeight": 193.5,
+          "visibleFraction": 1,
+          "alignmentErrorPx": null,
+          "sourceKind": "camera",
+          "video": {
+            "width": 815.375,
+            "height": 458.65625
+          },
+          "canvas": {
+            "width": null,
+            "height": null
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "cámara 390×844: fuente completa, escala física, pérdidas y recuperación",
+      "status": "passed",
+      "durationMs": 4001,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 20.25658339041687,
+        "inferenceFps": 13.504388926944582,
+        "renderFps": 51.28205128205128,
+        "processingMs": 31.827999994754798,
+        "inferenceMs": 21.69999998807907,
+        "approximateLatencyMs": 22.599999994039536,
+        "cameraReadyMs": 27.200000017881393,
+        "trackingInitializationMs": 27.30000001192093,
+        "firstPoseMs": 81.7000000178814,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 2,
+        "rejectedStaleResults": 0,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": 50,
+        "deliveryAgeMs": 27.299999982118607,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": 2.041431734249107,
+        "finalScalePxPerMm": 2.023833333333334,
+        "frameWidthMm": 137,
+        "finalFrameWidthPx": 277.26516666666674,
+        "irisWeight": 0.9195624999999997,
+        "irisConsistency": 0,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 2.0000000000000004,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.9523973894947538,
+        "backendFallbacks": null,
+        "backend": "main-thread",
+        "trackingState": "stable",
+        "modelVisible": true,
+        "scaleSource": "blend",
+        "irisConfidence": "high",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": 4,
+          "inferencesCompleted": 4,
+          "inferencesWithFace": 4,
+          "inferencesWithoutFace": 0,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": 1280,
+          "height": 720,
+          "frameRate": 30,
+          "aspectRatio": 1.7777777777777777,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 1280,
+          "videoHeight": 720,
+          "requestedFacingMode": "environment",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 720,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.001388888888888889,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 1280,
+          "height": 720,
+          "focalPx": 1280,
+          "fovDegrees": 31.417275658031492,
+          "aspect": 1.7777777777777777,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 1280,
+          "sourceHeight": 720,
+          "viewerWidth": 374,
+          "viewerHeight": 210.375,
+          "visibleFraction": 1,
+          "alignmentErrorPx": null,
+          "sourceKind": "camera",
+          "video": {
+            "width": 886.5,
+            "height": 498.65625
+          },
+          "canvas": {
+            "width": null,
+            "height": null
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "cámara 430×932: fuente completa, escala física, pérdidas y recuperación",
+      "status": "passed",
+      "durationMs": 4109,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 16.75603217124707,
+        "inferenceFps": 13.404825736997658,
+        "renderFps": 51.89413596584653,
+        "processingMs": 20.794400002002725,
+        "inferenceMs": 21.69999998807907,
+        "approximateLatencyMs": 22.59999999999991,
+        "cameraReadyMs": 25.400000005960464,
+        "trackingInitializationMs": 25.400000005960464,
+        "firstPoseMs": 78.5,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 1,
+        "rejectedStaleResults": 0,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": 50.09999999999991,
+        "deliveryAgeMs": 27.30000001192093,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": 2.0390927287101803,
+        "finalScalePxPerMm": 2.023833333333334,
+        "frameWidthMm": 137,
+        "finalFrameWidthPx": 277.26516666666674,
+        "irisWeight": 0.9195624999999997,
+        "irisConsistency": 0,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 2.0000000000000004,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.9523973894947538,
+        "backendFallbacks": null,
+        "backend": "main-thread",
+        "trackingState": "stable",
+        "modelVisible": true,
+        "scaleSource": "blend",
+        "irisConfidence": "high",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": 4,
+          "inferencesCompleted": 4,
+          "inferencesWithFace": 4,
+          "inferencesWithoutFace": 0,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": 1280,
+          "height": 720,
+          "frameRate": 30,
+          "aspectRatio": 1.7777777777777777,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 1280,
+          "videoHeight": 720,
+          "requestedFacingMode": "environment",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 720,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.001388888888888889,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 1280,
+          "height": 720,
+          "focalPx": 1280,
+          "fovDegrees": 31.417275658031492,
+          "aspect": 1.7777777777777777,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 1280,
+          "sourceHeight": 720,
+          "viewerWidth": 414,
+          "viewerHeight": 232.875,
+          "visibleFraction": 1,
+          "alignmentErrorPx": null,
+          "sourceKind": "camera",
+          "video": {
+            "width": 981.328125,
+            "height": 552
+          },
+          "canvas": {
+            "width": null,
+            "height": null
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "cámara 768×1024: fuente completa, escala física, pérdidas y recuperación",
+      "status": "passed",
+      "durationMs": 4694,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 19.710906702866133,
+        "inferenceFps": 16.425755585721777,
+        "renderFps": 51.49330587339777,
+        "processingMs": 22.687840004396442,
+        "inferenceMs": 20.299999982118607,
+        "approximateLatencyMs": 20.99999999403917,
+        "cameraReadyMs": 20.30000001192093,
+        "trackingInitializationMs": 20.30000001192093,
+        "firstPoseMs": 79.09999999403954,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 0,
+        "rejectedStaleResults": 0,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": 33.5,
+        "deliveryAgeMs": 11.89999998211897,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": 2.02972430926391,
+        "finalScalePxPerMm": 2.0068240740740744,
+        "frameWidthMm": 137,
+        "finalFrameWidthPx": 274.9348981481482,
+        "irisWeight": 0.9769687500000006,
+        "irisConsistency": 0,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 2.0000000000000004,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.944392988218747,
+        "backendFallbacks": null,
+        "backend": "main-thread",
+        "trackingState": "stable",
+        "modelVisible": true,
+        "scaleSource": "blend",
+        "irisConfidence": "high",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": 6,
+          "inferencesCompleted": 5,
+          "inferencesWithFace": 5,
+          "inferencesWithoutFace": 0,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": 1280,
+          "height": 720,
+          "frameRate": 30,
+          "aspectRatio": 1.7777777777777777,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 1280,
+          "videoHeight": 720,
+          "requestedFacingMode": "environment",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 720,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.001388888888888889,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 1280,
+          "height": 720,
+          "focalPx": 1280,
+          "fovDegrees": 31.417275658031492,
+          "aspect": 1.7777777777777777,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 1280,
+          "sourceHeight": 720,
+          "viewerWidth": 740,
+          "viewerHeight": 416.25,
+          "visibleFraction": 1,
+          "alignmentErrorPx": null,
+          "sourceKind": "camera",
+          "video": {
+            "width": 877.015625,
+            "height": 493.328125
+          },
+          "canvas": {
+            "width": null,
+            "height": null
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "cámara 844×390: fuente completa, escala física, pérdidas y recuperación",
+      "status": "passed",
+      "durationMs": 4544,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 17.34304543913762,
+        "inferenceFps": 10.405827263482571,
+        "renderFps": 51.09862033258194,
+        "processingMs": 20.98400001049042,
+        "inferenceMs": 21.599999994039536,
+        "approximateLatencyMs": 22.399999999999636,
+        "cameraReadyMs": 19.200000017881393,
+        "trackingInitializationMs": 19.30000001192093,
+        "firstPoseMs": 79.5,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 1,
+        "rejectedStaleResults": 0,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": 50.099999999999454,
+        "deliveryAgeMs": 28.500000011920747,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": 2.0066203703703707,
+        "finalScalePxPerMm": 2.0066203703703707,
+        "frameWidthMm": 137,
+        "finalFrameWidthPx": 274.90699074074075,
+        "irisWeight": 0.9776562500000001,
+        "irisConsistency": 0,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 2.0000000000000004,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.9442971271256212,
+        "backendFallbacks": null,
+        "backend": "main-thread",
+        "trackingState": "stable",
+        "modelVisible": true,
+        "scaleSource": "blend",
+        "irisConfidence": "high",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": 4,
+          "inferencesCompleted": 4,
+          "inferencesWithFace": 4,
+          "inferencesWithoutFace": 0,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": 1280,
+          "height": 720,
+          "frameRate": 30,
+          "aspectRatio": 1.7777777777777777,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 1280,
+          "videoHeight": 720,
+          "requestedFacingMode": "environment",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 720,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.001388888888888889,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 1280,
+          "height": 720,
+          "focalPx": 1280,
+          "fovDegrees": 31.417275658031492,
+          "aspect": 1.7777777777777777,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 1280,
+          "sourceHeight": 720,
+          "viewerWidth": 812,
+          "viewerHeight": 456.75,
+          "visibleFraction": 1,
+          "alignmentErrorPx": null,
+          "sourceKind": "camera",
+          "video": {
+            "width": 962.359375,
+            "height": 541.328125
+          },
+          "canvas": {
+            "width": null,
+            "height": null
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "fuente 1080×1920 cambia a 640×480 conservando proyección y captura",
+      "status": "passed",
+      "durationMs": 2160,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 25.183908807442293,
+        "inferenceFps": 20.544767711334504,
+        "renderFps": 57.15541877260788,
+        "processingMs": 21.216898074318774,
+        "inferenceMs": 20.5,
+        "approximateLatencyMs": 21.299999999999955,
+        "cameraReadyMs": 32.19999998807907,
+        "trackingInitializationMs": 32.400000005960464,
+        "firstPoseMs": 999.2999999821186,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 6,
+        "rejectedStaleResults": 0,
+        "sourceResolutionChanges": 1,
+        "resultAgeMs": 50.100000000000136,
+        "deliveryAgeMs": 28.10000000596051,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": 1.9999999999999984,
+        "finalScalePxPerMm": 1.9999999999999984,
+        "frameWidthMm": 147.85990119,
+        "finalFrameWidthPx": 295.71980237999975,
+        "irisWeight": 1,
+        "irisConsistency": 1.5182537088891025e-15,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 1.9999999999999984,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.9411816415990312,
+        "backendFallbacks": null,
+        "backend": "main-thread",
+        "trackingState": "stable",
+        "modelVisible": true,
+        "scaleSource": "iris",
+        "irisConfidence": "high",
+        "irisStable": true,
+        "detection": {
+          "inferenceAttempts": 32,
+          "inferencesCompleted": 32,
+          "inferencesWithFace": 32,
+          "inferencesWithoutFace": 0,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": 640,
+          "height": 480,
+          "frameRate": 30,
+          "aspectRatio": 1.3333333333333333,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 640,
+          "videoHeight": 480,
+          "requestedFacingMode": "user",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1080,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 1920,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.0005208333333333333,
+              "max": 1080,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 640,
+          "height": 480,
+          "focalPx": 640,
+          "fovDegrees": 41.11209043916693,
+          "aspect": 1.3333333333333333,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 640,
+          "sourceHeight": 480,
+          "viewerWidth": 374,
+          "viewerHeight": 280.5,
+          "visibleFraction": 1,
+          "alignmentErrorPx": 0,
+          "sourceKind": "camera",
+          "video": {
+            "width": 374,
+            "height": 280.5
+          },
+          "canvas": {
+            "width": 374,
+            "height": 280.5
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "latencia de 220 ms entrega poses, elimina las vencidas y permite usar una fotografía",
+      "status": "passed",
+      "durationMs": 6184,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": null,
+        "inferenceFps": null,
+        "renderFps": 56.6171266820151,
+        "processingMs": null,
+        "inferenceMs": null,
+        "approximateLatencyMs": null,
+        "cameraReadyMs": null,
+        "trackingInitializationMs": null,
+        "firstPoseMs": null,
+        "recoveryMs": null,
+        "recoveries": null,
+        "visualLosses": null,
+        "droppedFrames": null,
+        "rejectedStaleResults": null,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": null,
+        "deliveryAgeMs": null,
+        "captureAgeBudgetMs": null,
+        "pixelsPerMm": 1.9999999999999984,
+        "finalScalePxPerMm": 1.9999999999999984,
+        "frameWidthMm": 147.85990119,
+        "finalFrameWidthPx": 295.71980237999975,
+        "irisWeight": 1,
+        "irisConsistency": 1.5182537088891025e-15,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 310,
+        "irisScalePxPerMm": 1.9999999999999984,
+        "v2ScalePxPerMm": 2.2962962962962963,
+        "ratioCorrectedToOld": 0.9411816415990312,
+        "backendFallbacks": null,
+        "backend": null,
+        "trackingState": null,
+        "modelVisible": true,
+        "scaleSource": "iris",
+        "irisConfidence": "high",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": null,
+          "inferencesCompleted": null,
+          "inferencesWithFace": null,
+          "inferencesWithoutFace": null,
+          "mediaPipeErrors": null,
+          "poseConversionRejections": null,
+          "poseConversionErrors": null,
+          "trackingInitializationErrors": null,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": null,
+          "height": null,
+          "frameRate": null,
+          "aspectRatio": null,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": null,
+          "videoHeight": null,
+          "requestedFacingMode": null,
+          "actualFacingMode": null,
+          "resizeMode": null,
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": null,
+            "aspectRatio": null,
+            "facingMode": null,
+            "zoom": null,
+            "resizeMode": null
+          },
+          "capabilities": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": false,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 640,
+          "height": 480,
+          "focalPx": 640,
+          "fovDegrees": 41.11209043916693,
+          "aspect": 1.3333333333333333,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 640,
+          "sourceHeight": 480,
+          "viewerWidth": 374,
+          "viewerHeight": 280.5,
+          "visibleFraction": 1,
+          "alignmentErrorPx": 0,
+          "sourceKind": "photo",
+          "video": {
+            "width": 374,
+            "height": 280.5
+          },
+          "canvas": {
+            "width": 374,
+            "height": 280.5
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "MediaPipe real: modelo, WASM y backend procesan el patrón sin inventar un rostro",
+      "status": "passed",
+      "durationMs": 7588,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": 25.596659564471427,
+        "inferenceFps": 0.5719923925021548,
+        "renderFps": 50.119951713842,
+        "processingMs": 1108.8736000053884,
+        "inferenceMs": 7.5,
+        "approximateLatencyMs": 11.300000000000182,
+        "cameraReadyMs": 31.900000005960464,
+        "trackingInitializationMs": 582.9000000059605,
+        "firstPoseMs": null,
+        "recoveryMs": null,
+        "recoveries": 0,
+        "visualLosses": 0,
+        "droppedFrames": 162,
+        "rejectedStaleResults": 1,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": null,
+        "deliveryAgeMs": null,
+        "captureAgeBudgetMs": 180,
+        "pixelsPerMm": null,
+        "finalScalePxPerMm": null,
+        "frameWidthMm": null,
+        "finalFrameWidthPx": null,
+        "irisWeight": null,
+        "irisConsistency": null,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": null,
+        "irisScalePxPerMm": null,
+        "v2ScalePxPerMm": null,
+        "ratioCorrectedToOld": null,
+        "backendFallbacks": 0,
+        "backend": "worker",
+        "trackingState": "unacquired",
+        "modelVisible": false,
+        "scaleSource": null,
+        "irisConfidence": null,
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": 4,
+          "inferencesCompleted": 3,
+          "inferencesWithFace": 0,
+          "inferencesWithoutFace": 3,
+          "mediaPipeErrors": 0,
+          "poseConversionRejections": 0,
+          "poseConversionErrors": 0,
+          "trackingInitializationErrors": 0,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": 1
+        },
+        "camera": {
+          "width": 1280,
+          "height": 720,
+          "frameRate": 30,
+          "aspectRatio": 1.7777777777777777,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": 1280,
+          "videoHeight": 720,
+          "requestedFacingMode": "user",
+          "actualFacingMode": null,
+          "resizeMode": "none",
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": true,
+            "aspectRatio": null,
+            "facingMode": true,
+            "zoom": null,
+            "resizeMode": true
+          },
+          "capabilities": {
+            "width": {
+              "min": 1,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": 1,
+              "max": 720,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": 0,
+              "max": 30,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": 0.001388888888888889,
+              "max": 1280,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": true,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": null,
+          "height": null,
+          "focalPx": null,
+          "fovDegrees": null,
+          "aspect": null,
+          "source": null
+        },
+        "presentation": {
+          "sourceWidth": 1280,
+          "sourceHeight": 720,
+          "viewerWidth": 1234.5,
+          "viewerHeight": 694.40625,
+          "visibleFraction": 1,
+          "alignmentErrorPx": 0,
+          "sourceKind": "camera",
+          "video": {
+            "width": 1234.5,
+            "height": 694.40625
+          },
+          "canvas": {
+            "width": 1234.5,
+            "height": 694.40625
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    },
+    {
+      "title": "MediaPipe real: entrada tardía, ambos GLB, pérdida y fotografía",
+      "status": "passed",
+      "durationMs": 5427,
+      "metrics": {
+        "schemaVersion": 1,
+        "build": {
+          "commit": "db686b4b10a94efc6282fe0a717c4f7394a07a8f",
+          "branch": "mejoras-probador",
+          "dirty": true
+        },
+        "cameraFps": null,
+        "inferenceFps": null,
+        "renderFps": 57.78322535216659,
+        "processingMs": null,
+        "inferenceMs": null,
+        "approximateLatencyMs": null,
+        "cameraReadyMs": null,
+        "trackingInitializationMs": null,
+        "firstPoseMs": null,
+        "recoveryMs": null,
+        "recoveries": null,
+        "visualLosses": null,
+        "droppedFrames": null,
+        "rejectedStaleResults": null,
+        "sourceResolutionChanges": null,
+        "resultAgeMs": null,
+        "deliveryAgeMs": null,
+        "captureAgeBudgetMs": null,
+        "pixelsPerMm": 1.48994648622973,
+        "finalScalePxPerMm": 1.48994648622973,
+        "frameWidthMm": 137,
+        "finalFrameWidthPx": 204.12266861347302,
+        "irisWeight": 0.45,
+        "irisConsistency": 0.0041593321586828455,
+        "irisAgeMs": null,
+        "correctedFaceWidthPx": 215.6952605940844,
+        "irisScalePxPerMm": 1.3581955936504875,
+        "v2ScalePxPerMm": 1.597742671067292,
+        "ratioCorrectedToOld": 1.1140579573084104,
+        "backendFallbacks": null,
+        "backend": null,
+        "trackingState": null,
+        "modelVisible": true,
+        "scaleSource": "blend",
+        "irisConfidence": "medium",
+        "irisStable": false,
+        "detection": {
+          "inferenceAttempts": null,
+          "inferencesCompleted": null,
+          "inferencesWithFace": null,
+          "inferencesWithoutFace": null,
+          "mediaPipeErrors": null,
+          "poseConversionRejections": null,
+          "poseConversionErrors": null,
+          "trackingInitializationErrors": null,
+          "discardedResolutionChanges": null,
+          "discardedStaleResults": null
+        },
+        "camera": {
+          "width": null,
+          "height": null,
+          "frameRate": null,
+          "aspectRatio": null,
+          "zoom": {
+            "current": null,
+            "min": null,
+            "max": null,
+            "step": null
+          },
+          "videoWidth": null,
+          "videoHeight": null,
+          "requestedFacingMode": null,
+          "actualFacingMode": null,
+          "resizeMode": null,
+          "supportedConstraints": {
+            "width": null,
+            "height": null,
+            "frameRate": null,
+            "aspectRatio": null,
+            "facingMode": null,
+            "zoom": null,
+            "resizeMode": null
+          },
+          "capabilities": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "appliedConstraints": {
+            "width": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "height": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "frameRate": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "aspectRatio": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            },
+            "zoom": {
+              "min": null,
+              "max": null,
+              "step": null,
+              "ideal": null,
+              "exact": null
+            }
+          },
+          "capabilitiesAvailable": false,
+          "intrinsics": "unavailable"
+        },
+        "projection": {
+          "width": 820,
+          "height": 1024,
+          "focalPx": 820,
+          "fovDegrees": 63.960506963676515,
+          "aspect": 0.80078125,
+          "source": "estimated"
+        },
+        "presentation": {
+          "sourceWidth": 820,
+          "sourceHeight": 1024,
+          "viewerWidth": 1234.5,
+          "viewerHeight": 1541.609375,
+          "visibleFraction": 0.999993424320955,
+          "alignmentErrorPx": 0,
+          "sourceKind": "photo",
+          "video": {
+            "width": 1234.5,
+            "height": 1541.609375
+          },
+          "canvas": {
+            "width": 1234.5,
+            "height": 1541.609375
+          }
+        },
+        "measurementNotes": {
+          "fps": "measured",
+          "scale": "estimated-population-reference",
+          "focal": "estimated-not-camera-intrinsics",
+          "missingValues": "unavailable",
+          "confidence": "geometric-consistency-not-probability"
+        }
+      }
+    }
+  ]
+}

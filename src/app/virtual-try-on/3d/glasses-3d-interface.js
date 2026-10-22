@@ -9,9 +9,11 @@ import { Suspense, useEffect, useRef, useState } from "react";
 
 import { formatClp } from "@/utils/store-client";
 import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-projection";
+import { technicalReport } from "@/virtual-try-on-3d/technical-report";
 
 import styles from "./virtual-try-on-3d.module.css";
 import CameraDiagnostics from "./camera-diagnostics";
+import RenderTrackingState from "./render-tracking-state";
 
 const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
 
@@ -19,7 +21,7 @@ function TrackingDiagnostics({ metricsRef }) {
   const outputRef = useRef(null);
   useEffect(() => {
     const timer = window.setInterval(() => {
-      if (outputRef.current) outputRef.current.textContent = JSON.stringify(metricsRef.current, null, 2);
+      if (outputRef.current) outputRef.current.textContent = JSON.stringify(technicalReport(metricsRef.current), null, 2);
     }, 500);
     return () => window.clearInterval(timer);
   }, [metricsRef]);
@@ -59,6 +61,9 @@ export default function Glasses3DInterface({ model }) {
     photoUrl,
     poseRef,
     rendererCanvasRef,
+    renderedPoseRef,
+    onTrackingVisibility,
+    pendingCaptureRef,
     resetFitAdjustment,
     selectedModel,
     setCatalogSearch,
@@ -83,13 +88,12 @@ export default function Glasses3DInterface({ model }) {
     if (viewerRef.current) observer.observe(viewerRef.current);
     return () => observer.disconnect();
   }, []);
-  // Both camera pixels and WebGL use exactly this cover rectangle. Centering
-  // only horizontally fails for portrait sources on a wide/short mobile viewer.
+  // Video y WebGL comparten el rectángulo de presentación en ambas orientaciones.
   const { width: coverWidth, height: coverHeight } = coverRectangle(viewerSize.width, viewerSize.height, projection.aspect);
 
   return (
     <>
-    {debugMode && <CameraDiagnostics videoRef={videoRef} viewerRef={viewerRef} rendererCanvasRef={rendererCanvasRef}
+    {debugMode && <CameraDiagnostics videoRef={videoRef} photoImageRef={photoImageRef} viewerRef={viewerRef} rendererCanvasRef={rendererCanvasRef}
       metricsRef={debugMetricsRef} cameraStatus={cameraStatus} dimensions={videoDimensions} />}
     <section className={styles.experience} data-mobile-camera={mobileCamera} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>
@@ -192,6 +196,7 @@ export default function Glasses3DInterface({ model }) {
               }}
               onCreated={({ gl }) => {
                 rendererCanvasRef.current = gl.domElement;
+                renderedPoseRef.current = null;
                 gl.toneMappingExposure = 1.1;
               }}
               camera={{
@@ -249,6 +254,9 @@ export default function Glasses3DInterface({ model }) {
                     occlusionEnabled={occlusionEnabled}
                   />
                 )}
+                {modelMetadata && <RenderTrackingState poseRef={poseRef} poseFilterRef={poseFilterRef}
+                  renderedPoseRef={renderedPoseRef} debugMetricsRef={debugMetricsRef} onVisibility={onTrackingVisibility}
+                  pendingCaptureRef={pendingCaptureRef} />}
               </Suspense>
             </Canvas>
           )}

@@ -1,0 +1,52 @@
+{
+  "stimulus": "synthetic-identical-inputs-not-physical-phone",
+  "baseline": "db686b4",
+  "tracking": [
+    {
+      "latencyMs": 20,
+      "sampleIntervalMs": 33.333333333333336,
+      "firstPoseBeforeMs": 33.333333333333336,
+      "firstPoseAfterMs": 33.333333333333336,
+      "visibleFractionBefore": 0.988950276243094,
+      "visibleFractionAfter": 0.988950276243094
+    },
+    {
+      "latencyMs": 90,
+      "sampleIntervalMs": 133.33333333333334,
+      "firstPoseBeforeMs": 100.00000000000001,
+      "firstPoseAfterMs": 100.00000000000001,
+      "visibleFractionBefore": 0.6077348066298343,
+      "visibleFractionAfter": 0.9337016574585635
+    },
+    {
+      "latencyMs": 140,
+      "sampleIntervalMs": 166.66666666666666,
+      "firstPoseBeforeMs": 150,
+      "firstPoseAfterMs": 150,
+      "visibleFractionBefore": 0.19889502762430938,
+      "visibleFractionAfter": 0.8784530386740331
+    },
+    {
+      "latencyMs": 220,
+      "sampleIntervalMs": 266.6666666666667,
+      "firstPoseBeforeMs": null,
+      "firstPoseAfterMs": 233.3333333333333,
+      "visibleFractionBefore": 0,
+      "visibleFractionAfter": 0.4585635359116022
+    }
+  ],
+  "scale": {
+    "facePriorPxPerMm": 2.8,
+    "irisReferencePxPerMm": 2,
+    "missingPoseEveryNthInference": 3,
+    "beforePxPerMm": 2.44,
+    "afterPxPerMm": 2,
+    "beforeRelativeWidthError": 0.21999999999999997,
+    "afterRelativeWidthError": 0
+  },
+  "limits": {
+    "extrapolationMs": 25,
+    "captureAgeCeilingMs": 360,
+    "deliverySilenceCeilingMs": 180
+  }
+}

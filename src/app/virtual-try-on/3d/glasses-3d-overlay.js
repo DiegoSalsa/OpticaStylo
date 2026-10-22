@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 
 import { BUILT_IN_3D_GLASSES } from "@/constants/virtual-try-on";
 import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
-import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
-import { PhysicalScaleEstimator } from "@/virtual-try-on-3d/physical-scale";
+import { TrackingSession, MAX_CAPTURE_AGE_MS } from "@/virtual-try-on-3d/tracking-session";
+import { SessionScaleEstimator } from "@/virtual-try-on-3d/session-scale";
 import { TrackingTimeline, startVideoFrameLoop } from "@/virtual-try-on-3d/tracking-timeline";
 import { announceStoreCartChange, ensureStoreCart, readStoreResponse } from "@/utils/store-client";
 import { validateTryOnModelMetadata } from "@/virtual-try-on-3d/model-contract";
@@ -13,9 +13,10 @@ import { acquireCamera, cameraTrackSnapshot, mobileCameraEnvironment } from "@/v
 import { createDetectionDiagnostics, recordDetectionResult } from "@/virtual-try-on-3d/detection-diagnostics";
 import { drawTryOnCapture } from "@/virtual-try-on-3d/frame-presentation";
 import { VTO_BUILD_IDENTITY } from "@/virtual-try-on-3d/build-identity";
+import { technicalReport } from "@/virtual-try-on-3d/technical-report";
 
 import Glasses3DInterface from "./glasses-3d-interface";
-import { createFaceTracking } from "./face-tracking";
+import { createResilientFaceTracking as createFaceTracking } from "./resilient-face-tracking";
 
 const DEFAULT_FIT_ADJUSTMENT = Object.freeze({
   scaleFactor: 1,
@@ -65,6 +66,10 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const cameraRequestRef = useRef(0);
   const poseRef = useRef(null);
   const modelMetadataRef = useRef(null);
+  const modelReadyRef = useRef(false);
+  const renderedPoseRef = useRef(null);
+  const visibilityRef = useRef(false);
+  const pendingCaptureRef = useRef(null);
   const rendererCanvasRef = useRef(null);
   const fitAdjustmentRef = useRef(DEFAULT_FIT_ADJUSTMENT);
 
@@ -93,7 +98,13 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const [facingMode, setFacingMode] = useState("user");
   const [cartMessage, setCartMessage] = useState("");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  // The injected provider belongs only to the development validation route.
+  const onTrackingVisibility = useCallback((visible) => {
+    const detected = visible && modelReadyRef.current;
+    if (visibilityRef.current !== detected) {
+      visibilityRef.current = detected; setFaceDetected(detected);
+    }
+  }, []);
+  // El proveedor inyectado sólo pertenece a la ruta de validación de desarrollo.
   const testDevices = process.env.NODE_ENV === "development" ? cameraDevices : null;
   const mobileCamera = useSyncExternalStore(subscribeCameraEnvironment, () => testDevices?.mobile ?? mobileCameraEnvironment({
     userAgent: navigator.userAgent, mobile: navigator.userAgentData?.mobile,
@@ -111,7 +122,8 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const changeScaleMode = useCallback((mode) => { setSelectedScaleMode(mode); }, []);
   const recordScaleDiagnostics = useCallback((pose, timestamp) => {
     if (!pose) return;
-    Object.assign(debugMetricsRef.current, pose.scaleDiagnostics, { scaleSampleTimestamp: timestamp });
+    Object.assign(debugMetricsRef.current, pose.scaleDiagnostics, { scaleSampleTimestamp: timestamp,
+      projection: pose.projection });
     if (debugMode) {
       scaleSamplesRef.current.push({ ...pose.scaleDiagnostics, timestamp });
       if (scaleSamplesRef.current.length > 300) scaleSamplesRef.current.shift();
@@ -120,8 +132,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
 
   useEffect(() => {
     if (!debugMode) return;
-    const debug = { snapshot: () => ({ ...debugMetricsRef.current, build: VTO_BUILD_IDENTITY }),
-      pose: () => poseRef.current,
+    const debug = { snapshot: () => technicalReport(debugMetricsRef.current, VTO_BUILD_IDENTITY),
       scaleSamples: () => structuredClone(scaleSamplesRef.current) };
     window.__OPTICA_STYLO_VTO__ = debug;
     return () => { if (window.__OPTICA_STYLO_VTO__ === debug) delete window.__OPTICA_STYLO_VTO__; };
@@ -145,6 +156,10 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     faceLandmarkerRef.current?.close?.();
     faceLandmarkerRef.current = null;
     rendererCanvasRef.current = null;
+    renderedPoseRef.current = null;
+    modelReadyRef.current = false;
+    visibilityRef.current = false;
+    pendingCaptureRef.current = null;
     poseFilterRef.current = null;
     poseRef.current = null;
     debugMetricsRef.current = {};
@@ -202,6 +217,11 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     async function loadModelMetadata() {
       setModelError(false);
       setModelReady(false);
+      modelReadyRef.current = false;
+      renderedPoseRef.current = null;
+      visibilityRef.current = false;
+      pendingCaptureRef.current = null;
+      setFaceDetected(false);
       setModelMetadata(null);
       modelMetadataRef.current = null;
       poseFilterRef.current?.reset();
@@ -268,7 +288,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       setModelReady(false);
       setCaptureMessage("");
       setStatusMessage("Analizando la foto para ajustar el marco 3D…");
-      const tracking = await createFaceTracking("IMAGE").catch(() => null);
+      const tracking = await (testDevices?.createTracking ?? createFaceTracking)("IMAGE").catch(() => null);
       if (cameraRequestRef.current !== requestId) { tracking?.landmarker.close?.(); return; }
       if (!tracking || !photoImageRef.current) {
         setCameraStatus("error");
@@ -282,7 +302,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
       setTrackingReady(true);
     },
-    [releaseResources],
+    [releaseResources, testDevices],
   );
 
   useEffect(() => {
@@ -327,8 +347,10 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       }
     }
     poseRef.current = nextPose;
+    visibilityRef.current = false;
+    renderedPoseRef.current = null;
     recordScaleDiagnostics(nextPose, performance.now());
-    setFaceDetected(Boolean(nextPose));
+    setFaceDetected(false);
     setStatusMessage(
       nextPose
         ? "Foto lista. Puedes guardar la simulación."
@@ -365,9 +387,10 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       setStatusMessage("Esperando que autorices el uso de la cámara…");
 
       const detection = createDetectionDiagnostics();
+      const requestStartedAt = performance.now();
       debugMetricsRef.current.detection = detection;
       let cameraDiagnostics = null;
-      const trackingPromise = createFaceTracking().catch((error) => {
+      const trackingPromise = (testDevices?.createTracking ?? createFaceTracking)().catch((error) => {
         detection.trackingInitializationErrors++; detection.lastTrackingInitializationError = error.message; return null;
       });
 
@@ -395,9 +418,12 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         const syncDimensions = () => {
           if (cameraRequestRef.current === requestId && video.videoWidth > 0 && video.videoHeight > 0) {
             if (sourceDimensions && (sourceDimensions.width !== video.videoWidth || sourceDimensions.height !== video.videoHeight)) {
-              // Previous poses are expressed in previous source pixels. Start
-              // a fresh filter state without changing its approved algorithm.
+              // Una resolución distinta invalida coordenadas y calibración de
+              // sesión; una inferencia en vuelo se descarta al terminar.
               poseFilterRef.current?.reset(); poseRef.current = null; setFaceDetected(false);
+              visibilityRef.current = false;
+              scaleEstimatorRef.current?.reset();
+              renderedPoseRef.current = null;
               debugMetricsRef.current.sourceResolutionChanges = (debugMetricsRef.current.sourceResolutionChanges ?? 0) + 1;
             }
             sourceDimensions = { width: video.videoWidth, height: video.videoHeight };
@@ -423,16 +449,16 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         setCameraStatus("ready");
         setStatusMessage("Cámara activa. Preparando el seguimiento facial…");
 
-        const timeline = new TrackingTimeline(), filter = new PoseFilter();
+        const timeline = new TrackingTimeline(), filter = new TrackingSession(requestStartedAt);
+        debugMetricsRef.current.cameraReadyMs = performance.now() - requestStartedAt;
         poseFilterRef.current = filter;
-        scaleEstimatorRef.current = new PhysicalScaleEstimator();
-        let previousFaceState = false, renderFrames = 0;
+        scaleEstimatorRef.current = new SessionScaleEstimator();
+        let renderFrames = 0;
         const metricsStarted = performance.now();
         const renderFrame = (timestamp) => {
           if (!runningRef.current || cameraRequestRef.current !== requestId) return;
           poseRef.current = filter.sample(timestamp);
-          const detected = Boolean(poseRef.current);
-          if (detected !== previousFaceState) { previousFaceState = detected; setFaceDetected(detected); }
+          if (filter.phase === "lost" && timestamp - filter.lastReceivedAt > 1000) scaleEstimatorRef.current?.reset();
           renderFrames++;
           const seconds = Math.max(0.001, (timestamp - metricsStarted) / 1000);
           Object.assign(debugMetricsRef.current, {
@@ -448,7 +474,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
           const metadata = modelMetadataRef.current;
           const sourceWidth = video.videoWidth, sourceHeight = video.videoHeight;
           const started = performance.now();
-          // RVFC's display time is an estimate; never allow a future sample timestamp.
+          // RVFC estima la entrega; no se admiten capturas con tiempo futuro.
           const sampledAt = Math.min(now, captureTime);
           const infer = async () => {
             let result, inferenceError = null;
@@ -458,8 +484,17 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
             const duration = performance.now() - started;
             if (cameraRequestRef.current !== requestId || !runningRef.current) return;
             if (!timeline.finish(now, duration) || metadata !== modelMetadataRef.current) return;
+            // Una recuperación de backend incluye carga del modelo, no coste
+            // normal de inferencia. No convertirla en segundos de espera extra.
+            if (inferenceError) { timeline.durationMs = 0; timeline.intervalMs = 0; }
             if (sourceWidth !== video.videoWidth || sourceHeight !== video.videoHeight) {
               detection.discardedResolutionChanges = (detection.discardedResolutionChanges ?? 0) + 1;
+              return;
+            }
+            const receivedAt = performance.now();
+            if (receivedAt - sampledAt > MAX_CAPTURE_AGE_MS) {
+              detection.discardedStaleResults = (detection.discardedStaleResults ?? 0) + 1;
+              filter.update(null, sampledAt, receivedAt);
               return;
             }
             debugMetricsRef.current.inferenceMs = result?.inferenceDurationMs ?? duration;
@@ -472,9 +507,8 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
                 scaleEstimatorRef.current, sampledAt);
             } catch (error) { poseError = error; }
             recordDetectionResult(detection, { result, inferenceError, pose, poseError });
-            if (!pose) scaleEstimatorRef.current?.reset();
             recordScaleDiagnostics(pose, sampledAt);
-            filter.update(pose, sampledAt);
+            filter.update(pose, sampledAt, performance.now());
           };
           void infer();
         });
@@ -486,7 +520,19 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         }
         if (tracking) {
           debugMetricsRef.current.backend = tracking.backend;
-          faceLandmarkerRef.current = tracking.landmarker;
+          debugMetricsRef.current.trackingInitializationMs = performance.now() - requestStartedAt;
+          faceLandmarkerRef.current = {
+            detectForVideo: async (...args) => {
+              try { return await tracking.landmarker.detectForVideo(...args); }
+              finally {
+                if (cameraRequestRef.current === requestId) {
+                  debugMetricsRef.current.backend = tracking.backend;
+                  debugMetricsRef.current.backendFallbacks = tracking.fallbacks;
+                }
+              }
+            },
+            close: () => tracking.landmarker.close(),
+          };
           setFaceMeshTriangleIndices(tracking.faceMeshTriangleIndices);
           setTrackingReady(true);
           setStatusMessage(
@@ -494,7 +540,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
           );
         } else {
           setStatusMessage(
-            "La cámara funciona, pero el seguimiento facial no pudo cargarse. Recarga la página.",
+            "No pudimos cargar el seguimiento. Apaga y enciende la cámara para reintentar, o usa una foto.",
           );
         }
       } catch (error) {
@@ -534,30 +580,34 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   }, []);
 
   const captureTryOn = useCallback(() => {
-    const video = videoRef.current;
-    const photo = photoImageRef.current;
-    const overlay = rendererCanvasRef.current;
-    const media = cameraStatus === "photo" ? photo : video;
-    if (!media || !overlay || !faceDetected || !modelReady) return;
+    // Ejecutar la composición después del próximo render WebGL: una inferencia
+    // recién entregada todavía puede no estar dibujada cuando se pulsa el botón.
+    pendingCaptureRef.current = () => {
+      const video = videoRef.current;
+      const photo = photoImageRef.current;
+      const overlay = rendererCanvasRef.current;
+      const media = cameraStatus === "photo" ? photo : video;
+      const currentPose = cameraStatus === "photo" ? poseRef.current : poseFilterRef.current?.sample(performance.now());
+      if (!media || !overlay || !faceDetected || !modelReady || !currentPose || !renderedPoseRef.current
+        || currentPose.timestamp !== renderedPoseRef.current.timestamp) return;
 
-    const output = document.createElement("canvas");
-    output.width =
-      cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
-    output.height =
-      cameraStatus === "photo" ? photo.naturalHeight : video.videoHeight;
-    const context = output.getContext("2d");
-    drawTryOnCapture(context, media, overlay, output.width, output.height, cameraStatus !== "photo");
-    output.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `optica-stylo-${selectedModel.sku}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
-      setCaptureMessage("Captura guardada en tu dispositivo.");
-      window.setTimeout(() => setCaptureMessage(""), 3200);
-    }, "image/png");
+      const output = document.createElement("canvas");
+      output.width = cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
+      output.height = cameraStatus === "photo" ? photo.naturalHeight : video.videoHeight;
+      const context = output.getContext("2d");
+      drawTryOnCapture(context, media, overlay, output.width, output.height, cameraStatus !== "photo");
+      output.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `optica-stylo-${selectedModel.sku}.png`;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setCaptureMessage("Captura guardada en tu dispositivo.");
+        window.setTimeout(() => setCaptureMessage(""), 3200);
+      }, "image/png");
+    };
   }, [cameraStatus, faceDetected, modelReady, selectedModel.sku]);
 
   const changeCamera = useCallback(() => {
@@ -603,7 +653,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     }
   }, [selectedModel.productId]);
 
-  const handleModelReady = useCallback(() => setModelReady(true), []);
+  const handleModelReady = useCallback(() => { modelReadyRef.current = true; setModelReady(true); }, []);
   const displayedStatusMessage =
     captureMessage ||
     (cameraStatus === "ready" && trackingReady
@@ -661,6 +711,9 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         photoUrl,
         poseRef,
         rendererCanvasRef,
+        renderedPoseRef,
+        onTrackingVisibility,
+        pendingCaptureRef,
         resetFitAdjustment,
         selectedModel,
         setCatalogSearch,
