@@ -43,6 +43,7 @@ export function technicalReport(metrics, build = {}) {
     projection: { ...pickNumbers(projection, ["width", "height", "focalPx", "fovDegrees", "aspect"]),
       source: enumValue(projection.source, ["estimated", "calibrated"]) },
     presentation: { ...pickNumbers(presentation, ["sourceWidth", "sourceHeight", "viewerWidth", "viewerHeight", "visibleFraction", "alignmentErrorPx"]),
+      sourceKind: enumValue(presentation.sourceKind, ["camera", "photo"]),
       video: pickNumbers(presentation.videoRectangle, ["width", "height"]),
       canvas: pickNumbers(presentation.canvasRectangle, ["width", "height"]) },
     measurementNotes: { fps: "measured", scale: "estimated-population-reference", focal: "estimated-not-camera-intrinsics",

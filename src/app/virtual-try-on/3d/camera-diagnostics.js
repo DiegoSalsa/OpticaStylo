@@ -14,13 +14,13 @@ const rectangle = (element) => {
 };
 
 // Sólo se monta con ?vtoDebug=1; la vista original comparte el stream local.
-export default function CameraDiagnostics({ videoRef, viewerRef, rendererCanvasRef, metricsRef, cameraStatus, dimensions }) {
+export default function CameraDiagnostics({ videoRef, photoImageRef, viewerRef, rendererCanvasRef, metricsRef, cameraStatus, dimensions }) {
   const outputRef = useRef(null), summaryRef = useRef(null), rawRef = useRef(null);
   const [showRaw, setShowRaw] = useState(false);
   useEffect(() => {
     const update = () => {
       const video = videoRef.current, viewer = rectangle(viewerRef.current);
-      const videoRect = rectangle(video), canvasRect = rectangle(rendererCanvasRef.current);
+      const videoRect = rectangle(cameraStatus === "photo" ? photoImageRef.current : video), canvasRect = rectangle(rendererCanvasRef.current);
       const width = cameraStatus === "photo" ? dimensions.width : video?.videoWidth;
       const height = cameraStatus === "photo" ? dimensions.height : video?.videoHeight;
       const presentation = framePresentation(width, height, viewer?.width, viewer?.height);
@@ -28,7 +28,8 @@ export default function CameraDiagnostics({ videoRef, viewerRef, rendererCanvasR
         ? Math.max(...["x", "y", "width", "height"].map((key) => Math.abs(videoRect[key] - canvasRect[key]))) : null;
       const camera = metricsRef.current.camera;
       if (camera && video?.srcObject) Object.assign(camera, cameraTrackSnapshot(video.srcObject, camera.supportedConstraints));
-      metricsRef.current.presentation = { ...presentation, videoRectangle: videoRect, canvasRectangle: canvasRect, alignmentErrorPx };
+      metricsRef.current.presentation = { ...presentation, sourceKind: cameraStatus === "photo" ? "photo" : "camera",
+        videoRectangle: videoRect, canvasRectangle: canvasRect, alignmentErrorPx };
       if (outputRef.current) outputRef.current.textContent = JSON.stringify({ build: VTO_BUILD_IDENTITY, cameraStatus,
         videoWidth: video?.videoWidth ?? 0, videoHeight: video?.videoHeight ?? 0, ...technicalReport(metricsRef.current, VTO_BUILD_IDENTITY) }, null, 2);
       const m = metricsRef.current;
@@ -36,7 +37,7 @@ export default function CameraDiagnostics({ videoRef, viewerRef, rendererCanvasR
     };
     update(); const timer = window.setInterval(update, 500);
     return () => window.clearInterval(timer);
-  }, [videoRef, viewerRef, rendererCanvasRef, metricsRef, cameraStatus, dimensions]);
+  }, [videoRef, photoImageRef, viewerRef, rendererCanvasRef, metricsRef, cameraStatus, dimensions]);
   useEffect(() => {
     const raw = rawRef.current;
     if (showRaw && cameraStatus === "ready" && raw) {

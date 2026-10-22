@@ -93,7 +93,7 @@ export default function Glasses3DInterface({ model }) {
 
   return (
     <>
-    {debugMode && <CameraDiagnostics videoRef={videoRef} viewerRef={viewerRef} rendererCanvasRef={rendererCanvasRef}
+    {debugMode && <CameraDiagnostics videoRef={videoRef} photoImageRef={photoImageRef} viewerRef={viewerRef} rendererCanvasRef={rendererCanvasRef}
       metricsRef={debugMetricsRef} cameraStatus={cameraStatus} dimensions={videoDimensions} />}
     <section className={styles.experience} data-mobile-camera={mobileCamera} aria-label="Probador virtual 3D">
       <aside className={styles.guidePanel}>

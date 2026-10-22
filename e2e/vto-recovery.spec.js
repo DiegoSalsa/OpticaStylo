@@ -97,6 +97,7 @@ test("latencia de 220 ms entrega poses, elimina las vencidas y permite usar una 
   await page.locator('input[type="file"]').last().setInputFiles({ name: "patron.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
   await expect(badge(page)).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar foto", exact: true })).toBeEnabled();
+  await expect.poll(async () => (await snapshot(page)).presentation.alignmentErrorPx).toBeLessThan(.1);
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Guardar foto", exact: true }).click();
   expect((await download).suggestedFilename()).toContain(".png");
@@ -142,6 +143,7 @@ test("MediaPipe real: entrada tardía, ambos GLB, pérdida y fotografía", async
   await page.locator('input[type="file"]').last().setInputFiles(process.env.VTO_PORTRAIT_PATH);
   await expect(badge(page)).toBeVisible({ timeout: 30000 });
   await expect.poll(renderedPixels).toBeGreaterThan(100);
+  await expect.poll(async () => (await snapshot(page)).presentation.alignmentErrorPx).toBeLessThan(.1);
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Guardar foto", exact: true }).click();
   expect((await download).suggestedFilename()).toContain("HD0896-001.png");
