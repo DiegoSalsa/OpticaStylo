@@ -1,4 +1,10 @@
 import { loadProjectEnvironment } from "./load-environment.mjs";
+import { mkdir } from "node:fs/promises";
+import { addDemoDays, demoDate, demoInstant, DEMO_TIME_ZONE } from "./demo-configuration.mjs";
+import { requireAcademicIsolation, seedAcademicData, ids } from "../tests/fixtures/academic-data.js";
+import { createSale } from "../src/services/sale-service.js";
+
+loadProjectEnvironment();
 
 /*
  * Preparación manual de datos ficticios para la demostración presencial.
@@ -8,9 +14,9 @@ import { loadProjectEnvironment } from "./load-environment.mjs";
  * poner direcciones de terceros en la cola de correo.
  */
 
-const DEMO_MARKER = "[DEMO-OPTICA-STYLO-2026]";
+const DEMO_DATE = demoDate(process.env.DEMO_DATE);
+const DEMO_MARKER = `[DEMO-OPTICA-STYLO-${DEMO_DATE}]`;
 const DEFAULT_EMAIL_DOMAIN = "demo.opticastylo.invalid";
-const DEMO_DATE = process.env.DEMO_DATE ?? "2026-09-22";
 const emailDomain = (process.env.DEMO_EMAIL_DOMAIN ?? DEFAULT_EMAIL_DOMAIN)
   .trim()
   .toLowerCase();
@@ -32,15 +38,13 @@ function dateOnly(value) {
   return new Date(`${value}T00:00:00.000Z`);
 }
 
-// Las fechas de la demo corresponden a Chile continental durante septiembre.
+// Convertir cada horario con las reglas de America/Santiago, también en invierno.
 function chileDate(value, time) {
-  return new Date(`${value}T${time}:00-03:00`);
+  return demoInstant(value, time);
 }
 
 function addDays(value, days) {
-  const result = dateOnly(value);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result.toISOString().slice(0, 10);
+  return addDemoDays(value, days);
 }
 
 function rutFromBody(body) {
@@ -77,6 +81,8 @@ function reportAppointment(appointment, patient) {
 }
 
 function requireConfirmation() {
+  // Exigir el clúster local efímero evita que NODE_ENV=development habilite una base real.
+  requireAcademicIsolation();
   if (process.env.NODE_ENV === "production") {
     fail("se niega a ejecutarse con NODE_ENV=production.");
   }
@@ -181,17 +187,20 @@ const appointmentPlan = [
   ["carolina-martinez", 1, "10:30", "CONFIRMED"],
 ];
 
-loadProjectEnvironment();
 requireConfirmation();
 assertDate(DEMO_DATE, "DEMO_DATE");
 
 const { prisma, disconnectPrisma } = await import("../src/db/prisma.js");
 
 try {
+  await mkdir("tmp/academic-validation", { recursive: true });
+  // Reutilizar cuentas, roles, catálogo y jornadas sintéticas; la clave aleatoria queda en tmp.
+  const actors = await seedAcademicData();
   const professional = await prisma.professional_profiles.findFirst({
     include: { users_professional_profiles_user_idTousers: true },
     orderBy: { created_at: "asc" },
     where: {
+      user_id: ids.professional,
       is_bookable: true,
       users_professional_profiles_user_idTousers: { is_active: true },
     },
@@ -516,7 +525,21 @@ try {
     };
   }, { isolationLevel: "Serializable", maxWait: 10_000, timeout: 30_000 });
 
+  // Crear cotización y pedido con las mismas reglas e idempotencia del POS, sin proveedores.
+  const frame = await prisma.products.findFirstOrThrow({ where: { sku: "HD0896-001" } });
+  const commercial = [];
+  for (const operation of ["QUOTATION", "SALE"]) {
+    const sale = await createSale({ operation, customerId: result.customer.id,
+      items: [{ productId: frame.id, quantity: 1 }] }, actors.sales,
+    { requestKey: `${DEMO_MARKER}-${operation.toLowerCase()}` });
+    commercial.push({ operation, saleNumber: sale.saleNumber, status: sale.status });
+  }
+
   console.log(JSON.stringify({
+    demoDate: DEMO_DATE,
+    timeZone: DEMO_TIME_ZONE,
+    accounts: ["academic-administrador@example.invalid", "academic-ventas@example.invalid", "academic-profesional@example.invalid"],
+    commercial,
     emailDomain,
     marker: DEMO_MARKER,
     patientPrincipal: {
