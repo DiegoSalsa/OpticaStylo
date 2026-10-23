@@ -27,6 +27,7 @@ test("guarda una imagen de producto en Cloudinary y registra su referencia", asy
       return { image: { id: imageId, ...data }, reason: null };
     },
     findProductById: async () => ({ id: productId }),
+    findDuplicate: async () => null,
     mediaGateway: {
       deletePublicProductImage: async () => assert.fail("No debe compensar una carga exitosa"),
       uploadPublicProductImage: async () => ({

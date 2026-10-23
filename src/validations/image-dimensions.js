@@ -106,3 +106,10 @@ export function hasSafeImageDimensions(data, mediaType) {
   }
   return false;
 }
+
+export function readImageDimensions(data, mediaType) {
+  if (mediaType === "image/jpeg") return readJpegDimensions(data);
+  if (mediaType === "image/png") return readPngDimensions(data);
+  if (mediaType === "image/webp") return readWebpDimensions(data);
+  return null;
+}

@@ -9,6 +9,7 @@ function image(row) {
     publicId: row.cloudinary_public_id, sha256: row.file_sha256,
     size: Number(row.file_size_bytes), status: row.status, url: row.cloudinary_url,
     version: Number(row.cloudinary_version), width: row.width,
+    provenance: row.provenance ?? null, importKey: row.import_key ?? null,
   };
 }
 
@@ -27,11 +28,22 @@ export async function findActiveProductImage(productId, imageId) {
   }));
 }
 
+export async function findProductImageByHash(productId, sha256) {
+  return image(await prisma.product_images.findFirst({
+    orderBy: [{ created_at: "asc" }, { id: "asc" }],
+    where: { product_id: productId, file_sha256: sha256 },
+  }));
+}
+
 export async function createProductImage(productId, input, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const product = await client.products.findUnique({ select: { id: true }, where: { id: productId } });
     if (!product) return null;
+    const duplicate = await client.product_images.findFirst({
+      where: { product_id: productId, file_sha256: input.sha256 },
+    });
+    if (duplicate) return { image: image(duplicate), reason: "DUPLICATE" };
     const maximum = await client.product_images.aggregate({
       _max: { position: true }, where: { product_id: productId, status: "ACTIVE" },
     });
@@ -44,6 +56,7 @@ export async function createProductImage(productId, input, actorUserId) {
       created_by: actorUserId, file_sha256: input.sha256,
       file_size_bytes: input.size, height: input.height, media_type: input.mediaType,
       original_filename: input.filename, position, product_id: productId, width: input.width,
+      provenance: input.provenance ?? undefined, import_key: input.importKey ?? null,
     } });
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     await client.product_events.create({ data: {

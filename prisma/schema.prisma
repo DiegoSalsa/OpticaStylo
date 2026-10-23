@@ -563,6 +563,8 @@ model product_images {
   media_type                             String    @map("media_type") @db.VarChar(100)
   file_size_bytes                        Int       @map("file_size_bytes")
   file_sha256                            String    @map("file_sha256") @db.Char(64)
+  provenance                             Json?
+  import_key                             String?   @unique(map: "product_images_import_key_key") @db.Char(64)
   cloudinary_asset_id                    String    @unique @map("cloudinary_asset_id") @db.VarChar(100)
   cloudinary_public_id                   String    @unique @map("cloudinary_public_id") @db.VarChar(500)
   cloudinary_version                     BigInt    @map("cloudinary_version")
@@ -579,6 +581,7 @@ model product_images {
   products                               products  @relation(fields: [product_id], references: [id], onUpdate: NoAction)
   users_product_images_retired_byTousers users?    @relation("product_images_retired_byTousers", fields: [retired_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
+  @@index([product_id, file_sha256], map: "product_images_product_hash_index")
   @@map("product_images")
 }
 

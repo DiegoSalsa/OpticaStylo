@@ -53,8 +53,12 @@ export function createCloudinaryMediaGateway({
   environment = process.env,
   fetchImplementation = fetch,
   sdk = cloudinary,
+  productImageFolder = "opticastylo/productos",
 } = {}) {
   const configuration = configure(sdk, environment);
+  if (productImageFolder !== "opticastylo/productos" && !/^opticastylo\/pruebas\/romano-[a-z0-9-]+$/.test(productImageFolder)) {
+    throw new Error("La carpeta de imágenes de producto no está permitida.");
+  }
 
   return Object.freeze({
     async deletePrivatePrescription(asset) {
@@ -127,18 +131,45 @@ export function createCloudinaryMediaGateway({
       }
     },
 
-    async uploadPublicProductImage({ data }) {
+    async uploadPublicProductImage({ data, publicId, sha256, productId }) {
+      if (publicId && (!/^romano-[a-f0-9]{64}$/.test(publicId) || !/^[a-f0-9]{64}$/.test(sha256 ?? "") || !productId)) {
+        throw new AppError({ code: "INVALID_MEDIA_IMPORT", message: "El identificador de importación no es válido.", status: 400 });
+      }
+      const fullId = publicId ? `${productImageFolder}/${publicId}` : null;
+      async function recoverExisting() {
+        try {
+          const existing = await sdk.api.resource(fullId, { context: true, resource_type: "image", type: "upload" });
+          if (existing.context?.custom?.stylo_sha256 !== sha256 || existing.context?.custom?.stylo_product !== productId) {
+            throw new Error("El recurso existente no coincide con el producto y el hash esperados.");
+          }
+          return uploadResult(existing);
+        } catch (error) {
+          if (error?.http_code === 404 || error?.error?.http_code === 404) return null;
+          throw error;
+        }
+      }
       try {
+        if (fullId) {
+          const existing = await recoverExisting();
+          if (existing) return existing;
+        }
         const result = await uploadBuffer(sdk, data, {
-          folder: "opticastylo/productos",
+          folder: productImageFolder,
           overwrite: false,
-          public_id: `producto-${randomUUID()}`,
+          public_id: publicId ?? `producto-${randomUUID()}`,
           resource_type: "image",
           type: "upload",
           use_filename: false,
+          ...(fullId ? { context: { stylo_sha256: sha256, stylo_product: productId } } : {}),
         });
         return uploadResult(result);
       } catch (error) {
+        if (fullId) {
+          try {
+            const existing = await recoverExisting();
+            if (existing) return existing;
+          } catch { /* El reintento usa el mismo identificador y nunca sobrescribe el recurso. */ }
+        }
         return uploadFailure(error);
       }
     },

@@ -25,6 +25,9 @@
 /build
 /output/
 
+# Las fotografías nuevas del catálogo se almacenan exclusivamente en Cloudinary.
+/public/images/products/
+
 # Archivos del sistema
 .DS_Store
 Thumbs.db

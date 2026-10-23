@@ -6,12 +6,14 @@ import { getCloudinaryMediaGateway } from "../integrations/media/cloudinary-medi
 import {
   createProductImage,
   findActiveProductImage,
+  findProductImageByHash,
   listActiveProductImages,
   retireProductImage,
 } from "../repositories/product-image-repository.js";
 import { findProductById } from "../repositories/product-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { validateProductId } from "../validations/product-validation.js";
+import { validateImageProvenance } from "../validations/product-image-provenance.js";
 import {
   validateProductImage,
   validateProductImageAlt,
@@ -40,6 +42,7 @@ function grouped(images) {
     url: image.url,
     version: image.version,
     width: image.width,
+    provenance: image.provenance ?? null,
   }));
 }
 
@@ -58,12 +61,20 @@ export async function addProductImage(productId, input, actor, dependencies = {}
   if (!product) notFound();
   const image = validateProductImage(input.file);
   const alt = validateProductImageAlt(input.alt);
+  const provenance = validateImageProvenance(input.provenance);
   const data = validateProductImageBytes(
     Buffer.from(await image.file.arrayBuffer()),
     image.mediaType,
   );
+  const sha256 = createHash("sha256").update(data).digest("hex");
+  const findDuplicate = dependencies.findDuplicate ?? findProductImageByHash;
+  const duplicate = await findDuplicate(id, sha256);
+  if (duplicate) return { ...duplicate, duplicate: true };
+  const importKey = provenance ? createHash("sha256").update(`${id}|${sha256}`).digest("hex") : null;
   const uploader = dependencies.mediaGateway ?? getCloudinaryMediaGateway();
-  const stored = await uploader.uploadPublicProductImage({ data });
+  const stored = await uploader.uploadPublicProductImage({
+    data, ...(importKey ? { publicId: `romano-${importKey}`, sha256, productId: id } : {}),
+  });
   try {
     const result = await (dependencies.createImage ?? createProductImage)(id, {
       alt,
@@ -73,7 +84,7 @@ export async function addProductImage(productId, input, actor, dependencies = {}
       height: stored.height,
       mediaType: image.mediaType,
       publicId: stored.publicId,
-      sha256: createHash("sha256").update(data).digest("hex"),
+      sha256, importKey, provenance,
       size: data.length,
       url: stored.secureUrl,
       version: stored.version,
@@ -83,9 +94,24 @@ export async function addProductImage(productId, input, actor, dependencies = {}
       throw new AppError({ code: "PRODUCT_IMAGE_LIMIT_REACHED", message: "El producto ya tiene el máximo de imágenes permitido.", status: 409 });
     }
     if (!result?.image) notFound();
-    return result.image;
+    if (result.reason === "DUPLICATE" && result.image.publicId !== stored.publicId) {
+      const cleaned = await uploader.deletePublicProductImage(stored);
+      if (!cleaned) throw new AppError({ code: "PRODUCT_IMAGE_CLEANUP_REQUIRED", message: "La imagen duplicada requiere limpieza en Cloudinary.", status: 503 });
+    }
+    return { ...result.image, duplicate: result.reason === "DUPLICATE" };
   } catch (error) {
-    await uploader.deletePublicProductImage(stored);
+    // Una respuesta perdida puede ocultar una transacción confirmada: comprobar antes de compensar.
+    let persisted;
+    try { persisted = await findDuplicate(id, sha256); } catch {
+      throw new AppError({ code: "PRODUCT_IMAGE_ASSOCIATION_UNCERTAIN", message: "No se pudo confirmar la asociación; conservar el recurso y reintentar.", status: 503, cause: error });
+    }
+    if (persisted?.assetId === stored.assetId) return { ...persisted, duplicate: true };
+    // Un identificador de importación es compartido por los reintentos: conservarlo hasta reconciliar.
+    if (importKey && !persisted) {
+      throw new AppError({ code: "PRODUCT_IMAGE_ASSOCIATION_UNCERTAIN", message: "Conservar el recurso de importación para reintentar o reconciliar su asociación.", status: 503, cause: error });
+    }
+    const cleaned = await uploader.deletePublicProductImage(stored);
+    if (!cleaned) throw new AppError({ code: "PRODUCT_IMAGE_CLEANUP_REQUIRED", message: "La asociación falló y el recurso requiere limpieza en Cloudinary.", status: 503, cause: error });
     throw error;
   }
 }
