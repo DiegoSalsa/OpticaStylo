@@ -1,0 +1,564 @@
+[
+  {
+    "key": "GAFA POLARIZED|8550",
+    "colors": [
+      "C2",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "GAFA POLARIZED|8550|C2",
+      "GAFA POLARIZED|8550|C3",
+      "GAFA POLARIZED|8550|C5"
+    ],
+    "query": "\"GAFA POLARIZED\" \"8550\" (\"C2\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAFA SILMO|ZD21290W",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "GAFA SILMO|ZD21290W|C1",
+      "GAFA SILMO|ZD21290W|C2",
+      "GAFA SILMO|ZD21290W|C3"
+    ],
+    "query": "\"GAFA SILMO\" \"ZD21290W\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAME|JO24061",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "GAME|JO24061|C7"
+    ],
+    "query": "\"GAME\" \"JO24061\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAME|MT202035",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "GAME|MT202035|C2"
+    ],
+    "query": "\"GAME\" \"MT202035\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAME|MT21145",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "GAME|MT21145|C2"
+    ],
+    "query": "\"GAME\" \"MT21145\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAME|MT24068",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "GAME|MT24068|C3"
+    ],
+    "query": "\"GAME\" \"MT24068\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAME|MT24069",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "GAME|MT24069|C3"
+    ],
+    "query": "\"GAME\" \"MT24069\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GAME|MT24070",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "GAME|MT24070|C3"
+    ],
+    "query": "\"GAME\" \"MT24070\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G0174X",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G0174X|C2"
+    ],
+    "query": "\"GATTIZONI\" \"G0174X\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60093X",
+    "colors": [
+      "C15"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60093X|C15"
+    ],
+    "query": "\"GATTIZONI\" \"G60093X\" (\"C15\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60105X",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60105X|C4"
+    ],
+    "query": "\"GATTIZONI\" \"G60105X\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "AM26015 C1 | OPTICALI (https://www.opticali.cl/producto/graduado/am26015-c1)",
+        "url": "https://www.opticali.cl/producto/graduado/am26015-c1"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60123X",
+    "colors": [
+      "C7B"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60123X|C7B"
+    ],
+    "query": "\"GATTIZONI\" \"G60123X\" (\"C7B\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Lente óptico Gattizoni G60123X – Ópticas Osman (https://opticasosman.cl/products/lente-optico-gattizoni-g60123x)",
+        "url": "https://opticasosman.cl/products/lente-optico-gattizoni-g60123x"
+      },
+      {
+        "title": "Lentes ópticos – Page 6 – Ópticas Osman (https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=6)",
+        "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=6"
+      },
+      {
+        "title": "Productos – Page 3 – Ópticas Osman (https://opticasosman.cl/collections/all?page=3)",
+        "url": "https://opticasosman.cl/collections/all?page=3"
+      },
+      {
+        "title": "Opticas Optimundo | Un mundo de visión frente a usted (https://opticasoptimundo.cl/)",
+        "url": "https://opticasoptimundo.cl/"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60129X",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60129X|C3",
+      "GATTIZONI|G60129X|C4"
+    ],
+    "query": "\"GATTIZONI\" \"G60129X\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "untitled (https://webpac.cl/static/reporte_ventas.pdf)",
+        "url": "https://webpac.cl/static/reporte_ventas.pdf"
+      },
+      {
+        "title": "GATTIZONI Mujer Óptico (https://www.hdvisionrx.com/mujer/gattizoni-mujer-optico)",
+        "url": "https://www.hdvisionrx.com/mujer/gattizoni-mujer-optico"
+      },
+      {
+        "title": "Lente óptico Gattizoni G60129X – Ópticas Osman (https://opticasosman.cl/products/lente-optico-gattizoni-g60129x)",
+        "url": "https://opticasosman.cl/products/lente-optico-gattizoni-g60129x"
+      },
+      {
+        "title": "Opticas Optimundo | Un mundo de visión frente a usted (https://opticasoptimundo.cl/)",
+        "url": "https://opticasoptimundo.cl/"
+      },
+      {
+        "title": "Lentes ópticos – Page 6 – Ópticas Osman (https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=6)",
+        "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=6"
+      },
+      {
+        "title": "Mujer (https://www.hdvisionrx.com/mujer?page=3&sorting=price-desc)",
+        "url": "https://www.hdvisionrx.com/mujer?page=3&sorting=price-desc"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60130X",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60130X|C3"
+    ],
+    "query": "\"GATTIZONI\" \"G60130X\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "(https://lentesopticoschile.cl/ficha_slide.php?idp=351)",
+        "url": "https://lentesopticoschile.cl/ficha_slide.php?idp=351"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=44)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=44"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60131X",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60131X|C2"
+    ],
+    "query": "\"GATTIZONI\" \"G60131X\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Opticali | Lentes y monturas de calidad | OPTICALI (https://opticali.cl/)",
+        "url": "https://opticali.cl/"
+      },
+      {
+        "title": "Opticali | Lentes y monturas de calidad | OPTICALI (https://www.opticali.cl/)",
+        "url": "https://www.opticali.cl/"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=36)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=36"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=32)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=32"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60133X",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60133X|C1",
+      "GATTIZONI|G60133X|C2"
+    ],
+    "query": "\"GATTIZONI\" \"G60133X\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "GATTIZONI | G60133X C4 - Opticallery (https://opticallery.cl/producto/gattizoni-g60133x-c4/)",
+        "url": "https://opticallery.cl/producto/gattizoni-g60133x-c4/"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60157CX",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60157CX|C3"
+    ],
+    "query": "\"GATTIZONI\" \"G60157CX\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60157X",
+    "colors": [
+      "C1",
+      "C2",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60157X|C1",
+      "GATTIZONI|G60157X|C2",
+      "GATTIZONI|G60157X|C5",
+      "GATTIZONI|G60157X|C6"
+    ],
+    "query": "\"GATTIZONI\" \"G60157X\" (\"C1\" OR \"C2\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60160X",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60160X|C1",
+      "GATTIZONI|G60160X|C2",
+      "GATTIZONI|G60160X|C3"
+    ],
+    "query": "\"GATTIZONI\" \"G60160X\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60163X",
+    "colors": [
+      "C10",
+      "C14",
+      "C15",
+      "C16",
+      "C9"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60163X|C10",
+      "GATTIZONI|G60163X|C14",
+      "GATTIZONI|G60163X|C15",
+      "GATTIZONI|G60163X|C16",
+      "GATTIZONI|G60163X|C9"
+    ],
+    "query": "\"GATTIZONI\" \"G60163X\" (\"C10\" OR \"C14\" OR \"C15\" OR \"C16\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60164X",
+    "colors": [
+      "C7A"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60164X|C7A"
+    ],
+    "query": "\"GATTIZONI\" \"G60164X\" (\"C7A\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60165X",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60165X|C7"
+    ],
+    "query": "\"GATTIZONI\" \"G60165X\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60170X",
+    "colors": [
+      "C15",
+      "C17",
+      "C18",
+      "C19",
+      "C20"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60170X|C15",
+      "GATTIZONI|G60170X|C17",
+      "GATTIZONI|G60170X|C18",
+      "GATTIZONI|G60170X|C19",
+      "GATTIZONI|G60170X|C20"
+    ],
+    "query": "\"GATTIZONI\" \"G60170X\" (\"C15\" OR \"C17\" OR \"C18\" OR \"C19\" OR \"C20\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60171X",
+    "colors": [
+      "C10",
+      "C16"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60171X|C10",
+      "GATTIZONI|G60171X|C16"
+    ],
+    "query": "\"GATTIZONI\" \"G60171X\" (\"C10\" OR \"C16\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=36)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=36"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60172X",
+    "colors": [
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60172X|C4",
+      "GATTIZONI|G60172X|C5",
+      "GATTIZONI|G60172X|C6"
+    ],
+    "query": "\"GATTIZONI\" \"G60172X\" (\"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G60173X",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60173X|C1",
+      "GATTIZONI|G60173X|C2"
+    ],
+    "query": "\"GATTIZONI\" \"G60173X\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60174X",
+    "colors": [
+      "C1",
+      "C4"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60174X|C1",
+      "GATTIZONI|G60174X|C4"
+    ],
+    "query": "\"GATTIZONI\" \"G60174X\" (\"C1\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      }
+    ]
+  },
+  {
+    "key": "GATTIZONI|G60175X",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G60175X|C1",
+      "GATTIZONI|G60175X|C3"
+    ],
+    "query": "\"GATTIZONI\" \"G60175X\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GATTIZONI|G6017AX",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "GATTIZONI|G6017AX|C1",
+      "GATTIZONI|G6017AX|C2",
+      "GATTIZONI|G6017AX|C3"
+    ],
+    "query": "\"GATTIZONI\" \"G6017AX\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "GEORGE|GE3514X",
+    "colors": [
+      "C10"
+    ],
+    "variantKeys": [
+      "GEORGE|GE3514X|C10"
+    ],
+    "query": "\"GEORGE\" \"GE3514X\" (\"C10\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Lente óptico – Page 6 – Ópticas Osman (https://opticasosman.cl/collections/lente-optico?page=6)",
+        "url": "https://opticasosman.cl/collections/lente-optico?page=6"
+      },
+      {
+        "title": "Lente óptico George GE3514X – Ópticas Osman (https://opticasosman.cl/products/lente-optico-george-ge3514x)",
+        "url": "https://opticasosman.cl/products/lente-optico-george-ge3514x"
+      },
+      {
+        "title": "Lentes ópticos – Page 5 – Ópticas Osman (https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=5)",
+        "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=5"
+      },
+      {
+        "title": "Más Vendidos 🔥 – Page 2 – Ópticas Osman (https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2)",
+        "url": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      }
+    ]
+  }
+]

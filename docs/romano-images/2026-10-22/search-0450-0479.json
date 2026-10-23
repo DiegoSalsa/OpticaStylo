@@ -1,0 +1,608 @@
+[
+  {
+    "key": "MARCHIONI|MT017",
+    "colors": [
+      "C2",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|MT017|C2",
+      "MARCHIONI|MT017|C4",
+      "MARCHIONI|MT017|C5"
+    ],
+    "query": "\"MARCHIONI\" \"MT017\" (\"C2\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|MT019",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "MARCHIONI|MT019|C1",
+      "MARCHIONI|MT019|C2",
+      "MARCHIONI|MT019|C4"
+    ],
+    "query": "\"MARCHIONI\" \"MT019\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|MT022",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|MT022|C1",
+      "MARCHIONI|MT022|C2",
+      "MARCHIONI|MT022|C5"
+    ],
+    "query": "\"MARCHIONI\" \"MT022\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|MZ007",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|MZ007|C1",
+      "MARCHIONI|MZ007|C2",
+      "MARCHIONI|MZ007|C5"
+    ],
+    "query": "\"MARCHIONI\" \"MZ007\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|MZ012",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|MZ012|C5"
+    ],
+    "query": "\"MARCHIONI\" \"MZ012\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|MZ013",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "MARCHIONI|MZ013|C1",
+      "MARCHIONI|MZ013|C2"
+    ],
+    "query": "\"MARCHIONI\" \"MZ013\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|OM26501",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|OM26501|C1",
+      "MARCHIONI|OM26501|C2",
+      "MARCHIONI|OM26501|C3",
+      "MARCHIONI|OM26501|C4",
+      "MARCHIONI|OM26501|C5"
+    ],
+    "query": "\"MARCHIONI\" \"OM26501\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|OM26504",
+    "colors": [
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|OM26504|C3",
+      "MARCHIONI|OM26504|C4",
+      "MARCHIONI|OM26504|C5"
+    ],
+    "query": "\"MARCHIONI\" \"OM26504\" (\"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|OM26505",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "MARCHIONI|OM26505|C1",
+      "MARCHIONI|OM26505|C2",
+      "MARCHIONI|OM26505|C3"
+    ],
+    "query": "\"MARCHIONI\" \"OM26505\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|OM26507",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|OM26507|C1",
+      "MARCHIONI|OM26507|C2",
+      "MARCHIONI|OM26507|C5"
+    ],
+    "query": "\"MARCHIONI\" \"OM26507\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|OM26508",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|OM26508|C1",
+      "MARCHIONI|OM26508|C2",
+      "MARCHIONI|OM26508|C3",
+      "MARCHIONI|OM26508|C4",
+      "MARCHIONI|OM26508|C5"
+    ],
+    "query": "\"MARCHIONI\" \"OM26508\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|SH9103",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "MARCHIONI|SH9103|C3"
+    ],
+    "query": "\"MARCHIONI\" \"SH9103\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|SH9104",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "MARCHIONI|SH9104|C2",
+      "MARCHIONI|SH9104|C4"
+    ],
+    "query": "\"MARCHIONI\" \"SH9104\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCIANO|G50018",
+    "colors": [
+      "98"
+    ],
+    "variantKeys": [
+      "MARCIANO|G50018|98"
+    ],
+    "query": "\"MARCIANO\" \"G50018\" (\"98\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCIANO|GM50006",
+    "colors": [
+      "92"
+    ],
+    "variantKeys": [
+      "MARCIANO|GM50006|92"
+    ],
+    "query": "\"MARCIANO\" \"GM50006\" (\"92\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "GM50006 – Eyes of Nanuet (https://eyesofnanuet.com/products/guess-by-marciano-gm50006)",
+        "url": "https://eyesofnanuet.com/products/guess-by-marciano-gm50006"
+      },
+      {
+        "title": "Lentes Ópticos Havana Guess by Marciano | Lider (https://www.lider.cl/ip/accesorios/lentes-opticos-havana-guess-by-marciano/00088921449066)",
+        "url": "https://www.lider.cl/ip/accesorios/lentes-opticos-havana-guess-by-marciano/00088921449066"
+      },
+      {
+        "title": "Guess By Marciano GM50006 Eyeglasses | Select Eyewear (https://selecteyewear.com/products/guess-by-marciano-gm50006)",
+        "url": "https://selecteyewear.com/products/guess-by-marciano-gm50006"
+      },
+      {
+        "title": "Guess By Marciano GM50006 092 54 Glasses | Bassol Optic France (https://www.opticabassol.com/en-fr/products/guess-by-marciano-gm50006-092-54)",
+        "url": "https://www.opticabassol.com/en-fr/products/guess-by-marciano-gm50006-092-54"
+      },
+      {
+        "title": "Guess By Marciano 50006 Eyeglasses (https://designeroptics.com/products/guess-by-marciano-50006-eyeglasses)",
+        "url": "https://designeroptics.com/products/guess-by-marciano-50006-eyeglasses"
+      },
+      {
+        "title": "LENTES GUESS ÓPTICOS NEGRO BRILLANTE BY MARCIANO (https://simple.ripley.cl/lentes-guess-opticos-negro-brillante-by-marciano-mpm10001519466)",
+        "url": "https://simple.ripley.cl/lentes-guess-opticos-negro-brillante-by-marciano-mpm10001519466"
+      },
+      {
+        "title": "Armazón Guess By Marciano Gm50006 092 para mujer | Gran Barata (https://www.liverpool.com.mx/tienda/pdp/armazon-gm50006-092-para-mujer/1194108989)",
+        "url": "https://www.liverpool.com.mx/tienda/pdp/armazon-gm50006-092-para-mujer/1194108989"
+      },
+      {
+        "title": "Guess by Marciano GM50006 092 - Best Price and Available as Prescription Eyeglasses (https://lensesrx.com/108765-guess-by-marciano-eyeglasses-gm50006-092-eye-glasses/)",
+        "url": "https://lensesrx.com/108765-guess-by-marciano-eyeglasses-gm50006-092-eye-glasses/"
+      },
+      {
+        "title": "Marciano | Accessories | New Guess By Marciano Gm5006 Eyeglasses Bluehavana Cateye Acetate | Poshmark (https://poshmark.com/listing/New-Guess-by-Marciano-GM50006-Eyeglasses-BlueHavana-CatEye-Acetate-6a92fa7d83b26ca643f0256b)",
+        "url": "https://poshmark.com/listing/New-Guess-by-Marciano-GM50006-Eyeglasses-BlueHavana-CatEye-Acetate-6a92fa7d83b26ca643f0256b"
+      },
+      {
+        "title": "NEW Guess by Marciano GM50006 092 Blue 54mm Eyeglasses | eBay (https://www.ebay.com/itm/287130838015)",
+        "url": "https://www.ebay.com/itm/287130838015"
+      },
+      {
+        "title": "Guess | Accessories | Marciano By Guess Gm5006 092 Blue Havana Cat Eye Eyeglass Frames Nwot | Poshmark (https://poshmark.com/listing/Marciano-by-GUESS-GM50006-092-Blue-Havana-Cat-Eye-Eyeglass-Frames-NWOT-6acdc874d73373afd11bc6af)",
+        "url": "https://poshmark.com/listing/Marciano-by-GUESS-GM50006-092-Blue-Havana-Cat-Eye-Eyeglass-Frames-NWOT-6acdc874d73373afd11bc6af"
+      }
+    ]
+  },
+  {
+    "key": "MARCIANO|GM50038",
+    "colors": [
+      "52"
+    ],
+    "variantKeys": [
+      "MARCIANO|GM50038|52"
+    ],
+    "query": "\"MARCIANO\" \"GM50038\" (\"52\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Guess By Marciano GM50038 Prescription Eyeglasses | Free Shipping (https://www.ezcontacts.com/product/eyeglasses/1652886-1652889/guess-by-marciano-gm50038)",
+        "url": "https://www.ezcontacts.com/product/eyeglasses/1652886-1652889/guess-by-marciano-gm50038"
+      },
+      {
+        "title": "Guess By Marciano GM50038 052 53 | Bassol Optic Spain (https://www.opticabassol.com/en/products/guess-by-marciano-gm50038-052-53)",
+        "url": "https://www.opticabassol.com/en/products/guess-by-marciano-gm50038-052-53"
+      },
+      {
+        "title": "Armação Óculos Marciano by Guess Gatinho Preto Detalhe Joia Floral (https://laucenteropticapatio24.com.br/produtos/armacao-oculos-marciano-by-guess-gatinho-preto-detalhe-joia-floral-gm50038/)",
+        "url": "https://laucenteropticapatio24.com.br/produtos/armacao-oculos-marciano-by-guess-gatinho-preto-detalhe-joia-floral-gm50038/"
+      }
+    ]
+  },
+  {
+    "key": "MARCIANO|GM50039",
+    "colors": [
+      "52",
+      "57"
+    ],
+    "variantKeys": [
+      "MARCIANO|GM50039|52",
+      "MARCIANO|GM50039|57"
+    ],
+    "query": "\"MARCIANO\" \"GM50039\" (\"52\" OR \"57\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Marciano GM50039 Glasses | Free Shipping and Returns | Eyeconic (https://www.eyeconic.com/eyewear/eyeglasses/gm50039/GM50039.html)",
+        "url": "https://www.eyeconic.com/eyewear/eyeglasses/gm50039/GM50039.html"
+      },
+      {
+        "title": "Guess By Marciano GM50039 Eyeglasses | Select Eyewear (https://selecteyewear.com/products/guess-by-marciano-gm50039)",
+        "url": "https://selecteyewear.com/products/guess-by-marciano-gm50039"
+      },
+      {
+        "title": "Marciano Glasses & Sunglasses | Free Shipping | Eyeconic (https://www.eyeconic.com/eyewear/brands/marciano)",
+        "url": "https://www.eyeconic.com/eyewear/brands/marciano"
+      },
+      {
+        "title": "Optical Frames Guess By Marciano · Brown | OpticalH (https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano-marron)",
+        "url": "https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano-marron"
+      },
+      {
+        "title": "Optical Frames Guess By Marciano | OpticalH – Page 3 (https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano?page=3)",
+        "url": "https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano?page=3"
+      },
+      {
+        "title": "Eyeglasses | Find Prescription Glasses| Eyeconic (https://www.eyeconic.com/eyewear/eyeglasses?prefn1=brand&prefv1=Marciano)",
+        "url": "https://www.eyeconic.com/eyewear/eyeglasses?prefn1=brand&prefv1=Marciano"
+      },
+      {
+        "title": "GM50039 (https://www.shopko.com/products/gm50039-marciano)",
+        "url": "https://www.shopko.com/products/gm50039-marciano"
+      },
+      {
+        "title": "Eyeglasses Guess by Marciano 2026: prices and new arrivals – OtticaIT (https://www.otticait.com/en/eyeglasses/guess-by-marciano?p=4)",
+        "url": "https://www.otticait.com/en/eyeglasses/guess-by-marciano?p=4"
+      },
+      {
+        "title": "GUESS EYEWEAR – Eyes of Nanuet (https://eyesofnanuet.com/collections/guess-eyewear)",
+        "url": "https://eyesofnanuet.com/collections/guess-eyewear"
+      }
+    ]
+  },
+  {
+    "key": "MAXCOME|FXN21139",
+    "colors": [
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "MAXCOME|FXN21139|C2",
+      "MAXCOME|FXN21139|C3",
+      "MAXCOME|FXN21139|C4"
+    ],
+    "query": "\"MAXCOME\" \"FXN21139\" (\"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|D0015",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "MEREL|D0015|C4"
+    ],
+    "query": "\"MEREL\" \"D0015\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0001",
+    "colors": [
+      "C1",
+      "C4",
+      "C5",
+      "C6",
+      "C7",
+      "C8"
+    ],
+    "variantKeys": [
+      "MEREL|GD0001|C1",
+      "MEREL|GD0001|C4",
+      "MEREL|GD0001|C5",
+      "MEREL|GD0001|C6",
+      "MEREL|GD0001|C7",
+      "MEREL|GD0001|C8"
+    ],
+    "query": "\"MEREL\" \"GD0001\" (\"C1\" OR \"C4\" OR \"C5\" OR \"C6\" OR \"C7\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0002",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "MEREL|GD0002|C7"
+    ],
+    "query": "\"MEREL\" \"GD0002\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0004",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "MEREL|GD0004|C1",
+      "MEREL|GD0004|C2",
+      "MEREL|GD0004|C3",
+      "MEREL|GD0004|C4",
+      "MEREL|GD0004|C5",
+      "MEREL|GD0004|C6"
+    ],
+    "query": "\"MEREL\" \"GD0004\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0005",
+    "colors": [
+      "C1",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0005|C1",
+      "MEREL|GD0005|C3",
+      "MEREL|GD0005|C5"
+    ],
+    "query": "\"MEREL\" \"GD0005\" (\"C1\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0006",
+    "colors": [
+      "C2",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0006|C2",
+      "MEREL|GD0006|C3",
+      "MEREL|GD0006|C5"
+    ],
+    "query": "\"MEREL\" \"GD0006\" (\"C2\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0007",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "MEREL|GD0007|C1"
+    ],
+    "query": "\"MEREL\" \"GD0007\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0008",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0008|C1",
+      "MEREL|GD0008|C2",
+      "MEREL|GD0008|C3",
+      "MEREL|GD0008|C4",
+      "MEREL|GD0008|C5"
+    ],
+    "query": "\"MEREL\" \"GD0008\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0011",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0011|C5"
+    ],
+    "query": "\"MEREL\" \"GD0011\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Optica Escobedo (https://opticaescobedo.cl/)",
+        "url": "https://opticaescobedo.cl/"
+      },
+      {
+        "title": "MEREL GD0011 – Optica Escobedo (https://opticaescobedo.cl/producto/crystal-anke/)",
+        "url": "https://opticaescobedo.cl/producto/crystal-anke/"
+      }
+    ]
+  },
+  {
+    "key": "MEREL|GD0012",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "MEREL|GD0012|C1",
+      "MEREL|GD0012|C2",
+      "MEREL|GD0012|C3",
+      "MEREL|GD0012|C4",
+      "MEREL|GD0012|C5",
+      "MEREL|GD0012|C6"
+    ],
+    "query": "\"MEREL\" \"GD0012\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0013",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "MEREL|GD0013|C1",
+      "MEREL|GD0013|C2",
+      "MEREL|GD0013|C3",
+      "MEREL|GD0013|C4"
+    ],
+    "query": "\"MEREL\" \"GD0013\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0014",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C8"
+    ],
+    "variantKeys": [
+      "MEREL|GD0014|C1",
+      "MEREL|GD0014|C2",
+      "MEREL|GD0014|C3",
+      "MEREL|GD0014|C8"
+    ],
+    "query": "\"MEREL\" \"GD0014\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

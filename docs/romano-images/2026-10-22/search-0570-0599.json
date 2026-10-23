@@ -1,0 +1,405 @@
+[
+  {
+    "key": "ON DECK|OD2639",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2639|C4"
+    ],
+    "query": "\"ON DECK\" \"OD2639\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2662",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2662|C1"
+    ],
+    "query": "\"ON DECK\" \"OD2662\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2664",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2664|C2"
+    ],
+    "query": "\"ON DECK\" \"OD2664\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2668",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2668|C1"
+    ],
+    "query": "\"ON DECK\" \"OD2668\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD301C",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD301C|C2"
+    ],
+    "query": "\"ON DECK\" \"OD301C\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD302C",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD302C|C2"
+    ],
+    "query": "\"ON DECK\" \"OD302C\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD303C",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD303C|C2"
+    ],
+    "query": "\"ON DECK\" \"OD303C\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD305C",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD305C|C2"
+    ],
+    "query": "\"ON DECK\" \"OD305C\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD307",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD307|C1",
+      "ON DECK|OD307|C2"
+    ],
+    "query": "\"ON DECK\" \"OD307\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD307C",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD307C|C2"
+    ],
+    "query": "\"ON DECK\" \"OD307C\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD308C",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "ON DECK|OD308C|C2",
+      "ON DECK|OD308C|C3"
+    ],
+    "query": "\"ON DECK\" \"OD308C\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD320C",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD320C|C1"
+    ],
+    "query": "\"ON DECK\" \"OD320C\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD325C",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD325C|C1"
+    ],
+    "query": "\"ON DECK\" \"OD325C\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD327C",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD327C|C1"
+    ],
+    "query": "\"ON DECK\" \"OD327C\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD330B",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "ON DECK|OD330B|C4"
+    ],
+    "query": "\"ON DECK\" \"OD330B\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD377B",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD377B|C2"
+    ],
+    "query": "\"ON DECK\" \"OD377B\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD389",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD389|C1"
+    ],
+    "query": "\"ON DECK\" \"OD389\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD4025",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD4025|C1"
+    ],
+    "query": "\"ON DECK\" \"OD4025\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD546",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD546|C2"
+    ],
+    "query": "\"ON DECK\" \"OD546\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OPALO|9028",
+    "colors": [
+      "C6"
+    ],
+    "variantKeys": [
+      "OPALO|9028|C6"
+    ],
+    "query": "\"OPALO\" \"9028\" (\"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Las mejores ofertas en Ronda Polo Ralph Lauren Marcos de Anteojos | eBay (https://uy.ebay.com/b/Polo-Ralph-Lauren-Round-Eyeglass-Frames/180957/bn_8430736)",
+        "url": "https://uy.ebay.com/b/Polo-Ralph-Lauren-Round-Eyeglass-Frames/180957/bn_8430736"
+      }
+    ]
+  },
+  {
+    "key": "PICAZZIO|PA1046",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PA1046|C4"
+    ],
+    "query": "\"PICAZZIO\" \"PA1046\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PL301",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PL301|C1"
+    ],
+    "query": "\"PICAZZIO\" \"PL301\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PL302",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PL302|C4"
+    ],
+    "query": "\"PICAZZIO\" \"PL302\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PL303",
+    "colors": [
+      "C8"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PL303|C8"
+    ],
+    "query": "\"PICAZZIO\" \"PL303\" (\"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PL304",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PL304|C2"
+    ],
+    "query": "\"PICAZZIO\" \"PL304\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PL308",
+    "colors": [
+      "C8"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PL308|C8"
+    ],
+    "query": "\"PICAZZIO\" \"PL308\" (\"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS014",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS014|C1"
+    ],
+    "query": "\"PICAZZIO\" \"PS014\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS033",
+    "colors": [
+      "C2",
+      "C9"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS033|C2",
+      "PICAZZIO|PS033|C9"
+    ],
+    "query": "\"PICAZZIO\" \"PS033\" (\"C2\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS034",
+    "colors": [
+      "C3",
+      "C9"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS034|C3",
+      "PICAZZIO|PS034|C9"
+    ],
+    "query": "\"PICAZZIO\" \"PS034\" (\"C3\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS035",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS035|C1"
+    ],
+    "query": "\"PICAZZIO\" \"PS035\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

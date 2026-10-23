@@ -1,0 +1,435 @@
+[
+  {
+    "key": "BARGELLO|BA1276",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1276|C1",
+      "BARGELLO|BA1276|C2",
+      "BARGELLO|BA1276|C5"
+    ],
+    "query": "\"BARGELLO\" \"BA1276\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1376",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1376|C1",
+      "BARGELLO|BA1376|C2",
+      "BARGELLO|BA1376|C5"
+    ],
+    "query": "\"BARGELLO\" \"BA1376\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BS035",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "BARGELLO|BS035|C3"
+    ],
+    "query": "\"BARGELLO\" \"BS035\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BS037",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "BARGELLO|BS037|C2"
+    ],
+    "query": "\"BARGELLO\" \"BS037\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BOLLE|B630004",
+    "colors": [],
+    "variantKeys": [
+      "BOLLE|B630004|"
+    ],
+    "query": "\"BOLLE\" \"B630004\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BOLLE|BS04405",
+    "colors": [],
+    "variantKeys": [
+      "BOLLE|BS04405|"
+    ],
+    "query": "\"BOLLE\" \"BS04405\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA192",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA192|C2"
+    ],
+    "query": "\"CACHAREL\" \"CA192\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA194",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA194|C1"
+    ],
+    "query": "\"CACHAREL\" \"CA194\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA217",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA217|C1",
+      "CACHAREL|CA217|C3"
+    ],
+    "query": "\"CACHAREL\" \"CA217\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA232",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA232|C1",
+      "CACHAREL|CA232|C2",
+      "CACHAREL|CA232|C3"
+    ],
+    "query": "\"CACHAREL\" \"CA232\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA249",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA249|C1",
+      "CACHAREL|CA249|C2"
+    ],
+    "query": "\"CACHAREL\" \"CA249\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA262",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA262|C1"
+    ],
+    "query": "\"CACHAREL\" \"CA262\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA264",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA264|C1"
+    ],
+    "query": "\"CACHAREL\" \"CA264\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA265",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA265|C3"
+    ],
+    "query": "\"CACHAREL\" \"CA265\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA266",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA266|C2"
+    ],
+    "query": "\"CACHAREL\" \"CA266\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CACHAREL|CA268",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "CACHAREL|CA268|C1",
+      "CACHAREL|CA268|C3"
+    ],
+    "query": "\"CACHAREL\" \"CA268\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|2310",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CHINO|2310|C1"
+    ],
+    "query": "\"CHINO\" \"2310\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Verona Optical | (02) 8732 9979 | Makati (https://www.bizippines.com/verona-optical_21J)",
+        "url": "https://www.bizippines.com/verona-optical_21J"
+      },
+      {
+        "title": "Catálogo de Canaletas y Drenajes | PDF | Materiales | Sector secundario de la economía (https://es.scribd.com/document/756621176/Catalogo-Digital-Odem)",
+        "url": "https://es.scribd.com/document/756621176/Catalogo-Digital-Odem"
+      }
+    ]
+  },
+  {
+    "key": "CHINO|5447",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "CHINO|5447|C2"
+    ],
+    "query": "\"CHINO\" \"5447\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|9032",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "CHINO|9032|C2"
+    ],
+    "query": "\"CHINO\" \"9032\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Partida Arancelaria 9032 - INSTRUMENTOS Y APARATOS PARA REGULACIÓN O CONTROL AUTOMÁTICOS. - Datos Peru (https://www.datosperu.org/nandina-instrumentos-y-aparatos-para-regulacion-o-control-automaticos-9032-pagina-193.php)",
+        "url": "https://www.datosperu.org/nandina-instrumentos-y-aparatos-para-regulacion-o-control-automaticos-9032-pagina-193.php"
+      }
+    ]
+  },
+  {
+    "key": "CHINO|DS1001",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "CHINO|DS1001|C2"
+    ],
+    "query": "\"CHINO\" \"DS1001\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|DS1004",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "CHINO|DS1004|C1",
+      "CHINO|DS1004|C3"
+    ],
+    "query": "\"CHINO\" \"DS1004\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|DS1005",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "CHINO|DS1005|C5"
+    ],
+    "query": "\"CHINO\" \"DS1005\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|DS1006",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CHINO|DS1006|C1"
+    ],
+    "query": "\"CHINO\" \"DS1006\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|LE8807",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "CHINO|LE8807|C3"
+    ],
+    "query": "\"CHINO\" \"LE8807\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|M010",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "CHINO|M010|C5"
+    ],
+    "query": "\"CHINO\" \"M010\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|METALICO",
+    "colors": [
+      "PLATEADO"
+    ],
+    "variantKeys": [
+      "CHINO|METALICO|PLATEADO"
+    ],
+    "query": "\"CHINO\" \"METALICO\" (\"PLATEADO\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojo Sol Barrio Chino Armazones | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/anteojo-sol-barrio-chino-armazones)",
+        "url": "https://listado.mercadolibre.com.ar/anteojo-sol-barrio-chino-armazones"
+      },
+      {
+        "title": "ELTIEMPOMX.COM | MARTES 27 • MAYO • 2025 | 17 (https://eltiempomx.com/i/impresa/2025/05/eltiempo_2025-05-27_2333.pdf)",
+        "url": "https://eltiempomx.com/i/impresa/2025/05/eltiempo_2025-05-27_2333.pdf"
+      }
+    ]
+  },
+  {
+    "key": "CHINO|MZ003",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CHINO|MZ003|C1"
+    ],
+    "query": "\"CHINO\" \"MZ003\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|MZ007",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "CHINO|MZ007|C5"
+    ],
+    "query": "\"CHINO\" \"MZ007\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|MZ010",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "CHINO|MZ010|C1",
+      "CHINO|MZ010|C2",
+      "CHINO|MZ010|C3"
+    ],
+    "query": "\"CHINO\" \"MZ010\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "CHINO|MZ07",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "CHINO|MZ07|C1"
+    ],
+    "query": "\"CHINO\" \"MZ07\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

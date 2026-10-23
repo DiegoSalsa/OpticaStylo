@@ -1,0 +1,489 @@
+[
+  {
+    "key": "MEREL|GD0015",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "MEREL|GD0015|C1",
+      "MEREL|GD0015|C2",
+      "MEREL|GD0015|C3",
+      "MEREL|GD0015|C5",
+      "MEREL|GD0015|C6"
+    ],
+    "query": "\"MEREL\" \"GD0015\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Óptica CIG | Lentes y monturas de calidad | Óptica CIG (https://www.opticacig.cl/)",
+        "url": "https://www.opticacig.cl/"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon?page=3)",
+        "url": "https://www.opticacig.cl/categoria/armazon?page=3"
+      }
+    ]
+  },
+  {
+    "key": "MEREL|GD0016",
+    "colors": [
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0016|C2",
+      "MEREL|GD0016|C3",
+      "MEREL|GD0016|C4",
+      "MEREL|GD0016|C5"
+    ],
+    "query": "\"MEREL\" \"GD0016\" (\"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0018",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "MEREL|GD0018|C1",
+      "MEREL|GD0018|C2",
+      "MEREL|GD0018|C3",
+      "MEREL|GD0018|C4"
+    ],
+    "query": "\"MEREL\" \"GD0018\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0021",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "MEREL|GD0021|C1",
+      "MEREL|GD0021|C2",
+      "MEREL|GD0021|C3"
+    ],
+    "query": "\"MEREL\" \"GD0021\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0022",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "MEREL|GD0022|C1",
+      "MEREL|GD0022|C2",
+      "MEREL|GD0022|C3",
+      "MEREL|GD0022|C4"
+    ],
+    "query": "\"MEREL\" \"GD0022\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0023",
+    "colors": [
+      "C4",
+      "C5",
+      "C6",
+      "C8"
+    ],
+    "variantKeys": [
+      "MEREL|GD0023|C4",
+      "MEREL|GD0023|C5",
+      "MEREL|GD0023|C6",
+      "MEREL|GD0023|C8"
+    ],
+    "query": "\"MEREL\" \"GD0023\" (\"C4\" OR \"C5\" OR \"C6\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0024",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "MEREL|GD0024|C1",
+      "MEREL|GD0024|C2",
+      "MEREL|GD0024|C4"
+    ],
+    "query": "\"MEREL\" \"GD0024\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0025",
+    "colors": [
+      "C1",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0025|C1",
+      "MEREL|GD0025|C3",
+      "MEREL|GD0025|C5"
+    ],
+    "query": "\"MEREL\" \"GD0025\" (\"C1\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0026",
+    "colors": [
+      "C1",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0026|C1",
+      "MEREL|GD0026|C4",
+      "MEREL|GD0026|C5"
+    ],
+    "query": "\"MEREL\" \"GD0026\" (\"C1\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0027",
+    "colors": [
+      "C2",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0027|C2",
+      "MEREL|GD0027|C3",
+      "MEREL|GD0027|C5"
+    ],
+    "query": "\"MEREL\" \"GD0027\" (\"C2\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0028",
+    "colors": [
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0028|C3",
+      "MEREL|GD0028|C4",
+      "MEREL|GD0028|C5"
+    ],
+    "query": "\"MEREL\" \"GD0028\" (\"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0029",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "MEREL|GD0029|C3"
+    ],
+    "query": "\"MEREL\" \"GD0029\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0030",
+    "colors": [
+      "C2",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0030|C2",
+      "MEREL|GD0030|C4",
+      "MEREL|GD0030|C5"
+    ],
+    "query": "\"MEREL\" \"GD0030\" (\"C2\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0031",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0031|C1",
+      "MEREL|GD0031|C3",
+      "MEREL|GD0031|C4",
+      "MEREL|GD0031|C5"
+    ],
+    "query": "\"MEREL\" \"GD0031\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0032",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0032|C1",
+      "MEREL|GD0032|C2",
+      "MEREL|GD0032|C3",
+      "MEREL|GD0032|C4",
+      "MEREL|GD0032|C5"
+    ],
+    "query": "\"MEREL\" \"GD0032\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0044",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MEREL|GD0044|C2"
+    ],
+    "query": "\"MEREL\" \"GD0044\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0045",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MEREL|GD0045|C2"
+    ],
+    "query": "\"MEREL\" \"GD0045\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0047",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0047|C4",
+      "MEREL|GD0047|C5"
+    ],
+    "query": "\"MEREL\" \"GD0047\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0048",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "MEREL|GD0048|C2",
+      "MEREL|GD0048|C3"
+    ],
+    "query": "\"MEREL\" \"GD0048\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0055",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0055|C5"
+    ],
+    "query": "\"MEREL\" \"GD0055\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD0057",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MEREL|GD0057|C4",
+      "MEREL|GD0057|C5"
+    ],
+    "query": "\"MEREL\" \"GD0057\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MEREL|GD016",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "MEREL|GD016|C1"
+    ],
+    "query": "\"MEREL\" \"GD016\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOJAI|8277",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "MOJAI|8277|C1",
+      "MOJAI|8277|C2",
+      "MOJAI|8277|C3"
+    ],
+    "query": "\"MOJAI\" \"8277\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOJAI|94003C",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "MOJAI|94003C|C4"
+    ],
+    "query": "\"MOJAI\" \"94003C\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOJAI|94309B",
+    "colors": [
+      "C03"
+    ],
+    "variantKeys": [
+      "MOJAI|94309B|C03"
+    ],
+    "query": "\"MOJAI\" \"94309B\" (\"C03\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOJAI|MM0016",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "MOJAI|MM0016|C1"
+    ],
+    "query": "\"MOJAI\" \"MM0016\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOJAI|MM1055",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "MOJAI|MM1055|C1",
+      "MOJAI|MM1055|C3"
+    ],
+    "query": "\"MOJAI\" \"MM1055\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOODKIDS|MK02162",
+    "colors": [
+      "COL.3"
+    ],
+    "variantKeys": [
+      "MOODKIDS|MK02162|COL.3"
+    ],
+    "query": "\"MOODKIDS\" \"MK02162\" (\"COL.3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOODKIDS|MK202049",
+    "colors": [
+      "COL.9"
+    ],
+    "variantKeys": [
+      "MOODKIDS|MK202049|COL.9"
+    ],
+    "query": "\"MOODKIDS\" \"MK202049\" (\"COL.9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOODKIDS|MK202050",
+    "colors": [
+      "COL.5",
+      "COL.6"
+    ],
+    "variantKeys": [
+      "MOODKIDS|MK202050|COL.5",
+      "MOODKIDS|MK202050|COL.6"
+    ],
+    "query": "\"MOODKIDS\" \"MK202050\" (\"COL.5\" OR \"COL.6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

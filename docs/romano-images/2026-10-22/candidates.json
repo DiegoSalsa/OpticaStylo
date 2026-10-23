@@ -1,0 +1,110 @@
+{
+  "workbookSha256": "72406ed352ea5452d694b7cf3a026500730f6cdd897dbe3d6e481e32aa0c2580",
+  "allowedImageHosts": [
+    "tecnobrasil.com.br"
+  ],
+  "candidates": [
+    {
+      "id": "tecnobrasil-583476314ef7428b4ff6",
+      "inventoryKey": "FRIDA KAHLO|FK1010A|R",
+      "identity": {
+        "brand": "FRIDA KAHLO",
+        "model": "FK1010A",
+        "color": "R"
+      },
+      "sourceUrl": "https://tecnobrasil.com.br/fridakahlo/",
+      "sourceImageUrl": "https://tecnobrasil.com.br/fridakahlo/image/FK1010A-R.jpg",
+      "sourceType": "BRAND_COLLECTION_DISTRIBUTOR",
+      "officialStatus": "DISTRIBUTOR_CATALOGUE_NOT_MANUFACTURER_VERIFIED",
+      "view": "CATALOGUE_VIEW",
+      "alt": "Frida Kahlo FK1010A, variante R, vista de catálogo",
+      "sha256": "bed506806f82df60ae9402460bb0b169ec0c1b02265dfe9ad23cab2b089958c3",
+      "width": 2414,
+      "height": 1585,
+      "format": "jpeg",
+      "size": 139937,
+      "authorization": {
+        "status": "UNKNOWN",
+        "commercialUse": false,
+        "holder": "Pendiente de comprobar con Tecnobrasil / titular de Frida Kahlo Eyewear"
+      },
+      "verification": {
+        "status": "EXACT_CODE_CANDIDATE",
+        "colorConfirmed": true,
+        "evidenceUrl": "https://tecnobrasil.com.br/fridakahlo/",
+        "reviewedAt": "2026-10-23T20:57:14.444Z",
+        "reviewedBy": "Revisión de código publicado; falta autorización y revisión visual"
+      },
+      "mapping": null,
+      "status": "FOUND_PENDING_AUTHORIZATION"
+    },
+    {
+      "id": "tecnobrasil-7ca59f7187fbc98d531b",
+      "inventoryKey": "FRIDA KAHLO|FK1012A|F",
+      "identity": {
+        "brand": "FRIDA KAHLO",
+        "model": "FK1012A",
+        "color": "F"
+      },
+      "sourceUrl": "https://tecnobrasil.com.br/fridakahlo/",
+      "sourceImageUrl": "https://tecnobrasil.com.br/fridakahlo/image/FK1012A-F.jpg",
+      "sourceType": "BRAND_COLLECTION_DISTRIBUTOR",
+      "officialStatus": "DISTRIBUTOR_CATALOGUE_NOT_MANUFACTURER_VERIFIED",
+      "view": "CATALOGUE_VIEW",
+      "alt": "Frida Kahlo FK1012A, variante F, vista de catálogo",
+      "sha256": "95b11947b04460c58c9a755a16b30bf25cd19147d0d3d8bcc7abc052b6e78859",
+      "width": 2414,
+      "height": 1585,
+      "format": "jpeg",
+      "size": 122413,
+      "authorization": {
+        "status": "UNKNOWN",
+        "commercialUse": false,
+        "holder": "Pendiente de comprobar con Tecnobrasil / titular de Frida Kahlo Eyewear"
+      },
+      "verification": {
+        "status": "EXACT_CODE_CANDIDATE",
+        "colorConfirmed": true,
+        "evidenceUrl": "https://tecnobrasil.com.br/fridakahlo/",
+        "reviewedAt": "2026-10-23T20:57:14.577Z",
+        "reviewedBy": "Revisión de código publicado; falta autorización y revisión visual"
+      },
+      "mapping": null,
+      "status": "FOUND_PENDING_AUTHORIZATION"
+    },
+    {
+      "id": "tecnobrasil-2bc57032e3a0dd6e77fe",
+      "inventoryKey": "FRIDA KAHLO|FK1012A|PR",
+      "identity": {
+        "brand": "FRIDA KAHLO",
+        "model": "FK1012A",
+        "color": "PR"
+      },
+      "sourceUrl": "https://tecnobrasil.com.br/fridakahlo/",
+      "sourceImageUrl": "https://tecnobrasil.com.br/fridakahlo/image/FK1012A-PR.jpg",
+      "sourceType": "BRAND_COLLECTION_DISTRIBUTOR",
+      "officialStatus": "DISTRIBUTOR_CATALOGUE_NOT_MANUFACTURER_VERIFIED",
+      "view": "CATALOGUE_VIEW",
+      "alt": "Frida Kahlo FK1012A, variante PR, vista de catálogo",
+      "sha256": "be9463e96d16d3f7d3bd32b185dd9e6571a17c2a62602b6a07a401c261cbda30",
+      "width": 2414,
+      "height": 1585,
+      "format": "jpeg",
+      "size": 110587,
+      "authorization": {
+        "status": "UNKNOWN",
+        "commercialUse": false,
+        "holder": "Pendiente de comprobar con Tecnobrasil / titular de Frida Kahlo Eyewear"
+      },
+      "verification": {
+        "status": "EXACT_CODE_CANDIDATE",
+        "colorConfirmed": true,
+        "evidenceUrl": "https://tecnobrasil.com.br/fridakahlo/",
+        "reviewedAt": "2026-10-23T20:57:14.707Z",
+        "reviewedBy": "Revisión de código publicado; falta autorización y revisión visual"
+      },
+      "mapping": null,
+      "status": "FOUND_PENDING_AUTHORIZATION"
+    }
+  ]
+}

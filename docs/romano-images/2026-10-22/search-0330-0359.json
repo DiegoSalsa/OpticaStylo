@@ -1,0 +1,620 @@
+[
+  {
+    "key": "LAVANETT|LAC1198",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1198|C3"
+    ],
+    "query": "\"LAVANETT\" \"LAC1198\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1201",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1201|C3"
+    ],
+    "query": "\"LAVANETT\" \"LAC1201\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1202",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1202|C3"
+    ],
+    "query": "\"LAVANETT\" \"LAC1202\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1203",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1203|C1",
+      "LAVANETT|LAC1203|C2"
+    ],
+    "query": "\"LAVANETT\" \"LAC1203\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1204",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1204|C1"
+    ],
+    "query": "\"LAVANETT\" \"LAC1204\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1205",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1205|C3"
+    ],
+    "query": "\"LAVANETT\" \"LAC1205\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1206",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1206|C2"
+    ],
+    "query": "\"LAVANETT\" \"LAC1206\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAS035",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAS035|C3"
+    ],
+    "query": "\"LAVANETT\" \"LAS035\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LB002",
+    "colors": [
+      "C11",
+      "C12",
+      "C7"
+    ],
+    "variantKeys": [
+      "LAVANETT|LB002|C11",
+      "LAVANETT|LB002|C12",
+      "LAVANETT|LB002|C7"
+    ],
+    "query": "\"LAVANETT\" \"LB002\" (\"C11\" OR \"C12\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LD014",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "LAVANETT|LD014|C1"
+    ],
+    "query": "\"LAVANETT\" \"LD014\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LD015",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LD015|C1",
+      "LAVANETT|LD015|C2",
+      "LAVANETT|LD015|C4"
+    ],
+    "query": "\"LAVANETT\" \"LD015\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LD016",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LD016|C2",
+      "LAVANETT|LD016|C3"
+    ],
+    "query": "\"LAVANETT\" \"LD016\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LD020",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LD020|C1",
+      "LAVANETT|LD020|C2",
+      "LAVANETT|LD020|C3",
+      "LAVANETT|LD020|C4"
+    ],
+    "query": "\"LAVANETT\" \"LD020\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LJ001",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LJ001|C1",
+      "LAVANETT|LJ001|C3"
+    ],
+    "query": "\"LAVANETT\" \"LJ001\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LJ002",
+    "colors": [
+      "C1",
+      "C7"
+    ],
+    "variantKeys": [
+      "LAVANETT|LJ002|C1",
+      "LAVANETT|LJ002|C7"
+    ],
+    "query": "\"LAVANETT\" \"LJ002\" (\"C1\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazón Lavanett-Junior|LJ002 - Óptica Milúx (https://opticamilux.cl/product/armazon-lavanett-juniorlj002-3/)",
+        "url": "https://opticamilux.cl/product/armazon-lavanett-juniorlj002-3/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LJ021",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LJ021|C4"
+    ],
+    "query": "\"LAVANETT\" \"LJ021\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LJ025",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LJ025|C4"
+    ],
+    "query": "\"LAVANETT\" \"LJ025\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LT1000",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1000|C2",
+      "LAVANETT|LT1000|C3"
+    ],
+    "query": "\"LAVANETT\" \"LT1000\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Comprar Lentes opticos en Luxvision Chile (https://www.luxvision.cl/lentes-opticos/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://www.luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/clip-on/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://luxvision.cl/lentes-opticos/clip-on/"
+      },
+      {
+        "title": "Armazón De Anteojos Clip-on Lavanett Lt1000 C1 | Envío gratis (https://www.mercadolibre.com.ar/armazon-de-anteojos-clipon-lavanett-lt1000-c1/up/MLAU4022078144)",
+        "url": "https://www.mercadolibre.com.ar/armazon-de-anteojos-clipon-lavanett-lt1000-c1/up/MLAU4022078144"
+      },
+      {
+        "title": "Armazones Lavanette | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/armazones-lavanette)",
+        "url": "https://listado.mercadolibre.com.ar/armazones-lavanette"
+      },
+      {
+        "title": "Montura Lavanett LT1000 C3 - Ultraligera con Clip Polarizado Ámbar (https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c3-mw1ye/)",
+        "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c3-mw1ye/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1001",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1001|C1",
+      "LAVANETT|LT1001|C2",
+      "LAVANETT|LT1001|C3",
+      "LAVANETT|LT1001|C4"
+    ],
+    "query": "\"LAVANETT\" \"LT1001\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Comprar lentes opticos (https://www.luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/clip-on/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://luxvision.cl/lentes-opticos/clip-on/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1002",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1002|C1",
+      "LAVANETT|LT1002|C3"
+    ],
+    "query": "\"LAVANETT\" \"LT1002\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazon + Clip ON Polarizado + Night Vision (amarillo) (https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo18/)",
+        "url": "https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo18/"
+      },
+      {
+        "title": "Monturas Lavanett LT1002 C4 ultraligeras con clip polarizado ámbar (https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1/)",
+        "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1003",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1003|C2",
+      "LAVANETT|LT1003|C4"
+    ],
+    "query": "\"LAVANETT\" \"LT1003\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "LAVANETT LT1003 C4 55 - CREMONA OPTICA AUDIFONOS (https://opticacremona.com/productos/lavanett-lt1003-c4-55-3udsy/)",
+        "url": "https://opticacremona.com/productos/lavanett-lt1003-c4-55-3udsy/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1004",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1004|C1",
+      "LAVANETT|LT1004|C2",
+      "LAVANETT|LT1004|C3"
+    ],
+    "query": "\"LAVANETT\" \"LT1004\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Lentes Lavanett | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/lentes-lavanett)",
+        "url": "https://listado.mercadolibre.com.ar/lentes-lavanett"
+      },
+      {
+        "title": "Armazones Anteojos Lavanett | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/armazones-anteojos-lavanett)",
+        "url": "https://listado.mercadolibre.com.ar/armazones-anteojos-lavanett"
+      },
+      {
+        "title": "Anteojos Lavanett Clip On | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/anteojos-lavanett-clip-on)",
+        "url": "https://listado.mercadolibre.com.ar/anteojos-lavanett-clip-on"
+      },
+      {
+        "title": "Armazones Lavanette | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/armazones-lavanette)",
+        "url": "https://listado.mercadolibre.com.ar/armazones-lavanette"
+      },
+      {
+        "title": "Monturas Lavanett LT1004 C2 ultraligeras con clip polarizado ámbar (https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c2-yglpt/)",
+        "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c2-yglpt/"
+      },
+      {
+        "title": "Lavanett Clip On | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/lavanett-clip-on)",
+        "url": "https://listado.mercadolibre.com.ar/lavanett-clip-on"
+      },
+      {
+        "title": "Marcos De Lentes Lavanett | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/marcos-de-lentes-lavanett)",
+        "url": "https://listado.mercadolibre.com.ar/marcos-de-lentes-lavanett"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1005",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1005|C1",
+      "LAVANETT|LT1005|C2",
+      "LAVANETT|LT1005|C3"
+    ],
+    "query": "\"LAVANETT\" \"LT1005\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LT1006",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1006|C1"
+    ],
+    "query": "\"LAVANETT\" \"LT1006\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Comprar Lentes opticos en Luxvision Chile (https://www.luxvision.cl/lentes-opticos/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://www.luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/clip-on/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://luxvision.cl/lentes-opticos/clip-on/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1007",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1007|C4",
+      "LAVANETT|LT1007|C5"
+    ],
+    "query": "\"LAVANETT\" \"LT1007\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Luxvision Chile (https://www.luxvision.cl/)",
+        "url": "https://www.luxvision.cl/"
+      },
+      {
+        "title": "Lavanett CLIP ON - Comprar en Optica Soho (https://www.opticasoho.com.ar/productos/lavanett-clip-on-lo9jd/)",
+        "url": "https://www.opticasoho.com.ar/productos/lavanett-clip-on-lo9jd/"
+      },
+      {
+        "title": "Comprar anteojos (https://opticacremona.com/anteojos-para-sol/page/2/?mpage=8)",
+        "url": "https://opticacremona.com/anteojos-para-sol/page/2/?mpage=8"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1008",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1008|C1",
+      "LAVANETT|LT1008|C2",
+      "LAVANETT|LT1008|C3",
+      "LAVANETT|LT1008|C5"
+    ],
+    "query": "\"LAVANETT\" \"LT1008\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Luxvision Chile (https://www.luxvision.cl/)",
+        "url": "https://www.luxvision.cl/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1009",
+    "colors": [
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1009|C3",
+      "LAVANETT|LT1009|C4",
+      "LAVANETT|LT1009|C5"
+    ],
+    "query": "\"LAVANETT\" \"LT1009\" (\"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Luxvision Chile (https://www.luxvision.cl/)",
+        "url": "https://www.luxvision.cl/"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1010",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1010|C1",
+      "LAVANETT|LT1010|C2",
+      "LAVANETT|LT1010|C3",
+      "LAVANETT|LT1010|C4",
+      "LAVANETT|LT1010|C5"
+    ],
+    "query": "\"LAVANETT\" \"LT1010\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LT1014",
+    "colors": [
+      "C1",
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1014|C1",
+      "LAVANETT|LT1014|C3",
+      "LAVANETT|LT1014|C6"
+    ],
+    "query": "\"LAVANETT\" \"LT1014\" (\"C1\" OR \"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojos Lentes graduados 100%Online recetados con aumento — Estar (https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/)",
+        "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/"
+      },
+      {
+        "title": "Translucidos archivos — Estar (https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/translucidos/)",
+        "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/translucidos/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://luxvision.cl/lentes-opticos/clip-on/"
+      },
+      {
+        "title": "Anteojos Lavanett | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/anteojos-lavanett)",
+        "url": "https://listado.mercadolibre.com.ar/anteojos-lavanett"
+      },
+      {
+        "title": "Anteojos Lavanette | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/anteojos-lavanette)",
+        "url": "https://listado.mercadolibre.com.ar/anteojos-lavanette"
+      },
+      {
+        "title": "Lentes Con Clipones | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/lentes-con-clipones)",
+        "url": "https://listado.mercadolibre.com.ar/lentes-con-clipones"
+      }
+    ]
+  },
+  {
+    "key": "LAVANETT|LT1015",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETT|LT1015|C2",
+      "LAVANETT|LT1015|C4"
+    ],
+    "query": "\"LAVANETT\" \"LT1015\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Comprar Lentes opticos en Luxvision Chile (https://www.luxvision.cl/lentes-opticos/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/"
+      },
+      {
+        "title": "Comprar lentes opticos (https://www.luxvision.cl/lentes-opticos/clip-on/)",
+        "url": "https://www.luxvision.cl/lentes-opticos/clip-on/"
+      },
+      {
+        "title": "Montura Lavanett LT1015 C4 - Ultraligera con Clip Polarizado Ámbar (https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c4-xxjak/)",
+        "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c4-xxjak/"
+      },
+      {
+        "title": "Armazon + Clip ON Polarizado + Night Vision (amarillo) (https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo16/)",
+        "url": "https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo16/"
+      }
+    ]
+  }
+]

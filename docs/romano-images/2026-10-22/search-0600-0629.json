@@ -1,0 +1,678 @@
+[
+  {
+    "key": "PICAZZIO|PS036",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS036|C1"
+    ],
+    "query": "\"PICAZZIO\" \"PS036\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS042",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS042|C2"
+    ],
+    "query": "\"PICAZZIO\" \"PS042\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS043",
+    "colors": [
+      "C1",
+      "C5"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS043|C1",
+      "PICAZZIO|PS043|C5"
+    ],
+    "query": "\"PICAZZIO\" \"PS043\" (\"C1\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PICAZZIO|PS044",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "PICAZZIO|PS044|C1",
+      "PICAZZIO|PS044|C2",
+      "PICAZZIO|PS044|C3"
+    ],
+    "query": "\"PICAZZIO\" \"PS044\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PIERRET ROBERT|PR3561",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PIERRET ROBERT|PR3561|C1"
+    ],
+    "query": "\"PIERRET ROBERT\" \"PR3561\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "POLARIZED|FXLV007",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "POLARIZED|FXLV007|C1",
+      "POLARIZED|FXLV007|C3",
+      "POLARIZED|FXLV007|C4"
+    ],
+    "query": "\"POLARIZED\" \"FXLV007\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PRIUS|EM2103",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "PRIUS|EM2103|C3"
+    ],
+    "query": "\"PRIUS\" \"EM2103\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PRIUS|EM2104",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PRIUS|EM2104|C1"
+    ],
+    "query": "\"PRIUS\" \"EM2104\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PRUNE|CADAQUES",
+    "colors": [
+      "8",
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|CADAQUES|8",
+      "PRUNE|CADAQUES|9"
+    ],
+    "query": "\"PRUNE\" \"CADAQUES\" (\"8\" OR \"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Prune - Provincia Compras (https://www.provinciacompras.com.ar/prune)",
+        "url": "https://www.provinciacompras.com.ar/prune"
+      },
+      {
+        "title": "Comprar Prune en NEA.VISIÓN (https://www.neavision.com.ar/lentes-de-receta/prune1/)",
+        "url": "https://www.neavision.com.ar/lentes-de-receta/prune1/"
+      },
+      {
+        "title": "Anteojos Armazón Prune Prüne Cadaques Gafas Optica Saavedra | Mismo precio en cuotas (https://articulo.mercadolibre.com.ar/MLA-1844058886-anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra-_JM)",
+        "url": "https://articulo.mercadolibre.com.ar/MLA-1844058886-anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra-_JM"
+      },
+      {
+        "title": "Anteojos y Accesorios en Salta | MercadoLibre.com.ar (https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/nuevo-en-salta/_BRAND_154971_WITH%2APOLARIZED%2ALENS_242085)",
+        "url": "https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/nuevo-en-salta/_BRAND_154971_WITH%2APOLARIZED%2ALENS_242085"
+      },
+      {
+        "title": "Comprar Prune en Lumilens (https://opticalumilens.com.ar/armazones/prune1)",
+        "url": "https://opticalumilens.com.ar/armazones/prune1"
+      },
+      {
+        "title": "Anteojos y Accesorios Armazones y lentes sin graduar Nuevo Prüne | MercadoLibre.com.ar (https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/armazones-lentes-sin-graduar/nuevo/prune/_pickup%2Astate_TUxBUENPUmFkZGIw)",
+        "url": "https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/armazones-lentes-sin-graduar/nuevo/prune/_pickup%2Astate_TUxBUENPUmFkZGIw"
+      },
+      {
+        "title": "Anteojo De Vista Prune Cadaques Nude | MC Optica (https://mcoptica.com.ar/p/anteojo-de-vista-prune-cadaques-nude/3bec2e8f-21d8-46e1-a1ac-b2945210aaa5)",
+        "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-cadaques-nude/3bec2e8f-21d8-46e1-a1ac-b2945210aaa5"
+      },
+      {
+        "title": "Prune Lentes Recetados | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/prune-lentes-recetados)",
+        "url": "https://listado.mercadolibre.com.ar/prune-lentes-recetados"
+      },
+      {
+        "title": "Anteojos y Accesorios | MercadoLibre.com.ar (https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/nuevo/_BRAND_154971_pickup%2Astate_TUxBUENPUmFkZGIw)",
+        "url": "https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/nuevo/_BRAND_154971_pickup%2Astate_TUxBUENPUmFkZGIw"
+      },
+      {
+        "title": "Lentes Peune | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/lentes-peune)",
+        "url": "https://listado.mercadolibre.com.ar/lentes-peune"
+      },
+      {
+        "title": "Video de Anteojos armazón prune cadaqués gafas optica saavedra (https://www.mercadolibre.com.ar/shorts/clips/Z2LgFI/anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra)",
+        "url": "https://www.mercadolibre.com.ar/shorts/clips/Z2LgFI/anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|CANDELA",
+    "colors": [
+      "1",
+      "5"
+    ],
+    "variantKeys": [
+      "PRUNE|CANDELA|1",
+      "PRUNE|CANDELA|5"
+    ],
+    "query": "\"PRUNE\" \"CANDELA\" (\"1\" OR \"5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazón Prüne Candela 01 Anteojo Acetato Prune Receta Negro | MercadoLibre (https://articulo.mercadolibre.com.ar/MLA-2008423112-armazon-prune-candela-01-anteojo-acetato-prune-receta-negro-_JM)",
+        "url": "https://articulo.mercadolibre.com.ar/MLA-2008423112-armazon-prune-candela-01-anteojo-acetato-prune-receta-negro-_JM"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|ESMERALDA",
+    "colors": [
+      "4"
+    ],
+    "variantKeys": [
+      "PRUNE|ESMERALDA|4"
+    ],
+    "query": "\"PRUNE\" \"ESMERALDA\" (\"4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojos y Accesorios Armazones y Lentes Sin Graduar Nuevo Prüne en Formosa | MercadoLibre.com.ar (https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/armazones-lentes-sin-graduar/nuevo/prune-en-formosa/)",
+        "url": "https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/armazones-lentes-sin-graduar/nuevo/prune-en-formosa/"
+      },
+      {
+        "title": "Prüne Esmeralda (https://buenaimagenoptica.com.ar/productos/prune-esmeralda-qsu8i/)",
+        "url": "https://buenaimagenoptica.com.ar/productos/prune-esmeralda-qsu8i/"
+      },
+      {
+        "title": "Anteojo de Vista Prune Esmeralda Black | MC Optica (https://mcoptica.com.ar/p/anteojo-de-vista-prune-esmeralda-black/1dc19ead-bf54-4bac-8149-7b8d3be62a3a)",
+        "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-esmeralda-black/1dc19ead-bf54-4bac-8149-7b8d3be62a3a"
+      },
+      {
+        "title": "Anteojos De Vista | MC Optica (https://mcoptica.com.ar/anteojos-de-vista/brand-prune)",
+        "url": "https://mcoptica.com.ar/anteojos-de-vista/brand-prune"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|GRISELDA",
+    "colors": [
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|GRISELDA|9"
+    ],
+    "query": "\"PRUNE\" \"GRISELDA\" (\"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Prune griselda 09 - La Guía Online (https://laguiaonline.com.ar/products/869889-prune-griselda-09)",
+        "url": "https://laguiaonline.com.ar/products/869889-prune-griselda-09"
+      },
+      {
+        "title": "Comprar Prune en Lumilens (https://opticalumilens.com.ar/armazones/prune1/)",
+        "url": "https://opticalumilens.com.ar/armazones/prune1/"
+      },
+      {
+        "title": "Comprá online productos en OPTICA AVENIDA (https://opticavenida.com.ar/productos/)",
+        "url": "https://opticavenida.com.ar/productos/"
+      },
+      {
+        "title": "Anteojos Prüne (https://mioptica.com.ar/prune/receta3/prune-acetato/)",
+        "url": "https://mioptica.com.ar/prune/receta3/prune-acetato/"
+      },
+      {
+        "title": "Anteojos de receta Prüne - Estilo y calidad (https://www.opticalooklens.com.ar/coleccion2026/nuestras-marcas/prune)",
+        "url": "https://www.opticalooklens.com.ar/coleccion2026/nuestras-marcas/prune"
+      },
+      {
+        "title": "Receta Prüne Griselda marrón traslúcido - Opticarte (https://www.opticarte.com.ar/anteojos-de-receta/prune/receta-prune-griselda-marron-traslucido)",
+        "url": "https://www.opticarte.com.ar/anteojos-de-receta/prune/receta-prune-griselda-marron-traslucido"
+      },
+      {
+        "title": "Anteojos Prüne (https://mioptica.com.ar/prune/?Color=C.009)",
+        "url": "https://mioptica.com.ar/prune/?Color=C.009"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|HERMINIO",
+    "colors": [
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|HERMINIO|9"
+    ],
+    "query": "\"PRUNE\" \"HERMINIO\" (\"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Comprar Prune en NEA.VISIÓN (https://www.neavision.com.ar/lentes-de-receta/prune1/)",
+        "url": "https://www.neavision.com.ar/lentes-de-receta/prune1/"
+      },
+      {
+        "title": "Prune (https://buenaimagenoptica.com.ar/marcas/prune/)",
+        "url": "https://buenaimagenoptica.com.ar/marcas/prune/"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|MARA",
+    "colors": [
+      "5",
+      "7",
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|MARA|5",
+      "PRUNE|MARA|7",
+      "PRUNE|MARA|9"
+    ],
+    "query": "\"PRUNE\" \"MARA\" (\"5\" OR \"7\" OR \"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Colección 2026 de Lentes Ópticos y de Sol | Braver – Page 4 – BRAVER - Especialistas en ojos saludables (https://bravertiendaoptica.cl/collections/coleccion-2026?page=4)",
+        "url": "https://bravertiendaoptica.cl/collections/coleccion-2026?page=4"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|MERIS",
+    "colors": [
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|MERIS|9"
+    ],
+    "query": "\"PRUNE\" \"MERIS\" (\"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Prune (https://buenaimagenoptica.com.ar/marcas/prune/)",
+        "url": "https://buenaimagenoptica.com.ar/marcas/prune/"
+      },
+      {
+        "title": "Armazones de receta en Quilmes | Óptica Vas Viendo al Sur (https://vasviendoalsur.com.ar/catalogo.php?fam=armazones-de-receta&genero=unisex)",
+        "url": "https://vasviendoalsur.com.ar/catalogo.php?fam=armazones-de-receta&genero=unisex"
+      },
+      {
+        "title": "Anteojos Prüne (https://mioptica.com.ar/prune/receta3/prune-acetato/)",
+        "url": "https://mioptica.com.ar/prune/receta3/prune-acetato/"
+      },
+      {
+        "title": "Anteojo de Vista Prune Meris Black | MC Optica (https://mcoptica.com.ar/p/anteojo-de-vista-prune-meris-black/07395436-e1ba-41ba-acc4-67c809ebcdcb)",
+        "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-meris-black/07395436-e1ba-41ba-acc4-67c809ebcdcb"
+      },
+      {
+        "title": "Comprá online productos en lutz ferrando (https://www.lutzferrandocaba.com.ar/productos/)",
+        "url": "https://www.lutzferrandocaba.com.ar/productos/"
+      },
+      {
+        "title": "PRÜNE – Visión (https://visionplanet.com.ar/prune/)",
+        "url": "https://visionplanet.com.ar/prune/"
+      },
+      {
+        "title": "Óptica Junín | Lentes modernos + cristales de alta tecnología (https://optica-junin.tiendup.com/)",
+        "url": "https://optica-junin.tiendup.com/"
+      },
+      {
+        "title": "Armazon Prune Mujer | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/armazon-prune-mujer)",
+        "url": "https://listado.mercadolibre.com.ar/armazon-prune-mujer"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|MILENA",
+    "colors": [
+      "5"
+    ],
+    "variantKeys": [
+      "PRUNE|MILENA|5"
+    ],
+    "query": "\"PRUNE\" \"MILENA\" (\"5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojo de receta (https://www.opticalooklens.com.ar/productos/anteojo-de-receta-prune-milena-4475n)",
+        "url": "https://www.opticalooklens.com.ar/productos/anteojo-de-receta-prune-milena-4475n"
+      },
+      {
+        "title": "Armazones Prune, anteojos de Receta, Óptica Medrano (https://laboratorioopticomedrano.com.ar/armazones-de-receta/armazones-prune/)",
+        "url": "https://laboratorioopticomedrano.com.ar/armazones-de-receta/armazones-prune/"
+      },
+      {
+        "title": "Comprar Receta en OPTICA MOSCONI (https://www.opticamosconi.com.ar/armazones/receta/)",
+        "url": "https://www.opticamosconi.com.ar/armazones/receta/"
+      },
+      {
+        "title": "Lentes Ópticos Prüne Milena | Dorado con Varillas Negras | BRAVER – BRAVER - Especialistas en ojos saludables (https://bravertiendaoptica.cl/products/lentes-opticos-prune-milena)",
+        "url": "https://bravertiendaoptica.cl/products/lentes-opticos-prune-milena"
+      },
+      {
+        "title": "Comprá online productos en Optica Gimgall (https://gimgall.com/productos/)",
+        "url": "https://gimgall.com/productos/"
+      },
+      {
+        "title": "Anteojo de Vista Prüne Milena Dorado y Carey | MC Optica (https://mcoptica.com.ar/p/anteojo-de-vista-prune-milena-dorado-y-carey/dbaac887-29b2-47ee-bf22-1f5bfd0644b8)",
+        "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-milena-dorado-y-carey/dbaac887-29b2-47ee-bf22-1f5bfd0644b8"
+      },
+      {
+        "title": "Mujer (https://www.opticaripoll.com.ar/armazones-para-receta/mujer/page/5/)",
+        "url": "https://www.opticaripoll.com.ar/armazones-para-receta/mujer/page/5/"
+      },
+      {
+        "title": "Receta Prüne Milena dorado carey - Opticarte (https://opticarte.com.ar/anteojos-de-receta/prune/receta-prune-milena-dorado-carey)",
+        "url": "https://opticarte.com.ar/anteojos-de-receta/prune/receta-prune-milena-dorado-carey"
+      },
+      {
+        "title": "Anteojos de Receta de Metal | Look Lens (https://www.opticalooklens.com.ar/coleccion2026/anteojosdereceta/anteojosdereceta-mujer/anteojosdereceta-metal)",
+        "url": "https://www.opticalooklens.com.ar/coleccion2026/anteojosdereceta/anteojosdereceta-mujer/anteojosdereceta-metal"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|PALOMA",
+    "colors": [
+      "5"
+    ],
+    "variantKeys": [
+      "PRUNE|PALOMA|5"
+    ],
+    "query": "\"PRUNE\" \"PALOMA\" (\"5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojos Prüne de receta y de sol | Mióptica (https://mioptica.com.ar/prune/)",
+        "url": "https://mioptica.com.ar/prune/"
+      },
+      {
+        "title": "Armazones Prune, anteojos de Receta, Óptica Medrano (https://laboratorioopticomedrano.com.ar/armazones-de-receta/armazones-prune/)",
+        "url": "https://laboratorioopticomedrano.com.ar/armazones-de-receta/armazones-prune/"
+      },
+      {
+        "title": "¿Qué es Hot Sale?: (https://assets.hotsale.com.ar/assets/2022/hotsale2022-presskit.pdf)",
+        "url": "https://assets.hotsale.com.ar/assets/2022/hotsale2022-presskit.pdf"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|PILI",
+    "colors": [
+      "1",
+      "4",
+      "5"
+    ],
+    "variantKeys": [
+      "PRUNE|PILI|1",
+      "PRUNE|PILI|4",
+      "PRUNE|PILI|5"
+    ],
+    "query": "\"PRUNE\" \"PILI\" (\"1\" OR \"4\" OR \"5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojos Prüne de receta y de sol | Mióptica (https://mioptica.com.ar/prune/)",
+        "url": "https://mioptica.com.ar/prune/"
+      },
+      {
+        "title": "Comprá online productos en OPTICA AVENIDA (https://opticavenida.com.ar/productos/)",
+        "url": "https://opticavenida.com.ar/productos/"
+      },
+      {
+        "title": "Gafas de Sol PRUNE Polarizadas UV400 | Braver Óptica – BRAVER - Especialistas en ojos saludables (https://bravertiendaoptica.cl/collections/prune)",
+        "url": "https://bravertiendaoptica.cl/collections/prune"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|PRAGA",
+    "colors": [
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|PRAGA|9"
+    ],
+    "query": "\"PRUNE\" \"PRAGA\" (\"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Anteojo de Vista Prune Praga Marron | MC Optica (https://mcoptica.com.ar/p/anteojo-de-vista-prune-praga-marron/e3131c82-1b3b-4869-b16f-16c12c1a66e7)",
+        "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-praga-marron/e3131c82-1b3b-4869-b16f-16c12c1a66e7"
+      },
+      {
+        "title": "Prune – Óptica Ónix (https://opticaonix.uy/collections/prune-1)",
+        "url": "https://opticaonix.uy/collections/prune-1"
+      },
+      {
+        "title": "Armazon Anteojos Prune | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/armazon-anteojos-prune)",
+        "url": "https://listado.mercadolibre.com.ar/armazon-anteojos-prune"
+      },
+      {
+        "title": "Anteojos PRUNE: Estilo y Moda para Mujeres (https://opticaab.com.ar/marcas/prune/)",
+        "url": "https://opticaab.com.ar/marcas/prune/"
+      }
+    ]
+  },
+  {
+    "key": "PRUNE|ROSALBA",
+    "colors": [
+      "9"
+    ],
+    "variantKeys": [
+      "PRUNE|ROSALBA|9"
+    ],
+    "query": "\"PRUNE\" \"ROSALBA\" (\"9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Prune Rosalba 09 - Comprar en Lumilens (https://opticalumilens.com.ar/productos/prune-rosalba-09/)",
+        "url": "https://opticalumilens.com.ar/productos/prune-rosalba-09/"
+      },
+      {
+        "title": "Comprar Prune en Lumilens (https://opticalumilens.com.ar/armazones/prune1)",
+        "url": "https://opticalumilens.com.ar/armazones/prune1"
+      },
+      {
+        "title": "PRÜNE – Visión (https://visionplanet.com.ar/prune/)",
+        "url": "https://visionplanet.com.ar/prune/"
+      },
+      {
+        "title": "Tienda - Página 5 de 10 - TABOADA | ÓPTICA (https://opticataboada.com/tienda/page/5/)",
+        "url": "https://opticataboada.com/tienda/page/5/"
+      }
+    ]
+  },
+  {
+    "key": "PUCCINI|PA038",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "PUCCINI|PA038|C1",
+      "PUCCINI|PA038|C2",
+      "PUCCINI|PA038|C3",
+      "PUCCINI|PA038|C4"
+    ],
+    "query": "\"PUCCINI\" \"PA038\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PA042",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "PUCCINI|PA042|C1",
+      "PUCCINI|PA042|C2",
+      "PUCCINI|PA042|C3"
+    ],
+    "query": "\"PUCCINI\" \"PA042\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PA043",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "PUCCINI|PA043|C1",
+      "PUCCINI|PA043|C2",
+      "PUCCINI|PA043|C4"
+    ],
+    "query": "\"PUCCINI\" \"PA043\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PA044",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "PUCCINI|PA044|C1",
+      "PUCCINI|PA044|C3",
+      "PUCCINI|PA044|C4"
+    ],
+    "query": "\"PUCCINI\" \"PA044\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PA045",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "PUCCINI|PA045|C1",
+      "PUCCINI|PA045|C3"
+    ],
+    "query": "\"PUCCINI\" \"PA045\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PL033",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "PUCCINI|PL033|C1",
+      "PUCCINI|PL033|C2",
+      "PUCCINI|PL033|C5"
+    ],
+    "query": "\"PUCCINI\" \"PL033\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PL037",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "PUCCINI|PL037|C3"
+    ],
+    "query": "\"PUCCINI\" \"PL037\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PL047",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "PUCCINI|PL047|C2"
+    ],
+    "query": "\"PUCCINI\" \"PL047\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PT089",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "PUCCINI|PT089|C3"
+    ],
+    "query": "\"PUCCINI\" \"PT089\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PT1074",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "PUCCINI|PT1074|C1"
+    ],
+    "query": "\"PUCCINI\" \"PT1074\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

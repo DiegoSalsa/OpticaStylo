@@ -1,0 +1,569 @@
+[
+  {
+    "key": "JORGIO|FXJO024",
+    "colors": [
+      "C10",
+      "C7",
+      "C9"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO024|C10",
+      "JORGIO|FXJO024|C7",
+      "JORGIO|FXJO024|C9"
+    ],
+    "query": "\"JORGIO\" \"FXJO024\" (\"C10\" OR \"C7\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|FXJO025",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO025|C1",
+      "JORGIO|FXJO025|C3",
+      "JORGIO|FXJO025|C4",
+      "JORGIO|FXJO025|C5"
+    ],
+    "query": "\"JORGIO\" \"FXJO025\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Jorgio - Opticallery (https://opticallery.cl/product-category/lentes-opticos/jorgio/)",
+        "url": "https://opticallery.cl/product-category/lentes-opticos/jorgio/"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO026",
+    "colors": [
+      "C4",
+      "C6"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO026|C4",
+      "JORGIO|FXJO026|C6"
+    ],
+    "query": "\"JORGIO\" \"FXJO026\" (\"C4\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|FXJO028",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO028|C1",
+      "JORGIO|FXJO028|C2",
+      "JORGIO|FXJO028|C3",
+      "JORGIO|FXJO028|C4",
+      "JORGIO|FXJO028|C5",
+      "JORGIO|FXJO028|C6"
+    ],
+    "query": "\"JORGIO\" \"FXJO028\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      },
+      {
+        "title": "Mi Wishlist | OPTICALI (https://opticali.cl/wishlist)",
+        "url": "https://opticali.cl/wishlist"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO029",
+    "colors": [
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO029|C3",
+      "JORGIO|FXJO029|C4",
+      "JORGIO|FXJO029|C5",
+      "JORGIO|FXJO029|C6"
+    ],
+    "query": "\"JORGIO\" \"FXJO029\" (\"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazones | Óptica CIG (https://opticacig.cl/categoria/armazones)",
+        "url": "https://opticacig.cl/categoria/armazones"
+      },
+      {
+        "title": "Óptica CIG | Lentes y monturas de calidad | Óptica CIG (https://www.opticacig.cl/)",
+        "url": "https://www.opticacig.cl/"
+      },
+      {
+        "title": "Armazones | Óptica CIG (https://www.opticacig.cl/categoria/armazones)",
+        "url": "https://www.opticacig.cl/categoria/armazones"
+      },
+      {
+        "title": "Jorgio - Opticallery (https://opticallery.cl/product-category/lentes-opticos/jorgio/)",
+        "url": "https://opticallery.cl/product-category/lentes-opticos/jorgio/"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon)",
+        "url": "https://www.opticacig.cl/categoria/armazon"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://opticacig.cl/categoria/armazon)",
+        "url": "https://opticacig.cl/categoria/armazon"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon?page=2)",
+        "url": "https://www.opticacig.cl/categoria/armazon?page=2"
+      },
+      {
+        "title": "Armazones | Óptica CIG (https://www.opticacig.cl/categoria/armazones?page=2)",
+        "url": "https://www.opticacig.cl/categoria/armazones?page=2"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon?page=3)",
+        "url": "https://www.opticacig.cl/categoria/armazon?page=3"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=44)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=44"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO030",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C6"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO030|C1",
+      "JORGIO|FXJO030|C2",
+      "JORGIO|FXJO030|C3",
+      "JORGIO|FXJO030|C4",
+      "JORGIO|FXJO030|C6"
+    ],
+    "query": "\"JORGIO\" \"FXJO030\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Jorgio - Opticallery (https://opticallery.cl/product-category/lentes-opticos/jorgio/)",
+        "url": "https://opticallery.cl/product-category/lentes-opticos/jorgio/"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO031",
+    "colors": [
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO031|C2",
+      "JORGIO|FXJO031|C5"
+    ],
+    "query": "\"JORGIO\" \"FXJO031\" (\"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO032",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO032|C4"
+    ],
+    "query": "\"JORGIO\" \"FXJO032\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Lente óptico Jorgio Occhiali FXJO032 – Ópticas Osman (https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo032)",
+        "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo032"
+      },
+      {
+        "title": "Lente óptico – Page 6 – Ópticas Osman (https://opticasosman.cl/collections/lente-optico?page=6)",
+        "url": "https://opticasosman.cl/collections/lente-optico?page=6"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO034",
+    "colors": [
+      "C2",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO034|C2",
+      "JORGIO|FXJO034|C3",
+      "JORGIO|FXJO034|C5"
+    ],
+    "query": "\"JORGIO\" \"FXJO034\" (\"C2\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|FXJO036",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO036|C3"
+    ],
+    "query": "\"JORGIO\" \"FXJO036\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Lente óptico Jorgio Occhiali FXJO036 – Ópticas Osman (https://opticasosman.cl/products/lente-optico-jorgio-fxjo036)",
+        "url": "https://opticasosman.cl/products/lente-optico-jorgio-fxjo036"
+      },
+      {
+        "title": "Lente óptico – Page 7 – Ópticas Osman (https://opticasosman.cl/collections/lente-optico?page=7)",
+        "url": "https://opticasosman.cl/collections/lente-optico?page=7"
+      },
+      {
+        "title": "Más Vendidos 🔥 – Page 2 – Ópticas Osman (https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2)",
+        "url": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO037",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO037|C1",
+      "JORGIO|FXJO037|C2",
+      "JORGIO|FXJO037|C3",
+      "JORGIO|FXJO037|C4",
+      "JORGIO|FXJO037|C5",
+      "JORGIO|FXJO037|C6"
+    ],
+    "query": "\"JORGIO\" \"FXJO037\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|FXJO039",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO039|C2",
+      "JORGIO|FXJO039|C3"
+    ],
+    "query": "\"JORGIO\" \"FXJO039\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Mi Wishlist | OPTICALI (https://opticali.cl/wishlist)",
+        "url": "https://opticali.cl/wishlist"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO066",
+    "colors": [
+      "C4A"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO066|C4A"
+    ],
+    "query": "\"JORGIO\" \"FXJO066\" (\"C4A\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|FXJO067",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO067|C1",
+      "JORGIO|FXJO067|C2",
+      "JORGIO|FXJO067|C4"
+    ],
+    "query": "\"JORGIO\" \"FXJO067\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=32)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=32"
+      }
+    ]
+  },
+  {
+    "key": "JORGIO|FXJO077",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "JORGIO|FXJO077|C4"
+    ],
+    "query": "\"JORGIO\" \"FXJO077\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|XJO019",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "JORGIO|XJO019|C5"
+    ],
+    "query": "\"JORGIO\" \"XJO019\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "KCHAI|17058",
+    "colors": [
+      "C02"
+    ],
+    "variantKeys": [
+      "KCHAI|17058|C02"
+    ],
+    "query": "\"KCHAI\" \"17058\" (\"C02\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "KID|YM018",
+    "colors": [
+      "C2",
+      "C4",
+      "C5",
+      "C7"
+    ],
+    "variantKeys": [
+      "KID|YM018|C2",
+      "KID|YM018|C4",
+      "KID|YM018|C5",
+      "KID|YM018|C7"
+    ],
+    "query": "\"KID\" \"YM018\" (\"C2\" OR \"C4\" OR \"C5\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "KID|YM088",
+    "colors": [
+      "C3",
+      "C4",
+      "C5",
+      "C8"
+    ],
+    "variantKeys": [
+      "KID|YM088|C3",
+      "KID|YM088|C4",
+      "KID|YM088|C5",
+      "KID|YM088|C8"
+    ],
+    "query": "\"KID\" \"YM088\" (\"C3\" OR \"C4\" OR \"C5\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "KID|YM089",
+    "colors": [
+      "C4",
+      "C9"
+    ],
+    "variantKeys": [
+      "KID|YM089|C4",
+      "KID|YM089|C9"
+    ],
+    "query": "\"KID\" \"YM089\" (\"C4\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "KID|YM090",
+    "colors": [
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "KID|YM090|C5",
+      "KID|YM090|C6"
+    ],
+    "query": "\"KID\" \"YM090\" (\"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "KID|YM093",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "KID|YM093|C3"
+    ],
+    "query": "\"KID\" \"YM093\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LACROSS|LY2174L",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "LACROSS|LY2174L|C1"
+    ],
+    "query": "\"LACROSS\" \"LY2174L\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LACROSS|LY2175L",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "LACROSS|LY2175L|C4"
+    ],
+    "query": "\"LACROSS\" \"LY2175L\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LACROSS|LY2179L",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "LACROSS|LY2179L|C3"
+    ],
+    "query": "\"LACROSS\" \"LY2179L\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LACROSS|LY2180L",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "LACROSS|LY2180L|C2"
+    ],
+    "query": "\"LACROSS\" \"LY2180L\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LACROSSE|LY17909",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "LACROSSE|LY17909|C5"
+    ],
+    "query": "\"LACROSSE\" \"LY17909\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LA626",
+    "colors": [
+      "C13",
+      "C2",
+      "C9"
+    ],
+    "variantKeys": [
+      "LAVANETT|LA626|C13",
+      "LAVANETT|LA626|C2",
+      "LAVANETT|LA626|C9"
+    ],
+    "query": "\"LAVANETT\" \"LA626\" (\"C13\" OR \"C2\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1080",
+    "colors": [
+      "C6",
+      "C8"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1080|C6",
+      "LAVANETT|LAC1080|C8"
+    ],
+    "query": "\"LAVANETT\" \"LAC1080\" (\"C6\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETT|LAC1088",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "LAVANETT|LAC1088|C5"
+    ],
+    "query": "\"LAVANETT\" \"LAC1088\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

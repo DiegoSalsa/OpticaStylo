@@ -1,0 +1,473 @@
+[
+  {
+    "key": "VESPA|DYVE062",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE062|C2"
+    ],
+    "query": "\"VESPA\" \"DYVE062\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE064",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE064|C1",
+      "VESPA|DYVE064|C3",
+      "VESPA|DYVE064|C4"
+    ],
+    "query": "\"VESPA\" \"DYVE064\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE066",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE066|C4"
+    ],
+    "query": "\"VESPA\" \"DYVE066\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE068",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE068|C1"
+    ],
+    "query": "\"VESPA\" \"DYVE068\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE070",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE070|C2",
+      "VESPA|DYVE070|C3"
+    ],
+    "query": "\"VESPA\" \"DYVE070\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE081",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE081|C1",
+      "VESPA|DYVE081|C2",
+      "VESPA|DYVE081|C3"
+    ],
+    "query": "\"VESPA\" \"DYVE081\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE082",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE082|C1",
+      "VESPA|DYVE082|C2",
+      "VESPA|DYVE082|C3"
+    ],
+    "query": "\"VESPA\" \"DYVE082\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Productos – Exilus (https://exilus.cl/collections/all)",
+        "url": "https://exilus.cl/collections/all"
+      }
+    ]
+  },
+  {
+    "key": "VESPA|DYVE086",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE086|C1",
+      "VESPA|DYVE086|C3",
+      "VESPA|DYVE086|C4",
+      "VESPA|DYVE086|C5"
+    ],
+    "query": "\"VESPA\" \"DYVE086\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE087",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE087|C2"
+    ],
+    "query": "\"VESPA\" \"DYVE087\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|LY2147L",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "VESPA|LY2147L|C2"
+    ],
+    "query": "\"VESPA\" \"LY2147L\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|LY2180L",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "VESPA|LY2180L|C3"
+    ],
+    "query": "\"VESPA\" \"LY2180L\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE2103F",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "VESPA|VE2103F|C1"
+    ],
+    "query": "\"VESPA\" \"VE2103F\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21046",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "VESPA|VE21046|C1"
+    ],
+    "query": "\"VESPA\" \"VE21046\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21048",
+    "colors": [
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21048|C2",
+      "VESPA|VE21048|C3",
+      "VESPA|VE21048|C4"
+    ],
+    "query": "\"VESPA\" \"VE21048\" (\"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21050",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21050|C1",
+      "VESPA|VE21050|C2",
+      "VESPA|VE21050|C3",
+      "VESPA|VE21050|C4"
+    ],
+    "query": "\"VESPA\" \"VE21050\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21054",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "VESPA|VE21054|C5"
+    ],
+    "query": "\"VESPA\" \"VE21054\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Mi Wishlist | OPTICALI (https://opticali.cl/wishlist)",
+        "url": "https://opticali.cl/wishlist"
+      }
+    ]
+  },
+  {
+    "key": "VESPA|VE21074",
+    "colors": [
+      "COL.1",
+      "COL.2",
+      "COL.3"
+    ],
+    "variantKeys": [
+      "VESPA|VE21074|COL.1",
+      "VESPA|VE21074|COL.2",
+      "VESPA|VE21074|COL.3"
+    ],
+    "query": "\"VESPA\" \"VE21074\" (\"COL.1\" OR \"COL.2\" OR \"COL.3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21076",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "VESPA|VE21076|C3"
+    ],
+    "query": "\"VESPA\" \"VE21076\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21077",
+    "colors": [
+      "COL.1"
+    ],
+    "variantKeys": [
+      "VESPA|VE21077|COL.1"
+    ],
+    "query": "\"VESPA\" \"VE21077\" (\"COL.1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21078",
+    "colors": [
+      "COL.2",
+      "COL.3"
+    ],
+    "variantKeys": [
+      "VESPA|VE21078|COL.2",
+      "VESPA|VE21078|COL.3"
+    ],
+    "query": "\"VESPA\" \"VE21078\" (\"COL.2\" OR \"COL.3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21084",
+    "colors": [
+      "COL.1"
+    ],
+    "variantKeys": [
+      "VESPA|VE21084|COL.1"
+    ],
+    "query": "\"VESPA\" \"VE21084\" (\"COL.1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21086",
+    "colors": [
+      "COL.",
+      "COL.2"
+    ],
+    "variantKeys": [
+      "VESPA|VE21086|COL.",
+      "VESPA|VE21086|COL.2"
+    ],
+    "query": "\"VESPA\" \"VE21086\" (\"COL.\" OR \"COL.2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21097",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21097|C2",
+      "VESPA|VE21097|C4"
+    ],
+    "query": "\"VESPA\" \"VE21097\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21098",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21098|C1",
+      "VESPA|VE21098|C2",
+      "VESPA|VE21098|C4"
+    ],
+    "query": "\"VESPA\" \"VE21098\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21099",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21099|C1",
+      "VESPA|VE21099|C2",
+      "VESPA|VE21099|C3",
+      "VESPA|VE21099|C4"
+    ],
+    "query": "\"VESPA\" \"VE21099\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21100",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21100|C1",
+      "VESPA|VE21100|C2",
+      "VESPA|VE21100|C3",
+      "VESPA|VE21100|C4"
+    ],
+    "query": "\"VESPA\" \"VE21100\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE211026",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE211026|C4"
+    ],
+    "query": "\"VESPA\" \"VE211026\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21105",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "VESPA|VE21105|C3"
+    ],
+    "query": "\"VESPA\" \"VE21105\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|VE21106",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "VESPA|VE21106|C1",
+      "VESPA|VE21106|C2"
+    ],
+    "query": "\"VESPA\" \"VE21106\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazones ópticos | LENTESBIOBIO.CL (https://lentesbiobio.cl/categoria/armazones-opticos?page=6&sortDirection=desc&sortField=createdAt)",
+        "url": "https://lentesbiobio.cl/categoria/armazones-opticos?page=6&sortDirection=desc&sortField=createdAt"
+      },
+      {
+        "title": "Buscar | LENTESBIOBIO.CL (https://lentesbiobio.cl/search?page=7&search=%23MarcosHombre&sortDirection=desc&sortField=price)",
+        "url": "https://lentesbiobio.cl/search?page=7&search=%23MarcosHombre&sortDirection=desc&sortField=price"
+      }
+    ]
+  },
+  {
+    "key": "VESPA|VE21107",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|VE21107|C1",
+      "VESPA|VE21107|C3",
+      "VESPA|VE21107|C4"
+    ],
+    "query": "\"VESPA\" \"VE21107\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

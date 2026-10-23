@@ -1,0 +1,599 @@
+[
+  {
+    "key": "LAVANETTE|LT054",
+    "colors": [
+      "C6162"
+    ],
+    "variantKeys": [
+      "LAVANETTE|LT054|C6162"
+    ],
+    "query": "\"LAVANETTE\" \"LT054\" (\"C6162\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LAVANETTE|LT1015",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "LAVANETTE|LT1015|C2",
+      "LAVANETTE|LT1015|C4"
+    ],
+    "query": "\"LAVANETTE\" \"LT1015\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LE GIRO|PZ20001",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ20001|C4"
+    ],
+    "query": "\"LE GIRO\" \"PZ20001\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LE GIRO|PZ22001",
+    "colors": [
+      "C1",
+      "C5",
+      "C6",
+      "C7"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22001|C1",
+      "LE GIRO|PZ22001|C5",
+      "LE GIRO|PZ22001|C6",
+      "LE GIRO|PZ22001|C7"
+    ],
+    "query": "\"LE GIRO\" \"PZ22001\" (\"C1\" OR \"C5\" OR \"C6\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LE GIRO|PZ22002",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "C7"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22002|C1",
+      "LE GIRO|PZ22002|C3",
+      "LE GIRO|PZ22002|C4",
+      "LE GIRO|PZ22002|C5",
+      "LE GIRO|PZ22002|C6",
+      "LE GIRO|PZ22002|C7"
+    ],
+    "query": "\"LE GIRO\" \"PZ22002\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=44)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=44"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=36)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=36"
+      }
+    ]
+  },
+  {
+    "key": "LE GIRO|PZ22003",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22003|C1",
+      "LE GIRO|PZ22003|C2",
+      "LE GIRO|PZ22003|C3",
+      "LE GIRO|PZ22003|C4"
+    ],
+    "query": "\"LE GIRO\" \"PZ22003\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Le Giro Hombre Óptico (https://www.hdvisionrx.com/hombre/le-giro-hombre-optico)",
+        "url": "https://www.hdvisionrx.com/hombre/le-giro-hombre-optico"
+      },
+      {
+        "title": "Le Giro Mujer Óptico (https://www.hdvisionrx.com/mujer/le-giro-mujer-optico)",
+        "url": "https://www.hdvisionrx.com/mujer/le-giro-mujer-optico"
+      },
+      {
+        "title": "Hombre (https://www.hdvisionrx.com/hombre?page=2)",
+        "url": "https://www.hdvisionrx.com/hombre?page=2"
+      },
+      {
+        "title": "Mujer (https://www.hdvisionrx.com/mujer?page=3&sorting=price-desc)",
+        "url": "https://www.hdvisionrx.com/mujer?page=3&sorting=price-desc"
+      }
+    ]
+  },
+  {
+    "key": "LE GIRO|PZ22004",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22004|C5"
+    ],
+    "query": "\"LE GIRO\" \"PZ22004\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "LE GIRO | PZ22004 C2 - Opticallery (https://opticallery.cl/producto/le-giro-pz22004-c2/)",
+        "url": "https://opticallery.cl/producto/le-giro-pz22004-c2/"
+      },
+      {
+        "title": "Le Giro Hombre Óptico (https://www.hdvisionrx.com/hombre/le-giro-hombre-optico)",
+        "url": "https://www.hdvisionrx.com/hombre/le-giro-hombre-optico"
+      },
+      {
+        "title": "Hombre (https://www.hdvisionrx.com/hombre?page=2)",
+        "url": "https://www.hdvisionrx.com/hombre?page=2"
+      },
+      {
+        "title": "Lente óptico – Page 7 – Ópticas Osman (https://opticasosman.cl/collections/lente-optico?page=7)",
+        "url": "https://opticasosman.cl/collections/lente-optico?page=7"
+      },
+      {
+        "title": "Más Vendidos 🔥 – Page 2 – Ópticas Osman (https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2)",
+        "url": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2"
+      }
+    ]
+  },
+  {
+    "key": "LE GIRO|PZ22011",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22011|C1",
+      "LE GIRO|PZ22011|C2",
+      "LE GIRO|PZ22011|C3",
+      "LE GIRO|PZ22011|C4"
+    ],
+    "query": "\"LE GIRO\" \"PZ22011\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LE GIRO|PZ22013",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22013|C7"
+    ],
+    "query": "\"LE GIRO\" \"PZ22013\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Lentes Ópticos Le Giro PZ22013 C1 (https://www.hdvisionrx.com/lentes-opticos-le-giro-pz22013-c1)",
+        "url": "https://www.hdvisionrx.com/lentes-opticos-le-giro-pz22013-c1"
+      }
+    ]
+  },
+  {
+    "key": "LE GIRO|PZ22017",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22017|C1",
+      "LE GIRO|PZ22017|C2",
+      "LE GIRO|PZ22017|C3",
+      "LE GIRO|PZ22017|C4"
+    ],
+    "query": "\"LE GIRO\" \"PZ22017\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Opticali | Lentes y monturas de calidad | OPTICALI (https://www.opticali.cl/)",
+        "url": "https://www.opticali.cl/"
+      },
+      {
+        "title": "Opticali | Lentes y monturas de calidad | OPTICALI (https://opticali.cl/)",
+        "url": "https://opticali.cl/"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=32)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=32"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      }
+    ]
+  },
+  {
+    "key": "LE GIRO|PZ22020",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22020|C1",
+      "LE GIRO|PZ22020|C2",
+      "LE GIRO|PZ22020|C3",
+      "LE GIRO|PZ22020|C4"
+    ],
+    "query": "\"LE GIRO\" \"PZ22020\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LE GIRO|PZ22039",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22039|C3",
+      "LE GIRO|PZ22039|C4"
+    ],
+    "query": "\"LE GIRO\" \"PZ22039\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Óptica CIG | Lentes y monturas de calidad | Óptica CIG (https://www.opticacig.cl/)",
+        "url": "https://www.opticacig.cl/"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon)",
+        "url": "https://www.opticacig.cl/categoria/armazon"
+      },
+      {
+        "title": "Armazones | Óptica CIG (https://opticacig.cl/categoria/armazones)",
+        "url": "https://opticacig.cl/categoria/armazones"
+      },
+      {
+        "title": "Armazones | Óptica CIG (https://www.opticacig.cl/categoria/armazones)",
+        "url": "https://www.opticacig.cl/categoria/armazones"
+      },
+      {
+        "title": "Armazones | Óptica CIG (https://www.opticacig.cl/categoria/armazones?page=2)",
+        "url": "https://www.opticacig.cl/categoria/armazones?page=2"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://opticacig.cl/categoria/armazon)",
+        "url": "https://opticacig.cl/categoria/armazon"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon?page=2)",
+        "url": "https://www.opticacig.cl/categoria/armazon?page=2"
+      },
+      {
+        "title": "Armazon | Óptica CIG (https://www.opticacig.cl/categoria/armazon?page=3)",
+        "url": "https://www.opticacig.cl/categoria/armazon?page=3"
+      }
+    ]
+  },
+  {
+    "key": "LE GIRO|PZ22041",
+    "colors": [
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "LE GIRO|PZ22041|C2",
+      "LE GIRO|PZ22041|C3",
+      "LE GIRO|PZ22041|C4",
+      "LE GIRO|PZ22041|C5"
+    ],
+    "query": "\"LE GIRO\" \"PZ22041\" (\"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LOIS|MTLS10",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "LOIS|MTLS10|C4"
+    ],
+    "query": "\"LOIS\" \"MTLS10\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LOVER|LO5077",
+    "colors": [
+      "C01"
+    ],
+    "variantKeys": [
+      "LOVER|LO5077|C01"
+    ],
+    "query": "\"LOVER\" \"LO5077\" (\"C01\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LUCERNA|JH172",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "LUCERNA|JH172|C1"
+    ],
+    "query": "\"LUCERNA\" \"JH172\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LYM|DM18132",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "LYM|DM18132|C5"
+    ],
+    "query": "\"LYM\" \"DM18132\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "LYM|LM1037",
+    "colors": [
+      "ROSA/CELESTE"
+    ],
+    "variantKeys": [
+      "LYM|LM1037|ROSA/CELESTE"
+    ],
+    "query": "\"LYM\" \"LM1037\" (\"ROSA/CELESTE\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|DN342",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MARCHIONI|DN342|C2"
+    ],
+    "query": "\"MARCHIONI\" \"DN342\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|DN344",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MARCHIONI|DN344|C2"
+    ],
+    "query": "\"MARCHIONI\" \"DN344\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|M2003",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "MARCHIONI|M2003|C1"
+    ],
+    "query": "\"MARCHIONI\" \"M2003\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|ML001",
+    "colors": [
+      "C1",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML001|C1",
+      "MARCHIONI|ML001|C3",
+      "MARCHIONI|ML001|C5"
+    ],
+    "query": "\"MARCHIONI\" \"ML001\" (\"C1\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazones ópticos | LENTESBIOBIO.CL (https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc)",
+        "url": "https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc"
+      },
+      {
+        "title": "Productos | LENTESBIOBIO.CL (https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name)",
+        "url": "https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name"
+      }
+    ]
+  },
+  {
+    "key": "MARCHIONI|ML002",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML002|C1",
+      "MARCHIONI|ML002|C3",
+      "MARCHIONI|ML002|C4",
+      "MARCHIONI|ML002|C5"
+    ],
+    "query": "\"MARCHIONI\" \"ML002\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazones ópticos | LENTESBIOBIO.CL (https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc)",
+        "url": "https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc"
+      },
+      {
+        "title": "Productos | LENTESBIOBIO.CL (https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name)",
+        "url": "https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name"
+      }
+    ]
+  },
+  {
+    "key": "MARCHIONI|ML003",
+    "colors": [
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML003|C3",
+      "MARCHIONI|ML003|C5"
+    ],
+    "query": "\"MARCHIONI\" \"ML003\" (\"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazones ópticos | LENTESBIOBIO.CL (https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc)",
+        "url": "https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc"
+      },
+      {
+        "title": "Productos | LENTESBIOBIO.CL (https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name)",
+        "url": "https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name"
+      },
+      {
+        "title": "Buscar | LENTESBIOBIO.CL (https://lentesbiobio.cl/buscar?search=clip)",
+        "url": "https://lentesbiobio.cl/buscar?search=clip"
+      }
+    ]
+  },
+  {
+    "key": "MARCHIONI|ML004",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML004|C2",
+      "MARCHIONI|ML004|C4"
+    ],
+    "query": "\"MARCHIONI\" \"ML004\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|ML005",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML005|C1",
+      "MARCHIONI|ML005|C3"
+    ],
+    "query": "\"MARCHIONI\" \"ML005\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|ML007",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML007|C3"
+    ],
+    "query": "\"MARCHIONI\" \"ML007\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|ML008",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML008|C3"
+    ],
+    "query": "\"MARCHIONI\" \"ML008\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|ML009",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML009|C1",
+      "MARCHIONI|ML009|C3",
+      "MARCHIONI|ML009|C4"
+    ],
+    "query": "\"MARCHIONI\" \"ML009\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MARCHIONI|ML010",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MARCHIONI|ML010|C2"
+    ],
+    "query": "\"MARCHIONI\" \"ML010\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

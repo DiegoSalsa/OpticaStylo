@@ -1,0 +1,513 @@
+[
+  {
+    "key": "ANGELO FALCONI|AF2233",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|AF2233|C2"
+    ],
+    "query": "\"ANGELO FALCONI\" \"AF2233\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|DLAF18",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|DLAF18|C1"
+    ],
+    "query": "\"ANGELO FALCONI\" \"DLAF18\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=44)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=44"
+      }
+    ]
+  },
+  {
+    "key": "ANGELO FALCONI|FXAF2233",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXAF2233|C1"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXAF2233\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXAF2250",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXAF2250|C2",
+      "ANGELO FALCONI|FXAF2250|C4"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXAF2250\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Mujer - Opticallery (https://opticallery.cl/product-tag/mujer/)",
+        "url": "https://opticallery.cl/product-tag/mujer/"
+      }
+    ]
+  },
+  {
+    "key": "ANGELO FALCONI|FXAF2251",
+    "colors": [
+      "C",
+      "C1",
+      "C2",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXAF2251|C",
+      "ANGELO FALCONI|FXAF2251|C1",
+      "ANGELO FALCONI|FXAF2251|C2",
+      "ANGELO FALCONI|FXAF2251|C4",
+      "ANGELO FALCONI|FXAF2251|C5",
+      "ANGELO FALCONI|FXAF2251|C6"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXAF2251\" (\"C\" OR \"C1\" OR \"C2\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXF2250",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXF2250|C1"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXF2250\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXLAF18",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXLAF18|C7"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXLAF18\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXN20316",
+    "colors": [
+      "C5",
+      "C7"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXN20316|C5",
+      "ANGELO FALCONI|FXN20316|C7"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXN20316\" (\"C5\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXN20324",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXN20324|C1",
+      "ANGELO FALCONI|FXN20324|C3"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXN20324\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXN20333",
+    "colors": [
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXN20333|C2",
+      "ANGELO FALCONI|FXN20333|C3",
+      "ANGELO FALCONI|FXN20333|C4"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXN20333\" (\"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ANGELO FALCONI|FXN20348",
+    "colors": [
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "ANGELO FALCONI|FXN20348|C3",
+      "ANGELO FALCONI|FXN20348|C4",
+      "ANGELO FALCONI|FXN20348|C5",
+      "ANGELO FALCONI|FXN20348|C6"
+    ],
+    "query": "\"ANGELO FALCONI\" \"FXN20348\" (\"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=36)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=36"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=38)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=38"
+      }
+    ]
+  },
+  {
+    "key": "ATLANTIS|ANS015",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "ATLANTIS|ANS015|C3"
+    ],
+    "query": "\"ATLANTIS\" \"ANS015\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ATLANTIS|ANS040",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "ATLANTIS|ANS040|C3"
+    ],
+    "query": "\"ATLANTIS\" \"ANS040\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ATLANTIS|AT1017",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ATLANTIS|AT1017|C1"
+    ],
+    "query": "\"ATLANTIS\" \"AT1017\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Kit Atlas 6 em Promoção no Magazine Luiza (https://www.magazineluiza.com.br/busca/kit%2Batlas%2B6/)",
+        "url": "https://www.magazineluiza.com.br/busca/kit%2Batlas%2B6/"
+      },
+      {
+        "title": "Карта сайта - ODesign (https://odesign.ru/sitemap/)",
+        "url": "https://odesign.ru/sitemap/"
+      },
+      {
+        "title": "Kit Pecas Atlas em Promoção no Magazine Luiza (https://www.magazineluiza.com.br/busca/kit%2Bpecas%2Batlas/?page=3)",
+        "url": "https://www.magazineluiza.com.br/busca/kit%2Bpecas%2Batlas/?page=3"
+      },
+      {
+        "title": "Atlas Amarelo em Promoção no Magazine Luiza (https://www.magazineluiza.com.br/busca/atlas%2Bamarelo/)",
+        "url": "https://www.magazineluiza.com.br/busca/atlas%2Bamarelo/"
+      },
+      {
+        "title": "Home | tRNADB-CE : tRNA gene database curated manually by experts (https://trna.ie.niigata-u.ac.jp/cgi-bin/trnadb/whole_seq_list_clstr.cgi?CLSPHYLUM=2&CLSTYPE=1&DTYPE=CMP&NUC=GCA&PHY=Euryarchaeota&RATE=100&STYPE=A&VTYPE=1)",
+        "url": "https://trna.ie.niigata-u.ac.jp/cgi-bin/trnadb/whole_seq_list_clstr.cgi?CLSPHYLUM=2&CLSTYPE=1&DTYPE=CMP&NUC=GCA&PHY=Euryarchaeota&RATE=100&STYPE=A&VTYPE=1"
+      },
+      {
+        "title": "Atlas Esmalte 1 2 em Promoção no Magazine Luiza (https://www.magazineluiza.com.br/busca/atlas%2Besmalte%2B1%2B2/)",
+        "url": "https://www.magazineluiza.com.br/busca/atlas%2Besmalte%2B1%2B2/"
+      }
+    ]
+  },
+  {
+    "key": "ATLANTIS|AT1018",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ATLANTIS|AT1018|C1"
+    ],
+    "query": "\"ATLANTIS\" \"AT1018\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Authentic Toy Lego Minifigure Lance Spears Atlantis AT1018 With Blaster - LEGO (R) Minifigures (https://www.bonanza.com/listings/1808395917)",
+        "url": "https://www.bonanza.com/listings/1808395917"
+      },
+      {
+        "title": "Authentic Toy Lego Minifigure Lance Spears Atlantis AT1018 With Blaster - LEGO (R) Minifigures (https://www.bonanza.com/listings/Authentic-Toy-Lego-Minifigure-Lance-Spears-Atlantis-AT1018-With-Blaster/1808395917)",
+        "url": "https://www.bonanza.com/listings/Authentic-Toy-Lego-Minifigure-Lance-Spears-Atlantis-AT1018-With-Blaster/1808395917"
+      },
+      {
+        "title": "Authentic Toy Lego Minifigure Lance Spears and 50 similar items (https://www.bonanza.com/items/like/1808395917/Authentic-Toy-Lego-Minifigure-Lance-Spears-Atlantis-AT1018-With-Blaster)",
+        "url": "https://www.bonanza.com/items/like/1808395917/Authentic-Toy-Lego-Minifigure-Lance-Spears-Atlantis-AT1018-With-Blaster"
+      },
+      {
+        "title": "Bonanza :: Find everything but the ordinary (https://www.bonanza.com/?error=true&error_uuid=RQ%3A3f01af58-f791-4cca-b153-a477f9ae8873)",
+        "url": "https://www.bonanza.com/?error=true&error_uuid=RQ%3A3f01af58-f791-4cca-b153-a477f9ae8873"
+      }
+    ]
+  },
+  {
+    "key": "ATLANTIS|AT1020",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "ATLANTIS|AT1020|C1",
+      "ATLANTIS|AT1020|C3"
+    ],
+    "query": "\"ATLANTIS\" \"AT1020\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Your Paper's Title Starts Here: (https://www.atlantis-press.com/article/23194.pdf)",
+        "url": "https://www.atlantis-press.com/article/23194.pdf"
+      },
+      {
+        "title": "BYD Sealion 7 SUV/Geländewagen/Pickup in Blau neu in Wien für € 49 180 (https://www.autoscout24.at/angebote/byd-sealion-7-excellence-oesterreich-paket-91-5-kwh-awd-elektro-blau-cat_ma16379mo76898-0eeed7f8-88f4-46bb-bfbb-f1b9fb5371d9)",
+        "url": "https://www.autoscout24.at/angebote/byd-sealion-7-excellence-oesterreich-paket-91-5-kwh-awd-elektro-blau-cat_ma16379mo76898-0eeed7f8-88f4-46bb-bfbb-f1b9fb5371d9"
+      },
+      {
+        "title": "BYD Sealion 7 Excellence Österreich Paket 91.5 kWh AWD - gebrauchtwagen.at (https://www.gebrauchtwagen.at/fahrzeuge/byd-sealion-7-excellence-oesterreich-paket-91-5-kwh-awd-elektro-blau-cat_ma16379mo76898/0eeed7f8-88f4-46bb-bfbb-f1b9fb5371d9)",
+        "url": "https://www.gebrauchtwagen.at/fahrzeuge/byd-sealion-7-excellence-oesterreich-paket-91-5-kwh-awd-elektro-blau-cat_ma16379mo76898/0eeed7f8-88f4-46bb-bfbb-f1b9fb5371d9"
+      }
+    ]
+  },
+  {
+    "key": "ATLANTIS|ATS002",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "ATLANTIS|ATS002|C5"
+    ],
+    "query": "\"ATLANTIS\" \"ATS002\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "PromoTron Stats > Novelties (https://stats.promotron.com/?daysb=120&p=novelties&page=45&sort=productsort&suppid=51837)",
+        "url": "https://stats.promotron.com/?daysb=120&p=novelties&page=45&sort=productsort&suppid=51837"
+      }
+    ]
+  },
+  {
+    "key": "ATLANTIS|ATS010",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "ATLANTIS|ATS010|C5"
+    ],
+    "query": "\"ATLANTIS\" \"ATS010\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1186",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1186|C1"
+    ],
+    "query": "\"BARGELLO\" \"BA1186\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1254",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1254|C3"
+    ],
+    "query": "\"BARGELLO\" \"BA1254\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1257",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1257|C1",
+      "BARGELLO|BA1257|C2"
+    ],
+    "query": "\"BARGELLO\" \"BA1257\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1261",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1261|C1",
+      "BARGELLO|BA1261|C3",
+      "BARGELLO|BA1261|C4"
+    ],
+    "query": "\"BARGELLO\" \"BA1261\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1262",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1262|C2",
+      "BARGELLO|BA1262|C3"
+    ],
+    "query": "\"BARGELLO\" \"BA1262\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1263",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1263|C5"
+    ],
+    "query": "\"BARGELLO\" \"BA1263\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1266",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1266|C5"
+    ],
+    "query": "\"BARGELLO\" \"BA1266\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1267",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1267|C4",
+      "BARGELLO|BA1267|C5"
+    ],
+    "query": "\"BARGELLO\" \"BA1267\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1271",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1271|C1",
+      "BARGELLO|BA1271|C2"
+    ],
+    "query": "\"BARGELLO\" \"BA1271\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1272",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1272|C3"
+    ],
+    "query": "\"BARGELLO\" \"BA1272\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1274",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1274|C2"
+    ],
+    "query": "\"BARGELLO\" \"BA1274\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "BARGELLO|BA1275",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "BARGELLO|BA1275|C4",
+      "BARGELLO|BA1275|C5"
+    ],
+    "query": "\"BARGELLO\" \"BA1275\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

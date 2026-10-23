@@ -1,0 +1,604 @@
+[
+  {
+    "key": "SATURDAY|SPE020",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE020|C3"
+    ],
+    "query": "\"SATURDAY\" \"SPE020\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE022",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE022|C1"
+    ],
+    "query": "\"SATURDAY\" \"SPE022\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE023",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE023|C1"
+    ],
+    "query": "\"SATURDAY\" \"SPE023\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE025",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE025|C3"
+    ],
+    "query": "\"SATURDAY\" \"SPE025\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|ST003",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|ST003|C1"
+    ],
+    "query": "\"SATURDAY\" \"ST003\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|ST005",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "SATURDAY|ST005|C1",
+      "SATURDAY|ST005|C2"
+    ],
+    "query": "\"SATURDAY\" \"ST005\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "SUNBREAD - Page 5 - Siefers (https://siefersopticum.nl/en/product-tag/zonnebril/page/5/?per_page=18&per_row=3)",
+        "url": "https://siefersopticum.nl/en/product-tag/zonnebril/page/5/?per_page=18&per_row=3"
+      }
+    ]
+  },
+  {
+    "key": "SILMO|AM26018",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SILMO|AM26018|C3"
+    ],
+    "query": "\"SILMO\" \"AM26018\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SILMO|DVS1026",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SILMO|DVS1026|C1"
+    ],
+    "query": "\"SILMO\" \"DVS1026\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SILMO|ZD21235W",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "SILMO|ZD21235W|C2"
+    ],
+    "query": "\"SILMO\" \"ZD21235W\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Montura Optica | OPTICALI (https://www.opticali.cl/categoria/montura-optica?page=2)",
+        "url": "https://www.opticali.cl/categoria/montura-optica?page=2"
+      }
+    ]
+  },
+  {
+    "key": "SILMO|ZD21274W",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "SILMO|ZD21274W|C2"
+    ],
+    "query": "\"SILMO\" \"ZD21274W\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazon Silmo Clip On | Óptica Experta. (https://www.opticaexperta.cl/product/armazon-silmo-clip-on)",
+        "url": "https://www.opticaexperta.cl/product/armazon-silmo-clip-on"
+      }
+    ]
+  },
+  {
+    "key": "SILMO|ZD29279",
+    "colors": [
+      "C1",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "SILMO|ZD29279|C1",
+      "SILMO|ZD29279|C4",
+      "SILMO|ZD29279|C5"
+    ],
+    "query": "\"SILMO\" \"ZD29279\" (\"C1\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazon Silmo Clip On | Óptica Experta. (https://www.opticaexperta.cl/product/armazon-silmo-clip-on)",
+        "url": "https://www.opticaexperta.cl/product/armazon-silmo-clip-on"
+      }
+    ]
+  },
+  {
+    "key": "SILMO|ZD2979",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "SILMO|ZD2979|C2",
+      "SILMO|ZD2979|C3"
+    ],
+    "query": "\"SILMO\" \"ZD2979\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SIN MARCA|2154",
+    "colors": [],
+    "variantKeys": [
+      "SIN MARCA|2154|"
+    ],
+    "query": "\"SIN MARCA\" \"2154\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Las mejores ofertas en Men's Metal Marcos de Anteojos | eBay (https://ve.ebay.com/b/Mens-Metal-Eyeglass-Frames/180957/bn_8425896)",
+        "url": "https://ve.ebay.com/b/Mens-Metal-Eyeglass-Frames/180957/bn_8425896"
+      },
+      {
+        "title": "RAINER & BRENNER 2071 Gafas Ópticas Borde Completo Seafoam Raras 43-21-148mm - Eyeglass Frames (https://www.bonanza.com/listings/RAINER-BRENNER-2071-Gafas-pticas-Borde-Completo-Seafoam-Raras-43-21-148mm/1817246875)",
+        "url": "https://www.bonanza.com/listings/RAINER-BRENNER-2071-Gafas-pticas-Borde-Completo-Seafoam-Raras-43-21-148mm/1817246875"
+      },
+      {
+        "title": "Las mejores ofertas en Charmant metal Marcos de Anteojos | eBay (https://mx.ebay.com/b/Charmant-Metal-Eyeglass-Frames/180957/bn_8427018)",
+        "url": "https://mx.ebay.com/b/Charmant-Metal-Eyeglass-Frames/180957/bn_8427018"
+      },
+      {
+        "title": "Las mejores ofertas en Marco de plástico de ojo de gato Michael Kors Gafas de sol para mujeres | eBay (https://do.ebay.com/b/Michael-Kors-Cat-Eye-Plastic-Frame-Sunglasses-for-Women/45246/bn_4436866)",
+        "url": "https://do.ebay.com/b/Michael-Kors-Cat-Eye-Plastic-Frame-Sunglasses-for-Women/45246/bn_4436866"
+      }
+    ]
+  },
+  {
+    "key": "SIN MARCA|5447",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SIN MARCA|5447|C1"
+    ],
+    "query": "\"SIN MARCA\" \"5447\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Gafas originales Carrera 1980s | Compra online en eBay (https://www.ebay.es/b/Gafas-originales-Carrera-1980s/48559/bn_88933488)",
+        "url": "https://www.ebay.es/b/Gafas-originales-Carrera-1980s/48559/bn_88933488"
+      },
+      {
+        "title": "Las mejores ofertas en Gafas de sol de colección de plástico Carrera | eBay (https://ve.ebay.com/b/Carrera-Plastic-Vintage-Sunglasses/48559/bn_28304265)",
+        "url": "https://ve.ebay.com/b/Carrera-Plastic-Vintage-Sunglasses/48559/bn_28304265"
+      }
+    ]
+  },
+  {
+    "key": "SIN MARCA|MZ002",
+    "colors": [
+      "C2",
+      "C3",
+      "C4",
+      "C6"
+    ],
+    "variantKeys": [
+      "SIN MARCA|MZ002|C2",
+      "SIN MARCA|MZ002|C3",
+      "SIN MARCA|MZ002|C4",
+      "SIN MARCA|MZ002|C6"
+    ],
+    "query": "\"SIN MARCA\" \"MZ002\" (\"C2\" OR \"C3\" OR \"C4\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SIN MARCA|YM065",
+    "colors": [
+      "C2",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "SIN MARCA|YM065|C2",
+      "SIN MARCA|YM065|C4",
+      "SIN MARCA|YM065|C5"
+    ],
+    "query": "\"SIN MARCA\" \"YM065\" (\"C2\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SIN MARCA|YM066",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "SIN MARCA|YM066|C5"
+    ],
+    "query": "\"SIN MARCA\" \"YM066\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SIN MARCA|YM071",
+    "colors": [
+      "C2",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "SIN MARCA|YM071|C2",
+      "SIN MARCA|YM071|C4",
+      "SIN MARCA|YM071|C5",
+      "SIN MARCA|YM071|C6"
+    ],
+    "query": "\"SIN MARCA\" \"YM071\" (\"C2\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SIN MARCA|YM074",
+    "colors": [
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "SIN MARCA|YM074|C3",
+      "SIN MARCA|YM074|C4",
+      "SIN MARCA|YM074|C5",
+      "SIN MARCA|YM074|C6"
+    ],
+    "query": "\"SIN MARCA\" \"YM074\" (\"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "THURSDAY|ST004",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "THURSDAY|ST004|C1"
+    ],
+    "query": "\"THURSDAY\" \"ST004\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "TOUS|TOC62",
+    "colors": [
+      "O700"
+    ],
+    "variantKeys": [
+      "TOUS|TOC62|O700"
+    ],
+    "query": "\"TOUS\" \"TOC62\" (\"O700\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "TOUS|VTOD17",
+    "colors": [
+      "O6RN",
+      "O9HL"
+    ],
+    "variantKeys": [
+      "TOUS|VTOD17|O6RN",
+      "TOUS|VTOD17|O9HL"
+    ],
+    "query": "\"TOUS\" \"VTOD17\" (\"O6RN\" OR \"O9HL\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "TOUS|VTOD18",
+    "colors": [
+      "O4AP"
+    ],
+    "variantKeys": [
+      "TOUS|VTOD18|O4AP"
+    ],
+    "query": "\"TOUS\" \"VTOD18\" (\"O4AP\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Tous VTOD18 04AP | Óculos de Prescrição (https://oticaotima.com/oculos-graduados/tous-vtod18-04ap.html)",
+        "url": "https://oticaotima.com/oculos-graduados/tous-vtod18-04ap.html"
+      },
+      {
+        "title": "Comprar Tous VTOD18 04AP | Gafas graduadas (https://gafasylentillas.com/gafas-graduadas/tous/tous-vtod18-04ap)",
+        "url": "https://gafasylentillas.com/gafas-graduadas/tous/tous-vtod18-04ap"
+      },
+      {
+        "title": "Tous VTOD18 04AP | Gafas Graduadas (https://optica-optima.com/gafas-graduadas/tous-vtod18-04ap.html)",
+        "url": "https://optica-optima.com/gafas-graduadas/tous-vtod18-04ap.html"
+      },
+      {
+        "title": "Tous VTOD18 04AP | Ohgafas.com (https://www.ohgafas.com/es/gafas-graduadas/tous-rx/tous-vtod18-04ap.html)",
+        "url": "https://www.ohgafas.com/es/gafas-graduadas/tous-rx/tous-vtod18-04ap.html"
+      },
+      {
+        "title": "Óculos graduados Tous VTOD18 Azul | Mais Optica (https://www.maisoptica.pt/oculos-graduados-tous-vtod18-164990024.html)",
+        "url": "https://www.maisoptica.pt/oculos-graduados-tous-vtod18-164990024.html"
+      },
+      {
+        "title": "Tous VTOD18 04AP | Prescription Glasses (https://optimal-optic.co.uk/prescription-glasses/tous-vtod18-04ap.html)",
+        "url": "https://optimal-optic.co.uk/prescription-glasses/tous-vtod18-04ap.html"
+      }
+    ]
+  },
+  {
+    "key": "TOUS|VTOD19",
+    "colors": [
+      "O700",
+      "O752"
+    ],
+    "variantKeys": [
+      "TOUS|VTOD19|O700",
+      "TOUS|VTOD19|O752"
+    ],
+    "query": "\"TOUS\" \"VTOD19\" (\"O700\" OR \"O752\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "TOUS – BRAVER - Especialistas en ojos saludables (https://bravertiendaoptica.cl/collections/tous)",
+        "url": "https://bravertiendaoptica.cl/collections/tous"
+      },
+      {
+        "title": "TOUS – OS Fashion Eyewear (https://www.osfashioneyewear.com/collections/tous)",
+        "url": "https://www.osfashioneyewear.com/collections/tous"
+      },
+      {
+        "title": "Paquete Premium (https://www.devlyn.com.mx/paquete-premium?page=3)",
+        "url": "https://www.devlyn.com.mx/paquete-premium?page=3"
+      },
+      {
+        "title": "Ópticas Devlyn | Lente Oftálmico Mujer Tous Vtod19 Oro Carey (https://www.devlyn.com.mx/lente-oftalmico-mujer-tous-vtod19-oro-carey/p)",
+        "url": "https://www.devlyn.com.mx/lente-oftalmico-mujer-tous-vtod19-oro-carey/p"
+      },
+      {
+        "title": "Óculos Graduados Tous - Armações Tous | Mais Optica (https://www.maisoptica.pt/oculo-graduado/tous.html)",
+        "url": "https://www.maisoptica.pt/oculo-graduado/tous.html"
+      }
+    ]
+  },
+  {
+    "key": "TOUS|VTOD20",
+    "colors": [
+      "O700",
+      "O7AY",
+      "OJ80"
+    ],
+    "variantKeys": [
+      "TOUS|VTOD20|O700",
+      "TOUS|VTOD20|O7AY",
+      "TOUS|VTOD20|OJ80"
+    ],
+    "query": "\"TOUS\" \"VTOD20\" (\"O700\" OR \"O7AY\" OR \"OJ80\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-gb/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-gb/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Shop fashion from TOUS online on Miinto (https://www.miinto.co.uk/brands/tous)",
+        "url": "https://www.miinto.co.uk/brands/tous"
+      },
+      {
+        "title": "TOUS Accessories • Shop Accessories from TOUS online at Miinto (https://www.miinto.co.uk/women-accessories/tous)",
+        "url": "https://www.miinto.co.uk/women-accessories/tous"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-ie/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-ie/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Lunettes • Shop Lunettes from TOUS en ligne sur Miinto (https://www.miinto.fr/femme-accessoires-lunettes/tous)",
+        "url": "https://www.miinto.fr/femme-accessoires-lunettes/tous"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-dk/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-dk/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-tw/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-tw/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-au/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-au/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Comprar Tous VTOD20S 0752 | Gafas graduadas (https://gafasylentillas.com/gafas-graduadas/tous/tous-vtod20s-0752)",
+        "url": "https://gafasylentillas.com/gafas-graduadas/tous/tous-vtod20s-0752"
+      },
+      {
+        "title": "Comprar Monturas Tous VTOD20S C54 0752 | Blickers (https://www.blickers.com/es-es/gafas/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/es-es/gafas/tous-vtod20s-c54/4697251364339712/"
+      }
+    ]
+  },
+  {
+    "key": "TOUS|VTOD20S",
+    "colors": [
+      "O752"
+    ],
+    "variantKeys": [
+      "TOUS|VTOD20S|O752"
+    ],
+    "query": "\"TOUS\" \"VTOD20S\" (\"O752\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-gb/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-gb/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Shop fashion from TOUS online on Miinto (https://www.miinto.co.uk/brands/tous)",
+        "url": "https://www.miinto.co.uk/brands/tous"
+      },
+      {
+        "title": "TOUS Accessories • Shop Accessories from TOUS online at Miinto (https://www.miinto.co.uk/women-accessories/tous)",
+        "url": "https://www.miinto.co.uk/women-accessories/tous"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-ie/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-ie/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Lunettes • Shop Lunettes from TOUS en ligne sur Miinto (https://www.miinto.fr/femme-accessoires-lunettes/tous)",
+        "url": "https://www.miinto.fr/femme-accessoires-lunettes/tous"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-dk/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-dk/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-tw/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-tw/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers (https://www.blickers.com/en-au/glasses/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/en-au/glasses/tous-vtod20s-c54/4697251364339712/"
+      },
+      {
+        "title": "Comprar Tous VTOD20S 0752 | Gafas graduadas (https://gafasylentillas.com/gafas-graduadas/tous/tous-vtod20s-0752)",
+        "url": "https://gafasylentillas.com/gafas-graduadas/tous/tous-vtod20s-0752"
+      },
+      {
+        "title": "Comprar Monturas Tous VTOD20S C54 0752 | Blickers (https://www.blickers.com/es-es/gafas/tous-vtod20s-c54/4697251364339712/)",
+        "url": "https://www.blickers.com/es-es/gafas/tous-vtod20s-c54/4697251364339712/"
+      }
+    ]
+  },
+  {
+    "key": "UX EXPRESS|10UX121",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "UX EXPRESS|10UX121|C1",
+      "UX EXPRESS|10UX121|C3"
+    ],
+    "query": "\"UX EXPRESS\" \"10UX121\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VATICANO|VA3078",
+    "colors": [
+      "C10"
+    ],
+    "variantKeys": [
+      "VATICANO|VA3078|C10"
+    ],
+    "query": "\"VATICANO\" \"VA3078\" (\"C10\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VELTOM|TF6527",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "VELTOM|TF6527|C1"
+    ],
+    "query": "\"VELTOM\" \"TF6527\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VESPA|DYVE061",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "VESPA|DYVE061|C4"
+    ],
+    "query": "\"VESPA\" \"DYVE061\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

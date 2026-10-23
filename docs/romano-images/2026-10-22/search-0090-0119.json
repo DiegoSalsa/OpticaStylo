@@ -1,0 +1,483 @@
+[
+  {
+    "key": "FOOSE|XAPFO121",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "FOOSE|XAPFO121|C1",
+      "FOOSE|XAPFO121|C2",
+      "FOOSE|XAPFO121|C3"
+    ],
+    "query": "\"FOOSE\" \"XAPFO121\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FOOSE|XAPFO122",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "FOOSE|XAPFO122|C1",
+      "FOOSE|XAPFO122|C2",
+      "FOOSE|XAPFO122|C3"
+    ],
+    "query": "\"FOOSE\" \"XAPFO122\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FOOSE|XAPFO129",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "FOOSE|XAPFO129|C1",
+      "FOOSE|XAPFO129|C3"
+    ],
+    "query": "\"FOOSE\" \"XAPFO129\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Catálogo — ÓPTICA NORTE ESMERALDA (https://opticanortesmeralda.cl/productos/)",
+        "url": "https://opticanortesmeralda.cl/productos/"
+      }
+    ]
+  },
+  {
+    "key": "FOOSE|XAPFO67",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "FOOSE|XAPFO67|C1"
+    ],
+    "query": "\"FOOSE\" \"XAPFO67\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FOOSE|XYFO099",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "FOOSE|XYFO099|C5"
+    ],
+    "query": "\"FOOSE\" \"XYFO099\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FOOSE|XYFO100",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "FOOSE|XYFO100|C3"
+    ],
+    "query": "\"FOOSE\" \"XYFO100\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|DS1002",
+    "colors": [
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|DS1002|C3",
+      "FORMOSA|DS1002|C6"
+    ],
+    "query": "\"FORMOSA\" \"DS1002\" (\"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|DS1003",
+    "colors": [
+      "C1",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|DS1003|C1",
+      "FORMOSA|DS1003|C3",
+      "FORMOSA|DS1003|C5"
+    ],
+    "query": "\"FORMOSA\" \"DS1003\" (\"C1\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|DS1004",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|DS1004|C4"
+    ],
+    "query": "\"FORMOSA\" \"DS1004\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|DS1005",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "FORMOSA|DS1005|C2"
+    ],
+    "query": "\"FORMOSA\" \"DS1005\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|DS1006",
+    "colors": [
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|DS1006|C6"
+    ],
+    "query": "\"FORMOSA\" \"DS1006\" (\"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|F1517",
+    "colors": [
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|F1517|C6"
+    ],
+    "query": "\"FORMOSA\" \"F1517\" (\"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|F1518",
+    "colors": [
+      "C2",
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|F1518|C2",
+      "FORMOSA|F1518|C3",
+      "FORMOSA|F1518|C6"
+    ],
+    "query": "\"FORMOSA\" \"F1518\" (\"C2\" OR \"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|F1520",
+    "colors": [
+      "C4",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|F1520|C4",
+      "FORMOSA|F1520|C6"
+    ],
+    "query": "\"FORMOSA\" \"F1520\" (\"C4\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5120",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5120|C1",
+      "FORMOSA|G5120|C2",
+      "FORMOSA|G5120|C3",
+      "FORMOSA|G5120|C5",
+      "FORMOSA|G5120|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5120\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5123",
+    "colors": [
+      "C2",
+      "C3",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5123|C2",
+      "FORMOSA|G5123|C3",
+      "FORMOSA|G5123|C5"
+    ],
+    "query": "\"FORMOSA\" \"G5123\" (\"C2\" OR \"C3\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5140",
+    "colors": [
+      "C2",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5140|C2",
+      "FORMOSA|G5140|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5140\" (\"C2\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5142",
+    "colors": [
+      "C2",
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5142|C2",
+      "FORMOSA|G5142|C3",
+      "FORMOSA|G5142|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5142\" (\"C2\" OR \"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5147",
+    "colors": [
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5147|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5147\" (\"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5166",
+    "colors": [
+      "C2",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5166|C2",
+      "FORMOSA|G5166|C5",
+      "FORMOSA|G5166|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5166\" (\"C2\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5187",
+    "colors": [
+      "C15"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5187|C15"
+    ],
+    "query": "\"FORMOSA\" \"G5187\" (\"C15\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5188",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C8"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5188|C1",
+      "FORMOSA|G5188|C2",
+      "FORMOSA|G5188|C3",
+      "FORMOSA|G5188|C8"
+    ],
+    "query": "\"FORMOSA\" \"G5188\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5190",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5190|C2"
+    ],
+    "query": "\"FORMOSA\" \"G5190\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5195",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5195|C3",
+      "FORMOSA|G5195|C4"
+    ],
+    "query": "\"FORMOSA\" \"G5195\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5196",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5196|C2"
+    ],
+    "query": "\"FORMOSA\" \"G5196\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5202",
+    "colors": [
+      "C2",
+      "C3",
+      "C5",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5202|C2",
+      "FORMOSA|G5202|C3",
+      "FORMOSA|G5202|C5",
+      "FORMOSA|G5202|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5202\" (\"C2\" OR \"C3\" OR \"C5\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5203",
+    "colors": [
+      "C1",
+      "C2",
+      "C5",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5203|C1",
+      "FORMOSA|G5203|C2",
+      "FORMOSA|G5203|C5",
+      "FORMOSA|G5203|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5203\" (\"C1\" OR \"C2\" OR \"C5\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5205",
+    "colors": [
+      "C5",
+      "C6",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5205|C5",
+      "FORMOSA|G5205|C6",
+      "FORMOSA|G5205|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5205\" (\"C5\" OR \"C6\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5211",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5211|C1",
+      "FORMOSA|G5211|C2",
+      "FORMOSA|G5211|C3",
+      "FORMOSA|G5211|C4",
+      "FORMOSA|G5211|C5",
+      "FORMOSA|G5211|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5211\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5213",
+    "colors": [
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5213|C2",
+      "FORMOSA|G5213|C3",
+      "FORMOSA|G5213|C4",
+      "FORMOSA|G5213|C5",
+      "FORMOSA|G5213|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5213\" (\"C2\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

@@ -1,0 +1,544 @@
+[
+  {
+    "key": "MOODKIDS|MK202158",
+    "colors": [
+      "COL.3"
+    ],
+    "variantKeys": [
+      "MOODKIDS|MK202158|COL.3"
+    ],
+    "query": "\"MOODKIDS\" \"MK202158\" (\"COL.3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOODKIDS|MK21153",
+    "colors": [
+      "COL.3"
+    ],
+    "variantKeys": [
+      "MOODKIDS|MK21153|COL.3"
+    ],
+    "query": "\"MOODKIDS\" \"MK21153\" (\"COL.3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOODKIDS|MK21154",
+    "colors": [
+      "COL.1"
+    ],
+    "variantKeys": [
+      "MOODKIDS|MK21154|COL.1"
+    ],
+    "query": "\"MOODKIDS\" \"MK21154\" (\"COL.1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MOSSI|8050",
+    "colors": [
+      "C8"
+    ],
+    "variantKeys": [
+      "MOSSI|8050|C8"
+    ],
+    "query": "\"MOSSI\" \"8050\" (\"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MVK|BL04",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MVK|BL04|C2"
+    ],
+    "query": "\"MVK\" \"BL04\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MVK|BL06",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "MVK|BL06|C4"
+    ],
+    "query": "\"MVK\" \"BL06\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "MYTHO|MT12506",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "MYTHO|MT12506|C2"
+    ],
+    "query": "\"MYTHO\" \"MT12506\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Altavista - Productos (https://grupoaltavista.com.uy/productos/mytho)",
+        "url": "https://grupoaltavista.com.uy/productos/mytho"
+      },
+      {
+        "title": "Catálogo - Página 8 de 11 - Mytho Eyewear (https://www.mythoeyewear.com/shop/page/8/)",
+        "url": "https://www.mythoeyewear.com/shop/page/8/"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3020648SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3020648SC|"
+    ],
+    "query": "\"NANO\" \"3020648SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3030152",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3030152|"
+    ],
+    "query": "\"NANO\" \"3030152\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "AM-Catalogue_NANO AUGUST 2026_small (https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small)",
+        "url": "https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small"
+      },
+      {
+        "title": "Óculos de Grau Nano – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/nano?O=OrderByPriceASC&PS=50)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/nano?O=OrderByPriceASC&PS=50"
+      },
+      {
+        "title": "Óculos de grau INFANTIL NANO FANGAME3.0 3030152 da marca NANO (https://www.oticajoa.com.br/oculos-de-grau/oculos-de-grau-nano-fangame3-0-3030152)",
+        "url": "https://www.oticajoa.com.br/oculos-de-grau/oculos-de-grau-nano-fangame3-0-3030152"
+      },
+      {
+        "title": "Óculos de Grau Nano Aro Fechado Óculos de Grau Acetato – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/nano/Aro%20Fechado/%C3%93culos%20de%20Grau/Acetato?O=OrderByNameASC&PS=50&map=c%2Cb%2CspecificationFilter_35%2CspecificationFilter_31%2CspecificationFilter_36)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/nano/Aro%20Fechado/%C3%93culos%20de%20Grau/Acetato?O=OrderByNameASC&PS=50&map=c%2Cb%2CspecificationFilter_35%2CspecificationFilter_31%2CspecificationFilter_36"
+      },
+      {
+        "title": "Oculos em Óculos de Grau Nano Acetato – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/nano/Acetato/oculos?PS=48&map=c%2Cb%2CspecificationFilter_36%2Cft)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/nano/Acetato/oculos?PS=48&map=c%2Cb%2CspecificationFilter_36%2Cft"
+      },
+      {
+        "title": "Óculos de Grau Aro Fechado Óculos de Grau Infantil – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/Aro%20Fechado/%C3%93culos%20de%20Grau/Infantil?O=OrderByPriceDESC&PS=48&map=c%2CspecificationFilter_35%2CspecificationFilter_31%2CspecificationFilter_33)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/Aro%20Fechado/%C3%93culos%20de%20Grau/Infantil?O=OrderByPriceDESC&PS=48&map=c%2CspecificationFilter_35%2CspecificationFilter_31%2CspecificationFilter_33"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3031952",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3031952|"
+    ],
+    "query": "\"NANO\" \"3031952\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3050649SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3050649SC|"
+    ],
+    "query": "\"NANO\" \"3050649SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "AM-Catalogue_NANO AUGUST 2026_small (https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small)",
+        "url": "https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small"
+      },
+      {
+        "title": "Óculos de Grau Nano – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/nano?O=reviewRate+desc%2C+score+desc&PS=50)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/nano?O=reviewRate+desc%2C+score+desc&PS=50"
+      },
+      {
+        "title": "Óculos de Grau Nano – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/nano?O=OrderByPriceASC&PS=50)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/nano?O=OrderByPriceASC&PS=50"
+      },
+      {
+        "title": "Oculos em Óculos de Grau Nano Acetato – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/nano/Acetato/oculos?PS=48&map=c%2Cb%2CspecificationFilter_36%2Cft)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/nano/Acetato/oculos?PS=48&map=c%2Cb%2CspecificationFilter_36%2Cft"
+      },
+      {
+        "title": "Óculos de Grau Aro Fechado Óculos de Grau Acetato Azul – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/Aro%20Fechado/%C3%93culos%20de%20Grau/Acetato/Azul?O=OrderByNameASC&PS=50&map=c%2CspecificationFilter_35%2CspecificationFilter_31%2CspecificationFilter_36%2CspecificationFilter_39)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/Aro%20Fechado/%C3%93culos%20de%20Grau/Acetato/Azul?O=OrderByNameASC&PS=50&map=c%2CspecificationFilter_35%2CspecificationFilter_31%2CspecificationFilter_36%2CspecificationFilter_39"
+      },
+      {
+        "title": "Óculos de Grau Infantil – oticaswanny (https://www.oticaswanny.com/oculos-de-grau/Infantil?O=reviewRate+desc%2C+score+desc&PS=50&map=c%2CspecificationFilter_33)",
+        "url": "https://www.oticaswanny.com/oculos-de-grau/Infantil?O=reviewRate+desc%2C+score+desc&PS=50&map=c%2CspecificationFilter_33"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3081350SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3081350SC|"
+    ],
+    "query": "\"NANO\" \"3081350SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3120550SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3120550SC|"
+    ],
+    "query": "\"NANO\" \"3120550SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armação para Óculos de Grau com clip-on Nano Nao 3120550SC (https://www.atualoptica.com/oculos-de-grau/infantil/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc)",
+        "url": "https://www.atualoptica.com/oculos-de-grau/infantil/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc"
+      },
+      {
+        "title": "Armação para Óculos de Grau com clip-on Nano Nao 3120550SC - Nano Vista - Armação de Óculos - Magazine Seguetendencia (https://www.magazinevoce.com.br/magazineseguetendencia/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc-nano-vista/p/hf1cfhh895/md/adoc/?seller_id=atualoptica)",
+        "url": "https://www.magazinevoce.com.br/magazineseguetendencia/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc-nano-vista/p/hf1cfhh895/md/adoc/?seller_id=atualoptica"
+      },
+      {
+        "title": "oculos de sol feminino oculos solar ralph lauren ra5305u 500313 - Página 48 - Busca na Ótica Caxias do Sul - Ótica Online - Atual Óptica (https://www.atualoptica.com/loja/busca.php?loja=846719&palavra_busca=oculos+de+sol+feminino+oculos+solar+ralph+lauren+ra5305u+500313&pg=48)",
+        "url": "https://www.atualoptica.com/loja/busca.php?loja=846719&palavra_busca=oculos+de+sol+feminino+oculos+solar+ralph+lauren+ra5305u+500313&pg=48"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3120848SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3120848SC|"
+    ],
+    "query": "\"NANO\" \"3120848SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3150152",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3150152|"
+    ],
+    "query": "\"NANO\" \"3150152\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "AM-Catalogue_NANO AUGUST 2026_small (https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small)",
+        "url": "https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small"
+      },
+      {
+        "title": "Детские Оправы NANO NAO купить в Санкт-Петербурге — ЕврООптика (https://euro-optica.ru/product-category/frames/filters/brand/nano-nao/target_person/detskaya/)",
+        "url": "https://euro-optica.ru/product-category/frames/filters/brand/nano-nao/target_person/detskaya/"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3160452",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3160452|"
+    ],
+    "query": "\"NANO\" \"3160452\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Quest 3.0 NAO 3160452 (https://opticagc.cl/collections/nano/products/quest-3-0-nao-3160452)",
+        "url": "https://opticagc.cl/collections/nano/products/quest-3-0-nao-3160452"
+      },
+      {
+        "title": "NANO (https://opticagc.cl/collections/nano?page=5)",
+        "url": "https://opticagc.cl/collections/nano?page=5"
+      },
+      {
+        "title": "Детские Оправы NANO NAO купить в Санкт-Петербурге — ЕврООптика (https://euro-optica.ru/product-category/frames/filters/brand/nano-nao/target_person/detskaya/)",
+        "url": "https://euro-optica.ru/product-category/frames/filters/brand/nano-nao/target_person/detskaya/"
+      },
+      {
+        "title": "Ã“culos de grau INFANTIL NANO QUEST3.0 3160452 da marca NANO (https://www.oticajoa.com.br/oculos-de-grau/oculos-de-grau-nano-quest3-0-3160452)",
+        "url": "https://www.oticajoa.com.br/oculos-de-grau/oculos-de-grau-nano-quest3-0-3160452"
+      },
+      {
+        "title": "Anteojos Ópticos Niños (https://opticagc.cl/collections/anteojos-opticos-ninos?page=3)",
+        "url": "https://opticagc.cl/collections/anteojos-opticos-ninos?page=3"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3161252",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3161252|"
+    ],
+    "query": "\"NANO\" \"3161252\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3170554",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3170554|"
+    ],
+    "query": "\"NANO\" \"3170554\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "AM-Catalogue_NANO AUGUST 2026_small (https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small)",
+        "url": "https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small"
+      }
+    ]
+  },
+  {
+    "key": "NANO|3240553SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3240553SC|"
+    ],
+    "query": "\"NANO\" \"3240553SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3310350",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3310350|"
+    ],
+    "query": "\"NANO\" \"3310350\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NANO|3340452",
+    "colors": [],
+    "variantKeys": [
+      "NANO|3340452|"
+    ],
+    "query": "\"NANO\" \"3340452\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "AM-Catalogue_NANO AUGUST 2026_small (https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small)",
+        "url": "https://embed-rech-01.dialog.cm/avivamann/docs/am-catalogue_nano_august_2026_small"
+      },
+      {
+        "title": "NANO (https://opticagc.cl/collections/nano?page=2)",
+        "url": "https://opticagc.cl/collections/nano?page=2"
+      },
+      {
+        "title": "Anteojos Ópticos Niños (https://opticagc.cl/collections/anteojos-opticos-ninos?page=2)",
+        "url": "https://opticagc.cl/collections/anteojos-opticos-ninos?page=2"
+      },
+      {
+        "title": "สินค้าลดราคา - จำหน่ายกรอบแว่นตาเด็กเล็ก เด็กโต แว่นว่ายน้ำ แว่นกีฬา คุณภาพสูง ราคาปลีก/ส่ง : Inspired by LnwShop.com (v2) (https://www.kidzoniaeyewear.com/showroom/sale?tskp=29)",
+        "url": "https://www.kidzoniaeyewear.com/showroom/sale?tskp=29"
+      }
+    ]
+  },
+  {
+    "key": "NANO|NAO3070648SC",
+    "colors": [],
+    "variantKeys": [
+      "NANO|NAO3070648SC|"
+    ],
+    "query": "\"NANO\" \"NAO3070648SC\"  (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Nano Vista - Clip Solar | Pequevisión (https://www.pequevision.com/en/products/nano-vista-clip-solar-24)",
+        "url": "https://www.pequevision.com/en/products/nano-vista-clip-solar-24"
+      },
+      {
+        "title": "Armacao De Oculos Infantil Feminino Nano Vista em Promoção no Magazine Luiza (https://www.magazineluiza.com.br/busca/armacao%2Bde%2Boculos%2Binfantil%2Bfeminino%2Bnano%2Bvista/)",
+        "url": "https://www.magazineluiza.com.br/busca/armacao%2Bde%2Boculos%2Binfantil%2Bfeminino%2Bnano%2Bvista/"
+      },
+      {
+        "title": "Gafas Nano Clip: Versatilidad y Protección | PDF | Lentes | Arco iris (https://es.scribd.com/document/818025926/Nano-Clip-3-0-22-23-esp)",
+        "url": "https://es.scribd.com/document/818025926/Nano-Clip-3-0-22-23-esp"
+      },
+      {
+        "title": "Criança Sol – Fábrica de Óculos do Cacém e Chiado (https://www.fabricadeoculosonline.pt/collections/crianca-sol)",
+        "url": "https://www.fabricadeoculosonline.pt/collections/crianca-sol"
+      },
+      {
+        "title": "ÓCULOS CLIP-SOLAR criança – Page 4 – Fábrica de Óculos do Cacém e Chiado (https://www.fabricadeoculosonline.pt/collections/oculos-clip-solar-nanovista?page=4)",
+        "url": "https://www.fabricadeoculosonline.pt/collections/oculos-clip-solar-nanovista?page=4"
+      }
+    ]
+  },
+  {
+    "key": "NEUX|XL001",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "NEUX|XL001|C3"
+    ],
+    "query": "\"NEUX\" \"XL001\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NEUX|XL002",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "NEUX|XL002|C3"
+    ],
+    "query": "\"NEUX\" \"XL002\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NEUX|XL003",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "NEUX|XL003|C2",
+      "NEUX|XL003|C3"
+    ],
+    "query": "\"NEUX\" \"XL003\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NEUX|XL023",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "NEUX|XL023|C3"
+    ],
+    "query": "\"NEUX\" \"XL023\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Tienda — Estar (https://estar.com.ar/tienda/)",
+        "url": "https://estar.com.ar/tienda/"
+      },
+      {
+        "title": "Anteojos Lentes graduados 100%Online recetados con aumento — Estar (https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/)",
+        "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/"
+      },
+      {
+        "title": "Translucidos archivos — Estar (https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/translucidos/)",
+        "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/translucidos/"
+      },
+      {
+        "title": "Anteojos Clip-On archivos — Estar (https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/anteojos-clip-on/)",
+        "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/anteojos-clip-on/"
+      },
+      {
+        "title": "Óptica archivos — Página 2 de 9 — Estar (https://estar.com.ar/categoria-producto/optica/page/2/)",
+        "url": "https://estar.com.ar/categoria-producto/optica/page/2/"
+      },
+      {
+        "title": "Clip On Xl | MercadoLibre 📦 (https://listado.mercadolibre.com.ar/clip-on-xl)",
+        "url": "https://listado.mercadolibre.com.ar/clip-on-xl"
+      }
+    ]
+  },
+  {
+    "key": "NIÑO MARCHION|YM019",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "NIÑO MARCHION|YM019|C1",
+      "NIÑO MARCHION|YM019|C2"
+    ],
+    "query": "\"NIÑO MARCHION\" \"YM019\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NIÑO MARCHION|YM091",
+    "colors": [
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "NIÑO MARCHION|YM091|C3",
+      "NIÑO MARCHION|YM091|C4",
+      "NIÑO MARCHION|YM091|C5",
+      "NIÑO MARCHION|YM091|C6"
+    ],
+    "query": "\"NIÑO MARCHION\" \"YM091\" (\"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "NIÑO MARCHION|YM093",
+    "colors": [
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "NIÑO MARCHION|YM093|C5",
+      "NIÑO MARCHION|YM093|C6"
+    ],
+    "query": "\"NIÑO MARCHION\" \"YM093\" (\"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD0031",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "OLHAR|WD0031|C1"
+    ],
+    "query": "\"OLHAR\" \"WD0031\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

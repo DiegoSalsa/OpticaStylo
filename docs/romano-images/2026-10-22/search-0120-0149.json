@@ -1,0 +1,590 @@
+[
+  {
+    "key": "FORMOSA|G5215",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5215|C1",
+      "FORMOSA|G5215|C3",
+      "FORMOSA|G5215|C4",
+      "FORMOSA|G5215|C5",
+      "FORMOSA|G5215|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5215\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5216",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5216|C1",
+      "FORMOSA|G5216|C3",
+      "FORMOSA|G5216|C4",
+      "FORMOSA|G5216|C5",
+      "FORMOSA|G5216|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5216\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5217",
+    "colors": [
+      "C1",
+      "C2",
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5217|C1",
+      "FORMOSA|G5217|C2",
+      "FORMOSA|G5217|C4",
+      "FORMOSA|G5217|C5",
+      "FORMOSA|G5217|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5217\" (\"C1\" OR \"C2\" OR \"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5218",
+    "colors": [
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5218|C2",
+      "FORMOSA|G5218|C3",
+      "FORMOSA|G5218|C4",
+      "FORMOSA|G5218|C5"
+    ],
+    "query": "\"FORMOSA\" \"G5218\" (\"C2\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5227",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5227|C3",
+      "FORMOSA|G5227|C4"
+    ],
+    "query": "\"FORMOSA\" \"G5227\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5237",
+    "colors": [
+      "C1",
+      "C4",
+      "C5",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5237|C1",
+      "FORMOSA|G5237|C4",
+      "FORMOSA|G5237|C5",
+      "FORMOSA|G5237|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5237\" (\"C1\" OR \"C4\" OR \"C5\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5239",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5239|C4",
+      "FORMOSA|G5239|C5"
+    ],
+    "query": "\"FORMOSA\" \"G5239\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5260",
+    "colors": [
+      "C1",
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5260|C1",
+      "FORMOSA|G5260|C2",
+      "FORMOSA|G5260|C5"
+    ],
+    "query": "\"FORMOSA\" \"G5260\" (\"C1\" OR \"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5261",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5261|C1",
+      "FORMOSA|G5261|C2",
+      "FORMOSA|G5261|C3"
+    ],
+    "query": "\"FORMOSA\" \"G5261\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5283",
+    "colors": [
+      "C5",
+      "C6",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5283|C5",
+      "FORMOSA|G5283|C6",
+      "FORMOSA|G5283|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5283\" (\"C5\" OR \"C6\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5303",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5303|C1",
+      "FORMOSA|G5303|C2",
+      "FORMOSA|G5303|C3",
+      "FORMOSA|G5303|C5",
+      "FORMOSA|G5303|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5303\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5319",
+    "colors": [
+      "C2",
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5319|C2",
+      "FORMOSA|G5319|C3",
+      "FORMOSA|G5319|C6"
+    ],
+    "query": "\"FORMOSA\" \"G5319\" (\"C2\" OR \"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5320",
+    "colors": [
+      "C1",
+      "C6",
+      "C7"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5320|C1",
+      "FORMOSA|G5320|C6",
+      "FORMOSA|G5320|C7"
+    ],
+    "query": "\"FORMOSA\" \"G5320\" (\"C1\" OR \"C6\" OR \"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5392",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5392|C1",
+      "FORMOSA|G5392|C2",
+      "FORMOSA|G5392|C3",
+      "FORMOSA|G5392|C4"
+    ],
+    "query": "\"FORMOSA\" \"G5392\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|G5393",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|G5393|C1",
+      "FORMOSA|G5393|C2",
+      "FORMOSA|G5393|C3",
+      "FORMOSA|G5393|C4"
+    ],
+    "query": "\"FORMOSA\" \"G5393\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|GT8001",
+    "colors": [
+      "C1",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|GT8001|C1",
+      "FORMOSA|GT8001|C3",
+      "FORMOSA|GT8001|C4",
+      "FORMOSA|GT8001|C5"
+    ],
+    "query": "\"FORMOSA\" \"GT8001\" (\"C1\" OR \"C3\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|GT8006",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "FORMOSA|GT8006|C1"
+    ],
+    "query": "\"FORMOSA\" \"GT8006\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|HF228",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "FORMOSA|HF228|C2",
+      "FORMOSA|HF228|C3"
+    ],
+    "query": "\"FORMOSA\" \"HF228\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|MLT24014",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "FORMOSA|MLT24014|C2"
+    ],
+    "query": "\"FORMOSA\" \"MLT24014\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|MZ002",
+    "colors": [
+      "C2",
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|MZ002|C2",
+      "FORMOSA|MZ002|C3",
+      "FORMOSA|MZ002|C6"
+    ],
+    "query": "\"FORMOSA\" \"MZ002\" (\"C2\" OR \"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|MZ007",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|MZ007|C5"
+    ],
+    "query": "\"FORMOSA\" \"MZ007\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|MZ011",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|MZ011|C5"
+    ],
+    "query": "\"FORMOSA\" \"MZ011\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|YM019",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "FORMOSA|YM019|C4",
+      "FORMOSA|YM019|C5"
+    ],
+    "query": "\"FORMOSA\" \"YM019\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|YM041",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|YM041|C4"
+    ],
+    "query": "\"FORMOSA\" \"YM041\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|YM066",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "FORMOSA|YM066|C2",
+      "FORMOSA|YM066|C4"
+    ],
+    "query": "\"FORMOSA\" \"YM066\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FORMOSA|YM092",
+    "colors": [
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "FORMOSA|YM092|C4",
+      "FORMOSA|YM092|C5",
+      "FORMOSA|YM092|C6"
+    ],
+    "query": "\"FORMOSA\" \"YM092\" (\"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "FRIDA KAHLO|FK1010A",
+    "colors": [
+      "R"
+    ],
+    "variantKeys": [
+      "FRIDA KAHLO|FK1010A|R"
+    ],
+    "query": "\"FRIDA KAHLO\" \"FK1010A\" (\"R\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Frida Kahlo EYEWEAR (https://tecnobrasil.com.br/fridakahlo/)",
+        "url": "https://tecnobrasil.com.br/fridakahlo/"
+      },
+      {
+        "title": "MONTURA OFTÁLMICAS FRIDA KALHO – Kl Optical Premium (https://klopticalpremium.com/producto/montura-elegante-12/)",
+        "url": "https://klopticalpremium.com/producto/montura-elegante-12/"
+      },
+      {
+        "title": "Frida Kahlo FK1010A-BL – Óptica Ónix (https://opticaonix.uy/products/frida-kahlo-fk1010a-bl)",
+        "url": "https://opticaonix.uy/products/frida-kahlo-fk1010a-bl"
+      },
+      {
+        "title": "FRIDA KAHLO FK1010A Eyeglasses - SavonSpex Optometry (https://savonspex.com/frida-kahlo-fk1010a-eyeglasses/)",
+        "url": "https://savonspex.com/frida-kahlo-fk1010a-eyeglasses/"
+      },
+      {
+        "title": "FRIDA kAHLO | OPTICA BUIN (https://www.opticabuin.cl/brand/frida-kahlo)",
+        "url": "https://www.opticabuin.cl/brand/frida-kahlo"
+      },
+      {
+        "title": "Frida Kahlo archivos - Opticas La Realeza (https://opticaslarealeza.com.sv/categoria-producto/marcas/frida-kahlo/)",
+        "url": "https://opticaslarealeza.com.sv/categoria-producto/marcas/frida-kahlo/"
+      },
+      {
+        "title": "FRIDA kAHLO | OPTICA BUIN (https://www.opticabuin.cl/brand/frida-kahlo?limit=18&order=id&way=ASC)",
+        "url": "https://www.opticabuin.cl/brand/frida-kahlo?limit=18&order=id&way=ASC"
+      },
+      {
+        "title": "Frida Kahlo – Page 2 – Óptica Ónix (https://opticaonix.uy/collections/frida-kahlo?page=2)",
+        "url": "https://opticaonix.uy/collections/frida-kahlo?page=2"
+      },
+      {
+        "title": "TODOS – Page 15 – Óptica Ónix (https://opticaonix.uy/collections/todos?page=15)",
+        "url": "https://opticaonix.uy/collections/todos?page=15"
+      },
+      {
+        "title": "Global Colorant Black (HSN 9003) Suppliers Oct-26 | Volza (https://www.volza.com/p/colorant-black/hsn-code-9003/suppliers-directory/)",
+        "url": "https://www.volza.com/p/colorant-black/hsn-code-9003/suppliers-directory/"
+      },
+      {
+        "title": "Cat Eye archivos - Página 12 de 22 - Opticas La Realeza (https://opticaslarealeza.com.sv/estilo/cat-eye/page/12/)",
+        "url": "https://opticaslarealeza.com.sv/estilo/cat-eye/page/12/"
+      }
+    ]
+  },
+  {
+    "key": "FRIDA KAHLO|FK1012A",
+    "colors": [
+      "F",
+      "PR"
+    ],
+    "variantKeys": [
+      "FRIDA KAHLO|FK1012A|F",
+      "FRIDA KAHLO|FK1012A|PR"
+    ],
+    "query": "\"FRIDA KAHLO\" \"FK1012A\" (\"F\" OR \"PR\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Frida Kahlo EYEWEAR (https://tecnobrasil.com.br/fridakahlo/)",
+        "url": "https://tecnobrasil.com.br/fridakahlo/"
+      },
+      {
+        "title": "FRIDA KAHLO FK1012A - Opticas La Realeza (https://opticaslarealeza.com.sv/producto/frida-kahlo-fk1012a/)",
+        "url": "https://opticaslarealeza.com.sv/producto/frida-kahlo-fk1012a/"
+      },
+      {
+        "title": "FRIDA kAHLO | OPTICA BUIN (https://www.opticabuin.cl/brand/frida-kahlo)",
+        "url": "https://www.opticabuin.cl/brand/frida-kahlo"
+      },
+      {
+        "title": "FRIDA kAHLO | OPTICA BUIN (https://www.opticabuin.cl/brand/frida-kahlo?limit=18&order=id&way=ASC)",
+        "url": "https://www.opticabuin.cl/brand/frida-kahlo?limit=18&order=id&way=ASC"
+      },
+      {
+        "title": "Frida Kahlo archivos - Opticas La Realeza (https://opticaslarealeza.com.sv/categoria-producto/marcas/frida-kahlo/)",
+        "url": "https://opticaslarealeza.com.sv/categoria-producto/marcas/frida-kahlo/"
+      }
+    ]
+  },
+  {
+    "key": "FRIDA KAHLO|FK1015A",
+    "colors": [
+      "BU"
+    ],
+    "variantKeys": [
+      "FRIDA KAHLO|FK1015A|BU"
+    ],
+    "query": "\"FRIDA KAHLO\" \"FK1015A\" (\"BU\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "FRIDA KAHLO FK1015A Eyeglasses (https://www.go-readers.com/products/frida-kahlo-fk1015a-eyeglasses)",
+        "url": "https://www.go-readers.com/products/frida-kahlo-fk1015a-eyeglasses"
+      }
+    ]
+  },
+  {
+    "key": "FRIDA KAHLO|FK1017A",
+    "colors": [
+      "R"
+    ],
+    "variantKeys": [
+      "FRIDA KAHLO|FK1017A|R"
+    ],
+    "query": "\"FRIDA KAHLO\" \"FK1017A\" (\"R\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "FRIDA KAHLO FK1017A Eyeglasses - SavonSpex Optometry (https://savonspex.com/frida-kahlo-fk1017a-eyeglasses/)",
+        "url": "https://savonspex.com/frida-kahlo-fk1017a-eyeglasses/"
+      },
+      {
+        "title": "GAFAS OFTÁLMICAS FRIDA KAHLO FK1017A-BL – Opticas Isabel (https://opticasisabel.com/products/gafas-oftalmicas-frida-kahlo-fk1017a-bl)",
+        "url": "https://opticasisabel.com/products/gafas-oftalmicas-frida-kahlo-fk1017a-bl"
+      },
+      {
+        "title": "Monturas · MENVI Eyewear (https://www.menvieyewear.com/monturas.html)",
+        "url": "https://www.menvieyewear.com/monturas.html"
+      },
+      {
+        "title": "Productos – Opticas Isabel (https://opticasisabel.com/collections/all)",
+        "url": "https://opticasisabel.com/collections/all"
+      },
+      {
+        "title": "Ópticas Isabel - Atención Integral en Salud Visual de Alta Calidad – Opticas Isabel (https://opticasisabel.com/)",
+        "url": "https://opticasisabel.com/"
+      },
+      {
+        "title": "MUJER – Opticas Isabel (https://opticasisabel.com/collections/mujer)",
+        "url": "https://opticasisabel.com/collections/mujer"
+      }
+    ]
+  }
+]

@@ -1,0 +1,413 @@
+[
+  {
+    "key": "OLHAR|WD005",
+    "colors": [
+      "C1",
+      "C4"
+    ],
+    "variantKeys": [
+      "OLHAR|WD005|C1",
+      "OLHAR|WD005|C4"
+    ],
+    "query": "\"OLHAR\" \"WD005\" (\"C1\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "OMRON - Sensores de medição | Transfer Multisort Elektronik Brazil (https://www.tme.com/br/pt/katalog/sensores-de-medicao_113777/p%2Comron_186/)",
+        "url": "https://www.tme.com/br/pt/katalog/sensores-de-medicao_113777/p%2Comron_186/"
+      }
+    ]
+  },
+  {
+    "key": "OLHAR|WD1134",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1134|C3"
+    ],
+    "query": "\"OLHAR\" \"WD1134\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD1191",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1191|C1"
+    ],
+    "query": "\"OLHAR\" \"WD1191\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD1252",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1252|C2"
+    ],
+    "query": "\"OLHAR\" \"WD1252\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD1413",
+    "colors": [
+      "C1",
+      "C4"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1413|C1",
+      "OLHAR|WD1413|C4"
+    ],
+    "query": "\"OLHAR\" \"WD1413\" (\"C1\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD1441",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1441|C1",
+      "OLHAR|WD1441|C2"
+    ],
+    "query": "\"OLHAR\" \"WD1441\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD1666",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1666|C1"
+    ],
+    "query": "\"OLHAR\" \"WD1666\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD1923",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "OLHAR|WD1923|C1"
+    ],
+    "query": "\"OLHAR\" \"WD1923\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD2240",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "OLHAR|WD2240|C4"
+    ],
+    "query": "\"OLHAR\" \"WD2240\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD2243",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "OLHAR|WD2243|C1"
+    ],
+    "query": "\"OLHAR\" \"WD2243\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "OLHAR|WD4334P",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "OLHAR|WD4334P|C1",
+      "OLHAR|WD4334P|C3"
+    ],
+    "query": "\"OLHAR\" \"WD4334P\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD005A",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "ON DECK|OD005A|C3"
+    ],
+    "query": "\"ON DECK\" \"OD005A\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD017A",
+    "colors": [
+      "C1",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "ON DECK|OD017A|C1",
+      "ON DECK|OD017A|C3",
+      "ON DECK|OD017A|C4"
+    ],
+    "query": "\"ON DECK\" \"OD017A\" (\"C1\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD022A",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD022A|C2"
+    ],
+    "query": "\"ON DECK\" \"OD022A\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD034A",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD034A|C1"
+    ],
+    "query": "\"ON DECK\" \"OD034A\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD070",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD070|C2"
+    ],
+    "query": "\"ON DECK\" \"OD070\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD071",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD071|C2"
+    ],
+    "query": "\"ON DECK\" \"OD071\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD072",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD072|C1",
+      "ON DECK|OD072|C2"
+    ],
+    "query": "\"ON DECK\" \"OD072\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD1603",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD1603|C1"
+    ],
+    "query": "\"ON DECK\" \"OD1603\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD1759",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "ON DECK|OD1759|C3"
+    ],
+    "query": "\"ON DECK\" \"OD1759\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD1830",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD1830|C1"
+    ],
+    "query": "\"ON DECK\" \"OD1830\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD1927",
+    "colors": [
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "ON DECK|OD1927|C2",
+      "ON DECK|OD1927|C4"
+    ],
+    "query": "\"ON DECK\" \"OD1927\" (\"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD1932",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "ON DECK|OD1932|C3"
+    ],
+    "query": "\"ON DECK\" \"OD1932\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2163",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2163|C1"
+    ],
+    "query": "\"ON DECK\" \"OD2163\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2268",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2268|C1"
+    ],
+    "query": "\"ON DECK\" \"OD2268\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2483",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2483|C2"
+    ],
+    "query": "\"ON DECK\" \"OD2483\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2539",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2539|C2"
+    ],
+    "query": "\"ON DECK\" \"OD2539\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD254",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "ON DECK|OD254|C7"
+    ],
+    "query": "\"ON DECK\" \"OD254\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2544",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2544|C1"
+    ],
+    "query": "\"ON DECK\" \"OD2544\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ON DECK|OD2549",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "ON DECK|OD2549|C1"
+    ],
+    "query": "\"ON DECK\" \"OD2549\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

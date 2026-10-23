@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-23T20:49:24.837Z",
+  "cloud": "dr8dp4xqk",
+  "folder": "opticastylo/pruebas/romano-20261023",
+  "database": "127.0.0.1:55462/stylo_images_romano",
+  "assetId": "82ba87264fb923147cd28d8cb849a419",
+  "publicId": "opticastylo/pruebas/romano-20261023/producto-dc6f7709-04b7-4d27-b6ae-9560b018c76f",
+  "width": 1200,
+  "height": 600,
+  "persistenceVerified": true,
+  "idempotenceVerified": true,
+  "officialProductPhotos": 0,
+  "technicalFilesUploaded": 1,
+  "cloudinaryCleanupVerified": true
+}

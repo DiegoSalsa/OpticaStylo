@@ -1,0 +1,546 @@
+[
+  {
+    "key": "PUCCINI|PT1084",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "PUCCINI|PT1084|C1",
+      "PUCCINI|PT1084|C2"
+    ],
+    "query": "\"PUCCINI\" \"PT1084\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PT1085",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "PUCCINI|PT1085|C1",
+      "PUCCINI|PT1085|C2",
+      "PUCCINI|PT1085|C4"
+    ],
+    "query": "\"PUCCINI\" \"PT1085\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PT1086",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "PUCCINI|PT1086|C1",
+      "PUCCINI|PT1086|C2",
+      "PUCCINI|PT1086|C4"
+    ],
+    "query": "\"PUCCINI\" \"PT1086\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "PUCCINI|PT1087",
+    "colors": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "PUCCINI|PT1087|C1",
+      "PUCCINI|PT1087|C2",
+      "PUCCINI|PT1087|C3",
+      "PUCCINI|PT1087|C4"
+    ],
+    "query": "\"PUCCINI\" \"PT1087\" (\"C1\" OR \"C2\" OR \"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "RIO|RIO343",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "RIO|RIO343|C4"
+    ],
+    "query": "\"RIO\" \"RIO343\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "RODENSTOCK|R1441",
+    "colors": [
+      "B"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R1441|B"
+    ],
+    "query": "\"RODENSTOCK\" \"R1441\" (\"B\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "R1441 | Ópticas Quezada & Siles | Expertos En Lentes (https://www.opticasquezadaysiles.cl/r1441)",
+        "url": "https://www.opticasquezadaysiles.cl/r1441"
+      },
+      {
+        "title": "Rodenstock | Ópticas Quezada & Siles | Expertos En Lentes (https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock)",
+        "url": "https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock"
+      },
+      {
+        "title": "Rodenstock | Ópticas Quezada & Siles | Expertos En Lentes (https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock?sorting=name-desc)",
+        "url": "https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock?sorting=name-desc"
+      },
+      {
+        "title": "Rodenstock | Mood Eyewear | Lentes Ópticos & Gafas de Sol | Óptica Online (https://www.mood.cl/rodenstock?sorting=price-desc)",
+        "url": "https://www.mood.cl/rodenstock?sorting=price-desc"
+      },
+      {
+        "title": "OUTLET | Ópticas Quezada & Siles | Expertos En Lentes (https://www.opticasquezadaysiles.cl/lentes-de-sol/outlet?sorting=name-asc)",
+        "url": "https://www.opticasquezadaysiles.cl/lentes-de-sol/outlet?sorting=name-asc"
+      },
+      {
+        "title": "Rodenstock | Mood Eyewear | Lentes Ópticos & Gafas de Sol | Óptica Online (https://www.mood.cl/rodenstock?sorting=position-asc)",
+        "url": "https://www.mood.cl/rodenstock?sorting=position-asc"
+      }
+    ]
+  },
+  {
+    "key": "RODENSTOCK|R2619",
+    "colors": [
+      "A",
+      "C"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R2619|A",
+      "RODENSTOCK|R2619|C"
+    ],
+    "query": "\"RODENSTOCK\" \"R2619\" (\"A\" OR \"C\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Rodenstock – ÓPTICAS JLS (https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=desc&product_orderby=name&product_view=list)",
+        "url": "https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=desc&product_orderby=name&product_view=list"
+      },
+      {
+        "title": "Rodenstock – ÓPTICAS JLS (https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=asc&product_orderby=price&product_view=grid)",
+        "url": "https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=asc&product_orderby=price&product_view=grid"
+      },
+      {
+        "title": "Number 3 - Year II - 2019 - Publicomm Srl - Milan - Six-monthly - December 2019 - Italy 5 € - Europe 15 € - ISSN 2611-8386 (https://platform-optic.it/wp-content/uploads/2025/02/EYE_2019-dicembre-WEB.pdf)",
+        "url": "https://platform-optic.it/wp-content/uploads/2025/02/EYE_2019-dicembre-WEB.pdf"
+      }
+    ]
+  },
+  {
+    "key": "RODENSTOCK|R2635",
+    "colors": [
+      "C"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R2635|C"
+    ],
+    "query": "\"RODENSTOCK\" \"R2635\" (\"C\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Rodenstock sunglasses – Mr.Shades (https://www.mrshadeshop.com/en/collections/rodenstock)",
+        "url": "https://www.mrshadeshop.com/en/collections/rodenstock"
+      },
+      {
+        "title": "RODENSTOCK R2635 (A000) EYEGLASSES | Fruugo ES (https://www.fruugo.es/rodenstock-r2635-a000-gafas/p-374461183-811028194)",
+        "url": "https://www.fruugo.es/rodenstock-r2635-a000-gafas/p-374461183-811028194"
+      },
+      {
+        "title": "RODENSTOCK R2635 (A000) EYEGLASSES | Fruugo FI (https://www.fruugo.fi/rodenstock-r2635-a000-silmalasit/p-374461183-811028194)",
+        "url": "https://www.fruugo.fi/rodenstock-r2635-a000-silmalasit/p-374461183-811028194"
+      }
+    ]
+  },
+  {
+    "key": "RODENSTOCK|R5316",
+    "colors": [
+      "C"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R5316|C"
+    ],
+    "query": "\"RODENSTOCK\" \"R5316\" (\"C\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "RODENSTOCK|R5349",
+    "colors": [
+      "D"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R5349|D"
+    ],
+    "query": "\"RODENSTOCK\" \"R5349\" (\"D\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Óculos de sol e armações com 40% de desconto — Centro Óptico da Torre, Seixal (https://centroopticodatorre.pt/promocoes)",
+        "url": "https://centroopticodatorre.pt/promocoes"
+      }
+    ]
+  },
+  {
+    "key": "RODENSTOCK|R5355",
+    "colors": [
+      "D"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R5355|D"
+    ],
+    "query": "\"RODENSTOCK\" \"R5355\" (\"D\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazón Archives - Optica Vision (https://opticavision.com.py/product-category/tipos/armazon/)",
+        "url": "https://opticavision.com.py/product-category/tipos/armazon/"
+      },
+      {
+        "title": "Buy Rodenstock R5355 C54 A000 Frames | Blickers (https://www.blickers.com/en-us/glasses/rodenstock-r5355-c54/5081876716453888/)",
+        "url": "https://www.blickers.com/en-us/glasses/rodenstock-r5355-c54/5081876716453888/"
+      },
+      {
+        "title": "Rodenstock sunglasses – Mr.Shades (https://www.mrshadeshop.com/en/collections/rodenstock)",
+        "url": "https://www.mrshadeshop.com/en/collections/rodenstock"
+      },
+      {
+        "title": "Rodenstock R5355 | Rėmeliai vyrams | Familia Optica (https://shop.familia.lt/akiniai/akiniai-vyrams/rodenstock-r5355)",
+        "url": "https://shop.familia.lt/akiniai/akiniai-vyrams/rodenstock-r5355"
+      },
+      {
+        "title": "Brillengestell rodenstock | Bestenliste im 2026 - Bueros-mieten.com (https://www.bueros-mieten.com/brillengestell-rodenstock-besten/)",
+        "url": "https://www.bueros-mieten.com/brillengestell-rodenstock-besten/"
+      }
+    ]
+  },
+  {
+    "key": "RODENSTOCK|R7112",
+    "colors": [
+      "C"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|R7112|C"
+    ],
+    "query": "\"RODENSTOCK\" \"R7112\" (\"C\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Rodenstock R7112 Glasses + Free Basic Lenses - SelectSpecs (https://www.selectspecs.com/glasses/rodenstock/r7112/ss1155.40.html)",
+        "url": "https://www.selectspecs.com/glasses/rodenstock/r7112/ss1155.40.html"
+      },
+      {
+        "title": "Rodenstock : R7112 - Sornthai Optometrists (https://sornthaioptometrists.com/en/product/r7112/)",
+        "url": "https://sornthaioptometrists.com/en/product/r7112/"
+      }
+    ]
+  },
+  {
+    "key": "RODENSTOCK|RR215",
+    "colors": [
+      "A",
+      "D"
+    ],
+    "variantKeys": [
+      "RODENSTOCK|RR215|A",
+      "RODENSTOCK|RR215|D"
+    ],
+    "query": "\"RODENSTOCK\" \"RR215\" (\"A\" OR \"D\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Rodenstock Archive - Brillenmode und Kontaktlinsen (https://www.optiker.at/portfolio_entries/rodenstock/)",
+        "url": "https://www.optiker.at/portfolio_entries/rodenstock/"
+      },
+      {
+        "title": "Okulary korekcyjne unisex | Sklep EyeWear24.net (https://iokulary.eu/pol_m_Okulary-Korekcyjne_Unisex-524.html)",
+        "url": "https://iokulary.eu/pol_m_Okulary-Korekcyjne_Unisex-524.html"
+      },
+      {
+        "title": "Verena presents Rodenstock Freddie RR215 - Brillenmode und Kontaktlinsen (https://www.optiker.at/portfolio-item/rodenstock-rr215/)",
+        "url": "https://www.optiker.at/portfolio-item/rodenstock-rr215/"
+      },
+      {
+        "title": "O Rodenstock Young | Sklep EyeWear24.net (https://eyewear24.net/ukr_m_Okulary-Korekcyjne_Meskie_O-Rodenstock-Young-1978.html)",
+        "url": "https://eyewear24.net/ukr_m_Okulary-Korekcyjne_Meskie_O-Rodenstock-Young-1978.html"
+      },
+      {
+        "title": "O Rodenstock Young | Sklep EyeWear24.net (https://eyewear24.net/pol_m_Producenci_Okulary-Korekcyjne_O-Rodenstock-Young-2016.html)",
+        "url": "https://eyewear24.net/pol_m_Producenci_Okulary-Korekcyjne_O-Rodenstock-Young-2016.html"
+      },
+      {
+        "title": "Rodenstock Brillenfassungen für Herren online kaufen | eBay.de (https://www.ebay.de/b/Rodenstock-Brillenfassungen-fur-Herren/180957/bn_13329344)",
+        "url": "https://www.ebay.de/b/Rodenstock-Brillenfassungen-fur-Herren/180957/bn_13329344"
+      },
+      {
+        "title": "Rodenstock Brillenfassungen aus Metall für Herren online kaufen | eBay (https://www.ebay.ch/b/Rodenstock-Brillenfassungen-aus-Metall-fur-Herren/180957/bn_13329735)",
+        "url": "https://www.ebay.ch/b/Rodenstock-Brillenfassungen-aus-Metall-fur-Herren/180957/bn_13329735"
+      },
+      {
+        "title": "Designerskie okulary przeciwsłoneczne w niskich cenach | Sklep EyeWear24.net #467 (https://eyewear24.net/search.php?counter=466&lang=ger)",
+        "url": "https://eyewear24.net/search.php?counter=466&lang=ger"
+      },
+      {
+        "title": "damskie | Sklep EyeWear24.net #17 (https://eyewear24.net/tra-swe-1703-damskie.html?counter=16)",
+        "url": "https://eyewear24.net/tra-swe-1703-damskie.html?counter=16"
+      }
+    ]
+  },
+  {
+    "key": "SATURDAY|SA119",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|SA119|C1"
+    ],
+    "query": "\"SATURDAY\" \"SA119\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SA123",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|SA123|C1"
+    ],
+    "query": "\"SATURDAY\" \"SA123\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SA138",
+    "colors": [
+      "C3",
+      "C6"
+    ],
+    "variantKeys": [
+      "SATURDAY|SA138|C3",
+      "SATURDAY|SA138|C6"
+    ],
+    "query": "\"SATURDAY\" \"SA138\" (\"C3\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SM3010",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "SATURDAY|SM3010|C4"
+    ],
+    "query": "\"SATURDAY\" \"SM3010\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP031",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP031|C3"
+    ],
+    "query": "\"SATURDAY\" \"SP031\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP034",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP034|C3"
+    ],
+    "query": "\"SATURDAY\" \"SP034\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Met CODATRONCA MAG-CLIP DUAL SHIELD MIRROR - The Edge Cycleworks (https://www.theedgecycleworks.com/product/128004356/met-codatronca-mag-clip-dual-shield-mirror/option/)",
+        "url": "https://www.theedgecycleworks.com/product/128004356/met-codatronca-mag-clip-dual-shield-mirror/option/"
+      }
+    ]
+  },
+  {
+    "key": "SATURDAY|SP2015",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP2015|C3"
+    ],
+    "query": "\"SATURDAY\" \"SP2015\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP203030",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP203030|C1"
+    ],
+    "query": "\"SATURDAY\" \"SP203030\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP23020",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP23020|C2"
+    ],
+    "query": "\"SATURDAY\" \"SP23020\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP23028",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP23028|C4"
+    ],
+    "query": "\"SATURDAY\" \"SP23028\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP2606",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP2606|C4"
+    ],
+    "query": "\"SATURDAY\" \"SP2606\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SP2608",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "SATURDAY|SP2608|C1"
+    ],
+    "query": "\"SATURDAY\" \"SP2608\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE009",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE009|C4"
+    ],
+    "query": "\"SATURDAY\" \"SPE009\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE011",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE011|C3"
+    ],
+    "query": "\"SATURDAY\" \"SPE011\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE016",
+    "colors": [
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE016|C2",
+      "SATURDAY|SPE016|C3"
+    ],
+    "query": "\"SATURDAY\" \"SPE016\" (\"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE017",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE017|C1",
+      "SATURDAY|SPE017|C3"
+    ],
+    "query": "\"SATURDAY\" \"SPE017\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "SATURDAY|SPE019",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "SATURDAY|SPE019|C3"
+    ],
+    "query": "\"SATURDAY\" \"SPE019\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]

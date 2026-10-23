@@ -1,0 +1,506 @@
+[
+  {
+    "key": "HEMME|HA205",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HA205|C1",
+      "HEMME|HA205|C2",
+      "HEMME|HA205|C3"
+    ],
+    "query": "\"HEMME\" \"HA205\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HA206",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HA206|C1",
+      "HEMME|HA206|C2",
+      "HEMME|HA206|C3"
+    ],
+    "query": "\"HEMME\" \"HA206\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HA207",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HA207|C3"
+    ],
+    "query": "\"HEMME\" \"HA207\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HA208",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HA208|C1",
+      "HEMME|HA208|C2",
+      "HEMME|HA208|C3"
+    ],
+    "query": "\"HEMME\" \"HA208\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HA209",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HA209|C1",
+      "HEMME|HA209|C2",
+      "HEMME|HA209|C3"
+    ],
+    "query": "\"HEMME\" \"HA209\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HA210",
+    "colors": [
+      "C1",
+      "C2",
+      "C4"
+    ],
+    "variantKeys": [
+      "HEMME|HA210|C1",
+      "HEMME|HA210|C2",
+      "HEMME|HA210|C4"
+    ],
+    "query": "\"HEMME\" \"HA210\" (\"C1\" OR \"C2\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HA211",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "HEMME|HA211|C4"
+    ],
+    "query": "\"HEMME\" \"HA211\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1025",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "HEMME|HS1025|C2"
+    ],
+    "query": "\"HEMME\" \"HS1025\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1026",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "HEMME|HS1026|C2"
+    ],
+    "query": "\"HEMME\" \"HS1026\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1027",
+    "colors": [
+      "C1",
+      "C2"
+    ],
+    "variantKeys": [
+      "HEMME|HS1027|C1",
+      "HEMME|HS1027|C2"
+    ],
+    "query": "\"HEMME\" \"HS1027\" (\"C1\" OR \"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1028",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HS1028|C1",
+      "HEMME|HS1028|C3"
+    ],
+    "query": "\"HEMME\" \"HS1028\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1031",
+    "colors": [
+      "C2",
+      "C5"
+    ],
+    "variantKeys": [
+      "HEMME|HS1031|C2",
+      "HEMME|HS1031|C5"
+    ],
+    "query": "\"HEMME\" \"HS1031\" (\"C2\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1034",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HS1034|C3"
+    ],
+    "query": "\"HEMME\" \"HS1034\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1035",
+    "colors": [
+      "C1",
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "HEMME|HS1035|C1",
+      "HEMME|HS1035|C4",
+      "HEMME|HS1035|C5"
+    ],
+    "query": "\"HEMME\" \"HS1035\" (\"C1\" OR \"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1037",
+    "colors": [
+      "C4",
+      "C5"
+    ],
+    "variantKeys": [
+      "HEMME|HS1037|C4",
+      "HEMME|HS1037|C5"
+    ],
+    "query": "\"HEMME\" \"HS1037\" (\"C4\" OR \"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1039",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "HEMME|HS1039|C3",
+      "HEMME|HS1039|C4"
+    ],
+    "query": "\"HEMME\" \"HS1039\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1040",
+    "colors": [
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HS1040|C1",
+      "HEMME|HS1040|C2",
+      "HEMME|HS1040|C3"
+    ],
+    "query": "\"HEMME\" \"HS1040\" (\"C1\" OR \"C2\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1041",
+    "colors": [
+      "C1",
+      "C3"
+    ],
+    "variantKeys": [
+      "HEMME|HS1041|C1",
+      "HEMME|HS1041|C3"
+    ],
+    "query": "\"HEMME\" \"HS1041\" (\"C1\" OR \"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HEMME|HS1042",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "HEMME|HS1042|C4"
+    ],
+    "query": "\"HEMME\" \"HS1042\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HIGO|JR005",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "HIGO|JR005|C3",
+      "HIGO|JR005|C4"
+    ],
+    "query": "\"HIGO\" \"JR005\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HIGO|JS60027",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "HIGO|JS60027|C4"
+    ],
+    "query": "\"HIGO\" \"JS60027\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HIGO|TY189",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "HIGO|TY189|C1"
+    ],
+    "query": "\"HIGO\" \"TY189\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "HIGO|ULTEM",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "HIGO|ULTEM|C3"
+    ],
+    "query": "\"HIGO\" \"ULTEM\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Catálogo de lentes en Concepción | Ópticas Venus (https://opticavenus.cl/catalog)",
+        "url": "https://opticavenus.cl/catalog"
+      },
+      {
+        "title": "Ultem Clip on - , for Sale – WENZHOU HIGO OPTICAL CO.,LTD (https://www.higooptical.com/ultem-clip-on.html)",
+        "url": "https://www.higooptical.com/ultem-clip-on.html"
+      },
+      {
+        "title": "titanium eyeglasses , half rim titanium , titanium eyewear - WENZHOU HIGO OPTICAL CO.,LTD (https://www.higooptical.com/half-rim-titanium-eyeglasses-with-acetate-temple-wholesale-titanium-eyewear-in-china.html)",
+        "url": "https://www.higooptical.com/half-rim-titanium-eyeglasses-with-acetate-temple-wholesale-titanium-eyewear-in-china.html"
+      },
+      {
+        "title": "Titanium optical frame , eyeglasses frame titanium , glasses frame titanium - WENZHOU HIGO OPTICAL CO.,LTD (https://www.higooptical.com/china-beautiful-design-light-optical-frame-titanium-optical-frame-glasses-frame-titanium.html)",
+        "url": "https://www.higooptical.com/china-beautiful-design-light-optical-frame-titanium-optical-frame-glasses-frame-titanium.html"
+      },
+      {
+        "title": "Higo Wholesale Ultem Clip on Sunglasses 1902 High Quality - New Product Ideas 2019 and Magnetic Sunglasses Polarized Lens Glasses price (https://chinahigo.en.made-in-china.com/product/zQrRHnUouMhP/China-Higo-Wholesale-Ultem-Clip-on-Sunglasses-1902-High-Quality.html)",
+        "url": "https://chinahigo.en.made-in-china.com/product/zQrRHnUouMhP/China-Higo-Wholesale-Ultem-Clip-on-Sunglasses-1902-High-Quality.html"
+      },
+      {
+        "title": "Wenzhou Acetate Frame products, Wenzhou Acetate Frame manufacturers & suppliers page1326 (https://wenzhou.made-in-china.com/suppliers/acetate-frame-1326.html)",
+        "url": "https://wenzhou.made-in-china.com/suppliers/acetate-frame-1326.html"
+      },
+      {
+        "title": "Higo Wholesale Ultem Clip on Glasses Hot Cat Eye Shape Hot Model High Quality Eyeglasses Frames - New Product Ideas 2019 and Magnetic Sunglasses Polarized Lens Glasses price (https://chinahigo.en.made-in-china.com/product/ldtADkiOZWhp/China-Higo-Wholesale-Ultem-Clip-on-Glasses-Hot-Cat-Eye-Shape-Hot-Model-High-Quality-Eyeglasses-Frames.html)",
+        "url": "https://chinahigo.en.made-in-china.com/product/ldtADkiOZWhp/China-Higo-Wholesale-Ultem-Clip-on-Glasses-Hot-Cat-Eye-Shape-Hot-Model-High-Quality-Eyeglasses-Frames.html"
+      },
+      {
+        "title": "2025 Higo Ultem Magnetic Clip on Optical Frames Models Polarized Sunglasses - 2026 New Product Ideas 2025, Magnetic Sunglasses Polarized Lens Glasses price | Made-in-china.com (https://chinahigo.en.made-in-china.com/product/prPRQilHoEcm/China-2025-Higo-Ultem-Magnetic-Clip-on-Optical-Frames-Models-Polarized-Sunglasses.html)",
+        "url": "https://chinahigo.en.made-in-china.com/product/prPRQilHoEcm/China-2025-Higo-Ultem-Magnetic-Clip-on-Optical-Frames-Models-Polarized-Sunglasses.html"
+      },
+      {
+        "title": "Ultem Eyewear China Trade,Buy China Direct From Ultem Eyewear Factories at Alibaba.com (https://www.alibaba.com/countrysearch/CN/ultem-eyewear.html)",
+        "url": "https://www.alibaba.com/countrysearch/CN/ultem-eyewear.html"
+      },
+      {
+        "title": "Wholesale Plastic Spectacle Eyewear Frames Ultem Optical Glasses Frame from SourcingAI (https://www.sourcingai.com/smart-products/chinahigo/plastic-spectacle-eyewear-frames-ultem-optical-glasses-frame-lcIHUXSaJTjh)",
+        "url": "https://www.sourcingai.com/smart-products/chinahigo/plastic-spectacle-eyewear-frames-ultem-optical-glasses-frame-lcIHUXSaJTjh"
+      },
+      {
+        "title": "China Eyeglass Spectacle Ultem Frame, Eyeglass Spectacle Ultem Frame Wholesale, Manufacturers, Price | Made-in-China.com (https://www.made-in-china.com/products-search/hot-china-products/Eyeglass_Spectacle_Ultem_Frame.html)",
+        "url": "https://www.made-in-china.com/products-search/hot-china-products/Eyeglass_Spectacle_Ultem_Frame.html"
+      },
+      {
+        "title": "Wholesale Cheap Ultem Frames Optical Eye Glasses Promotion Eyeglasses Classic Eyewear from SourcingAI (https://www.sourcingai.com/smart-products/chinahigo/cheap-ultem-frames-optical-eye-glasses-promotion-eyeglasses-classic-eyewear-BfQMyNbwmcKX)",
+        "url": "https://www.sourcingai.com/smart-products/chinahigo/cheap-ultem-frames-optical-eye-glasses-promotion-eyeglasses-classic-eyewear-BfQMyNbwmcKX"
+      }
+    ]
+  },
+  {
+    "key": "HIGO|ULTEMJ2513",
+    "colors": [
+      "C9"
+    ],
+    "variantKeys": [
+      "HIGO|ULTEMJ2513|C9"
+    ],
+    "query": "\"HIGO\" \"ULTEMJ2513\" (\"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ICE LOOCK|KF17919",
+    "colors": [
+      "C5"
+    ],
+    "variantKeys": [
+      "ICE LOOCK|KF17919|C5"
+    ],
+    "query": "\"ICE LOOCK\" \"KF17919\" (\"C5\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "ICE LOOK|KF17919",
+    "colors": [
+      "C4",
+      "C5",
+      "C6"
+    ],
+    "variantKeys": [
+      "ICE LOOK|KF17919|C4",
+      "ICE LOOK|KF17919|C5",
+      "ICE LOOK|KF17919|C6"
+    ],
+    "query": "\"ICE LOOK\" \"KF17919\" (\"C4\" OR \"C5\" OR \"C6\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|DJO044",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "JORGIO|DJO044|C4"
+    ],
+    "query": "\"JORGIO\" \"DJO044\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|DJO065",
+    "colors": [
+      "C2"
+    ],
+    "variantKeys": [
+      "JORGIO|DJO065|C2"
+    ],
+    "query": "\"JORGIO\" \"DJO065\" (\"C2\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|DLJO015",
+    "colors": [
+      "C3",
+      "C4"
+    ],
+    "variantKeys": [
+      "JORGIO|DLJO015|C3",
+      "JORGIO|DLJO015|C4"
+    ],
+    "query": "\"JORGIO\" \"DLJO015\" (\"C3\" OR \"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "JORGIO|DLJO016",
+    "colors": [
+      "C3"
+    ],
+    "variantKeys": [
+      "JORGIO|DLJO016|C3"
+    ],
+    "query": "\"JORGIO\" \"DLJO016\" (\"C3\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Jorgio - Opticallery (https://opticallery.cl/product-category/lentes-opticos/jorgio/)",
+        "url": "https://opticallery.cl/product-category/lentes-opticos/jorgio/"
+      },
+      {
+        "title": "Lente óptico Jorgio Occhiali DLJO016 – Ópticas Osman (https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo016)",
+        "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo016"
+      },
+      {
+        "title": "Graduado | OPTICALI (https://www.opticali.cl/categoria/graduado?page=32)",
+        "url": "https://www.opticali.cl/categoria/graduado?page=32"
+      },
+      {
+        "title": "Productos – Page 6 – Ópticas Osman (https://opticasosman.cl/collections/all?page=6)",
+        "url": "https://opticasosman.cl/collections/all?page=6"
+      }
+    ]
+  }
+]

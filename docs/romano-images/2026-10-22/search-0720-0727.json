@@ -1,0 +1,138 @@
+[
+  {
+    "key": "VOZZEN|VN09",
+    "colors": [
+      "C5",
+      "C7",
+      "C8",
+      "C9"
+    ],
+    "variantKeys": [
+      "VOZZEN|VN09|C5",
+      "VOZZEN|VN09|C7",
+      "VOZZEN|VN09|C8",
+      "VOZZEN|VN09|C9"
+    ],
+    "query": "\"VOZZEN\" \"VN09\" (\"C5\" OR \"C7\" OR \"C8\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VOZZEN|VN10",
+    "colors": [
+      "C2",
+      "C4",
+      "C8"
+    ],
+    "variantKeys": [
+      "VOZZEN|VN10|C2",
+      "VOZZEN|VN10|C4",
+      "VOZZEN|VN10|C8"
+    ],
+    "query": "\"VOZZEN\" \"VN10\" (\"C2\" OR \"C4\" OR \"C8\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VOZZEN|VN11",
+    "colors": [
+      "C8",
+      "C9"
+    ],
+    "variantKeys": [
+      "VOZZEN|VN11|C8",
+      "VOZZEN|VN11|C9"
+    ],
+    "query": "\"VOZZEN\" \"VN11\" (\"C8\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazón Óptico Infantil / Juvenil Vozzen VN11 Flexible Ultraliviano 49-18-140 (https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn11-flexible-ultraliviano-49-18-140)",
+        "url": "https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn11-flexible-ultraliviano-49-18-140"
+      }
+    ]
+  },
+  {
+    "key": "VOZZEN|VN12",
+    "colors": [
+      "C2",
+      "C5",
+      "C8",
+      "C9"
+    ],
+    "variantKeys": [
+      "VOZZEN|VN12|C2",
+      "VOZZEN|VN12|C5",
+      "VOZZEN|VN12|C8",
+      "VOZZEN|VN12|C9"
+    ],
+    "query": "\"VOZZEN\" \"VN12\" (\"C2\" OR \"C5\" OR \"C8\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": [
+      {
+        "title": "Armazón Óptico Infantil / Juvenil Vozzen VN12 Flexible Ultraliviano 49-16-140 (https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn12-flexible-ultraliviano-49-16-140)",
+        "url": "https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn12-flexible-ultraliviano-49-16-140"
+      }
+    ]
+  },
+  {
+    "key": "VOZZEN|VN13",
+    "colors": [
+      "C2",
+      "C8",
+      "C9"
+    ],
+    "variantKeys": [
+      "VOZZEN|VN13|C2",
+      "VOZZEN|VN13|C8",
+      "VOZZEN|VN13|C9"
+    ],
+    "query": "\"VOZZEN\" \"VN13\" (\"C2\" OR \"C8\" OR \"C9\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "VOZZEN|YM019",
+    "colors": [
+      "C7"
+    ],
+    "variantKeys": [
+      "VOZZEN|YM019|C7"
+    ],
+    "query": "\"VOZZEN\" \"YM019\" (\"C7\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "WILD GLASS|6606",
+    "colors": [
+      "C1"
+    ],
+    "variantKeys": [
+      "WILD GLASS|6606|C1"
+    ],
+    "query": "\"WILD GLASS\" \"6606\" (\"C1\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  },
+  {
+    "key": "YANGO|DH5517",
+    "colors": [
+      "C4"
+    ],
+    "variantKeys": [
+      "YANGO|DH5517|C4"
+    ],
+    "query": "\"YANGO\" \"DH5517\" (\"C4\") (lentes OR eyewear OR armazones)",
+    "searchedAt": "2026-10-23",
+    "status": "SEARCHED_PENDING_VERIFICATION",
+    "leads": []
+  }
+]
