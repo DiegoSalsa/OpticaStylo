@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import CloudinaryProductImage from "@/components/store/cloudinary-product-image";
 import Link from "next/link";
 import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,8 +20,8 @@ function formatPrice(value) { return new Intl.NumberFormat("es-CL", { currency: 
 // Mantener la proporción del producto y una alternativa cuando no existe fotografía.
 function ProductVisual({ product }) {
   const image = product.images?.[0];
-  if (image) return <Image alt={image.alt} className={styles.productPhoto} fill sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw" src={image.url} />;
-  return product.category === "FRAME" ? <div className={styles.frameVisual} aria-hidden="true"><span /><i /><span /></div> : <div className={styles.categoryVisual} aria-hidden="true"><Icon name={product.category === "ACCESSORY" ? "sparkle" : "eye"} size={38} /></div>;
+  const fallback = <><span className={styles.photoPending}>Fotografía oficial pendiente</span>{product.category === "FRAME" ? <div className={styles.frameVisual} aria-hidden="true"><span /><i /><span /></div> : <div className={styles.categoryVisual} aria-hidden="true"><Icon name={product.category === "ACCESSORY" ? "sparkle" : "eye"} size={38} /></div>}</>;
+  return <CloudinaryProductImage image={image} className={styles.productPhoto} sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 33vw">{fallback}</CloudinaryProductImage>;
 }
 
 // Limitar la espera también cuando la red no responde; el reintento conserva los filtros.

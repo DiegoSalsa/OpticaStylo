@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import CloudinaryProductImage from "@/components/store/cloudinary-product-image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
 import { announceStoreCartChange, ensureStoreCart, formatClp, readStoreResponse } from "@/utils/store-client";
 
@@ -14,7 +14,7 @@ function ProductArt({ category, small = false }) {
 }
 
 function ProductImage({ image, preload = false, thumbnail = false }) {
-  return <Image alt={image.alt} className={`detail-photo${thumbnail ? " detail-thumbnail-photo" : ""}`} fill preload={preload} sizes="(max-width: 960px) 100vw, 55vw" src={image.url} />;
+  return <CloudinaryProductImage image={image} className={`detail-photo${thumbnail ? " detail-thumbnail-photo" : ""}`} preload={preload} sizes={thumbnail ? "82px" : "(max-width: 960px) 100vw, 55vw"}><span className="detail-photo-pending">Fotografía oficial pendiente</span></CloudinaryProductImage>;
 }
 
 function prescriptionLabel(lens) {
@@ -22,6 +22,7 @@ function prescriptionLabel(lens) {
 }
 
 export default function ProductDetail({ productId }) {
+  const zoomDialog = useRef(null);
   const router = useRouter();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
@@ -105,8 +106,9 @@ export default function ProductDetail({ productId }) {
     <nav className="breadcrumbs" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>{product.name}</span></nav>
     <div className="detail-grid">
       <section className="detail-gallery" aria-label={`Galería de ${product.name}`}>
-        <div className="detail-visual"><span className="detail-published">{product.isTestData ? "Producto de prueba" : "Producto publicado"}</span>{activeImage ? <ProductImage image={activeImage} preload /> : <ProductArt category={product.category} />}{product.virtualTryOn && <Link className="try-link" href={product.virtualTryOn.url}><Icon name="eye" /> Probar este marco en 3D</Link>}</div>
+        <div className="detail-visual"><span className="detail-published">{product.isTestData ? "Producto de prueba" : "Producto publicado"}</span>{activeImage ? <ProductImage image={activeImage} preload /> : <><ProductArt category={product.category} /><span className="detail-photo-pending">Fotografía oficial pendiente</span></>}{activeImage && <button className="detail-zoom-button" type="button" onClick={() => zoomDialog.current?.showModal()} aria-label={`Ampliar ${activeImage.alt}`}>Ampliar fotografía</button>}{product.virtualTryOn && <Link className="try-link" href={product.virtualTryOn.url}><Icon name="eye" /> Probar este marco en 3D</Link>}</div>
         <div className="detail-thumbnails">{images.length > 0 && images.map((image, index) => <button aria-label={`Mostrar ${image.alt}`} aria-pressed={index === selectedImage} key={image.url} onClick={() => setSelectedImage(index)} type="button"><ProductImage image={image} thumbnail /></button>)}</div>
+        {activeImage && <dialog className="detail-zoom" ref={zoomDialog} aria-label={`Detalle de ${product.name}`}><button type="button" className="detail-zoom-close" onClick={() => zoomDialog.current?.close()}>Cerrar fotografía</button><div className="detail-zoom-image"><CloudinaryProductImage image={activeImage} className="detail-photo" sizes="90vw"><span>La fotografía no está disponible.</span></CloudinaryProductImage></div><p>{activeImage.alt}</p></dialog>}
       </section>
 
       <section className="detail-copy">

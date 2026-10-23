@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
-
 import Pagination from "@/components/internal/pagination";
 import Icon from "@/components/ui/icon";
+import CloudinaryProductImage from "@/components/store/cloudinary-product-image";
 
 export default function ProductCatalogInterface({ model }) {
   const {
@@ -127,6 +126,7 @@ export default function ProductCatalogInterface({ model }) {
                       {money.format(product.unitPriceCents)}
                       {product.requiresPrescription ? " · Receta opcional" : ""}
                     </small>
+                    <small>{product.imageStatus === "VERIFIED" ? "Fotografía verificada" : product.imageStatus === "REVIEW" ? "Fotografías por revisar" : "Fotografía pendiente"}</small>
                   </span>
                   <i
                     className={
@@ -302,22 +302,21 @@ export default function ProductCatalogInterface({ model }) {
                   </div>
                   {imageStatus === "loading" && <p role="status">Cargando imágenes…</p>}
                   {imageError && <p className="inline-error" role="alert">{imageError} <button className="app-button" onClick={retryImages} type="button">Reintentar</button></p>}
-                  {imageStatus === "idle" && !images.length && <p>No hay imágenes registradas.</p>}
+                  {imageStatus === "idle" && !images.length && <p>Fotografía oficial pendiente.</p>}
                   {images.length > 0 && (
                     <div className="product-image-grid">
                       {images.map((image) => (
                         <article className="product-image-card" key={image.id}>
                           <div className="product-image-preview">
-                            <Image
-                              alt={image.alt}
-                              fill
+                            <CloudinaryProductImage
+                              image={image}
                               sizes="(max-width: 900px) 45vw, 180px"
-                              src={image.url}
-                              unoptimized
                             />
                           </div>
                           <div>
                             <span>{image.alt}</span>
+                            <small>{image.provenance?.authorization?.status === "AUTHORIZED" ? "Uso comercial autorizado · modelo y color verificados" : "Procedencia y autorización por revisar"}</small>
+                            {image.provenance?.sourceUrl && <a href={image.provenance.sourceUrl} target="_blank" rel="noreferrer">Ver fuente original</a>}
                             {canManage && (
                               <button
                                 className="app-button app-button--quiet"

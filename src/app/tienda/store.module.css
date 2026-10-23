@@ -291,10 +291,18 @@
 }
 .productPhoto {
   box-sizing: border-box;
-  mix-blend-mode: multiply;
+  background: #fff;
   object-fit: contain;
   padding: 0.7rem;
-  transform: scale(1.1);
+}
+.photoPending {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  right: 0.8rem;
+  text-align: center;
+  color: var(--color-text-soft);
+  font-size: 0.7rem;
 }
 .frameVisual {
   align-items: center;

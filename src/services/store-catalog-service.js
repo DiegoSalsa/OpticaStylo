@@ -7,6 +7,7 @@ import { AppError } from "../utils/app-error.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { validateStoreCatalogQuery } from "../validations/store-catalog-validation.js";
 import { validateStoreProductId } from "../validations/store-validation.js";
+import { isCloudinaryProductUrl } from "../utils/cloudinary-product-image.js";
 
 function publicProduct(product, availabilityProvider, images = [], model = null) {
   const presentation = getProductPresentation(product.sku);
@@ -16,7 +17,7 @@ function publicProduct(product, availabilityProvider, images = [], model = null)
     description: presentation.description,
     id: product.id,
     isTestData: product.isTestData,
-    images: images.length > 0 ? images : presentation.images,
+    images: images.filter((image) => isCloudinaryProductUrl(image.url)),
     name: product.name,
     requiresPrescription: product.requiresPrescription,
     supportsPrescription: product.category === "FRAME",

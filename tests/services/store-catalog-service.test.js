@@ -79,7 +79,7 @@ test("oculta los cristales como productos independientes en la tienda", async ()
   }), (error) => error.code === "STORE_PRODUCT_NOT_FOUND" && error.status === 404);
 });
 
-test("incluye la galería y ficha del modelo HD0896-001", async () => {
+test("conserva la ficha y exige imágenes persistidas para HD0896-001", async () => {
   const result = await getStoreProduct(product.id, {
     list3dModels: async () => [],
     findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
@@ -91,7 +91,7 @@ test("incluye la galería y ficha del modelo HD0896-001", async () => {
       };
     },
   });
-  assert.equal(result.images.length, 3);
+  assert.equal(result.images.length, 0);
   assert.equal(result.specifications.find((item) => item.label === "Medidas")?.value, "56-15-145 mm");
   assert.equal(result.lensOptions[0].isTestData, true);
   assert.match(result.description, /Harley-Davidson/);

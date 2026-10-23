@@ -61,11 +61,14 @@ export async function getProductList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
   const result = await (dependencies.listProducts ?? listProducts)(validateProductListQuery(searchParams));
   const availability = dependencies.getAvailability ?? getMockAvailability;
+  const images = await (dependencies.listImages ?? listActiveProductImages)(result.items.map((product) => product.id));
   return {
     ...result,
     items: result.items.map((product) => ({
       ...product,
       availability: availability(product),
+      imageStatus: images.some((image) => image.productId === product.id && image.provenance?.authorization?.status === "AUTHORIZED")
+        ? "VERIFIED" : images.some((image) => image.productId === product.id) ? "REVIEW" : "PENDING",
     })),
   };
 }
