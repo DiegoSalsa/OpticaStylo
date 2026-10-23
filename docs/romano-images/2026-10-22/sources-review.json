@@ -1,0 +1,5169 @@
+{
+  "generatedAt": "2026-10-23T21:47:34.510185+00:00",
+  "workbookSha256": "72406ed352ea5452d694b7cf3a026500730f6cdd897dbe3d6e481e32aa0c2580",
+  "method": "Lectura pública de fichas, galerías y metadatos Shopify, Tiendanube y WooCommerce; contraste exacto de marca/modelo/color, hash y dimensiones de imágenes descargadas solo en memoria. OCR de catálogos escaneados públicos con revisión visual parcial expresamente identificada. Sin publicación comercial.",
+  "webSources": [
+    {
+      "url": "https://articulo.mercadolibre.com.ar/MLA-1844058886-anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra-_JM",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Farticulo.mercadolibre.com.ar%2FMLA-1844058886-anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra-_JM&tid=14e84804-c66f-406a-b114-b4b9df0b1707",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:22:57Z"
+    },
+    {
+      "url": "https://bravertiendaoptica.cl/collections/coleccion-2026?page=4",
+      "finalUrl": "https://bravertiendaoptica.cl/collections/coleccion-2026?page=4",
+      "status": 200,
+      "title": "Colección 2026 de Lentes Ópticos y de Sol | Braver\n\n        – Page 4\n        – BRAVER - Especialistas en ojos saludables",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:22:57Z"
+    },
+    {
+      "url": "https://bravertiendaoptica.cl/collections/prune",
+      "finalUrl": "https://bravertiendaoptica.cl/collections/prune",
+      "status": 200,
+      "title": "Gafas de Sol PRUNE Polarizadas UV400 | Braver Óptica\n\n        – BRAVER - Especialistas en ojos saludables",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:22:57Z"
+    },
+    {
+      "url": "https://bravertiendaoptica.cl/collections/prune/products.json?limit=250",
+      "finalUrl": "https://bravertiendaoptica.cl/collections/prune/products.json?limit=250",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:22:23Z",
+      "products": 44
+    },
+    {
+      "url": "https://bravertiendaoptica.cl/collections/tous",
+      "finalUrl": "https://bravertiendaoptica.cl/collections/tous",
+      "status": 200,
+      "title": "TOUS\n\n        – BRAVER - Especialistas en ojos saludables",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:22:57Z"
+    },
+    {
+      "url": "https://bravertiendaoptica.cl/products/lentes-opticos-prune-milena",
+      "finalUrl": "https://bravertiendaoptica.cl/products/lentes-opticos-prune-milena",
+      "status": 200,
+      "title": "Lentes Ópticos Prüne Milena | Dorado con Varillas Negras | BRAVER\n\n        – BRAVER - Especialistas en ojos saludables",
+      "h1": [
+        "Lentes Ópticos Prüne Milena"
+      ],
+      "fetchedAt": "2026-10-23T21:22:57Z"
+    },
+    {
+      "url": "https://buenaimagenoptica.com.ar/marcas/prune/",
+      "finalUrl": "https://buenaimagenoptica.com.ar/marcas/prune/",
+      "status": 200,
+      "title": "Prune",
+      "h1": [
+        "Prune"
+      ],
+      "fetchedAt": "2026-10-23T21:22:57Z"
+    },
+    {
+      "url": "https://buenaimagenoptica.com.ar/productos/prune-esmeralda-qsu8i/",
+      "finalUrl": "https://buenaimagenoptica.com.ar/productos/prune-esmeralda-qsu8i/",
+      "status": 200,
+      "title": "Prüne Esmeralda",
+      "h1": [
+        "Prüne Esmeralda"
+      ],
+      "fetchedAt": "2026-10-23T21:22:58Z"
+    },
+    {
+      "url": "https://centroopticodatorre.pt/promocoes",
+      "finalUrl": "https://centroopticodatorre.pt/promocoes",
+      "status": 200,
+      "title": "Óculos de sol e armações com 40% de desconto — Centro Óptico da Torre, Seixal",
+      "h1": [
+        "40% de desconto em óculos de sol e armações"
+      ],
+      "fetchedAt": "2026-10-23T21:22:59Z"
+    },
+    {
+      "url": "https://chinahigo.en.made-in-china.com/product/prPRQilHoEcm/China-2025-Higo-Ultem-Magnetic-Clip-on-Optical-Frames-Models-Polarized-Sunglasses.html",
+      "finalUrl": "https://chinahigo.en.made-in-china.com/product/prPRQilHoEcm/China-2025-Higo-Ultem-Magnetic-Clip-on-Optical-Frames-Models-Polarized-Sunglasses.html",
+      "status": 200,
+      "title": "2025 Higo Ultem Magnetic Clip on Optical Frames Models Polarized Sunglasses - 2026 New Product Ideas 2025, Magnetic Sunglasses Polarized Lens Glasses price | Made-in-china.com",
+      "h1": [
+        "2025 Higo Ultem Magnetic Clip on Optical Frames Models Polarized Sunglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:22:58Z"
+    },
+    {
+      "url": "https://designeroptics.com/products/guess-by-marciano-50006-eyeglasses",
+      "finalUrl": "https://designeroptics.com/products/guess-by-marciano-50006-eyeglasses",
+      "status": 200,
+      "title": "Guess By Marciano 50006 Eyeglasses",
+      "h1": [
+        "Guess By Marciano 50006 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:22:59Z"
+    },
+    {
+      "url": "https://digitalbloomla.wixstudio.com/lhopticaec/armazones-guess",
+      "finalUrl": "https://digitalbloomla.wixstudio.com/lhopticaec/armazones-guess",
+      "status": 200,
+      "title": "ARMAZONES GUESS (List) | LHOptica",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:00Z"
+    },
+    {
+      "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/",
+      "finalUrl": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/",
+      "status": 200,
+      "title": "Anteojos Lentes graduados 100%Online recetados con aumento — Estar",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:05Z"
+    },
+    {
+      "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/anteojos-clip-on/",
+      "finalUrl": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/anteojos-clip-on/",
+      "status": 200,
+      "title": "Anteojos Clip-On archivos — Estar",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:05Z"
+    },
+    {
+      "url": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/translucidos/",
+      "finalUrl": "https://estar.com.ar/categoria-producto/optica/anteojos-lentes-graduados-100online/translucidos/",
+      "status": 200,
+      "title": "Translucidos archivos — Estar",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:05Z"
+    },
+    {
+      "url": "https://estar.com.ar/categoria-producto/optica/page/2/",
+      "finalUrl": "https://estar.com.ar/categoria-producto/optica/page/2/",
+      "status": 200,
+      "title": "Óptica archivos — Página 2 de 9 — Estar",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:06Z"
+    },
+    {
+      "url": "https://euro-optica.ru/product-category/frames/filters/brand/nano-nao/target_person/detskaya/",
+      "finalUrl": "https://euro-optica.ru/product-category/frames/filters/brand/nano-nao/target_person/detskaya/",
+      "status": 200,
+      "title": "Детские Оправы NANO NAO купить в Санкт-Петербурге — ЕврООптика",
+      "h1": [
+        "Детские Оправы NANO NAO"
+      ],
+      "fetchedAt": "2026-10-23T21:23:11Z"
+    },
+    {
+      "url": "https://eyesofnanuet.com/collections/guess-eyewear",
+      "finalUrl": "https://eyesofnanuet.com/collections/guess-eyewear",
+      "status": 200,
+      "title": "GUESS EYEWEAR\n– Eyes of Nanuet",
+      "h1": [
+        "GUESS EYEWEAR"
+      ],
+      "fetchedAt": "2026-10-23T21:23:06Z"
+    },
+    {
+      "url": "https://eyewear24.net/pol_m_Producenci_Okulary-Korekcyjne_O-Rodenstock-Young-2016.html",
+      "finalUrl": "https://eyewear24.net/pol_m_Producenci_Okulary-Korekcyjne_O-Rodenstock-Young-2016.html",
+      "status": 200,
+      "title": "O Rodenstock Young | Sklep EyeWear24.net",
+      "h1": [
+        "O Rodenstock Young"
+      ],
+      "fetchedAt": "2026-10-23T21:23:07Z"
+    },
+    {
+      "url": "https://eyewear24.net/search.php?counter=466&lang=ger",
+      "finalUrl": "https://eyewear24.net/search.php?counter=466&lang=ger",
+      "status": 200,
+      "title": "Designerskie okulary przeciwsłoneczne w niskich cenach | Sklep EyeWear24.net #467",
+      "h1": [
+        "Suchergebnisse"
+      ],
+      "fetchedAt": "2026-10-23T21:23:08Z"
+    },
+    {
+      "url": "https://eyewear24.net/tra-swe-1703-damskie.html?counter=16",
+      "finalUrl": "https://eyewear24.net/tra-swe-1703-damskie.html?counter=16",
+      "status": 200,
+      "title": "damskie | Sklep EyeWear24.net #17",
+      "h1": [
+        "damskie"
+      ],
+      "fetchedAt": "2026-10-23T21:23:09Z"
+    },
+    {
+      "url": "https://eyewear24.net/ukr_m_Okulary-Korekcyjne_Meskie_O-Rodenstock-Young-1978.html",
+      "finalUrl": "https://eyewear24.net/ukr_m_Okulary-Korekcyjne_Meskie_O-Rodenstock-Young-1978.html",
+      "status": 200,
+      "title": "O Rodenstock Young | Sklep EyeWear24.net",
+      "h1": [
+        "O Rodenstock Young"
+      ],
+      "fetchedAt": "2026-10-23T21:23:09Z"
+    },
+    {
+      "url": "https://klopticalpremium.com/producto/montura-elegante-12/",
+      "finalUrl": "https://klopticalpremium.com/producto/montura-elegante-12/",
+      "status": 200,
+      "title": "MONTURA OFTÁLMICAS FRIDA KALHO – Kl Optical Premium",
+      "h1": [
+        "MONTURA OFTÁLMICAS FRIDA KALHO",
+        "Acetato",
+        "Rojo",
+        "Mujer",
+        "MONTURA OFTÁLMICAS FINA CLÁSICA",
+        "MONTURA OFTÁLMICA TRES PIEZAS",
+        "MONTURA OFTÁLMICA FINA"
+      ],
+      "fetchedAt": "2026-10-23T21:23:12Z"
+    },
+    {
+      "url": "https://laboratorioopticomedrano.com.ar/armazones-de-receta/armazones-prune/",
+      "finalUrl": "https://laboratorioopticomedrano.com.ar/armazones-de-receta/armazones-prune/",
+      "status": 200,
+      "title": "Armazones Prune, anteojos de Receta, Óptica Medrano",
+      "h1": [
+        "Prune"
+      ],
+      "fetchedAt": "2026-10-23T21:23:09Z"
+    },
+    {
+      "url": "https://laucenteropticapatio24.com.br/produtos/armacao-oculos-marciano-by-guess-gatinho-preto-detalhe-joia-floral-gm50038/",
+      "finalUrl": "https://laucenteropticapatio24.com.br/produtos/armacao-oculos-marciano-by-guess-gatinho-preto-detalhe-joia-floral-gm50038/",
+      "status": 200,
+      "title": "Armação Óculos Marciano by Guess Gatinho Preto Detalhe Joia Floral",
+      "h1": [
+        "Armação Óculos Marciano by Guess Gatinho Preto Detalhe Joia Floral GM50038"
+      ],
+      "fetchedAt": "2026-10-23T21:23:10Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/buscar?search=clip",
+      "finalUrl": "https://lentesbiobio.cl/buscar?search=clip",
+      "status": 200,
+      "title": "Buscar | LENTESBIOBIO.CL",
+      "h1": [
+        "Resultados de la búsqueda para clip\""
+      ],
+      "fetchedAt": "2026-10-23T21:23:13Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc",
+      "finalUrl": "https://lentesbiobio.cl/categoria/armazones-opticos?page=1&sortDirection=desc",
+      "status": 200,
+      "title": "Armazones ópticos | LENTESBIOBIO.CL",
+      "h1": [
+        "Armazones ópticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:12Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/categoria/armazones-opticos?page=6&sortDirection=desc&sortField=createdAt",
+      "finalUrl": "https://lentesbiobio.cl/categoria/armazones-opticos?page=6&sortDirection=desc&sortField=createdAt",
+      "status": 200,
+      "title": "Armazones ópticos | LENTESBIOBIO.CL",
+      "h1": [
+        "Armazones ópticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:14Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn11-flexible-ultraliviano-49-18-140",
+      "finalUrl": "https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn11-flexible-ultraliviano-49-18-140",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:12Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn12-flexible-ultraliviano-49-16-140",
+      "finalUrl": "https://lentesbiobio.cl/index.php/producto/armazon-optico-infantil-juvenil-vozzen-vn12-flexible-ultraliviano-49-16-140",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:13Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name",
+      "finalUrl": "https://lentesbiobio.cl/productos?category=&page=32&sortDirection=asc&sortField=name",
+      "status": 200,
+      "title": "Productos | LENTESBIOBIO.CL",
+      "h1": [
+        "Explorar Productos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:15Z"
+    },
+    {
+      "url": "https://lentesbiobio.cl/search?page=7&search=%23MarcosHombre&sortDirection=desc&sortField=price",
+      "finalUrl": "https://lentesbiobio.cl/search?page=7&search=%23MarcosHombre&sortDirection=desc&sortField=price",
+      "status": 200,
+      "title": "Buscar | LENTESBIOBIO.CL",
+      "h1": [
+        "Resultados de la búsqueda para #MarcosHombre\""
+      ],
+      "fetchedAt": "2026-10-23T21:23:15Z"
+    },
+    {
+      "url": "https://lentesopticoschile.cl/ficha_slide.php?idp=351",
+      "finalUrl": "https://lentesopticoschile.cl/ficha_slide.php?idp=351",
+      "status": 200,
+      "title": "Lentes Ópticos Chile, Soluciones ópticas al mejor precio",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:13Z"
+    },
+    {
+      "url": "https://lentesparatodos.cl/",
+      "finalUrl": "https://lentesparatodos.cl/",
+      "status": 200,
+      "title": "lentesparatodos.cl",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:22:25Z"
+    },
+    {
+      "url": "https://lentex.cl/producto/lentes-opticos-guess-gu2723-083/",
+      "finalUrl": "https://lentex.cl/cgi-sys/suspendedpage.cgi",
+      "status": 200,
+      "title": "Account Suspended",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:14Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/lentes-con-clipones",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Flentes-con-clipones&tid=3c578c3a-e300-4819-9138-96c7de555d6b",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:15Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/lentes-lavanett",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Flentes-lavanett&tid=f71e9676-1931-458f-b1f8-4aa82fbdaa19",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:15Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/lentes-peune",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Flentes-peune&tid=811201e2-5a7b-4761-b41d-ebfb07c5ec26",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:15Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/marcos-de-lentes-lavanett",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Fmarcos-de-lentes-lavanett&tid=decbb96e-8bd0-4a30-adca-6a4f878a6c3d",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:16Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/prune-lentes-recetados",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Fprune-lentes-recetados&tid=36ceea05-b5ef-46c8-8062-7e0d8ead0068",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:16Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/armazones-lentes-sin-graduar/nuevo/prune-en-formosa/",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Fropa-accesorios%2Faccesorios-moda%2Fanteojos-accesorios%2Farmazones-lentes-sin-graduar%2Fnuevo%2Fprune-en-formosa%2F&tid=295ea38d-7a22-4371-ae5b-81b10f127d97",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:16Z"
+    },
+    {
+      "url": "https://listado.mercadolibre.com.ar/ropa-accesorios/accesorios-moda/anteojos-accesorios/armazones-lentes-sin-graduar/nuevo/prune/_pickup%2Astate_TUxBUENPUmFkZGIw",
+      "finalUrl": "https://www.mercadolibre.com.ar/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ar%2Fropa-accesorios%2Faccesorios-moda%2Fanteojos-accesorios%2Farmazones-lentes-sin-graduar%2Fnuevo%2Fprune%2F_pickup%252Astate_TUxBUENPUmFkZGIw&tid=cb4914f6-9585-4ab3-8995-de15fad54d57",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:16Z"
+    },
+    {
+      "url": "https://luxvision.cl/lentes-opticos/clip-on/",
+      "finalUrl": "https://luxvision.cl/lentes-opticos/clip-on/",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:17Z"
+    },
+    {
+      "url": "https://mcoptica.com.ar/anteojos-de-vista/brand-prune",
+      "finalUrl": "https://mcoptica.com.ar/anteojos-de-vista/brand-prune",
+      "status": 200,
+      "title": "Anteojos De Vista | MC Optica",
+      "h1": [
+        "Anteojos De Vista"
+      ],
+      "fetchedAt": "2026-10-23T21:23:18Z"
+    },
+    {
+      "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-cadaques-nude/3bec2e8f-21d8-46e1-a1ac-b2945210aaa5",
+      "finalUrl": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-cadaques-nude/3bec2e8f-21d8-46e1-a1ac-b2945210aaa5",
+      "status": 200,
+      "title": "Anteojo De Vista Prune Cadaques Nude | MC Optica",
+      "h1": [
+        "Anteojo De Vista Prune Cadaques Nude",
+        "Características del Anteojo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:17Z"
+    },
+    {
+      "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-esmeralda-black/1dc19ead-bf54-4bac-8149-7b8d3be62a3a",
+      "finalUrl": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-esmeralda-black/1dc19ead-bf54-4bac-8149-7b8d3be62a3a",
+      "status": 200,
+      "title": "Anteojo de Vista Prune Esmeralda Black | MC Optica",
+      "h1": [
+        "Anteojo de Vista Prune Esmeralda Black",
+        "Características del Anteojo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:17Z"
+    },
+    {
+      "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-meris-black/07395436-e1ba-41ba-acc4-67c809ebcdcb",
+      "finalUrl": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-meris-black/07395436-e1ba-41ba-acc4-67c809ebcdcb",
+      "status": 200,
+      "title": "Anteojo de Vista Prune Meris Black | MC Optica",
+      "h1": [
+        "Anteojo de Vista Prune Meris Black",
+        "Características del Anteojo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:18Z"
+    },
+    {
+      "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-milena-dorado-y-carey/dbaac887-29b2-47ee-bf22-1f5bfd0644b8",
+      "finalUrl": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-milena-dorado-y-carey/dbaac887-29b2-47ee-bf22-1f5bfd0644b8",
+      "status": 200,
+      "title": "Anteojo de Vista Prüne Milena Dorado y Carey | MC Optica",
+      "h1": [
+        "Anteojo de Vista Prüne Milena Dorado y Carey",
+        "Características del Anteojo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:18Z"
+    },
+    {
+      "url": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-praga-marron/e3131c82-1b3b-4869-b16f-16c12c1a66e7",
+      "finalUrl": "https://mcoptica.com.ar/p/anteojo-de-vista-prune-praga-marron/e3131c82-1b3b-4869-b16f-16c12c1a66e7",
+      "status": 200,
+      "title": "Anteojo de Vista Prune Praga Marron | MC Optica",
+      "h1": [
+        "Anteojo de Vista Prune Praga Marron",
+        "Características del Anteojo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:18Z"
+    },
+    {
+      "url": "https://mioptica.com.ar/prune/",
+      "finalUrl": "https://mioptica.com.ar/prune/",
+      "status": 200,
+      "title": "Anteojos Prüne de receta y de sol | Mióptica",
+      "h1": [
+        "Prüne"
+      ],
+      "fetchedAt": "2026-10-23T21:23:19Z"
+    },
+    {
+      "url": "https://mioptica.com.ar/prune/?Color=C.009",
+      "finalUrl": "https://mioptica.com.ar/prune/?Color=C.009",
+      "status": 200,
+      "title": "Anteojos Prüne de receta y de sol | Mióptica",
+      "h1": [
+        "Prüne"
+      ],
+      "fetchedAt": "2026-10-23T21:23:19Z"
+    },
+    {
+      "url": "https://mioptica.com.ar/prune/receta3/prune-acetato/",
+      "finalUrl": "https://mioptica.com.ar/prune/receta3/prune-acetato/",
+      "status": 200,
+      "title": "Anteojos Prüne",
+      "h1": [
+        "Acetato"
+      ],
+      "fetchedAt": "2026-10-23T21:23:19Z"
+    },
+    {
+      "url": "https://nzl.grandado.com/products/magnetic-sunglasses-men-polarized-clip-on-sunglass-women-cat-eye-sunglases-ultra-light-night-vision-glasses?variant=UHJvZHVjdFZhcmlhbnQ6NDU2MzAzNjYw",
+      "finalUrl": "https://nzl.grandado.com/products/magnetic-sunglasses-men-polarized-clip-on-sunglass-women-cat-eye-sunglases-ultra-light-night-vision-glasses?variant=UHJvZHVjdFZhcmlhbnQ6NDU2MzAzNjYw",
+      "status": 200,
+      "title": "Magnetic Sunglasses Men Polarized Clip On Sungl...  –  Grandado",
+      "h1": [
+        "Magnetic Sunglasses Men Polarized Clip On Sunglass Women cat eye Sunglases Ultra-Light Night Vision Glasses",
+        "Advantages"
+      ],
+      "fetchedAt": "2026-10-23T21:23:19Z"
+    },
+    {
+      "url": "https://optica-junin.tiendup.com/",
+      "finalUrl": "https://optica-junin.tiendup.com/",
+      "status": 200,
+      "title": "Óptica Junín | Lentes modernos + cristales de alta tecnología",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:20Z"
+    },
+    {
+      "url": "https://optica-optima.com/gafas-graduadas/guess-gu50242-098.html",
+      "finalUrl": "https://optica-optima.com/gafas-graduadas/guess-gu50242-098.html",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:23:20Z"
+    },
+    {
+      "url": "https://optica-optima.com/gafas-graduadas/tous-vtod18-04ap.html",
+      "finalUrl": "https://optica-optima.com/gafas-graduadas/tous-vtod18-04ap.html",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:23:20Z"
+    },
+    {
+      "url": "https://opticaab.com.ar/marcas/prune/",
+      "finalUrl": "https://opticaab.com.ar/marcas/prune/",
+      "status": 200,
+      "title": "Anteojos PRUNE: Estilo y Moda para Mujeres",
+      "h1": [
+        "PRUNE"
+      ],
+      "fetchedAt": "2026-10-23T21:23:20Z"
+    },
+    {
+      "url": "https://opticacig.cl/categoria/armazon",
+      "finalUrl": "https://opticacig.cl/categoria/armazon",
+      "status": 200,
+      "title": "Armazon | Óptica CIG",
+      "h1": [
+        "Armazon",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:21Z"
+    },
+    {
+      "url": "https://opticacig.cl/categoria/armazones",
+      "finalUrl": "https://opticacig.cl/categoria/armazones",
+      "status": 200,
+      "title": "Armazones | Óptica CIG",
+      "h1": [
+        "Armazones",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:21Z"
+    },
+    {
+      "url": "https://opticacig.cl/producto/armazon/dljo052-c2",
+      "finalUrl": "https://opticacig.cl/producto/armazon/dljo052-c2",
+      "status": 200,
+      "title": "Dljo052 C2 | Óptica CIG",
+      "h1": [
+        "DLJO052 C2",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:21Z"
+    },
+    {
+      "url": "https://opticacremona.com/anteojos-para-sol/page/2/?mpage=8",
+      "finalUrl": "https://opticacremona.com/anteojos-para-sol/page/2/?mpage=8",
+      "status": 200,
+      "title": "Comprar anteojos",
+      "h1": [
+        "ANTEOJOS PARA SOL"
+      ],
+      "fetchedAt": "2026-10-23T21:23:21Z"
+    },
+    {
+      "url": "https://opticacremona.com/productos/lavanett-lt1003-c4-55-3udsy/",
+      "finalUrl": "https://opticacremona.com/productos/lavanett-lt1003-c4-55-3udsy/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:21Z"
+    },
+    {
+      "url": "https://opticaescobedo.cl/",
+      "finalUrl": "https://opticaescobedo.cl/",
+      "status": 200,
+      "title": "Optica Escobedo",
+      "h1": [
+        "Bienvenido a Óptica Escobedo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:23Z"
+    },
+    {
+      "url": "https://opticaescobedo.cl/producto/crystal-anke/",
+      "finalUrl": "https://opticaescobedo.cl/producto/crystal-anke/",
+      "status": 200,
+      "title": "MEREL GD0011 – Optica Escobedo",
+      "h1": [
+        "MEREL GD0011",
+        "MEREL GD0011"
+      ],
+      "fetchedAt": "2026-10-23T21:23:23Z"
+    },
+    {
+      "url": "https://opticagc.cl/collections/anteojos-opticos-ninos?page=2",
+      "finalUrl": "https://opticagc.cl/collections/anteojos-opticos-ninos?page=2",
+      "status": 200,
+      "title": "Anteojos Ópticos Niños – Página 2 – Ópticas Gonzalo Cortés",
+      "h1": [
+        "Anteojos Ópticos Niños"
+      ],
+      "fetchedAt": "2026-10-23T21:23:22Z"
+    },
+    {
+      "url": "https://opticagc.cl/collections/anteojos-opticos-ninos?page=3",
+      "finalUrl": "https://opticagc.cl/collections/anteojos-opticos-ninos?page=3",
+      "status": 200,
+      "title": "Anteojos Ópticos Niños – Página 3 – Ópticas Gonzalo Cortés",
+      "h1": [
+        "Anteojos Ópticos Niños"
+      ],
+      "fetchedAt": "2026-10-23T21:23:22Z"
+    },
+    {
+      "url": "https://opticagc.cl/collections/nano/products/quest-3-0-nao-3160452",
+      "finalUrl": "https://opticagc.cl/collections/nano/products/quest-3-0-nao-3160452",
+      "status": 200,
+      "title": "Quest 3.0 NAO 3160452 – Ópticas Gonzalo Cortés",
+      "h1": [
+        "Quest 3.0 NAO 3160452"
+      ],
+      "fetchedAt": "2026-10-23T21:23:23Z"
+    },
+    {
+      "url": "https://opticagc.cl/collections/nano?page=2",
+      "finalUrl": "https://opticagc.cl/collections/nano?page=2",
+      "status": 200,
+      "title": "NANO – Página 2 – Ópticas Gonzalo Cortés",
+      "h1": [
+        "NANO"
+      ],
+      "fetchedAt": "2026-10-23T21:23:23Z"
+    },
+    {
+      "url": "https://opticagc.cl/collections/nano?page=5",
+      "finalUrl": "https://opticagc.cl/collections/nano?page=5",
+      "status": 200,
+      "title": "NANO – Página 5 – Ópticas Gonzalo Cortés",
+      "h1": [
+        "NANO"
+      ],
+      "fetchedAt": "2026-10-23T21:23:23Z"
+    },
+    {
+      "url": "https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano-marron",
+      "finalUrl": "https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano-marron",
+      "status": 200,
+      "title": "Optical Frames Guess By Marciano · Brown | OpticalH",
+      "h1": [
+        "Optical Frames Guess By Marciano · Brown"
+      ],
+      "fetchedAt": "2026-10-23T21:23:24Z"
+    },
+    {
+      "url": "https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano?page=3",
+      "finalUrl": "https://opticalh.com/en/collections/gafas-graduadas-guess-by-marciano?page=3",
+      "status": 200,
+      "title": "Optical Frames Guess By Marciano | OpticalH – Page 3",
+      "h1": [
+        "Optical Frames Guess By Marciano"
+      ],
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://opticali.cl/",
+      "finalUrl": "https://opticali.cl/",
+      "status": 200,
+      "title": "Opticali | Lentes y monturas de calidad | OPTICALI",
+      "h1": [
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://opticali.cl/wishlist",
+      "finalUrl": "https://opticali.cl/wishlist",
+      "status": 200,
+      "title": "Mi Wishlist | OPTICALI",
+      "h1": [
+        "Wishlist Vacío",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:24Z"
+    },
+    {
+      "url": "https://opticallery.cl/product-category/lentes-opticos/jorgio/",
+      "finalUrl": "https://opticallery.cl/product-category/lentes-opticos/jorgio/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://opticallery.cl/product-tag/mujer/",
+      "finalUrl": "https://opticallery.cl/product-tag/mujer/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://opticallery.cl/producto/gattizoni-g60133x-c4/",
+      "finalUrl": "https://opticallery.cl/producto/gattizoni-g60133x-c4/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://opticallery.cl/producto/le-giro-pz22004-c2/",
+      "finalUrl": "https://opticallery.cl/producto/le-giro-pz22004-c2/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://opticalumilens.com.ar/armazones/prune1",
+      "finalUrl": "https://opticalumilens.com.ar/armazones/prune1",
+      "status": 200,
+      "title": "Comprar Prune en Lumilens",
+      "h1": [
+        "Prune"
+      ],
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://opticalumilens.com.ar/armazones/prune1/",
+      "finalUrl": "https://opticalumilens.com.ar/armazones/prune1/",
+      "status": 200,
+      "title": "Comprar Prune en Lumilens",
+      "h1": [
+        "Prune"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://opticalumilens.com.ar/productos/prune-rosalba-09/",
+      "finalUrl": "https://opticalumilens.com.ar/productos/prune-rosalba-09/",
+      "status": 200,
+      "title": "Prune Rosalba 09 - Comprar en Lumilens",
+      "h1": [
+        "Prune Rosalba 09"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://opticamilux.cl/product/armazon-lavanett-juniorlj002-3/",
+      "finalUrl": "https://opticamilux.cl/product/armazon-lavanett-juniorlj002-3/",
+      "status": 200,
+      "title": "Armazón Lavanett-Junior|LJ002 - Óptica Milúx",
+      "h1": [
+        "Detalles del producto"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://opticanortesmeralda.cl/productos/",
+      "finalUrl": "https://opticanortesmeralda.cl/productos/",
+      "status": 200,
+      "title": "Catálogo — ÓPTICA NORTE ESMERALDA",
+      "h1": [
+        "Todos los productos"
+      ],
+      "fetchedAt": "2026-10-23T21:22:24Z"
+    },
+    {
+      "url": "https://opticaonix.uy/collections/frida-kahlo",
+      "finalUrl": "https://opticaonix.uy/collections/frida-kahlo",
+      "status": 200,
+      "title": "Frida Kahlo\n – Óptica Ónix",
+      "h1": [
+        "Colección: Frida Kahlo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://opticaonix.uy/collections/frida-kahlo/products.json?limit=250",
+      "finalUrl": "https://opticaonix.uy/collections/frida-kahlo/products.json?limit=250",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:22:23Z",
+      "products": 32
+    },
+    {
+      "url": "https://opticaonix.uy/collections/frida-kahlo?page=2",
+      "finalUrl": "https://opticaonix.uy/collections/frida-kahlo?page=2",
+      "status": 200,
+      "title": "Frida Kahlo\n – Page 2 – Óptica Ónix",
+      "h1": [
+        "Colección: Frida Kahlo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://opticaonix.uy/collections/prune-1",
+      "finalUrl": "https://opticaonix.uy/collections/prune-1",
+      "status": 200,
+      "title": "Prune\n – Óptica Ónix",
+      "h1": [
+        "Colección: Prune"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://opticaonix.uy/collections/todos?page=15",
+      "finalUrl": "https://opticaonix.uy/collections/todos?page=15",
+      "status": 200,
+      "title": "TODOS\n – Page 15 – Óptica Ónix",
+      "h1": [
+        "Colección: TODOS"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://opticaonix.uy/products/frida-kahlo-fk1010a-bl",
+      "finalUrl": "https://opticaonix.uy/products/frida-kahlo-fk1010a-bl",
+      "status": 200,
+      "title": "Frida Kahlo FK1010A-BL\n – Óptica Ónix",
+      "h1": [
+        "Frida Kahlo FK1010A-BL"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://opticaonix.uy/products/frida-kahlo-fk1019a-bl",
+      "finalUrl": "https://opticaonix.uy/products/frida-kahlo-fk1019a-bl",
+      "status": 200,
+      "title": "Frida Kahlo FK1019A-BL\n – Óptica Ónix",
+      "h1": [
+        "Frida Kahlo FK1019A-BL"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://opticaonix.uy/products/frida-kahlo-fk1019a-blu",
+      "finalUrl": "https://opticaonix.uy/products/frida-kahlo-fk1019a-blu",
+      "status": 200,
+      "title": "Frida Kahlo FK1019A-BLU\n – Óptica Ónix",
+      "h1": [
+        "Frida Kahlo FK1019A-BLU"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://opticaonix.uy/products/frida-kahlo-fk1028a-f",
+      "finalUrl": "https://opticaonix.uy/products/frida-kahlo-fk1028a-f",
+      "status": 200,
+      "title": "Frida Kahlo FK1028A-F\n – Óptica Ónix",
+      "h1": [
+        "Frida Kahlo FK1028A-F"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://opticarte.com.ar/anteojos-de-receta/prune/receta-prune-milena-dorado-carey",
+      "finalUrl": "https://opticarte.com.ar/anteojos-de-receta/prune/receta-prune-milena-dorado-carey",
+      "status": 200,
+      "title": "Receta Prüne Milena dorado carey - Opticarte",
+      "h1": [
+        "Receta Prüne Milena dorado carey"
+      ],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://opticasisabel.com/",
+      "finalUrl": "https://opticasisabel.com/",
+      "status": 200,
+      "title": "Ópticas Isabel - Atención Integral en Salud Visual de Alta Calidad – Opticas Isabel",
+      "h1": [
+        "Opticas Isabel"
+      ],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://opticasisabel.com/collections/all",
+      "finalUrl": "https://opticasisabel.com/collections/all",
+      "status": 200,
+      "title": "Productos – Opticas Isabel",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://opticasisabel.com/collections/mujer",
+      "finalUrl": "https://opticasisabel.com/collections/mujer",
+      "status": 200,
+      "title": "MUJER – Opticas Isabel",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://opticasisabel.com/products/gafas-oftalmicas-frida-kahlo-fk1017a-bl",
+      "finalUrl": "https://opticasisabel.com/products/gafas-oftalmicas-frida-kahlo-fk1017a-bl",
+      "status": 200,
+      "title": "GAFAS OFTÁLMICAS FRIDA KAHLO FK1017A-BL – Opticas Isabel",
+      "h1": [
+        "GAFAS OFTÁLMICAS FRIDA KAHLO FK1017A-BL"
+      ],
+      "fetchedAt": "2026-10-23T21:23:30Z"
+    },
+    {
+      "url": "https://opticaslarealeza.com.sv/categoria-producto/marcas/frida-kahlo/",
+      "finalUrl": "https://opticaslarealeza.com.sv/categoria-producto/marcas/frida-kahlo/",
+      "status": 200,
+      "title": "Frida Kahlo archivos - Opticas La Realeza",
+      "h1": [
+        "Frida Kahlo"
+      ],
+      "fetchedAt": "2026-10-23T21:23:31Z"
+    },
+    {
+      "url": "https://opticaslarealeza.com.sv/estilo/cat-eye/page/12/",
+      "finalUrl": "https://opticaslarealeza.com.sv/estilo/cat-eye/page/12/",
+      "status": 200,
+      "title": "Cat Eye archivos - Página 12 de 25 - Opticas La Realeza",
+      "h1": [
+        "Cat Eye"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://opticaslarealeza.com.sv/producto/frida-kahlo-fk1012a/",
+      "finalUrl": "https://opticaslarealeza.com.sv/producto/frida-kahlo-fk1012a/",
+      "status": 200,
+      "title": "FRIDA KAHLO FK1012A - Opticas La Realeza",
+      "h1": [
+        "FRIDA KAHLO  FK1012A"
+      ],
+      "fetchedAt": "2026-10-23T21:23:31Z"
+    },
+    {
+      "url": "https://opticasoptimundo.cl/",
+      "finalUrl": "https://opticasoptimundo.cl/",
+      "status": 200,
+      "title": "Opticas Optimundo | Un mundo de visión frente a usted",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:31Z"
+    },
+    {
+      "url": "https://opticasoptimundo.cl/categoria-producto/marca/george/",
+      "finalUrl": "https://opticasoptimundo.cl/categoria-producto/marca/george/",
+      "status": 200,
+      "title": "George | Opticas Optimundo",
+      "h1": [
+        "Category Archive"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://opticasosman.cl/",
+      "finalUrl": "https://opticasosman.cl/",
+      "status": 200,
+      "title": "Ópticas Osman - Comprometidos Con Tu Visión",
+      "h1": [
+        ""
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/all?page=3",
+      "finalUrl": "https://opticasosman.cl/collections/all?page=3",
+      "status": 200,
+      "title": "Productos\n – Page 3 – Ópticas Osman",
+      "h1": [
+        "Colección: Productos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/all?page=6",
+      "finalUrl": "https://opticasosman.cl/collections/all?page=6",
+      "status": 200,
+      "title": "Productos\n – Page 6 – Ópticas Osman",
+      "h1": [
+        "Colección: Productos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/lente-optico",
+      "finalUrl": "https://opticasosman.cl/collections/lente-optico",
+      "status": 200,
+      "title": "Lente óptico\n – Ópticas Osman",
+      "h1": [
+        "Colección: Lente óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/lente-optico?page=6",
+      "finalUrl": "https://opticasosman.cl/collections/lente-optico?page=6",
+      "status": 200,
+      "title": "Lente óptico\n – Page 6 – Ópticas Osman",
+      "h1": [
+        "Colección: Lente óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:34Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/lente-optico?page=7",
+      "finalUrl": "https://opticasosman.cl/collections/lente-optico?page=7",
+      "status": 200,
+      "title": "Lente óptico\n – Page 7 – Ópticas Osman",
+      "h1": [
+        "Colección: Lente óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2",
+      "finalUrl": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=2",
+      "status": 200,
+      "title": "Más Vendidos 🔥\n – Page 2 – Ópticas Osman",
+      "h1": [
+        "Colección: Más Vendidos 🔥"
+      ],
+      "fetchedAt": "2026-10-23T21:23:34Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=6",
+      "finalUrl": "https://opticasosman.cl/collections/mas-vendidos-%F0%9F%94%A5?page=6",
+      "status": 200,
+      "title": "Más Vendidos 🔥\n – Page 6 – Ópticas Osman",
+      "h1": [
+        "Colección: Más Vendidos 🔥"
+      ],
+      "fetchedAt": "2026-10-23T21:23:34Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/nuevos-modelos-%F0%9F%94%A5?page=7",
+      "finalUrl": "https://opticasosman.cl/collections/nuevos-modelos-%F0%9F%94%A5?page=7",
+      "status": 200,
+      "title": "Nuevos modelos 🔥\n – Page 7 – Ópticas Osman",
+      "h1": [
+        "Colección: Nuevos modelos 🔥"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5",
+      "finalUrl": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5",
+      "status": 200,
+      "title": "Lentes ópticos\n – Ópticas Osman",
+      "h1": [
+        "Colección: Lentes ópticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=2",
+      "finalUrl": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=2",
+      "status": 200,
+      "title": "Lentes ópticos\n – Page 2 – Ópticas Osman",
+      "h1": [
+        "Colección: Lentes ópticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=5",
+      "finalUrl": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=5",
+      "status": 200,
+      "title": "Lentes ópticos\n – Page 5 – Ópticas Osman",
+      "h1": [
+        "Colección: Lentes ópticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=6",
+      "finalUrl": "https://opticasosman.cl/collections/oferta-black-armazon-x-9-990-%E2%8F%B3%F0%9F%94%A5?page=6",
+      "status": 200,
+      "title": "Lentes ópticos\n – Page 6 – Ópticas Osman",
+      "h1": [
+        "Colección: Lentes ópticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products.json?limit=250&page=1",
+      "finalUrl": "https://opticasosman.cl/products.json?limit=250&page=1",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:32:29Z",
+      "products": 197
+    },
+    {
+      "url": "https://opticasosman.cl/products.json?limit=250&page=2",
+      "finalUrl": "https://opticasosman.cl/products.json?limit=250&page=2",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:32:28Z",
+      "products": 0
+    },
+    {
+      "url": "https://opticasosman.cl/products.json?limit=250&page=3",
+      "finalUrl": "https://opticasosman.cl/products.json?limit=250&page=3",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:32:28Z",
+      "products": 0
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-gattizoni-g60123x",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-gattizoni-g60123x",
+      "status": 200,
+      "title": "Lente óptico Gattizoni G60123X\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Gattizoni G60123X"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-gattizoni-g60129x",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-gattizoni-g60129x",
+      "status": 200,
+      "title": "Lente óptico Gattizoni G60129X\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Gattizoni G60129X"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-george-ge3514x",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-george-ge3514x",
+      "status": 200,
+      "title": "Lente óptico George GE3514X\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico George GE3514X"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-fxjo036",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-fxjo036",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali FXJO036\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali FXJO036"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo016",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo016",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali DLJO016\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali DLJO016"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo040",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo040",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali DLJO040\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali DLJO040"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo044",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo044",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali DLJO044\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali DLJO044"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo048",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo048",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali DLJO048\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali DLJO048"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo052",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo052",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali DLJO052\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali DLJO052"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo054",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo054",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali DLJO054\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali DLJO054"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo019",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo019",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali FXJO019\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali FXJO019"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo022",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo022",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali FXJO022\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali FXJO022"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo032",
+      "finalUrl": "https://opticasosman.cl/products/lente-optico-jorgio-occhiali-fxjo032",
+      "status": 200,
+      "title": "Lente óptico Jorgio Occhiali FXJO032\n – Ópticas Osman",
+      "h1": [
+        "Lente óptico Jorgio Occhiali FXJO032"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://opticataboada.com/tienda/page/5/",
+      "finalUrl": "https://opticataboada.com/tienda/page/5/",
+      "status": 200,
+      "title": "Tienda - Página 5 de 11 - TABOADA | ÓPTICA",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:39Z"
+    },
+    {
+      "url": "https://opticavenida.com.ar/productos/",
+      "finalUrl": "https://opticavenida.com.ar/productos/",
+      "status": 200,
+      "title": "Comprá online productos en OPTICA AVENIDA",
+      "h1": [
+        "Productos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:39Z"
+    },
+    {
+      "url": "https://opticavenus.cl/catalog",
+      "finalUrl": "https://opticavenus.cl/catalog",
+      "status": 200,
+      "title": "Ópticas Venus | Óptica en Concepción",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:39Z"
+    },
+    {
+      "url": "https://opticavision.com.py/product-category/tipos/armazon/",
+      "finalUrl": "https://opticavision.com.py/product-category/tipos/armazon/",
+      "status": 200,
+      "title": "Armazón Archives - Optica Vision",
+      "h1": [
+        "Armazón"
+      ],
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://optimal-optic.co.uk/prescription-glasses/tous-vtod18-04ap.html",
+      "finalUrl": "https://optimal-optic.co.uk/prescription-glasses/tous-vtod18-04ap.html",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://platform-optic.it/wp-content/uploads/2025/02/EYE_2019-dicembre-WEB.pdf",
+      "finalUrl": "https://platform-optic.it/wp-content/uploads/2025/02/EYE_2019-dicembre-WEB.pdf",
+      "status": 200,
+      "title": "",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:43Z"
+    },
+    {
+      "url": "https://savonspex.com/frida-kahlo-fk1010a-eyeglasses/",
+      "finalUrl": "https://savonspex.com/frida-kahlo-fk1010a-eyeglasses/",
+      "status": 200,
+      "title": "FRIDA KAHLO FK1010A Eyeglasses - SavonSpex Optometry",
+      "h1": [
+        "FRIDA KAHLO FK1010A Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://savonspex.com/frida-kahlo-fk1017a-eyeglasses/",
+      "finalUrl": "https://savonspex.com/frida-kahlo-fk1017a-eyeglasses/",
+      "status": 200,
+      "title": "FRIDA KAHLO FK1017A Eyeglasses - SavonSpex Optometry",
+      "h1": [
+        "FRIDA KAHLO FK1017A Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-by-marciano-gm50006",
+      "finalUrl": "https://selecteyewear.com/products/guess-by-marciano-gm50006",
+      "status": 200,
+      "title": "Guess By Marciano GM50006 Eyeglasses | Select Eyewear",
+      "h1": [
+        "GM50006"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-by-marciano-gm50038.json",
+      "finalUrl": "https://selecteyewear.com/products/guess-by-marciano-gm50038.json",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:32:29Z",
+      "products": 0
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-by-marciano-gm50039",
+      "finalUrl": "https://selecteyewear.com/products/guess-by-marciano-gm50039",
+      "status": 200,
+      "title": "Guess By Marciano GM50039 Eyeglasses | Select Eyewear",
+      "h1": [
+        "GM50039"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-gu2723.json",
+      "finalUrl": "https://selecteyewear.com/products/guess-gu2723.json",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:32:29Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-gu50126",
+      "finalUrl": "https://selecteyewear.com/products/guess-gu50126",
+      "status": 200,
+      "title": "Guess GU50126 Eyeglasses | Select Eyewear",
+      "h1": [
+        "GU50126"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-gu50194",
+      "finalUrl": "https://selecteyewear.com/products/guess-gu50194",
+      "status": 200,
+      "title": "Guess GU50194 Eyeglasses | Select Eyewear",
+      "h1": [
+        "GU50194"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-gu50242.json",
+      "finalUrl": "https://selecteyewear.com/products/guess-gu50242.json",
+      "status": 200,
+      "fetchedAt": "2026-10-23T21:32:28Z",
+      "products": 0
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-gu50255d.json",
+      "finalUrl": "https://selecteyewear.com/products/guess-gu50255d.json",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:32:29Z"
+    },
+    {
+      "url": "https://selecteyewear.com/products/guess-gu50304",
+      "finalUrl": "https://selecteyewear.com/products/guess-gu50304",
+      "status": 200,
+      "title": "Guess GU50304 Eyeglasses | Select Eyewear",
+      "h1": [
+        "GU50304"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://siefersopticum.nl/en/product-tag/zonnebril/page/5/?per_page=18&per_row=3",
+      "finalUrl": "https://siefersopticum.nl/en/product-tag/zonnebril/page/5/?per_page=18&per_row=3",
+      "status": 200,
+      "title": "SUNBREAD - Page 5 - Siefers",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://simple.ripley.cl/lentes-guess-opticos-negro-brillante-by-marciano-mpm10001519466",
+      "finalUrl": "https://simple.ripley.cl/lentes-guess-opticos-negro-brillante-by-marciano-mpm10001519466",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://smartvisionpr.com/",
+      "finalUrl": "https://smartvisionpr.com/",
+      "status": 200,
+      "title": "Smart Vision – Smart Vision, especialistas en salud ocular con tecnología de vanguardia y atención personalizada.",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:44Z"
+    },
+    {
+      "url": "https://sornthaioptometrists.com/en/product/r7112/",
+      "finalUrl": "https://sornthaioptometrists.com/en/product/r7112/",
+      "status": 200,
+      "title": "Rodenstock : R7112 - Sornthai Optometrists",
+      "h1": [
+        "Rodenstock : R7112"
+      ],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://taplink.cc/formosachile",
+      "finalUrl": "https://taplink.cc/formosachile",
+      "status": 200,
+      "title": "Formosachile at Taplink",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:22:25Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c2-23ym0/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1000-c2-23ym0%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:28Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c3-mw1ye/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1000-c3-mw1ye%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:28Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:28Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c3-8o9w1/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1003-c3-8o9w1%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:28Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c4-qoxgy/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1003-c4-qoxgy%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:29Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c1-c5j8c/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1004-c1-c5j8c%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:29Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c2-yglpt/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1004-c2-yglpt%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:30Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c1-fx1tu/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1005-c1-fx1tu%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:30Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c2-dr96h/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1005-c2-dr96h%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:31Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c3-g91ua/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1005-c3-g91ua%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:31Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c3-ja2xa/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1006-c3-ja2xa%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:31Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1007-c3-bcd6q/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1007-c3-bcd6q%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:31Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c3-n3unw/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1008-c3-n3unw%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:32Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c2-3t34w/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1009-c2-3t34w%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:32Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c3-n0a6z/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1009-c3-n0a6z%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:33Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c4-1cvjx/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1009-c4-1cvjx%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:33Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c4-y5a3n/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1010-c4-y5a3n%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:33Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c4-xxjak/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lt1015-c4-xxjak%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:34Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lta009-c1-plfjg/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lta009-c1-plfjg%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:34Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lta009-c3-l2goj/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lta009-c3-l2goj%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:34Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lta010-c3-hqx5m/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lta010-c3-hqx5m%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:35Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lta011-c3-1pyug/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lta011-c3-1pyug%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:36Z"
+    },
+    {
+      "url": "https://twitter.com/share?url=https://www.luxvision.cl/productos/lavanett-modelo-lta013-c3-4oaza/",
+      "finalUrl": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fshare%3Furl%3Dhttps%253A%252F%252Fwww.luxvision.cl%252Fproductos%252Flavanett-modelo-lta013-c3-4oaza%252F&mode=login",
+      "status": 200,
+      "title": "X - The Everything App / X",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:36Z"
+    },
+    {
+      "url": "https://uk.vicedeal.com/products/magnetic-sunglasses-men-polarized-clip-on-sunglass-women-cat-eye-sunglases-ultra-light-night-vision-glasses?variant=UHJvZHVjdFZhcmlhbnQ6NDU2MzAzNjcx",
+      "finalUrl": "https://uk.vicedeal.com/products/magnetic-sunglasses-men-polarized-clip-on-sunglass-women-cat-eye-sunglases-ultra-light-night-vision-glasses?variant=UHJvZHVjdFZhcmlhbnQ6NDU2MzAzNjcx",
+      "status": 200,
+      "title": "Magnetic Sunglasses Men Polarized Clip On Sungl...  –  Vicedeal",
+      "h1": [
+        "Magnetic Sunglasses Men Polarized Clip On Sunglass Women cat eye Sunglases Ultra-Light Night Vision Glasses",
+        "Advantages"
+      ],
+      "fetchedAt": "2026-10-23T21:23:46Z"
+    },
+    {
+      "url": "https://visionplanet.com.ar/prune/",
+      "finalUrl": "https://visionplanet.com.ar/prune/",
+      "status": 200,
+      "title": "PRÜNE – Visión",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.alibaba.com/countrysearch/CN/ultem-eyewear.html",
+      "finalUrl": "https://www.alibaba.com/countrysearch/CN/ultem-eyewear.html",
+      "status": 200,
+      "title": "Ultem Eyewear China Trade,Buy China Direct From Ultem Eyewear Factories at Alibaba.com",
+      "h1": [
+        "Ultem eyewear"
+      ],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.atualoptica.com/loja/busca.php?loja=846719&palavra_busca=oculos+de+sol+feminino+oculos+solar+ralph+lauren+ra5305u+500313&pg=48",
+      "finalUrl": "https://www.atualoptica.com/loja/busca.php?loja=846719&palavra_busca=oculos+de+sol+feminino+oculos+solar+ralph+lauren+ra5305u+500313&pg=48",
+      "status": 200,
+      "title": "oculos de sol feminino oculos solar ralph lauren ra5305u 500313 - Página 48 - Busca na Ótica Caxias do Sul - Ótica Online - Atual Óptica",
+      "h1": [
+        "Resultados para a busca: Oculos de sol feminino oculos solar ralph lauren ra5305u 500313"
+      ],
+      "fetchedAt": "2026-10-23T21:23:46Z"
+    },
+    {
+      "url": "https://www.atualoptica.com/oculos-de-grau/infantil/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc",
+      "finalUrl": "https://www.atualoptica.com/oculos-de-grau/infantil/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc",
+      "status": 200,
+      "title": "Armação para Óculos de Grau com clip-on Nano Nao 3120550SC",
+      "h1": [
+        "Armação para Óculos de Grau com clip-on Nano Nao 3120550SC"
+      ],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.bizippines.com/verona-optical_21J",
+      "finalUrl": "https://www.bizippines.com/verona-optical_21J",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.blickers.com/en-au/glasses/tous-vtod20s-c54/4697251364339712/",
+      "finalUrl": "https://www.blickers.com/en-au/glasses/tous-vtod20s-c54/4697251364339712/",
+      "status": 200,
+      "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers",
+      "h1": [
+        "VTOD20S C54 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.blickers.com/en-dk/glasses/tous-vtod20s-c54/4697251364339712/",
+      "finalUrl": "https://www.blickers.com/en-dk/glasses/tous-vtod20s-c54/4697251364339712/",
+      "status": 200,
+      "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers",
+      "h1": [
+        "VTOD20S C54 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.blickers.com/en-gb/glasses/tous-vtod20s-c54/4697251364339712/",
+      "finalUrl": "https://www.blickers.com/en-gb/glasses/tous-vtod20s-c54/4697251364339712/",
+      "status": 200,
+      "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers",
+      "h1": [
+        "VTOD20S C54 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.blickers.com/en-ie/glasses/tous-vtod20s-c54/4697251364339712/",
+      "finalUrl": "https://www.blickers.com/en-ie/glasses/tous-vtod20s-c54/4697251364339712/",
+      "status": 200,
+      "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers",
+      "h1": [
+        "VTOD20S C54 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.blickers.com/en-tw/glasses/tous-vtod20s-c54/4697251364339712/",
+      "finalUrl": "https://www.blickers.com/en-tw/glasses/tous-vtod20s-c54/4697251364339712/",
+      "status": 200,
+      "title": "Buy Tous VTOD20S C54 0752 Frames | Blickers",
+      "h1": [
+        "VTOD20S C54 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.blickers.com/en-us/glasses/rodenstock-r5355-c54/5081876716453888/",
+      "finalUrl": "https://www.blickers.com/en-us/glasses/rodenstock-r5355-c54/5081876716453888/",
+      "status": 200,
+      "title": "Buy Rodenstock R5355 C54 A000 Frames | Blickers",
+      "h1": [
+        "R5355 C54 Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.blickers.com/es-es/gafas/tous-vtod20s-c54/4697251364339712/",
+      "finalUrl": "https://www.blickers.com/es-es/gafas/tous-vtod20s-c54/4697251364339712/",
+      "status": 200,
+      "title": "Comprar Monturas Tous VTOD20S C54 0752 | Blickers",
+      "h1": [
+        "VTOD20S C54 Gafas de vista"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.carousell.sg/men-s-fashion/sunglasses-eyewear/vintage-frame/q-1844/",
+      "finalUrl": "https://www.carousell.sg/men-s-fashion/sunglasses-eyewear/vintage-frame/q-1844/",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.eyeconic.com/eyewear/brands/marciano",
+      "finalUrl": "https://www.eyeconic.com/eyewear/brands/marciano",
+      "status": 200,
+      "title": "Marciano Glasses & Sunglasses | Free Shipping | Eyeconic",
+      "h1": [
+        "Marciano Glasses and Sunglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.eyeconic.com/eyewear/eyeglasses/gm50039/GM50039.html",
+      "finalUrl": "https://www.eyeconic.com/eyewear/eyeglasses/gm50039/GM50039.html",
+      "status": 200,
+      "title": "Marciano GM50039 Glasses | Free Shipping and Returns | Eyeconic",
+      "h1": [
+        "GM50039"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.eyeconic.com/eyewear/eyeglasses?prefn1=brand&prefv1=Marciano",
+      "finalUrl": "https://www.eyeconic.com/eyewear/eyeglasses?prefn1=brand&prefv1=Marciano",
+      "status": 200,
+      "title": "Eyeglasses | Find Prescription Glasses| Eyeconic",
+      "h1": [
+        "Shop all Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.fabricadeoculosonline.pt/collections/oculos-clip-solar-nanovista?page=4",
+      "finalUrl": "https://www.fabricadeoculosonline.pt/collections/oculos-clip-solar-nanovista?page=4",
+      "status": 200,
+      "title": "ÓCULOS CLIP-SOLAR criança\n – Page 4 – Fábrica de Óculos do Cacém e Chiado",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c2-23ym0/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1000-c2-23ym0%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:35Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c3-mw1ye/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1000-c3-mw1ye%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:36Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:36Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c3-8o9w1/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1003-c3-8o9w1%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c4-qoxgy/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1003-c4-qoxgy%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c1-c5j8c/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1004-c1-c5j8c%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c2-yglpt/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1004-c2-yglpt%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c1-fx1tu/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1005-c1-fx1tu%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c2-dr96h/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1005-c2-dr96h%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c3-g91ua/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1005-c3-g91ua%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c3-ja2xa/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1006-c3-ja2xa%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:37Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1007-c3-bcd6q/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1007-c3-bcd6q%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:38Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c3-n3unw/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1008-c3-n3unw%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:38Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c2-3t34w/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1009-c2-3t34w%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:38Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c3-n0a6z/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1009-c3-n0a6z%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:38Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c4-1cvjx/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1009-c4-1cvjx%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:39Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c4-y5a3n/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1010-c4-y5a3n%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:39Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c4-xxjak/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lt1015-c4-xxjak%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:39Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lta009-c1-plfjg/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lta009-c1-plfjg%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:39Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lta009-c3-l2goj/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lta009-c3-l2goj%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:40Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lta010-c3-hqx5m/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lta010-c3-hqx5m%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:40Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lta011-c3-1pyug/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lta011-c3-1pyug%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:40Z"
+    },
+    {
+      "url": "https://www.facebook.com/sharer/sharer.php?u=https://www.luxvision.cl/productos/lavanett-modelo-lta013-c3-4oaza/",
+      "finalUrl": "https://www.facebook.com/share_channel/?type=reshare&link=https%3A%2F%2Fwww.luxvision.cl%2Fproductos%2Flavanett-modelo-lta013-c3-4oaza%2F&app_id=966242223397117&source_surface=external_reshare&display&hashtag",
+      "status": 200,
+      "title": "Facebook",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:30:40Z"
+    },
+    {
+      "url": "https://www.fashioneyewear.com/en-de/products/guess-gu50304",
+      "finalUrl": "https://www.fashioneyewear.com/en-de/products/guess-gu50304",
+      "status": 200,
+      "title": "Guess GU50304 Rectangle Glasses | Fashion Eyewear",
+      "h1": [
+        "Guess GU50304"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.fashioneyewear.com/en-us/products/guess-gu50304",
+      "finalUrl": "https://www.fashioneyewear.com/en-us/products/guess-gu50304",
+      "status": 200,
+      "title": "Guess GU50304 Rectangle Glasses | Fashion Eyewear US",
+      "h1": [
+        "Guess GU50304"
+      ],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.go-readers.com/products/frida-kahlo-fk1015a-eyeglasses",
+      "finalUrl": "https://www.go-readers.com/products/frida-kahlo-fk1015a-eyeglasses",
+      "status": 200,
+      "title": "American Express",
+      "h1": [
+        "FRIDA KAHLO FK1015A Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.hdvisionrx.com/hombre/le-giro-hombre-optico",
+      "finalUrl": "https://www.hdvisionrx.com/hombre/le-giro-hombre-optico",
+      "status": 200,
+      "title": "Le Giro Hombre Óptico",
+      "h1": [
+        "Le Giro Hombre Óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.hdvisionrx.com/hombre?page=2",
+      "finalUrl": "https://www.hdvisionrx.com/hombre?page=2",
+      "status": 200,
+      "title": "Hombre",
+      "h1": [
+        "Hombre Óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.hdvisionrx.com/lentes-opticos-le-giro-pz22013-c1",
+      "finalUrl": "https://www.hdvisionrx.com/lentes-opticos-le-giro-pz22013-c1",
+      "status": 200,
+      "title": "Lentes Ópticos Le Giro PZ22013 C1",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.hdvisionrx.com/mujer/gattizoni-mujer-optico",
+      "finalUrl": "https://www.hdvisionrx.com/mujer/gattizoni-mujer-optico",
+      "status": 200,
+      "title": "GATTIZONI Mujer Óptico",
+      "h1": [
+        "GATTIZONI Mujer Óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:54Z"
+    },
+    {
+      "url": "https://www.hdvisionrx.com/mujer/le-giro-mujer-optico",
+      "finalUrl": "https://www.hdvisionrx.com/mujer/le-giro-mujer-optico",
+      "status": 200,
+      "title": "Le Giro Mujer Óptico",
+      "h1": [
+        "Le Giro Mujer Óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:54Z"
+    },
+    {
+      "url": "https://www.hdvisionrx.com/mujer?page=3&sorting=price-desc",
+      "finalUrl": "https://www.hdvisionrx.com/mujer?page=3&sorting=price-desc",
+      "status": 200,
+      "title": "Mujer",
+      "h1": [
+        "Mujer Óptico"
+      ],
+      "fetchedAt": "2026-10-23T21:23:55Z"
+    },
+    {
+      "url": "https://www.higooptical.com/china-beautiful-design-light-optical-frame-titanium-optical-frame-glasses-frame-titanium.html",
+      "finalUrl": "https://www.higooptical.com/china-beautiful-design-light-optical-frame-titanium-optical-frame-glasses-frame-titanium.html",
+      "status": 200,
+      "title": "Titanium optical frame ,  eyeglasses frame titanium ,  glasses frame titanium -  WENZHOU HIGO OPTICAL CO.,LTD",
+      "h1": [
+        "China beautiful design light optical frame  titanium optical frame glasses frame titanium"
+      ],
+      "fetchedAt": "2026-10-23T21:23:56Z"
+    },
+    {
+      "url": "https://www.higooptical.com/half-rim-titanium-eyeglasses-with-acetate-temple-wholesale-titanium-eyewear-in-china.html",
+      "finalUrl": "https://www.higooptical.com/half-rim-titanium-eyeglasses-with-acetate-temple-wholesale-titanium-eyewear-in-china.html",
+      "status": 200,
+      "title": "titanium eyeglasses ,  half rim titanium ,  titanium eyewear -  WENZHOU HIGO OPTICAL CO.,LTD",
+      "h1": [
+        "Half-rim Titanium Eyeglasses  With Acetate Temple Wholesale Titanium eyewear in china"
+      ],
+      "fetchedAt": "2026-10-23T21:23:57Z"
+    },
+    {
+      "url": "https://www.higooptical.com/ultem-clip-on.html",
+      "finalUrl": "https://www.higooptical.com/ultem-clip-on.html",
+      "status": 200,
+      "title": "Ultem Clip on  -   ,     for Sale –  WENZHOU HIGO OPTICAL CO.,LTD",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:23:55Z"
+    },
+    {
+      "url": "https://www.kidzoniaeyewear.com/showroom/sale?tskp=29",
+      "finalUrl": "https://www.kidzoniaeyewear.com/showroom/sale?tskp=29",
+      "status": 200,
+      "title": "สินค้าลดราคา - จำหน่ายกรอบแว่นตาเด็กเล็ก เด็กโต แว่นว่ายน้ำ แว่นกีฬา คุณภาพสูง ราคาปลีก/ส่ง : Inspired by LnwShop.com (v2)",
+      "h1": [
+        "สินค้าลดราคา"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.lider.cl/ip/accesorios/lentes-opticos-havana-guess-by-marciano/00088921449066",
+      "finalUrl": "https://www.lider.cl/ip/accesorios/lentes-opticos-havana-guess-by-marciano/00088921449066",
+      "status": 200,
+      "title": "Lentes Ópticos Havana Guess by Marciano | Lider",
+      "h1": [
+        "Lentes Ópticos Havana Guess by Marciano"
+      ],
+      "fetchedAt": "2026-10-23T21:23:57Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/",
+      "finalUrl": "https://www.luxvision.cl/",
+      "status": 200,
+      "title": "Luxvision Chile",
+      "h1": [
+        "Luxvision Chile"
+      ],
+      "fetchedAt": "2026-10-23T21:22:23Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/",
+      "status": 200,
+      "title": "Comprar Lentes opticos en Luxvision Chile",
+      "h1": [
+        "Lentes opticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:56Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/clip-on/",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/clip-on/",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=1",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=1",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:30Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=2",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=2",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:30Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=3",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=3",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:30Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=4",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=4",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:30Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=5",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/clip-on/?page=5",
+      "status": 200,
+      "title": "Comprar lentes opticos",
+      "h1": [
+        "Clip on"
+      ],
+      "fetchedAt": "2026-10-23T21:23:31Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/lentes-opticos/page/2/",
+      "finalUrl": "https://www.luxvision.cl/lentes-opticos/page/2/",
+      "status": 200,
+      "title": "Comprar Lentes opticos en Luxvision Chile",
+      "h1": [
+        "Lentes opticos"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c1-124cc/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c1-124cc/",
+      "status": 200,
+      "title": "Montura Lavanett AT1007 C1 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo AT1007 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:41Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c2-e57tq/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c2-e57tq/",
+      "status": 200,
+      "title": "Montura Lavanett AT1007 C2 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo AT1007 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:41Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c3-x2ecg/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c3-x2ecg/",
+      "status": 200,
+      "title": "Montura Lavanett AT1007 C3 - Ultraligera y Clip Polarizado",
+      "h1": [
+        "Lavanett modelo AT1007 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:41Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c4-45ft1/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1007-c4-45ft1/",
+      "status": 200,
+      "title": "Montura Lavanett AT1007 C4 Ultraligera y Resistente con Clip Polarizad",
+      "h1": [
+        "Lavanett modelo AT1007 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:30:40Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1019-c1-1m22z/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1019-c1-1m22z/",
+      "status": 200,
+      "title": "Montura Lavanett AT1019 C2 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo AT1019 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:41Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1019-c3-1subt/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1019-c3-1subt/",
+      "status": 200,
+      "title": "Montura Lavanett AT1019 C3 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo AT1019 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:41Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1019-c5-i8vm4/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1019-c5-i8vm4/",
+      "status": 200,
+      "title": "Montura Lavanett AT1019 C5 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo AT1019 C5"
+      ],
+      "fetchedAt": "2026-10-23T21:30:42Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1026-c1-1b58u/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1026-c1-1b58u/",
+      "status": 200,
+      "title": "Montura Lavanett AT1026 C1 - Ultraligera y Polarizada",
+      "h1": [
+        "Lavanett modelo AT1026 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:42Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1026-c2-1qcmu/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1026-c2-1qcmu/",
+      "status": 200,
+      "title": "Monturas Lavanett AT1026 C2 - Ultraligeras y Resistentes con Clip Pola",
+      "h1": [
+        "Lavanett modelo AT1026 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:42Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-at1026-c3-1lfj5/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-at1026-c3-1lfj5/",
+      "status": 200,
+      "title": "Montura Lavanett AT1026 C3 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo AT1026 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:42Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c1-1u6z4/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c1-1u6z4/",
+      "status": 200,
+      "title": "Lavanett LT1000 C1 - Montura Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1000 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:43Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c2-23ym0/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c2-23ym0/",
+      "status": 200,
+      "title": "Montura Lavanett LT1000 C2 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1000 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:22:24Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c3-mw1ye/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c3-mw1ye/",
+      "status": 200,
+      "title": "Montura Lavanett LT1000 C3 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1000 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1001-c1-h4a5d/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1001-c1-h4a5d/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1001 C1 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1001 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:43Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1001-c2-ofaiq/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1001-c2-ofaiq/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1001 C2 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1001 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:42Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1001-c3-gujwv/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1001-c3-gujwv/",
+      "status": 200,
+      "title": "Montura Lavanett LT1001 C3 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1001 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:43Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c1-irx86/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c1-irx86/",
+      "status": 200,
+      "title": "Montura Lavanett LT1002 C1 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1002 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:43Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c3-x261t/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c3-x261t/",
+      "status": 200,
+      "title": "Montura Lavanett LT1002 C3 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1002 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:44Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1002-c4-de-regalo-incluye-cristales-opticos-con-antirreflejo1/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1002 C4 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1002 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c1-tet4j/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c1-tet4j/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1003 C1 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1003 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:44Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c2-tfmxk/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c2-tfmxk/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1003 C2 ultraligeras con clip polarizado",
+      "h1": [
+        "Lavanett modelo LT1003 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:44Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c3-8o9w1/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c3-8o9w1/",
+      "status": 200,
+      "title": "Montura Lavanett LT1003 C3 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1003 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c4-qoxgy/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1003-c4-qoxgy/",
+      "status": 200,
+      "title": "Montura Lavanett LT1003 C4 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1003 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c1-c5j8c/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c1-c5j8c/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1004 C1 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1004 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c2-yglpt/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1004-c2-yglpt/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1004 C2 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1004 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c1-fx1tu/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c1-fx1tu/",
+      "status": 200,
+      "title": "Montura Lavanett LT1005 C1 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1005 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c2-dr96h/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c2-dr96h/",
+      "status": 200,
+      "title": "Montura Lavanett LT1005 C2 Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1005 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:23:30Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c3-g91ua/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1005-c3-g91ua/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1005 C3 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1005 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c1-gd2ov/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c1-gd2ov/",
+      "status": 200,
+      "title": "Montura Lavanett LT1006 C1 Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1006 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:44Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c2-1g3io/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c2-1g3io/",
+      "status": 200,
+      "title": "Montura Lavanett LT1006 C2 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1006 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:44Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c3-ja2xa/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1006-c3-ja2xa/",
+      "status": 200,
+      "title": "Montura Lavanett LT1006 C3 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1006 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1007-c3-bcd6q/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1007-c3-bcd6q/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1007 C3 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1007 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c1-068yy/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c1-068yy/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1008 C1 ultraligeras con clip ámbar polarizado",
+      "h1": [
+        "Lavanett modelo LT1008 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:45Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c2-tfzcg/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c2-tfzcg/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1008 C2 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1008 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:45Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c3-n3unw/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c3-n3unw/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1008 C3 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1008 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:25Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c4-a0qmu/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1008-c4-a0qmu/",
+      "status": 200,
+      "title": "Montura Lavanett LT1008 C4 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1008 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:30:45Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c1-h51hn/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c1-h51hn/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1009 C1 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1009 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:45Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c2-3t34w/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c2-3t34w/",
+      "status": 200,
+      "title": "Montura Lavanett LT1009 C2 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1009 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c3-n0a6z/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c3-n0a6z/",
+      "status": 200,
+      "title": "Montura Lavanett LT1009 C3 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1009 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c4-1cvjx/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1009-c4-1cvjx/",
+      "status": 200,
+      "title": "Montura Lavanett LT1009 C4 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1009 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:23:26Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c1-ulft6/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c1-ulft6/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1010 C1 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1010 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:46Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c2-mwv5a/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c2-mwv5a/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1010 C2 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1010 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:46Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c3-8kyd7/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c3-8kyd7/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1010 C3 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1010 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:47Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c4-y5a3n/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1010-c4-y5a3n/",
+      "status": 200,
+      "title": "Montura Lavanett LT1010 C4 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1010 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1014-c2-vg4f2/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1014-c2-vg4f2/",
+      "status": 200,
+      "title": "Montura Lavanett LT1014 C2 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1014 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:46Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1014-c3-1pjdf/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1014-c3-1pjdf/",
+      "status": 200,
+      "title": "Lavanett modelo LT1014 C3 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1014 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:47Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1014-c4-xv6m1/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1014-c4-xv6m1/",
+      "status": 200,
+      "title": "Lavanett modelo LT1014 C4 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1014 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:30:47Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c1-g7z9q/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c1-g7z9q/",
+      "status": 200,
+      "title": "Montura Lavanett LT1015 C1 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1015 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:47Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c2-3wt87/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c2-3wt87/",
+      "status": 200,
+      "title": "Montura Lavanett LT1015 C2 con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1015 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:47Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c3-18owa/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c3-18owa/",
+      "status": 200,
+      "title": "Montura Lavanett LT1015 C3 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1015 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:48Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c4-xxjak/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1015-c4-xxjak/",
+      "status": 200,
+      "title": "Montura Lavanett LT1015 C4 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1015 C4"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1016-c1-80xil/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1016-c1-80xil/",
+      "status": 200,
+      "title": "Montura Lavanett LT1016 C1 Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1016 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:49Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1016-c2-y7ojx/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1016-c2-y7ojx/",
+      "status": 200,
+      "title": "Lavanett modelo LT1016 C2 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1016 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:48Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1016-c3-2tqim/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1016-c3-2tqim/",
+      "status": 200,
+      "title": "Lavanett modelo LT1016 C3 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1016 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:49Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1018-c1-12feq/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1018-c1-12feq/",
+      "status": 200,
+      "title": "Montura Lavanett LT1018 C1 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1018 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:49Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1018-c3-152tm/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1018-c3-152tm/",
+      "status": 200,
+      "title": "Lavanett modelo LT1018 C3 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1018 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:50Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1018-c5-7s972/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1018-c5-7s972/",
+      "status": 200,
+      "title": "Lavanett modelo LT1018 C5 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1018 C5"
+      ],
+      "fetchedAt": "2026-10-23T21:30:50Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1019-c1-68k92/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1019-c1-68k92/",
+      "status": 200,
+      "title": "Lavanett modelo LT1019 C1 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1019 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:49Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1019-c2-13rwr/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1019-c2-13rwr/",
+      "status": 200,
+      "title": "Lavanett modelo LT1019 C2 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1019 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:51Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1019-c3-1wmy7/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1019-c3-1wmy7/",
+      "status": 200,
+      "title": "Montura Lavanett LT1019 C3 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1019 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:51Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1020-c3-st7uw/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1020-c3-st7uw/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1020 C3 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1020 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:51Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1021-c1-4dia3/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1021-c1-4dia3/",
+      "status": 200,
+      "title": "Montura Lavanett LT1021 C1 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1021 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:51Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1021-c2-2ntok/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1021-c2-2ntok/",
+      "status": 200,
+      "title": "Montura Lavanett LT1021 C2 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1021 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:52Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1021-c3-74j6b/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1021-c3-74j6b/",
+      "status": 200,
+      "title": "Montura Lavanett LT1021 C3 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1021 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:52Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1022-c1-mfxc1/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1022-c1-mfxc1/",
+      "status": 200,
+      "title": "Montura Lavanett LT1022 C1 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1022 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:52Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1022-c2-l5r7g/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1022-c2-l5r7g/",
+      "status": 200,
+      "title": "Montura Lavanett LT1022 C2 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1022 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:52Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1022-c7-d2kis/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1022-c7-d2kis/",
+      "status": 200,
+      "title": "Montura Lavanett LT1022 C7 ultraligera con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT1022 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:53Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1023-c1-7q2km/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1023-c1-7q2km/",
+      "status": 200,
+      "title": "Montura Lavanett LT1023 C1 - Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT1023 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:53Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1023-c2-1uyu8/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1023-c2-1uyu8/",
+      "status": 200,
+      "title": "Lavanett modelo LT1023 C2 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1023 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:53Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1023-c3-167kq/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1023-c3-167kq/",
+      "status": 200,
+      "title": "Lavanett modelo LT1023 C3 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT1023 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:53Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1025-c1-1tnda/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1025-c1-1tnda/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1025 C1 - Ultraligeras y Resistentes con Clip Pola",
+      "h1": [
+        "Lavanett modelo LT1025 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:54Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1025-c2-1ht9l/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1025-c2-1ht9l/",
+      "status": 200,
+      "title": "Montura Lavanett LT1025 C2 - Ultraligera con Clip Polarizado",
+      "h1": [
+        "Lavanett modelo LT1025 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:54Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1025-c3-1dbxl/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1025-c3-1dbxl/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1025 C3 - Ultraligeras y Resistentes con Clip Pola",
+      "h1": [
+        "Lavanett modelo LT1025 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:54Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1026-c1-18ovp/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1026-c1-18ovp/",
+      "status": 200,
+      "title": "Montura Lavanett LT1026 C1 - Ultraligera y Clip Polarizado",
+      "h1": [
+        "Lavanett modelo LT1026 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:54Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1026-c2-i7xf8/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1026-c2-i7xf8/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1026 C2 - Ultraligeras y Polarizadas",
+      "h1": [
+        "Lavanett modelo LT1026 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:54Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1026-c3-1kup2/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1026-c3-1kup2/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1026 C3 - Ultraligeras y Polarizadas",
+      "h1": [
+        "Lavanett modelo LT1026 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:54Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1027-c1-rtu2w/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1027-c1-rtu2w/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1027 C1 - Ultraligeras y Resistentes con Clip Pola",
+      "h1": [
+        "Lavanett modelo LT1027 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:55Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1027-c2-eh7nd/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1027-c2-eh7nd/",
+      "status": 200,
+      "title": "Montura Lavanett LT1027 C2 - Ultraligera y Resistente con Clip Polariz",
+      "h1": [
+        "Lavanett modelo LT1027 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:55Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt1027-c3-rxi46/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt1027-c3-rxi46/",
+      "status": 200,
+      "title": "Monturas Lavanett LT1027 C3 - Ultraligeras y Resistentes con Clip Pola",
+      "h1": [
+        "Lavanett modelo LT1027 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:55Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt2003-c3-xw2y4/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt2003-c3-xw2y4/",
+      "status": 200,
+      "title": "Monturas Lavanett LT2003 C3 ultraligeras con clip polarizado ámbar",
+      "h1": [
+        "Lavanett modelo LT2003 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:55Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt2003-c5/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt2003-c5/",
+      "status": 200,
+      "title": "Lavanett LT2003 C5 - Modelo Exclusivo para Compra Web",
+      "h1": [
+        "Lavanett modelo LT2003 C5"
+      ],
+      "fetchedAt": "2026-10-23T21:30:56Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt2003-c6/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt2003-c6/",
+      "status": 200,
+      "title": "Monturas Lavanett LT2003 C6 ultraligeras con clip polarizado",
+      "h1": [
+        "Lavanett modelo LT2003 C6"
+      ],
+      "fetchedAt": "2026-10-23T21:30:56Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt3006-c1-qv3ci/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt3006-c1-qv3ci/",
+      "status": 200,
+      "title": "Montura Lavanett LT3006 C1 Ultraligera con Clip Polarizado Ámbar",
+      "h1": [
+        "Lavanett modelo LT3006 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:56Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt3006-c2-181h9/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt3006-c2-181h9/",
+      "status": 200,
+      "title": "Lavanett modelo LT3006 C2 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT3006 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:56Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt3006-c3-og64s/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt3006-c3-og64s/",
+      "status": 200,
+      "title": "Lavanett modelo LT3006 C3 - Comprar en Luxvision Chile",
+      "h1": [
+        "Lavanett modelo LT3006 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:57Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt4001-1spzv/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt4001-1spzv/",
+      "status": 200,
+      "title": "Monturas Lavanett LT4001 Ultraligeras con Clip Polarizado",
+      "h1": [
+        "Lavanett modelo LT4001"
+      ],
+      "fetchedAt": "2026-10-23T21:30:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lt4002-16asf/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lt4002-16asf/",
+      "status": 200,
+      "title": "Montura Lavanett LT4002 Ultraligera con Clip Polarizado",
+      "h1": [
+        "Lavanett modelo LT4002"
+      ],
+      "fetchedAt": "2026-10-23T21:30:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta007-c1-1ip7n/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta007-c1-1ip7n/",
+      "status": 200,
+      "title": "Montura Lavanett LTA007 C1 - Ultraligera con Clip Polarizado",
+      "h1": [
+        "Lavanett modelo LTA007 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta007-c2-do9pm/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta007-c2-do9pm/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA007 C2 - con Clip Polarizados",
+      "h1": [
+        "Lavanett modelo LTA007 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:57Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta007-c3-1m39x/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta007-c3-1m39x/",
+      "status": 200,
+      "title": "Montura Lavanett LTA007 C3 con Clip Polarizado - Resistente y Ligera",
+      "h1": [
+        "Lavanett modelo LTA007 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta008-c1-gekjz/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta008-c1-gekjz/",
+      "status": 200,
+      "title": "Montura Lavanett LTA008 C1 con Clip Polarizado - Resistencia y Estilo",
+      "h1": [
+        "Lavanett modelo LTA008 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta008-c2-1t3zn/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta008-c2-1t3zn/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA008 C2 con Clip Polarizado - Resistentes y Ligera",
+      "h1": [
+        "Lavanett modelo LTA008 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:58Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta008-c3-17emr/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta008-c3-17emr/",
+      "status": 200,
+      "title": "Montura Lavanett LTA008 C3 con Clip Polarizado - Resistente y Ligera",
+      "h1": [
+        "Lavanett modelo LTA008 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:30:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta009-c1-plfjg/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta009-c1-plfjg/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA009 C1 con Clip Polarizado y Alta Resistencia",
+      "h1": [
+        "Lavanett modelo LTA009 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:23:27Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta009-c2-19bjb/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta009-c2-19bjb/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA009 C2 con Clip Polarizado - Resistencia y Estilo",
+      "h1": [
+        "Lavanett modelo LTA009 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta009-c3-l2goj/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta009-c3-l2goj/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA009 C3 con Clip Polarizado - Resistentes y Estilo",
+      "h1": [
+        "Lavanett modelo LTA009 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta010-c1-1pr8h/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta010-c1-1pr8h/",
+      "status": 200,
+      "title": "Montura Lavanett LTA010 C1 con Clip Polarizado - Resistente y Ligera",
+      "h1": [
+        "Lavanett modelo LTA010 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:30:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta010-c2-t77zu/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta010-c2-t77zu/",
+      "status": 200,
+      "title": "Montura Lavanett LTA010 C2 con Clip Polarizado - Resistente y Estiliza",
+      "h1": [
+        "Lavanett modelo LTA010 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:30:59Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta010-c3-hqx5m/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta010-c3-hqx5m/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA010 C3 con Clip Polarizado, Resistencia y Estilo",
+      "h1": [
+        "Lavanett modelo LTA010 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:28Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta011-c1-fxnzm/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta011-c1-fxnzm/",
+      "status": 200,
+      "title": "Montura Lavanett LTA011 C1 con Clip Polarizado - Resistencia y Estilo",
+      "h1": [
+        "Lavanett modelo LTA011 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:31:00Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta011-c2-2gx9s/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta011-c2-2gx9s/",
+      "status": 200,
+      "title": "Montura Lavanett LTA011 C2 con Clip Polarizado - Resistencia y Estilo",
+      "h1": [
+        "Lavanett modelo LTA011 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:31:00Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta011-c3-1pyug/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta011-c3-1pyug/",
+      "status": 200,
+      "title": "Montura Lavanett LTA011 C3 con Clip Polarizado Resistente",
+      "h1": [
+        "Lavanett modelo LTA011 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta013-c1-15dmy/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta013-c1-15dmy/",
+      "status": 200,
+      "title": "Montura Lavanett LTA013 C1 con Clip Polarizado - Resistencia y Estilo",
+      "h1": [
+        "Lavanett modelo LTA013 C1"
+      ],
+      "fetchedAt": "2026-10-23T21:31:00Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta013-c2-1ab5f/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta013-c2-1ab5f/",
+      "status": 200,
+      "title": "Monturas Lavanett LTA013 C2 con Clip Polarizado Resistente",
+      "h1": [
+        "Lavanett modelo LTA013 C2"
+      ],
+      "fetchedAt": "2026-10-23T21:31:00Z"
+    },
+    {
+      "url": "https://www.luxvision.cl/productos/lavanett-modelo-lta013-c3-4oaza/",
+      "finalUrl": "https://www.luxvision.cl/productos/lavanett-modelo-lta013-c3-4oaza/",
+      "status": 200,
+      "title": "Montura Lavanett LTA013 C3 con Clip Polarizado Resistente",
+      "h1": [
+        "Lavanett modelo LTA013 C3"
+      ],
+      "fetchedAt": "2026-10-23T21:23:29Z"
+    },
+    {
+      "url": "https://www.magazinevoce.com.br/magazineseguetendencia/armacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc-nano-vista/p/hf1cfhh895/md/adoc/?seller_id=atualoptica",
+      "finalUrl": "https://www.magazinevoce.com.br/az-request-verify?url=https%3A%2F%2Fwww.magazinevoce.com.br%2Fmagazineseguetendencia%2Farmacao-para-oculos-de-grau-com-clip-on-nano-nao-3120550sc-nano-vista%2Fp%2Fhf1cfhh895%2Fmd%2Fadoc%2F%3Fseller_id%3Datualoptica",
+      "status": 200,
+      "title": "Captcha Magalu",
+      "h1": [
+        "Parece que você acessou nosso site de uma forma um pouco diferente do comum. Para sua segurança precisamos de uma verificação rápida. Isso nos ajuda a manter a sua navegação segura e a proteger seus dados. Não se preocupe, essa é uma etapa simples e rápida!"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.maisoptica.pt/oculo-graduado/tous.html",
+      "finalUrl": "https://www.maisoptica.pt/oculo-graduado/tous.html",
+      "status": 200,
+      "title": "Óculos Graduados Tous - Armações Tous | Mais Optica",
+      "h1": [
+        "Óculos Tous Graduados"
+      ],
+      "fetchedAt": "2026-10-23T21:24:01Z"
+    },
+    {
+      "url": "https://www.maisoptica.pt/oculos-graduados-tous-vtod18-164990024.html",
+      "finalUrl": "https://www.maisoptica.pt/oculos-graduados-tous-vtod18-164990024.html",
+      "status": 200,
+      "title": "Óculos graduados Tous VTOD18 Azul | Mais Optica",
+      "h1": [
+        "Óculos graduados Tous VTOD18 Azul Tamanho: 53X16"
+      ],
+      "fetchedAt": "2026-10-23T21:24:01Z"
+    },
+    {
+      "url": "https://www.menvieyewear.com/monturas.html",
+      "finalUrl": "https://www.menvieyewear.com/monturas.html",
+      "status": 200,
+      "title": "Monturas · MENVI Eyewear",
+      "h1": [
+        "Armazones con carácter propio"
+      ],
+      "fetchedAt": "2026-10-23T21:24:00Z"
+    },
+    {
+      "url": "https://www.mercadolibre.com.ar/shorts/clips/Z2LgFI/anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra",
+      "finalUrl": "https://www.mercadolibre.com.ar/shorts/clips/Z2LgFI/anteojos-armazon-prune-prune-cadaques-gafas-optica-saavedra",
+      "status": 200,
+      "title": "Video de Anteojos armazón prune cadaqués gafas optica saavedra",
+      "h1": [
+        "Anteojos armazón prune cadaqués gafas optica saavedra"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.mercadolibre.com.mx/guess-lentes-oftalmicos-gu50242-098-53/up/MLMU3499029838",
+      "finalUrl": "https://www.mercadolibre.com.mx/gz/account-verification?go=https%3A%2F%2Fwww.mercadolibre.com.mx%2Fguess-lentes-oftalmicos-gu50242-098-53%2Fup%2FMLMU3499029838&tid=ee65ed35-0598-4727-809e-d89199b73361",
+      "status": 200,
+      "title": "Mercado Libre",
+      "h1": [],
+      "fetchedAt": "2026-10-23T21:24:00Z"
+    },
+    {
+      "url": "https://www.mrshadeshop.com/en/collections/rodenstock",
+      "finalUrl": "https://www.mrshadeshop.com/en/collections/rodenstock",
+      "status": 200,
+      "title": "Rodenstock sunglasses – Mr.Shades",
+      "h1": [
+        "RODENSTOCK EYEWEAR"
+      ],
+      "fetchedAt": "2026-10-23T21:24:02Z"
+    },
+    {
+      "url": "https://www.mythoeyewear.com/shop/page/8/",
+      "finalUrl": "https://www.mythoeyewear.com/shop/page/8/",
+      "status": 200,
+      "title": "Catálogo - Página 8 de 11 - Mytho Eyewear",
+      "h1": [
+        "Catálogo"
+      ],
+      "fetchedAt": "2026-10-23T21:24:03Z"
+    },
+    {
+      "url": "https://www.neavision.com.ar/lentes-de-receta/prune1/",
+      "finalUrl": "https://www.neavision.com.ar/lentes-de-receta/prune1/",
+      "status": 200,
+      "title": "Comprar Prune en Neavisión Óptica",
+      "h1": [
+        "Prune"
+      ],
+      "fetchedAt": "2026-10-23T21:24:02Z"
+    },
+    {
+      "url": "https://www.opticabassol.com/en-fr/products/guess-by-marciano-gm50006-092-54",
+      "finalUrl": "https://www.opticabassol.com/en-fr/products/guess-by-marciano-gm50006-092-54",
+      "status": 200,
+      "title": "Guess By Marciano GM50006 092 54 Glasses | Bassol Optic France",
+      "h1": [
+        "Guess By Marciano GM50006 092 54"
+      ],
+      "fetchedAt": "2026-10-23T21:24:03Z"
+    },
+    {
+      "url": "https://www.opticabassol.com/en/products/guess-by-marciano-gm50038-052-53",
+      "finalUrl": "https://www.opticabassol.com/en/products/guess-by-marciano-gm50038-052-53",
+      "status": 200,
+      "title": "Guess By Marciano GM50038 052 53 | Bassol Optic Spain",
+      "h1": [
+        "Guess By Marciano GM50038 052 53"
+      ],
+      "fetchedAt": "2026-10-23T21:24:04Z"
+    },
+    {
+      "url": "https://www.opticabuin.cl/brand/frida-kahlo",
+      "finalUrl": "https://www.opticabuin.cl/brand/frida-kahlo",
+      "status": 200,
+      "title": "FRIDA kAHLO | OPTICA BUIN",
+      "h1": [
+        ""
+      ],
+      "fetchedAt": "2026-10-23T21:24:04Z"
+    },
+    {
+      "url": "https://www.opticabuin.cl/brand/frida-kahlo?limit=18&order=id&way=ASC",
+      "finalUrl": "https://www.opticabuin.cl/brand/frida-kahlo?limit=18&order=id&way=ASC",
+      "status": 200,
+      "title": "FRIDA kAHLO | OPTICA BUIN",
+      "h1": [
+        ""
+      ],
+      "fetchedAt": "2026-10-23T21:24:04Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/",
+      "finalUrl": "https://www.opticacig.cl/",
+      "status": 200,
+      "title": "Óptica CIG | Lentes y monturas de calidad | Óptica CIG",
+      "h1": [
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:05Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/categoria/armazon",
+      "finalUrl": "https://www.opticacig.cl/categoria/armazon",
+      "status": 200,
+      "title": "Armazon | Óptica CIG",
+      "h1": [
+        "Armazon",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:05Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/categoria/armazon?page=2",
+      "finalUrl": "https://www.opticacig.cl/categoria/armazon?page=2",
+      "status": 200,
+      "title": "Armazon | Óptica CIG",
+      "h1": [
+        "Armazon",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:05Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/categoria/armazon?page=3",
+      "finalUrl": "https://www.opticacig.cl/categoria/armazon?page=3",
+      "status": 200,
+      "title": "Armazon | Óptica CIG",
+      "h1": [
+        "Armazon",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:05Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/categoria/armazones",
+      "finalUrl": "https://www.opticacig.cl/categoria/armazones",
+      "status": 200,
+      "title": "Armazones | Óptica CIG",
+      "h1": [
+        "Armazones",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:06Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/categoria/armazones?page=2",
+      "finalUrl": "https://www.opticacig.cl/categoria/armazones?page=2",
+      "status": 200,
+      "title": "Armazones | Óptica CIG",
+      "h1": [
+        "Armazones",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:06Z"
+    },
+    {
+      "url": "https://www.opticacig.cl/producto/armazon/fxjo022-c1",
+      "finalUrl": "https://www.opticacig.cl/producto/armazon/fxjo022-c1",
+      "status": 200,
+      "title": "Fxjo022 C1 | Óptica CIG",
+      "h1": [
+        "FXJO022 C1",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:06Z"
+    },
+    {
+      "url": "https://www.opticaexperta.cl/product/armazon-silmo-clip-on",
+      "finalUrl": "https://www.opticaexperta.cl/product/armazon-silmo-clip-on",
+      "status": 200,
+      "title": "Armazon Silmo Clip On | Óptica Experta.",
+      "h1": [
+        "Armazon Silmo Clip On"
+      ],
+      "fetchedAt": "2026-10-23T21:24:13Z"
+    },
+    {
+      "url": "https://www.opticali.cl/",
+      "finalUrl": "https://www.opticali.cl/",
+      "status": 200,
+      "title": "Opticali | Lentes y monturas de calidad | OPTICALI",
+      "h1": [
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:07Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=1",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=1",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:22:24Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=10",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=10",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=100",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=100",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:55Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=101",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=101",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:55Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=102",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=102",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:55Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=103",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=103",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:55Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=104",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=104",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:56Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=105",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=105",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:56Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=106",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=106",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:56Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=107",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=107",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:56Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=108",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=108",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:57Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=109",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=109",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:57Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=11",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=11",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=110",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=110",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:57Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=111",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=111",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:57Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=112",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=112",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=113",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=113",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=114",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=114",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=115",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=115",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:58Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=116",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=116",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=117",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=117",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=118",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=118",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=119",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=119",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=12",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=12",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:34Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=120",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=120",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:59Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=121",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=121",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:00Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=122",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=122",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:00Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=13",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=13",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=14",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=14",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:34Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=15",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=15",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:34Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=16",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=16",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=17",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=17",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=18",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=18",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=19",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=19",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=2",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=2",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=20",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=20",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=21",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=21",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:35Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=22",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=22",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=23",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=23",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=24",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=24",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:36Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=25",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=25",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=26",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=26",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=27",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=27",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:37Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=28",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=28",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=29",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=29",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=3",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=3",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:31Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=30",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=30",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=31",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=31",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=32",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=32",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:39Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=33",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=33",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:38Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=34",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=34",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:39Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=35",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=35",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:39Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=36",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=36",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=37",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=37",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=38",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=38",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=39",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=39",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:40Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=4",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=4",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:31Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=40",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=40",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=41",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=41",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=42",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=42",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=43",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=43",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:41Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=44",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=44",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=45",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=45",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=46",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=46",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=47",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=47",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:42Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=48",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=48",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:43Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=49",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=49",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:43Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=5",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=5",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=50",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=50",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:43Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=51",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=51",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:43Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=52",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=52",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:44Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=53",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=53",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:44Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=54",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=54",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:44Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=55",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=55",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:44Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=56",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=56",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=57",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=57",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=58",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=58",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=59",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=59",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=6",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=6",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=60",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=60",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:45Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=61",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=61",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:46Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=62",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=62",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:46Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=63",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=63",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:46Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=64",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=64",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:46Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=65",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=65",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=66",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=66",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=67",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=67",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=68",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=68",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:47Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=69",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=69",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:48Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=7",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=7",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:32Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=70",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=70",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:48Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=71",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=71",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:48Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=72",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=72",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:48Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=73",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=73",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:48Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=74",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=74",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=75",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=75",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=76",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=76",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=77",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=77",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:49Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=78",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=78",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=79",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=79",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=8",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=8",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=80",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=80",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=81",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=81",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=82",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=82",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:50Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=83",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=83",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=84",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=84",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=85",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=85",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=86",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=86",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=87",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=87",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:51Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=88",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=88",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=89",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=89",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=9",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=9",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:33Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=90",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=90",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=91",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=91",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:52Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=92",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=92",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=93",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=93",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=94",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=94",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=95",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=95",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:53Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=96",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=96",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:54Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=97",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=97",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:54Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=98",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=98",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:54Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/graduado?page=99",
+      "finalUrl": "https://www.opticali.cl/categoria/graduado?page=99",
+      "status": 200,
+      "title": "Graduado | OPTICALI",
+      "h1": [
+        "Graduado",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:23:54Z"
+    },
+    {
+      "url": "https://www.opticali.cl/categoria/montura-optica?page=2",
+      "finalUrl": "https://www.opticali.cl/categoria/montura-optica?page=2",
+      "status": 200,
+      "title": "Montura Optica | OPTICALI",
+      "h1": [
+        "Montura Optica",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:07Z"
+    },
+    {
+      "url": "https://www.opticali.cl/producto/graduado/am26015-c1",
+      "finalUrl": "https://www.opticali.cl/producto/graduado/am26015-c1",
+      "status": 200,
+      "title": "AM26015 C1 | OPTICALI",
+      "h1": [
+        "AM26015 C1",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:07Z"
+    },
+    {
+      "url": "https://www.opticali.cl/producto/graduado/fxn20348-c6",
+      "finalUrl": "https://www.opticali.cl/producto/graduado/fxn20348-c6",
+      "status": 200,
+      "title": "FXN20348 C6 | OPTICALI",
+      "h1": [
+        "FXN20348 C6",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:00Z"
+    },
+    {
+      "url": "https://www.opticali.cl/producto/graduado/ve21099-c3",
+      "finalUrl": "https://www.opticali.cl/producto/graduado/ve21099-c3",
+      "status": 200,
+      "title": "Ve21099 C3 | OPTICALI",
+      "h1": [
+        "VE21099 C3",
+        "Recuperar contraseña"
+      ],
+      "fetchedAt": "2026-10-23T21:24:00Z"
+    },
+    {
+      "url": "https://www.opticalooklens.com.ar/coleccion2026/anteojosdereceta/anteojosdereceta-mujer/anteojosdereceta-metal",
+      "finalUrl": "https://www.opticalooklens.com.ar/coleccion2026/anteojosdereceta/anteojosdereceta-mujer/anteojosdereceta-metal",
+      "status": 200,
+      "title": "Anteojos de Receta de Metal | Look Lens",
+      "h1": [
+        "METAL"
+      ],
+      "fetchedAt": "2026-10-23T21:24:08Z"
+    },
+    {
+      "url": "https://www.opticalooklens.com.ar/coleccion2026/nuestras-marcas/prune",
+      "finalUrl": "https://www.opticalooklens.com.ar/coleccion2026/nuestras-marcas/prune",
+      "status": 200,
+      "title": "Anteojos de receta Prüne - Estilo y calidad",
+      "h1": [
+        "Prüne"
+      ],
+      "fetchedAt": "2026-10-23T21:24:08Z"
+    },
+    {
+      "url": "https://www.opticalooklens.com.ar/productos/anteojo-de-receta-prune-milena-4475n",
+      "finalUrl": "https://www.opticalooklens.com.ar/productos/anteojo-de-receta-prune-milena-4475n",
+      "status": 200,
+      "title": "Anteojo de receta",
+      "h1": [
+        "Anteojo de receta Prüne Milena"
+      ],
+      "fetchedAt": "2026-10-23T21:24:08Z"
+    },
+    {
+      "url": "https://www.opticamosconi.com.ar/armazones/receta/",
+      "finalUrl": "https://www.opticamosconi.com.ar/armazones/receta/",
+      "status": 200,
+      "title": "Comprar Receta en OPTICA MOSCONI",
+      "h1": [
+        "Receta"
+      ],
+      "fetchedAt": "2026-10-23T21:24:09Z"
+    },
+    {
+      "url": "https://www.opticaripoll.com.ar/armazones-para-receta/mujer/page/5/",
+      "finalUrl": "https://www.opticaripoll.com.ar/armazones-para-receta/mujer/page/5/",
+      "status": 200,
+      "title": "Mujer",
+      "h1": [
+        "Mujer"
+      ],
+      "fetchedAt": "2026-10-23T21:24:09Z"
+    },
+    {
+      "url": "https://www.opticarte.com.ar/anteojos-de-receta/prune/receta-prune-griselda-marron-traslucido",
+      "finalUrl": "https://www.opticarte.com.ar/anteojos-de-receta/prune/receta-prune-griselda-marron-traslucido",
+      "status": 200,
+      "title": "Receta Prüne Griselda marrón traslúcido - Opticarte",
+      "h1": [
+        "Receta Prüne Griselda marrón traslúcido"
+      ],
+      "fetchedAt": "2026-10-23T21:24:09Z"
+    },
+    {
+      "url": "https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=asc&product_orderby=price&product_view=grid",
+      "finalUrl": "https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=asc&product_orderby=price&product_view=grid",
+      "status": 200,
+      "title": "Rodenstock – ÓPTICAS JLS",
+      "h1": [
+        "Rodenstock"
+      ],
+      "fetchedAt": "2026-10-23T21:24:13Z"
+    },
+    {
+      "url": "https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=desc&product_orderby=name&product_view=list",
+      "finalUrl": "https://www.opticasjls.pt/categoria-produto/armacoes/rodenstock-armacoes/?product_count=12&product_order=desc&product_orderby=name&product_view=list",
+      "status": 200,
+      "title": "Rodenstock – ÓPTICAS JLS",
+      "h1": [
+        "Rodenstock"
+      ],
+      "fetchedAt": "2026-10-23T21:24:12Z"
+    },
+    {
+      "url": "https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo16/",
+      "finalUrl": "https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo16/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:24:10Z"
+    },
+    {
+      "url": "https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo18/",
+      "finalUrl": "https://www.opticasoho.com.ar/productos/armazon-clip-on-polarizado-night-vision-amarillo18/",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:24:11Z"
+    },
+    {
+      "url": "https://www.opticasoho.com.ar/productos/lavanett-clip-on-lo9jd/",
+      "finalUrl": "https://www.opticasoho.com.ar/productos/lavanett-clip-on-lo9jd/",
+      "status": 200,
+      "title": "Lavanett CLIP ON - Comprar en Optica Soho",
+      "h1": [
+        "Lavanett CLIP ON"
+      ],
+      "fetchedAt": "2026-10-23T21:24:11Z"
+    },
+    {
+      "url": "https://www.opticasquezadaysiles.cl/lentes-de-sol/outlet?sorting=name-asc",
+      "finalUrl": "https://www.opticasquezadaysiles.cl/lentes-de-sol/outlet?sorting=name-asc",
+      "status": 200,
+      "title": "OUTLET | Lentes de Sol | Ópticas Quezada & Siles | Expertos En Lentes",
+      "h1": [
+        "OUTLET"
+      ],
+      "fetchedAt": "2026-10-23T21:24:13Z"
+    },
+    {
+      "url": "https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock",
+      "finalUrl": "https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock",
+      "status": 200,
+      "title": "Rodenstock | Marcas | Ópticas Quezada & Siles | Expertos En Lentes",
+      "h1": [
+        "Rodenstock"
+      ],
+      "fetchedAt": "2026-10-23T21:24:14Z"
+    },
+    {
+      "url": "https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock?sorting=name-desc",
+      "finalUrl": "https://www.opticasquezadaysiles.cl/lentes-opticos/marcas/rodenstock?sorting=name-desc",
+      "status": 200,
+      "title": "Rodenstock | Marcas | Ópticas Quezada & Siles | Expertos En Lentes",
+      "h1": [
+        "Rodenstock"
+      ],
+      "fetchedAt": "2026-10-23T21:24:15Z"
+    },
+    {
+      "url": "https://www.opticasquezadaysiles.cl/r1441",
+      "finalUrl": "https://www.opticasquezadaysiles.cl/r1441",
+      "status": 404,
+      "fetchedAt": "2026-10-23T21:24:14Z"
+    },
+    {
+      "url": "https://www.opticsplanet.com/guess-gu2723-prescription-eyeglasses.html",
+      "finalUrl": "https://www.opticsplanet.com/guess-gu2723-prescription-eyeglasses.html",
+      "status": 200,
+      "title": "Guess GU2723 Prescription Eyeglasses |",
+      "h1": [
+        "Guess GU2723 Prescription Eyeglasses"
+      ],
+      "fetchedAt": "2026-10-23T21:24:15Z"
+    },
+    {
+      "url": "https://www.osfashioneyewear.com/collections/tous",
+      "finalUrl": "https://www.osfashioneyewear.com/collections/tous",
+      "status": 200,
+      "title": "TOUS – OS Fashion Eyewear",
+      "h1": [
+        "TOUS"
+      ],
+      "fetchedAt": "2026-10-23T21:24:15Z"
+    },
+    {
+      "url": "https://www.pequevision.com/en/products/nano-vista-clip-solar-24",
+      "finalUrl": "https://www.pequevision.com/en/products/nano-vista-clip-solar-24",
+      "status": 200,
+      "title": "Nano Vista - Clip Solar | Pequevisión",
+      "h1": [
+        "Nano Vista - Clip Solar"
+      ],
+      "fetchedAt": "2026-10-23T21:24:15Z"
+    },
+    {
+      "url": "https://www.sourcingai.com/smart-products/chinahigo/cheap-ultem-frames-optical-eye-glasses-promotion-eyeglasses-classic-eyewear-BfQMyNbwmcKX",
+      "finalUrl": "https://captcha.made-in-china.com/verification.html?srcUrl=https://www.sourcingai.com/smart-products/chinahigo/cheap-ultem-frames-optical-eye-glasses-promotion-eyeglasses-classic-eyewear-BfQMyNbwmcKX",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:24:15Z"
+    },
+    {
+      "url": "https://www.sourcingai.com/smart-products/chinahigo/plastic-spectacle-eyewear-frames-ultem-optical-glasses-frame-lcIHUXSaJTjh",
+      "finalUrl": "https://captcha.made-in-china.com/verification.html?srcUrl=https://www.sourcingai.com/smart-products/chinahigo/plastic-spectacle-eyewear-frames-ultem-optical-glasses-frame-lcIHUXSaJTjh",
+      "status": 403,
+      "fetchedAt": "2026-10-23T21:24:16Z"
+    }
+  ],
+  "pdfDocuments": [
+    {
+      "sourceUrl": "https://drive.google.com/file/d/19lhYloZA1lTxgRRGAN6jyUcqLNe0preU/view",
+      "title": "CLIP ON - 1 MICA / SIN MARCA",
+      "sha256": "af5182779c5b4fcf64b834d97c1fa7c57397f4579b79cb9fa18efa0ec5249642",
+      "pages": 20,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1APDsom-n0Fnf0N-fvxbX7skAcHP4g0d6/view",
+      "title": "FILTRO AZUL",
+      "sha256": "45d0f3d99c0494a5913634c33472f07eb78e3d08f97513bc921b3a9b107ec80f",
+      "pages": 17,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1Bdn66yjkXA2Z3skPMwcYvGabYypuNzQX/view",
+      "title": "MARCHIONI / TR90",
+      "sha256": "c368522aa16463b8bab2f07ea58e079c3f382cb0e90fad04d3a9f9a476cb1c8d",
+      "pages": 18,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1CGnn0224jfJpdjuqeSzegWnaJD9KHroN/view",
+      "title": "CLIP ON - 2 MICAS / FORMOSA",
+      "sha256": "7730f08709996d72dad821c9e41a63e1be4169c232a38ac56ee168297d66af1a",
+      "pages": 5,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1eVhP-cE8c8ypNVa4yXFkqcDJkYWBrQ2U/view",
+      "title": "MARCHIONI / VARIOS",
+      "sha256": "2d6b0d9ec53584117e06b5944c200f627f1bebb936aa99a059b51a10fef0831a",
+      "pages": 27,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1gqL0wcX1x3n36jq4MgAlHYkjxiBYEqba/view",
+      "title": "CLIP ON - 5 MICAS / FORMOSA",
+      "sha256": "2c6573382e8d8898f6d312ea43136d00730884c39d10969e9fbb5895a1446e30",
+      "pages": 34,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1J0Rd2jJZeCTLDGpfqm93iJtop_1X7D7b/view",
+      "title": "MARCHIONI - METALICO",
+      "sha256": "bc1ca2c69efb3e61c165802753945b66e80a530e0dbcc906d3302c7de1d3adbe",
+      "pages": 47,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1jNotu5vJKiLTt-RJROV5AQ6Fdhj-Gy7i/view",
+      "title": "MARCHIONI - ACETATO",
+      "sha256": "8cd66a888c0f6bd24f77f8a583c087a017487299c79c8e1fac805e3652ee796e",
+      "pages": 18,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1n77gu6FhstbItZ1hhh2c357cwl734CjK/view",
+      "title": "DIFROLI - CLIP ON - 5 MICAS / TR90",
+      "sha256": "dbc8d5cac285e17f61f74d373e41994e01c307200b54f551e3db33ca167b500c",
+      "pages": 10,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1Q2ngLv9BlnqDHzV2-dBR5Gc40BppLR8o/view",
+      "title": "DIFROLI - ACETATO",
+      "sha256": "5102a8bf9bc080baa3f5141e958b2e614efcdb1e28e080a282c7052e4b5bb6cd",
+      "pages": 6,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1rIMYYdZqs0Xwdw2H2eiJMDKnckp8NcvK/view",
+      "title": "DIFROLI / TR90",
+      "sha256": "bb15bc7b14ab8b41f40412677e765bf37f038754865323febc3e4821863b4371",
+      "pages": 6,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1ruGn3yrYWNs1D7ENGlWhXHYAonba-Pwr/view",
+      "title": "TITANIUM / SIN MARCA",
+      "sha256": "c7756944207afe10d01842727c59f5e837df3650bf071e0af8b9876ee5a5c3dd",
+      "pages": 20,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1SOJtuuvhlwGB6NO3_ydaUb3DMlSYzBST/view",
+      "title": "KIDS - NIÑOS",
+      "sha256": "bc2d3b9ae1b694ed74439a67ca5b1b064c88ba8fce41b8a080379f2833815517",
+      "pages": 43,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1tlANtA4ccKgnMcyiRyOQozfTCp4iILaT/view",
+      "title": "VOZZEN - PLASTICO  ",
+      "sha256": "59a61ce813936ad050e5bf09c0d2750e0204eb13f7aa6cecb606ab50150b43ee",
+      "pages": 69,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1vADqiiwFl-0K_GFgh5ZCMDgYF_kYc1p3/view",
+      "title": "DIFROLI - METALICO",
+      "sha256": "d2cce6c0ef49bbeddcf6072b48fd33c02c8eab36e898fef1cc77706a7dea7756",
+      "pages": 25,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1vXjOF6-3Jo4OGxNTIv9TXJFYM2o1Ugnq/view",
+      "title": "MARCHIONI - CLIP ON - 1 MICA / TR90",
+      "sha256": "dd7e1ccadc8524a48185e5fe1605ab0c25f62017dec2939b50044989bdeeb2a4",
+      "pages": 17,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1Z3gF0bQlgPDi6VPhpZBseteGAmmpMxL7/view",
+      "title": "DIFROLI - CLIP ON - 1 MICA  / TR90",
+      "sha256": "e28bf6399b7497364804f57a93e926901d1016ddf26b1f6b8d88c1db7e2074a7",
+      "pages": 7,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1zE6ahuihGEZj9BFPdfM-IS5TcLDJWi0R/view",
+      "title": "VOZZEN - METALICO ",
+      "sha256": "2dffab67d7c08a414db6d0d8c40cf25dbe3ce4612673d60527521e50b89416dc",
+      "pages": 25,
+      "ocrComplete": true
+    },
+    {
+      "sourceUrl": "https://drive.google.com/file/d/1ZFVG2B0BxRB3QheoGC-1bCu4D8GZuLAq/view",
+      "title": "MARCHIONI - CLIP ON - 1 MICA / METALICO",
+      "sha256": "876ce3e27241ef682212e04ff111707fcf7bd21b8683f1b9f12090ab171491e1",
+      "pages": 18,
+      "ocrComplete": true
+    }
+  ],
+  "summary": {
+    "webSourcesRead": 512,
+    "webSourcesAvailable": 492,
+    "candidateImageUrlsWithMetadata": 219,
+    "exactCodePhotoFiles": 81,
+    "exactCodeVariants": 49,
+    "exactCodeModels": 30,
+    "uncertainPhotoFiles": 138,
+    "pdf": {
+      "documents": 19,
+      "pages": 432,
+      "ocrCompleteDocuments": 19,
+      "candidatePages": 51,
+      "models": 51,
+      "exactCodeVariantReferences": 88,
+      "pendingColorVariantReferences": 24
+    }
+  }
+}

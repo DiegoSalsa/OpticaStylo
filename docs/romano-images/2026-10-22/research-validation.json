@@ -1,0 +1,40 @@
+{
+  "validatedAt": "2026-10-23T21:46:39.006794+00:00",
+  "lint": "PASS",
+  "build": "PASS",
+  "tests": {
+    "total": 763,
+    "passed": 753,
+    "skipped": 10,
+    "failed": 0
+  },
+  "manifest": {
+    "candidateFiles": 81,
+    "uniqueIds": 81,
+    "uniqueSha256": 81,
+    "references": 49,
+    "uncertainFiles": 138,
+    "allCommercialPermissions": "UNKNOWN",
+    "identityAndInventoryKeys": "PASS"
+  },
+  "dryRun": {
+    "destination": "PostgreSQL local aislado stylo_images_romano",
+    "processed": 81,
+    "statuses": {
+      "PENDING_PRODUCT_MAPPING": 81
+    },
+    "uploads": 0,
+    "databaseImageAssociations": 0
+  },
+  "productionChangesInThisRevision": {
+    "products": 0,
+    "prices": 0,
+    "stock": 0,
+    "images": 0
+  },
+  "newProductImageBinariesInGit": 0,
+  "visualReview": {
+    "PDF": "MT002 C1, MT004 C1/C2/C3, MT006 C1/C3; el resto permanece pendiente",
+    "commercialGallery": "Sin cambios de interfaz en esta revisión; validación de escritorio/móvil del código previo documentada en la entrega anterior"
+  }
+}

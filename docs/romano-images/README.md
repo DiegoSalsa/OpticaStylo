@@ -1,40 +1,65 @@
 # Fotografías del inventario Romano
 
-## Resultado de la revisión del 22–23 de octubre de 2026
+## Revisión ampliada del 23 de octubre de 2026
 
-Se recorrió el archivo `Optica_Stylo_Inventario_Romano_Precios_Actualizados_2026-10-22.xlsx` completo. Su SHA-256 es `72406ed352ea5452d694b7cf3a026500730f6cdd897dbe3d6e481e32aa0c2580`.
+La primera entrega registró tres fotografías de un solo catálogo y dejó sin examinar suficientes fuentes. Las 728 consultas indexadas no equivalían a 728 modelos revisados en fichas y galerías. Esta revisión amplía la evidencia y corrige ese alcance.
 
-| Indicador | Resultado |
+El Excel completo contiene 1.513 filas investigables, 728 modelos y 1.422 referencias normalizadas; 21 no tienen color explícito. Su SHA-256 es `72406ed352ea5452d694b7cf3a026500730f6cdd897dbe3d6e481e32aa0c2580`. Se conservan precios confirmados y trazabilidad a las filas; no se deduce stock disponible.
+
+| Resultado comprobado | Cantidad |
 | --- | ---: |
-| Filas con marca y modelo investigables | 1.513 |
-| Filas excluidas: lotes o sin modelo | 10 |
-| Marcas conservadas tras las equivalencias confirmadas | 76 |
-| Modelos investigados | 728 |
-| Referencias normalizadas de modelo y color | 1.422 |
-| Referencias sin color explícito | 21 |
-| Modelos con pistas de búsqueda sin verificar | 156 |
-| Fotografías candidatas con código de variante coincidente | 3 |
-| Fotografías oficiales confirmadas con el fabricante | 0 |
-| Fotografías con autorización comercial comprobada | 0 |
-| Fotografías de Romano subidas a Cloudinary | 0 |
-| Fotografías de Romano asociadas en BD | 0 |
+| Archivos fotográficos candidatos con códigos de modelo y color publicados coincidentes | 81 |
+| Modelos representados por esos archivos | 30 |
+| Variantes representadas por esos archivos | 49 |
+| Fotos adicionales del modelo con color o correspondencia de vista pendientes | 138 |
+| Catálogos PDF públicos examinados mediante OCR | 19 |
+| Páginas de esos catálogos | 432 |
+| Páginas PDF con modelos del Excel | 51 |
+| Variantes con código de modelo y color localizado en PDF | 88 |
+| Referencias con archivo candidato o código coincidente en PDF | 137 |
+| Fotos confirmadas con el fabricante | 0 |
+| Fotos con permiso comercial comprobado | 0 |
+| Fotos de Romano subidas a Cloudinary en esta revisión | 0 |
+| Fotos de Romano vinculadas en BD en esta revisión | 0 |
 
-Las búsquedas combinaron marca, modelo y los colores registrados. Se conservaron consultas, resultados candidatos y fecha por modelo. Un resultado indexado no prueba correspondencia, oficialidad ni permiso. Los códigos genéricos devuelven también resultados ajenos a óptica; no se utilizaron como fotografías.
+Las fotos siguen pendientes de revisión visual y de derechos. Coincidir en el código publicado no prueba por sí solo que el comerciante haya fotografiado la variante correcta. Los PDF son hallazgos documentales separados: una página con varias monturas no se cuenta como una foto individual lista para importar. Se revisaron visualmente las páginas de Marchioni MT002, MT004 y MT006; las demás revisiones visuales pendientes se identifican como tales.
 
-[coverage.json](2026-10-22/coverage.json) contiene el estado y motivo de cada referencia, con trazabilidad a todas sus filas originales. [inventory.json](2026-10-22/inventory.json) conserva marcas, códigos, colores y precios confirmados originales. Los archivos `search-*.json` registran las 728 búsquedas de modelos. [candidates.json](2026-10-22/candidates.json) es el manifiesto pendiente; no autoriza ninguna carga.
+| Marca | Modelos con archivos candidatos | Variantes | Archivos |
+| --- | ---: | ---: | ---: |
+| FRIDA KAHLO | 5 | 6 | 11 |
+| GUESS | 4 | 5 | 10 |
+| JORGIO | 8 | 10 | 19 |
+| LAVANETT | 9 | 23 | 29 |
+| MARCIANO | 3 | 4 | 8 |
+| PRUNE | 1 | 1 | 4 |
 
-Distribución de referencias: 1.117 sin fotografía exacta verificada en la búsqueda, 302 con coincidencia incierta o color incompleto y 3 con fotografía encontrada pendiente de autorización. Estas categorías no demuestran que el fabricante carezca de fotografías.
+Los 81 archivos tienen hashes distintos. Ocho archivos Lavanett quedan además pendientes de mayor resolución: sus anchos publicados son de 530 a 592 píxeles, por debajo del mínimo de importación de 600. Las demás candidatas tienen metadatos suficientes para la comprobación técnica inicial; falta evaluar su contenido visual. No se ampliaron artificialmente las imágenes pequeñas.
 
 ## Fuentes y correspondencias
 
-- [Mercavisión](https://mercavision.cl/): publica las marcas Angelo Falconi, Foose, Gattizoni, George, Jorgio, Game, Ice Look, Lacrosse, Le Giro, Maxcome, Moodkids, Silmo y Vespa. Los enlaces de catálogos y publicidades conducen a SharePoint; el acceso consultado requiere autenticación o no respondió. No se eludió ese control.
-- [Atlantis](https://impoatlantis.cl/lavanett/): la ficha Lavanett invita a solicitar catálogo. Su [tienda](https://impoatlantis.cl/tienda/) es exclusiva para clientes. La página pública no ofrece una licencia comercial para reutilizar fotografías.
-- [Formosa Importadora](https://taplink.cc/formosachile): ofrece acceso comercial por categorías de Marchioni, Difroli, Vozzen, Formosa y Clip On. No se obtuvo una fotografía con modelo, color y permiso verificables.
-- [On Deck](https://www.ondeck.cl/collections/all): catálogo público y datos públicos de productos; no se confirmó una correspondencia exacta entre los códigos OD del Excel y las denominaciones publicadas.
-- [Tecnobrasil / colección Frida Kahlo](https://tecnobrasil.com.br/fridakahlo/): tres recursos de 2.414 × 1.585 píxeles coinciden con `FK1010A R`, `FK1012A F` y `FK1012A PR`. Se verificaron códigos publicados, formato, dimensiones y hash sin guardar archivos de producto en el repositorio. La galería publica una vista por referencia encontrada. Falta confirmar oficialidad con el titular, uso comercial y revisión visual final; no se cargaron a Cloudinary.
-- [Rodenstock, declaración del fabricante](https://www.rodenstock-pro.com/dam/jcr%3A689e9029-77e7-4baa-b599-7c3ccaddf3fc/rod_ce_doc_spectacle_frames.pdf): sirve para contrastar referencias técnicas; no constituye una fotografía ni una autorización de imágenes.
+- [Luxvision](https://www.luxvision.cl/productos/lavanett-modelo-lt1000-c2-23ym0/): galerías de Lavanett. Incluye LT1000 C2/C3 con cuatro recursos por variante, además de LT1001, LT1002, LT1003, LT1004, LT1005, LT1008, LT1009 y LT1010 en los colores detallados en el manifiesto.
+- [Óptica Ónix](https://opticaonix.uy/products/frida-kahlo-fk1017a-r): dos vistas publicadas para FK1017A R, FK1019A BLU, FK1022A PU y FK1010A R. Los colores alternativos BL, W, PO o F que no coinciden con la referencia buscada no se trasladan a ella.
+- [Tecnobrasil](https://tecnobrasil.com.br/fridakahlo/): tres recursos de 2.414 × 1.585 píxeles para FK1010A R, FK1012A F y FK1012A PR.
+- [Select Eyewear](https://selecteyewear.com/products/guess-gu50194): recursos por variante Guess y Marciano, con códigos en el nombre del archivo y opciones de color. Se conserva el código original de tres dígitos (por ejemplo, 083) y se documenta su contraste con el número 83 del Excel; no se aplica esa regla a letras ni a otras marcas.
+- [Ópticas Osman](https://opticasosman.cl/products/lente-optico-jorgio-occhiali-dljo048): Jorgio, incluyendo variantes enlazadas por `featured_image`. Las vistas que no tienen vínculo claro con un color permanecen en el archivo de coincidencias inciertas.
+- [Óptica Lumilens](https://opticalumilens.com.ar/productos/prune-rosalba-09/): galería de Prune Rosalba 09, contrastada con el color numérico 9 del Excel.
+- [Formosa Importadora](https://taplink.cc/formosachile): 19 catálogos PDF públicos de Marchioni, Difroli, Vozzen, Formosa y otras líneas. Las páginas candidatas conservan título, enlace original, página, hash del documento, códigos, confianza y coordenadas del OCR. Los PDF originales y sus renders se mantienen fuera del repositorio.
+- [Mercavisión](https://mercavision.cl/): los enlaces a su material comercial conducen a SharePoint; no se obtuvo acceso utilizable a esas carpetas. [Atlantis](https://impoatlantis.cl/lavanett/) remite al acceso comercial. No se eludieron controles.
+- [On Deck](https://www.ondeck.cl/collections/all): el catálogo público incluye productos con nombres comerciales y una ficha de Óptica Stylo como aliado, pero eso no demuestra autorización de fotografías ni equivalencia entre los códigos OD antiguos y los modelos publicados.
 
-No se convirtieron `O` en `0`, colores desconocidos en negro, ni referencias parecidas en equivalentes. Lavanette/Lavanett y otros alias sin confirmar permanecen separados. Las equivalencias expresamente confirmadas por la óptica sí se aplicaron. Las búsquedas individuales de las demás marcas quedan en los archivos de registro.
+Se leyeron 512 URLs web, de las cuales 492 respondieron correctamente, además de los PDF. Las páginas de Opticali incluían muchas fichas sin foto; se excluyeron los placeholders y el logotipo del sitio. Los resultados ajenos a óptica y las páginas con otro color no se suman como fotos exactas. Las fuentes no accesibles siguen pendientes.
+
+## Archivos de revisión
+
+- [candidates.json](2026-10-22/candidates.json): archivos candidatos con clave exacta del Excel, fuente, URL, hash, dimensiones, formato, evidencia de código y permiso desconocido. Vistas de una referencia agrupadas para permitir la simulación del importador.
+- [uncertain-candidates.json](2026-10-22/uncertain-candidates.json): fotos del modelo cuyo color o correspondencia de vista no se confirmó. No son un manifiesto de importación.
+- [pdf-candidates.json](2026-10-22/pdf-candidates.json): páginas con fotografías y códigos localizados por OCR, separadas de los archivos fotográficos individuales.
+- [catalogue-rejections.json](2026-10-22/catalogue-rejections.json): fuentes descartadas por otra variante y errores técnicos.
+- [sources-review.json](2026-10-22/sources-review.json): auditoría de lecturas y método.
+- [coverage.json](2026-10-22/coverage.json): estado y motivo por cada una de las 1.422 referencias.
+- [inventory.json](2026-10-22/inventory.json) y `search-*.json`: archivo maestro normalizado y registro de consultas iniciales.
+
+No se convirtieron `O` en `0`, no se confirmó Lavanette/Lavanett como un alias nuevo y no se asignaron colores por semejanza. Todas las candidatas siguen sin autorización comercial acreditada y sin correspondencia aprobada con productos de producción.
 
 ## Entornos y datos
 
@@ -55,7 +80,7 @@ La prueba real de Cloudinary utilizó un fondo neutro propio, sin representar un
 5. Simular: `npm run images:import -- --inventory INVENTARIO.json --manifest MANIFIESTO.json --actor UUID --dry-run --batch-size 25 --offset 0`
 6. Aplicar una vez comprobadas fuentes, correspondencias y destino: agregar `--apply --expected-cloud NUBE --expected-database-host HOST`. Producción también requiere `--allow-production`. No combinar `--apply` y `--dry-run`.
 7. Continuar con el `nextOffset` informado. Repetir un lote es seguro: el servicio consulta hash por producto, Cloudinary usa un identificador determinista y la BD protege `import_key`. Los recursos retirados no se reactivan automáticamente.
-8. Generar cobertura con `npm run images:report -- --inventory INVENTARIO.json --candidates MANIFIESTO.json --research DIRECTORIO --journal DIARIO.jsonl --output REPORTE.json`.
+8. Generar cobertura con `npm run images:report -- --inventory INVENTARIO.json --candidates MANIFIESTO.json --uncertain-candidates INCIERTAS.json --pdf-candidates PDF.json --research DIRECTORIO --journal DIARIO.jsonl --output REPORTE.json`. Los dos archivos adicionales son opcionales; separan fotografías, variantes inciertas y páginas PDF.
 
 La aplicación consulta permisos del usuario activo y reutiliza `addProductImage`, validaciones de bytes, repositorio, transacciones e historial existentes. Solo se descarga desde hosts HTTPS aprobados, con DNS público fijado en la conexión, sin redirecciones ni credenciales. Se admiten JPEG, PNG y WebP para importación, hasta 4 MiB, con dimensiones seguras y un mínimo de 600 × 200 píxeles. No se cambia el color ni la geometría del producto.
 
