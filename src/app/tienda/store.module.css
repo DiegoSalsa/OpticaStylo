@@ -282,7 +282,7 @@
 }
 .productImage {
   align-items: center;
-  background: linear-gradient(145deg, #f7fbfa, #e5f5f1);
+  background: var(--product-photo-background);
   display: flex;
   height: 225px;
   justify-content: center;
@@ -291,7 +291,7 @@
 }
 .productPhoto {
   box-sizing: border-box;
-  background: #fff;
+  background: transparent;
   object-fit: contain;
   padding: 0.7rem;
 }
