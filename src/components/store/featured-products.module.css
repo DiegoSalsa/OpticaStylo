@@ -27,6 +27,7 @@
 }
 .productImage {
   background: transparent;
+  mix-blend-mode: multiply;
   object-fit: contain;
   padding: 0.7rem;
 }

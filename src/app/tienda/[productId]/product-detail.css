@@ -64,6 +64,7 @@
 .detail-photo {
   box-sizing: border-box;
   background: transparent;
+  mix-blend-mode: multiply;
   object-fit: contain;
   padding: 0.75rem;
 }

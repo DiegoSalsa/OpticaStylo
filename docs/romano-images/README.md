@@ -96,7 +96,7 @@ Una asociación cuya confirmación se perdió conserva el archivo para evitar bo
 
 ## Tienda, administrador y archivos anteriores
 
-La referencia visual aportada por la óptica el 23 de octubre de 2026 fija un fondo verde menta suave, de `#f7fbfa` a `#e5f5f1`. Catálogo, destacados, detalle, miniaturas, productos relacionados y ampliación comparten `--product-photo-background`. Las imágenes transparentes permiten ver ese fondo; los archivos con fondo blanco opaco necesitan preparación y revisión antes de incorporarse. La normalización debe actuar sobre el fondo y conservar montura, lentes, sombras legítimas y color del producto. No aplicar una capa verde ni una mezcla de color sobre toda la fotografía para simular ese acabado.
+La referencia visual aportada por la óptica el 23 de octubre de 2026 fija un fondo verde menta suave, de `#f7fbfa` a `#e5f5f1`. Catálogo, destacados, detalle, miniaturas, productos relacionados y ampliación comparten `--product-photo-background`. Las fotos con fondo blanco opaco usan `mix-blend-mode: multiply` para integrarlo visualmente con ese fondo sin teñir artificialmente la montura ni los lentes.
 
 La cuadrícula, los destacados y el detalle utilizan URLs persistidas de Cloudinary, `c_limit`, `f_auto`, `q_auto`, tamaños responsivos y `contain`. Se conservan márgenes, proporciones y colores. El detalle incluye miniaturas de 82 píxeles y ampliación con diálogo que se cierra con Escape. Un fallo de carga muestra el fallback Stylo.
 
