@@ -29,6 +29,14 @@ const inventory = JSON.parse(await readFile(values.inventory, "utf8"));
 const manifest = JSON.parse(await readFile(values.manifest, "utf8"));
 if (inventory.workbookSha256 !== manifest.workbookSha256) throw new Error("El manifiesto no corresponde al Excel.");
 const variants = new Map(inventory.variants.map((item) => [item.key, item]));
+const imageViewPriority = (sourceImageUrl) => {
+  const url = String(sourceImageUrl ?? "").toLowerCase();
+  if (/imagen-1[-_]/.test(url)) return 0; // frontal
+  if (/imagen-2[-_]/.test(url)) return 1; // diagonal / accesorio
+  if (/imagen-3[-_]/.test(url)) return 2; // lateral
+  if (/imagen-4[-_]/.test(url)) return 3; // lateral opuesta
+  return 4;
+};
 const groups = new Map();
 for (const candidate of manifest.candidates) {
   const variant = variants.get(candidate.inventoryKey);
@@ -38,6 +46,7 @@ for (const candidate of manifest.candidates) {
   if (list.length < 4) list.push({ candidate, variant, price: prices[0] });
   groups.set(candidate.inventoryKey, list);
 }
+for (const list of groups.values()) list.sort((a, b) => imageViewPriority(a.candidate.sourceImageUrl) - imageViewPriority(b.candidate.sourceImageUrl));
 const results = [];
 for (const [inventoryKey, group] of groups) {
   const { variant, price } = group[0];

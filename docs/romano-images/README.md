@@ -120,3 +120,5 @@ El 23 de octubre de 2026 el solicitante autorizó publicar las referencias que t
 
 Las 62 asociaciones conservan `USER_PUBLISHED_PENDING_RIGHTS`: la publicación fue solicitada por Óptica Stylo, pero el permiso del titular de cada fotografía aún no está documentado. Por eso el administrador las clasifica como revisión y no como `VERIFIED`. [published-production.json](2026-10-22/published-production.json) contiene los IDs, public IDs, URLs seguras, hashes y productos afectados. Las 35 fichas quedaron activas; los 21 modelos sin precio confirmado y las candidatas con resolución insuficiente no se publicaron.
 
+Para el orden visual de las galerías se prioriza siempre la vista frontal, después la diagonal o tres cuartos y al final las laterales. En Lavanett se reordenaron las 15 galerías productivas siguiendo la convención pública `imagen-1` frontal, `imagen-2` diagonal/accesorio, `imagen-3` lateral e `imagen-4` lateral opuesta.
+
