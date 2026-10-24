@@ -6,14 +6,21 @@ import { publicSourceUrl } from "../../validations/product-image-provenance.js";
 
 const privateNetworks = new BlockList();
 for (const [address, prefix] of [["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8], ["169.254.0.0", 16], ["172.16.0.0", 12], ["192.0.0.0", 24], ["192.168.0.0", 16], ["198.18.0.0", 15], ["224.0.0.0", 4], ["240.0.0.0", 4]]) privateNetworks.addSubnet(address, prefix, "ipv4");
-for (const [address, prefix] of [["::", 128], ["::1", 128], ["::ffff:0:0", 96], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]]) privateNetworks.addSubnet(address, prefix, "ipv6");
+// Node BlockList trata ::ffff:0:0/96 como si alcanzara algunas IPv4 cuando se
+// combina con rangos IPv4. Las IPv4-mapeadas se detectan explícitamente abajo.
+for (const [address, prefix] of [["::", 128], ["::1", 128], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]]) privateNetworks.addSubnet(address, prefix, "ipv6");
+
+function isBlockedAddress(address) {
+  const normalized = address.toLowerCase();
+  return normalized.startsWith("::ffff:") || privateNetworks.check(address, isIP(address) === 6 ? "ipv6" : "ipv4");
+}
 
 // Fijar la dirección resuelta en la conexión impide redirecciones y cambios de DNS hacia redes privadas.
 export async function downloadProductImage(source, { allowedHosts, resolve = lookup, request = https.request } = {}) {
   const url = new URL(publicSourceUrl(source));
   if (!Array.isArray(allowedHosts) || !allowedHosts.includes(url.hostname)) throw new Error("El servidor de la fotografía no está aprobado en el manifiesto.");
   const addresses = await resolve(url.hostname, { all: true });
-  if (!addresses.length || addresses.some(({ address }) => !isIP(address) || privateNetworks.check(address, isIP(address) === 6 ? "ipv6" : "ipv4"))) {
+  if (!addresses.length || addresses.some(({ address }) => !isIP(address) || isBlockedAddress(address))) {
     throw new Error("El servidor de origen no tiene una dirección pública permitida.");
   }
   const pinned = addresses[0];

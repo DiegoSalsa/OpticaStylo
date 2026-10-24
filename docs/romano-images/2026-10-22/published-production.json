@@ -1,0 +1,918 @@
+{
+  "dryRun": false,
+  "databaseHost": "ep-spring-king-acct0cy6-pooler.sa-east-1.aws.neon.tech",
+  "cloudinary": "dr8dp4xqk",
+  "groups": 35,
+  "publishedProducts": 35,
+  "associatedImages": 62,
+  "results": [
+    {
+      "inventoryKey": "GUESS|GU50126|5",
+      "productId": "4483e454-189a-4c1c-b17b-49654a7fc185",
+      "sku": "ROM-D1944C66DDFC799F4BF9",
+      "name": "GUESS GU50126 5",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-0f021fc9038633e3217e",
+          "status": "ASSOCIATED",
+          "imageId": "3be58984-d082-4f54-82c0-815ffb9e254d",
+          "assetId": "a22829de12edb1f912e6b0447a58d0b4",
+          "publicId": "opticastylo/productos/romano-5a85bf19e0d609018d3c1b9612b1196371b989e9bda80e157116f07132549641",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806001/opticastylo/productos/romano-5a85bf19e0d609018d3c1b9612b1196371b989e9bda80e157116f07132549641.webp",
+          "sha256": "8f96707dba700e3a491c4a9b4ece5edbe77310e719516c28acedb4fe9bfba193"
+        },
+        {
+          "candidateId": "catalogue-c53126ef12043cb73102",
+          "status": "ASSOCIATED",
+          "imageId": "73ce1b30-4098-4cab-8550-35155559f894",
+          "assetId": "d9155d42bd2228400b4f9878a6cf3be2",
+          "publicId": "opticastylo/productos/romano-362162514a3e8b01a96778817764a8add318faf4cf323cb04730241d6d20b3e7",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806093/opticastylo/productos/romano-362162514a3e8b01a96778817764a8add318faf4cf323cb04730241d6d20b3e7.webp",
+          "sha256": "7bff40caf030959eb9788261cc6c1f2b60e8df19c91fe6d20fd8eeb805322f01"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "GUESS|GU50126|52",
+      "productId": "31b63704-e36c-4aae-96ef-e9661f46688e",
+      "sku": "ROM-3AFB99B904DE6ED5F436",
+      "name": "GUESS GU50126 52",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-c2a835d32201a9719ee6",
+          "status": "ASSOCIATED",
+          "imageId": "58ed34ea-ff43-4ca0-9b42-2e933f40b493",
+          "assetId": "a803f922fdd3f0069cbf79e337256e2b",
+          "publicId": "opticastylo/productos/romano-f89cdf7ddab9c2af863cfb1d5aab86a4f7c75098dd5d24024d6b1e807063a9d0",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806096/opticastylo/productos/romano-f89cdf7ddab9c2af863cfb1d5aab86a4f7c75098dd5d24024d6b1e807063a9d0.webp",
+          "sha256": "52214cd8e936a09c61f69ab194bb7ad4e104bcae0d8175e0cfc71a51336346a2"
+        },
+        {
+          "candidateId": "catalogue-f76ab17da303938278f1",
+          "status": "ASSOCIATED",
+          "imageId": "7e7adeec-16f9-443e-b2ac-89a4ca024822",
+          "assetId": "9fd0252c70c6cd63a115e77b3b72d804",
+          "publicId": "opticastylo/productos/romano-89798f780aee36ff2c2728f82582d2e64f46564c719391210dfce904bb56ab8a",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806098/opticastylo/productos/romano-89798f780aee36ff2c2728f82582d2e64f46564c719391210dfce904bb56ab8a.webp",
+          "sha256": "2078765ca4af909eaeb8a7c605043097e5e69ef1a3cd79955091e84022085907"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "GUESS|GU50194|83",
+      "productId": "98ec7eea-bd06-4e07-902d-993032582240",
+      "sku": "ROM-B56F07EA33300DB09583",
+      "name": "GUESS GU50194 83",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-96c43a553da35aba74cc",
+          "status": "ASSOCIATED",
+          "imageId": "89723712-8811-4f9a-ba1d-a133b67a7628",
+          "assetId": "ec4ce413a237bb4a1e1b5dc86d521a2f",
+          "publicId": "opticastylo/productos/romano-4d988a99e77ca89c33d793923e10eba52540bbf93009019b81b4fedae590eb82",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806101/opticastylo/productos/romano-4d988a99e77ca89c33d793923e10eba52540bbf93009019b81b4fedae590eb82.webp",
+          "sha256": "e25dbda98bc58c7c372272468eece856eafba297d9b760ccabfe2c95abaa6eaa"
+        },
+        {
+          "candidateId": "catalogue-c82b1e868d73b18fb5e7",
+          "status": "ASSOCIATED",
+          "imageId": "f2064301-5438-4345-9068-f1b811a0bf36",
+          "assetId": "ecbd9a142a7fbe618d0a34eba5df392d",
+          "publicId": "opticastylo/productos/romano-83494a289e9967d9ef8f4c9c7cc46f016adb74fecb52fc669aa8c6ab48771b87",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806103/opticastylo/productos/romano-83494a289e9967d9ef8f4c9c7cc46f016adb74fecb52fc669aa8c6ab48771b87.webp",
+          "sha256": "87cf3b8179c7fa88638a4bfef21fd610d447abc0eed351d5a36e66729ae27efa"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "GUESS|GU50242|98",
+      "productId": "cf108269-b03b-4067-a6f7-7ff80b82bc9f",
+      "sku": "ROM-23FA65BA3A923BD56D78",
+      "name": "GUESS GU50242 98",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-627edf83542b2efc2518",
+          "status": "ASSOCIATED",
+          "imageId": "e6ee2d0e-8d5c-4899-8a23-8e4011e08030",
+          "assetId": "06f52c9b64cee986dea7f2b60713967a",
+          "publicId": "opticastylo/productos/romano-10b13ba6f9d6592b902e9ed10db9f9a06aef6ec8cb4eb98d4c1490902b5d7020",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806105/opticastylo/productos/romano-10b13ba6f9d6592b902e9ed10db9f9a06aef6ec8cb4eb98d4c1490902b5d7020.webp",
+          "sha256": "992c2210122093e2e3302cc57276129d434058159edf6ec29e5487d936af420e"
+        },
+        {
+          "candidateId": "catalogue-93c8036dea823e8dfc8c",
+          "status": "ASSOCIATED",
+          "imageId": "9b50065c-3d64-4706-b764-ad0d2b5f00d9",
+          "assetId": "99b4dacdb855e9257e98553a7b7ef79d",
+          "publicId": "opticastylo/productos/romano-94042febcdc8c14811b56746c5f4dd0e1c3ea0d3706f4b40cd222d8050264ad2",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806107/opticastylo/productos/romano-94042febcdc8c14811b56746c5f4dd0e1c3ea0d3706f4b40cd222d8050264ad2.webp",
+          "sha256": "614e26354bcf8d97ee20ffbd7190e41aa6be4a2c38eb47b2a9500f0d5970c902"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "GUESS|GU50304|1",
+      "productId": "b786bb2c-ef35-40a8-9503-dcea904b2b5e",
+      "sku": "ROM-F90DF416C84F1A9502AB",
+      "name": "GUESS GU50304 1",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-33a0fcc9d796d5f0b099",
+          "status": "ASSOCIATED",
+          "imageId": "5b474075-6c40-4788-a234-72f0dfc4e35f",
+          "assetId": "312c44174c357bc975bacd46e9d338d6",
+          "publicId": "opticastylo/productos/romano-d1a92b441dd6c419a8b6cc9e38d72d2b792a48baddb3f0c49d7fbfcea014d96e",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806110/opticastylo/productos/romano-d1a92b441dd6c419a8b6cc9e38d72d2b792a48baddb3f0c49d7fbfcea014d96e.webp",
+          "sha256": "775c2870ed51ce824f3b0c7e2173c6b670e91e4e5578fd036c3d465b0e0bf50a"
+        },
+        {
+          "candidateId": "catalogue-6b9191d1ace1e139b4ce",
+          "status": "ASSOCIATED",
+          "imageId": "b3e45fdd-ead5-4d9e-ac85-b8689e998532",
+          "assetId": "948360e6ddd44fde160d1f267153ce6c",
+          "publicId": "opticastylo/productos/romano-fce90c580789f851692a23d3d78bf3ec2803397dde53759d5709ea3590905784",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806112/opticastylo/productos/romano-fce90c580789f851692a23d3d78bf3ec2803397dde53759d5709ea3590905784.webp",
+          "sha256": "6188aeed2bf66b6e555ea426d49e77c75fa9138de607ad95238e82aa86366e81"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO040|C1",
+      "productId": "bb11b8f0-c965-4103-8df7-6c335f7b28f9",
+      "sku": "ROM-D89DE57A1AD5AE47D32F",
+      "name": "JORGIO DLJO040 C1",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-8c309a146718b949c877",
+          "status": "ASSOCIATED",
+          "imageId": "acc59687-d81c-435e-a75c-282a79e2cd7b",
+          "assetId": "1c641b528e04777808d396eb623d715d",
+          "publicId": "opticastylo/productos/romano-12f0fcc3bf60969b61c510769d3d8ef84fd2d8d7491f04e67d470bc45800d055",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806115/opticastylo/productos/romano-12f0fcc3bf60969b61c510769d3d8ef84fd2d8d7491f04e67d470bc45800d055.webp",
+          "sha256": "8a15d1d673f0a026428396d8b022637d040eef7d9b9ff479fe21b58f71f47b54"
+        },
+        {
+          "candidateId": "catalogue-92e0be0f68ebbcc53f96",
+          "status": "ASSOCIATED",
+          "imageId": "49e1b268-bbe5-4f63-8211-f16fec14291f",
+          "assetId": "9a5d4fe3ed29a7db893a807791c222c1",
+          "publicId": "opticastylo/productos/romano-9e0181ca9fec67ae21fc7af135529b960ca2fe53839c22fa9eb0bfb5d11df7d9",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806118/opticastylo/productos/romano-9e0181ca9fec67ae21fc7af135529b960ca2fe53839c22fa9eb0bfb5d11df7d9.webp",
+          "sha256": "7f21d1c51f619a79063b068798b91e2c6e17595045bfa5a3be6be7697d8d39c1"
+        },
+        {
+          "candidateId": "catalogue-c78cf85527a55ad39df5",
+          "status": "ASSOCIATED",
+          "imageId": "52f2ee21-18f5-488f-9229-191883ce82f6",
+          "assetId": "f16fcc6c8c9394f6305ac24f40716e63",
+          "publicId": "opticastylo/productos/romano-28b08f27a2677bbd8a62f11fd89211f84ebc5c0aff0ced34a9fc00c58aba5be8",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806120/opticastylo/productos/romano-28b08f27a2677bbd8a62f11fd89211f84ebc5c0aff0ced34a9fc00c58aba5be8.webp",
+          "sha256": "fb8fc035d8e4b580aea089bc1940ae3f0e44210638327dd376e03420489d1016"
+        },
+        {
+          "candidateId": "catalogue-f3c4b1e309b205c8a7f7",
+          "status": "ASSOCIATED",
+          "imageId": "3f021485-fe4e-4f0c-8a1a-b6c5e823d345",
+          "assetId": "8a7a2721d59f8020794b753d368dbff4",
+          "publicId": "opticastylo/productos/romano-ddf321737fdf2d70e077d2b318421909e21b54eff2ccb1695989a0114451899f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806122/opticastylo/productos/romano-ddf321737fdf2d70e077d2b318421909e21b54eff2ccb1695989a0114451899f.webp",
+          "sha256": "6d06d658443aa92b2b38f923bae6ceb0dffa1eea54c45dfc4e3cbeb8750882f9"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO043|C1",
+      "productId": "4d070d7b-18d7-4493-a64e-a3aad51716b2",
+      "sku": "ROM-68BC886009084D5863C5",
+      "name": "JORGIO DLJO043 C1",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-52905e3061242f0e5910",
+          "status": "ASSOCIATED",
+          "imageId": "fee3474f-b477-41b5-b109-28cad38470b3",
+          "assetId": "0499f1ab0ef1dda50977c1290ce2cc0a",
+          "publicId": "opticastylo/productos/romano-a2190abc2f7d61e48f8e7e0f454027eb1f1b80ddeceb8882b6ac608b96e50f47",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806125/opticastylo/productos/romano-a2190abc2f7d61e48f8e7e0f454027eb1f1b80ddeceb8882b6ac608b96e50f47.webp",
+          "sha256": "a7769a529dd5e313e2469d99cbc2d59ca383e298c70cc22046b46f164458a6d9"
+        },
+        {
+          "candidateId": "catalogue-c7710325d6d7faec230b",
+          "status": "ASSOCIATED",
+          "imageId": "95cee637-dfe1-47d9-8733-05451cb7fb3a",
+          "assetId": "4c2e282ee95c43a0439b63738aab1e24",
+          "publicId": "opticastylo/productos/romano-ac085f372339c222a226eb89462856f9de889e9be972e1aa01e45051145ad2d4",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806127/opticastylo/productos/romano-ac085f372339c222a226eb89462856f9de889e9be972e1aa01e45051145ad2d4.webp",
+          "sha256": "6cecf3a9afe9e0f074c6c7efea3a6a7176bc19e24640e8d89615bc19efdbf445"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO044|C2",
+      "productId": "48e19957-d248-453e-b5dd-036d02333b53",
+      "sku": "ROM-A5DC1F2558508DCD9328",
+      "name": "JORGIO DLJO044 C2",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-31c4f308de26c15b6adf",
+          "status": "ASSOCIATED",
+          "imageId": "03ccdaee-3142-41dd-8f77-56e7ba2b0cb9",
+          "assetId": "a74c7a0ee234e64fe5423757b4ac68ba",
+          "publicId": "opticastylo/productos/romano-5fb03fdff65ffaf843ff60e13baa8253dba634af2c39c800ad2f3bbd4092e7dd",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806129/opticastylo/productos/romano-5fb03fdff65ffaf843ff60e13baa8253dba634af2c39c800ad2f3bbd4092e7dd.webp",
+          "sha256": "3e508a48fb25c7de778bb4813f3fe5f310b1731b3dabb2b28c39bf44721e5a26"
+        },
+        {
+          "candidateId": "catalogue-41873fb4aaed1681a551",
+          "status": "ASSOCIATED",
+          "imageId": "56711179-ae05-4f0a-9398-034a31d192f7",
+          "assetId": "28b258fcb7f00b43d1d2e1eb218bdbb9",
+          "publicId": "opticastylo/productos/romano-b1a058c3cdc08dde75ea6179640d510e1d00339104a596955b7f7484c41b8795",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806131/opticastylo/productos/romano-b1a058c3cdc08dde75ea6179640d510e1d00339104a596955b7f7484c41b8795.webp",
+          "sha256": "b9094b906543fb16d51a39911ec8eb77325f5a9db9b2c614b618ec53a48cc659"
+        },
+        {
+          "candidateId": "catalogue-b3cbcb14e70149886b9b",
+          "status": "ASSOCIATED",
+          "imageId": "538efd46-fbc2-4179-9460-116c54793041",
+          "assetId": "8d37dda9a0d812e7d06b2ca1d2b51d75",
+          "publicId": "opticastylo/productos/romano-af9267004ed0343924e6a8fcf9549eba1ac34080f1de158b202388105f260d47",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806134/opticastylo/productos/romano-af9267004ed0343924e6a8fcf9549eba1ac34080f1de158b202388105f260d47.webp",
+          "sha256": "6cdea1b7b7759efa63e0bb7406051a10288002be7c07c25ef47d4f3535b2092e"
+        },
+        {
+          "candidateId": "catalogue-c2b718d6ce5a8d7e0a59",
+          "status": "ASSOCIATED",
+          "imageId": "e85e40c3-ad10-424f-b429-0ee28b12d5cb",
+          "assetId": "426188dfd2abe89e529ed91c6eca6935",
+          "publicId": "opticastylo/productos/romano-6684f2cfdabfcb506add576e38c76c55c8336d2ab731b76e56753a6cba8d1a0f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806137/opticastylo/productos/romano-6684f2cfdabfcb506add576e38c76c55c8336d2ab731b76e56753a6cba8d1a0f.webp",
+          "sha256": "eefbd8430b6ef8f25d6444fd7901054bc2cb9389594173e57cf4c38693502ecb"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO048|C2",
+      "productId": "29d36dae-8cd8-48df-9ad2-4d084e03632c",
+      "sku": "ROM-D9DC31D6FCA9D8BB10B4",
+      "name": "JORGIO DLJO048 C2",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-e3d681e145a27f44cebc",
+          "status": "ASSOCIATED",
+          "imageId": "9a24abd9-6a6a-4ac7-9168-366a1085344d",
+          "assetId": "a8191b4cde307de30574b4e7c2724450",
+          "publicId": "opticastylo/productos/romano-c3d72c8240701cffc945202b3ae7b910be8fa5264cac3d4a3c60da20d0ae15c4",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806140/opticastylo/productos/romano-c3d72c8240701cffc945202b3ae7b910be8fa5264cac3d4a3c60da20d0ae15c4.webp",
+          "sha256": "e7e7fa5aa545b04096437f87133eb932a434cf7f1d27ea47a0b762bd5a566de2"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO048|C3",
+      "productId": "d49ace15-f3df-4aea-9fe0-4dfd5ecf0b51",
+      "sku": "ROM-2B7DF8289F8E4CD0631B",
+      "name": "JORGIO DLJO048 C3",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-c4d5d7bcc0cd85a2ad8d",
+          "status": "ASSOCIATED",
+          "imageId": "9f78a698-977f-4d1a-ac66-38c70f8cb7de",
+          "assetId": "e77ac4471ba1179f2be763ccaa7f0dc7",
+          "publicId": "opticastylo/productos/romano-78d47dcd679e3ae672216ef17d74d0b5bafd105afbc7d09ef56ef359c6650789",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806143/opticastylo/productos/romano-78d47dcd679e3ae672216ef17d74d0b5bafd105afbc7d09ef56ef359c6650789.webp",
+          "sha256": "c8188175d3956a94ca3cc0fd5b84f527168b55be3b74c451422f8dde22b30788"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO052|C3",
+      "productId": "c345a969-4e65-4bb4-ad72-923fc8eaef25",
+      "sku": "ROM-C5D17FEE13BE66A2D982",
+      "name": "JORGIO DLJO052 C3",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-510600f15e3e81773592",
+          "status": "ASSOCIATED",
+          "imageId": "ebf5b143-4e06-4613-b664-1defe1906d5d",
+          "assetId": "401cfa53d0a39d9d5feb683dd7dc5949",
+          "publicId": "opticastylo/productos/romano-30e8b76adee0b86ae0da69071057c8dd484043fcee799d4fc6890a80c6e2a091",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806145/opticastylo/productos/romano-30e8b76adee0b86ae0da69071057c8dd484043fcee799d4fc6890a80c6e2a091.webp",
+          "sha256": "4a75807a81bbe1443728fc8c98feac7df3b0cfa98e01d3d7202b9a87ca2407cb"
+        },
+        {
+          "candidateId": "catalogue-57096e6088dcf0382f5c",
+          "status": "ASSOCIATED",
+          "imageId": "bcad4043-3aba-4607-984a-00b585e5e2f3",
+          "assetId": "5b564a76b128e176fa84416c379ae131",
+          "publicId": "opticastylo/productos/romano-e4db51b978f797284fd0dc4246ddcc1d1ef60f4c6126302f923c131396a239d2",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806148/opticastylo/productos/romano-e4db51b978f797284fd0dc4246ddcc1d1ef60f4c6126302f923c131396a239d2.webp",
+          "sha256": "c1b13d57ade562936cc5da884b23f01964436faac17fc3578ec61cbc4122d139"
+        },
+        {
+          "candidateId": "catalogue-aeb952572420e1e990fe",
+          "status": "ASSOCIATED",
+          "imageId": "0552a4d9-57a9-402c-a5c3-0084a9d843d8",
+          "assetId": "b1229c96ad3b90a56ad675e295fede8a",
+          "publicId": "opticastylo/productos/romano-d9e305b83facbec2d23882c4987905ee5605baee3e58acd6c025bcaa7d238d56",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806151/opticastylo/productos/romano-d9e305b83facbec2d23882c4987905ee5605baee3e58acd6c025bcaa7d238d56.webp",
+          "sha256": "efc7f1a652d929d75134345c6560a8fff0c6cbca9f9c7ca8a9a9f62a281fb128"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|DLJO054|C3",
+      "productId": "95993258-69bd-4ee0-9838-beba62077aa2",
+      "sku": "ROM-1909E0F25AD975BAB933",
+      "name": "JORGIO DLJO054 C3",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-e4d34be1b2fb53dca3e5",
+          "status": "ASSOCIATED",
+          "imageId": "b5d043dd-d408-47d8-bf9e-d289b57a2f26",
+          "assetId": "9d2a2ea7fe01c5cb7e4c5085a1c832d8",
+          "publicId": "opticastylo/productos/romano-f4ee6a165f350bfe7cab03b432d21829ddf240d6e0aee605b6d26c0e30441051",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806154/opticastylo/productos/romano-f4ee6a165f350bfe7cab03b432d21829ddf240d6e0aee605b6d26c0e30441051.webp",
+          "sha256": "7d14d564602d0a0c697537a1991fb1395a424688e97a0cda0a8694d25394faab"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|FXJO005|C3A",
+      "productId": "acce79af-d8e9-4ab7-b32e-c3a3a8c506da",
+      "sku": "ROM-5AF297446FBDC1931E5B",
+      "name": "JORGIO FXJO005 C3A",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-2628c863d8b3f9f4483b",
+          "status": "ASSOCIATED",
+          "imageId": "ef34eb11-6ecc-4db4-ad07-4eb7591f93e0",
+          "assetId": "ea3bbd752cd60c509dd21656e53299e6",
+          "publicId": "opticastylo/productos/romano-69bf47d625d42b06583595fbdec199d89343f3c3f068d5b97918167f72f21cc1",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806156/opticastylo/productos/romano-69bf47d625d42b06583595fbdec199d89343f3c3f068d5b97918167f72f21cc1.webp",
+          "sha256": "3333a7448d4d0f51693bf5d4a3bd6d4c1f84f39394f9e0f65eea02bd79c4d84b"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|FXJO034|C2",
+      "productId": "b13c1dde-e2a5-4b1d-a46c-16f4919159f5",
+      "sku": "ROM-7E07E081C9ED80797594",
+      "name": "JORGIO FXJO034 C2",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-18d940eeaa3bff7b9e05",
+          "status": "ASSOCIATED",
+          "imageId": "6c84fb02-0483-45fe-8d85-2efe5445b5f3",
+          "assetId": "ffc4e7d1d84dd49ef00bc8a782a67d98",
+          "publicId": "opticastylo/productos/romano-0f0dd20177d36998fa5412445bf8fde8e6cd75e2cfb39e3b39643a153f90d470",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806159/opticastylo/productos/romano-0f0dd20177d36998fa5412445bf8fde8e6cd75e2cfb39e3b39643a153f90d470.webp",
+          "sha256": "5b715d16f38e04a1b13f95be2e1664ba898439c06fc9777f6660a81ad09b0006"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "JORGIO|FXJO034|C3",
+      "productId": "67aa9892-b63f-4983-94b6-3923c5659151",
+      "sku": "ROM-3778B37212EE01B95C3D",
+      "name": "JORGIO FXJO034 C3",
+      "priceClp": 35000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-956fa2fc5ffabfc9de2b",
+          "status": "ASSOCIATED",
+          "imageId": "ba160de8-937c-4643-a2ff-9b13cdc10245",
+          "assetId": "d11eb5edf9f8494047184b56366d7487",
+          "publicId": "opticastylo/productos/romano-43ebb061d583bce01df9256325f020c1bc326ef68ad757b5a8b2419313445a8f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806162/opticastylo/productos/romano-43ebb061d583bce01df9256325f020c1bc326ef68ad757b5a8b2419313445a8f.webp",
+          "sha256": "14aa57d3941b5662611b6b9f103af0af9a85c62d6414d2ac94ac9a21350153fa"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1000|C2",
+      "productId": "f8c88866-2b99-4b6e-a1fa-e4a4040239d3",
+      "sku": "ROM-4598C824E04D9C85F669",
+      "name": "LAVANETT LT1000 C2",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-67c4cabb0b878f8328db",
+          "status": "ASSOCIATED",
+          "imageId": "d3735861-6537-4b85-b1ac-6f20bcb6569b",
+          "assetId": "f4e0a82f5c7d66e808995c29104b0a5e",
+          "publicId": "opticastylo/productos/romano-d2d0b0732fc7a22a9e55c68ad6f54168db435e1738acb347412d418565fd1b7f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806165/opticastylo/productos/romano-d2d0b0732fc7a22a9e55c68ad6f54168db435e1738acb347412d418565fd1b7f.webp",
+          "sha256": "c9ab02201442cfd2f810d44f7bbf9adb6667d994db2546f0f52716f01c9f8d43"
+        },
+        {
+          "candidateId": "catalogue-95194af122ad9ec6bc4d",
+          "status": "ASSOCIATED",
+          "imageId": "0ff53f88-062a-449c-b54b-5d2a5956888d",
+          "assetId": "b330c707e5ac73b88c0bf82cb1dcfa93",
+          "publicId": "opticastylo/productos/romano-f120e8cbc750e2aaf03a955ec2d0664f85a0d1bff0703798f7c422cdf67a3078",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806166/opticastylo/productos/romano-f120e8cbc750e2aaf03a955ec2d0664f85a0d1bff0703798f7c422cdf67a3078.webp",
+          "sha256": "afd098de89681231dd6c73eecef1b2f32f8c53fb0f12377a09134bdfae2eb9f5"
+        },
+        {
+          "candidateId": "catalogue-a5c5d03909b94bf6309f",
+          "status": "ASSOCIATED",
+          "imageId": "125e5cb9-c7d9-4989-a52f-a0bf8d72821b",
+          "assetId": "13c58f25bcd844156d727d15d0b3aeb0",
+          "publicId": "opticastylo/productos/romano-7c7f82f36039509fc14a3d31b59319a1eeed8cf5964b499643cbf342a051c5f2",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806169/opticastylo/productos/romano-7c7f82f36039509fc14a3d31b59319a1eeed8cf5964b499643cbf342a051c5f2.webp",
+          "sha256": "2f1ed2676cda98d4539cc1e5b2415d12808070fdb089360900e6c9c7301cbaaf"
+        },
+        {
+          "candidateId": "catalogue-e81cfe9a0122c786f33b",
+          "status": "ASSOCIATED",
+          "imageId": "551351c6-7045-4744-bde7-934a69cda337",
+          "assetId": "7f2dcff120a552a12ca89c50adedb104",
+          "publicId": "opticastylo/productos/romano-4002344824816d344549e2ec4a3dfc6b3b3ad73c2230055e1d23c2924fc84e6f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806171/opticastylo/productos/romano-4002344824816d344549e2ec4a3dfc6b3b3ad73c2230055e1d23c2924fc84e6f.webp",
+          "sha256": "f587f56b19848f1f9d9c195e7376dc35e478bb2fd8e628fc28e5f7526d194dbf"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1000|C3",
+      "productId": "1fef3777-db94-4df2-9730-15e4d4412e9b",
+      "sku": "ROM-85275BDF15BC50158FA5",
+      "name": "LAVANETT LT1000 C3",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-0dd205c76c5cf024eeea",
+          "status": "ASSOCIATED",
+          "imageId": "6619d44d-9d7b-43c8-8e5c-53267cc28686",
+          "assetId": "e1018bdbc6984cb655243b0450b12b28",
+          "publicId": "opticastylo/productos/romano-49fa4c9b163970ec8c864c94b753eb2cbf3b753b24598a46edf3b5af2f664d8d",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806173/opticastylo/productos/romano-49fa4c9b163970ec8c864c94b753eb2cbf3b753b24598a46edf3b5af2f664d8d.webp",
+          "sha256": "36e0768f6ed2eeef0d49566947f1438d8ae511bba34072f1b5a9fdf087dcc394"
+        },
+        {
+          "candidateId": "catalogue-ad6cbfe8b590ff1b4ce7",
+          "status": "ASSOCIATED",
+          "imageId": "fc8a7a8c-bb80-454b-a66d-18bbe17900ef",
+          "assetId": "98074ed2f5507a31d37b8d90b3c45926",
+          "publicId": "opticastylo/productos/romano-4ed3c9f596507b49428d6017312a701a144f4ff52af0ff7e48ab1e46a937b3d3",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806175/opticastylo/productos/romano-4ed3c9f596507b49428d6017312a701a144f4ff52af0ff7e48ab1e46a937b3d3.webp",
+          "sha256": "6d9be788b5d8ca29bd9ea5e71b60f57d71b1f5f0004fef689981c2045c74afa6"
+        },
+        {
+          "candidateId": "catalogue-c57e640e0f1d64026db6",
+          "status": "ASSOCIATED",
+          "imageId": "e4695228-bde2-4ae8-b8cf-f98b14e048c4",
+          "assetId": "772ff2cdfb08b9abc654a5bb2f0123e3",
+          "publicId": "opticastylo/productos/romano-b48acbf836e23e6f4ec981840d41f7b88ae0a2a32d35bde7383263e9fdfdc73f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806177/opticastylo/productos/romano-b48acbf836e23e6f4ec981840d41f7b88ae0a2a32d35bde7383263e9fdfdc73f.webp",
+          "sha256": "7be5e1a6af45b4847e08b319043fa0a915d4a33f8c3dd806fee567a592496161"
+        },
+        {
+          "candidateId": "catalogue-d685bb52e40d5c919a66",
+          "status": "ASSOCIATED",
+          "imageId": "b6fbdab7-99ed-4389-8732-a63989dae649",
+          "assetId": "b2ab21dcdf6b6d6947367bc8005e9a43",
+          "publicId": "opticastylo/productos/romano-1761b677aa68cc66acf1f1ec78f4b83395afc95cb1ad3a237fe38c2025bb13ae",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806178/opticastylo/productos/romano-1761b677aa68cc66acf1f1ec78f4b83395afc95cb1ad3a237fe38c2025bb13ae.webp",
+          "sha256": "fd1efd69a91aaf3a9aea351cdd4b2b33b29fdc0e0af08d684bd839d099fe593e"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1001|C1",
+      "productId": "0a0d0082-8b19-4c0b-9c62-423893bd389d",
+      "sku": "ROM-2094D501E5F61A4E95D9",
+      "name": "LAVANETT LT1001 C1",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-31ba64663718f89e0bad",
+          "status": "ASSOCIATED",
+          "imageId": "17e7fe32-8d41-4d07-8b12-d92303422b04",
+          "assetId": "e10482e1951e565c718539a5d0934682",
+          "publicId": "opticastylo/productos/romano-cebb277924c144abc608444b6b56d0bac1789c42dc92a1dd98c039f25836ee46",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806181/opticastylo/productos/romano-cebb277924c144abc608444b6b56d0bac1789c42dc92a1dd98c039f25836ee46.webp",
+          "sha256": "0d23c5968e94bae6c596475c1a65f5e1f1a0b608d1c9bd29849f22c6553f5863"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1001|C2",
+      "productId": "8c6f15ed-ba19-4ddb-9a14-2e0e38462674",
+      "sku": "ROM-A7A541C74DD4BAE7C6A0",
+      "name": "LAVANETT LT1001 C2",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-cd8a00f84c75334b6c5f",
+          "status": "ASSOCIATED",
+          "imageId": "33218e6b-c1a0-4726-a954-61ff8672d205",
+          "assetId": "37132d0dc29fe07753fa6dbe0123533c",
+          "publicId": "opticastylo/productos/romano-c357dad4f75cc1678f2d0bf5ef7d3d1f1af2ec287af8303a58482af2419ea16f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806183/opticastylo/productos/romano-c357dad4f75cc1678f2d0bf5ef7d3d1f1af2ec287af8303a58482af2419ea16f.webp",
+          "sha256": "a4145b5b631d8b95020d44c54a5b4c60206fdb08f7fa08cd0c6e9db9a498ce0a"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1001|C3",
+      "productId": "078c1f27-f74a-4842-87e0-7a21ab934d12",
+      "sku": "ROM-70F22BECA9E4C76AB5DD",
+      "name": "LAVANETT LT1001 C3",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-74255a498dee55413876",
+          "status": "ASSOCIATED",
+          "imageId": "90c5ce1b-ef39-4dfa-b323-90b2e74676e7",
+          "assetId": "58e8fc8cbafe6be581f74b6cc5807bf3",
+          "publicId": "opticastylo/productos/romano-b69e7ac54b7639107207fb4e9cb7868c8006387073673293f197862819a346ca",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806185/opticastylo/productos/romano-b69e7ac54b7639107207fb4e9cb7868c8006387073673293f197862819a346ca.png",
+          "sha256": "19f99809df71675d2d816e2a6d323110cf1326768eb3e4d962fddb52bb58f42e"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1002|C1",
+      "productId": "c2a6aa1f-77c0-4133-8c9a-b8413f4e8b47",
+      "sku": "ROM-ED91B2BAB7AF236CD0E3",
+      "name": "LAVANETT LT1002 C1",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-e65cf5bd5229c40602ee",
+          "status": "ASSOCIATED",
+          "imageId": "35365143-b7ac-416e-afab-1102a1cb56b2",
+          "assetId": "763251eb87d38faf3c1b399687398bc4",
+          "publicId": "opticastylo/productos/romano-3e54f3ff30df2a5b77beaf4561176c1268fd228e227091c672201e40cca28634",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806187/opticastylo/productos/romano-3e54f3ff30df2a5b77beaf4561176c1268fd228e227091c672201e40cca28634.webp",
+          "sha256": "9eb6990cc69d51903f56f0bede66b6c3935d3005c977da73bf53c9d97340d9d3"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1002|C3",
+      "productId": "ba456a8a-6760-453b-9c68-b46f8abd84c8",
+      "sku": "ROM-C5D794A27D47465F705F",
+      "name": "LAVANETT LT1002 C3",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-2204e08866a93afff0db",
+          "status": "ASSOCIATED",
+          "imageId": "7ef6c3c3-6d99-4c00-8eef-f12067f6f698",
+          "assetId": "93c11552f3129bd19a3e738b45449e89",
+          "publicId": "opticastylo/productos/romano-7a567745c1d0de6379d9bb8b609645b96aea44deedaf6da11bc65cc04ebd6482",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806189/opticastylo/productos/romano-7a567745c1d0de6379d9bb8b609645b96aea44deedaf6da11bc65cc04ebd6482.webp",
+          "sha256": "aa66056cc76064cebb17662e30fa5dc9a6de888451bef38347200c9227b2e60f"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1003|C2",
+      "productId": "223a9f40-67c9-4141-a1f8-cb6915d25661",
+      "sku": "ROM-9A8A98AD48EF06DA4E26",
+      "name": "LAVANETT LT1003 C2",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-6f6411f2513e4868e237",
+          "status": "ASSOCIATED",
+          "imageId": "547bc501-b4d5-4104-8994-deabc241dfe9",
+          "assetId": "bf6e0413a6422d2074eba69ae85bf8bb",
+          "publicId": "opticastylo/productos/romano-35282c3869a0d69cb75c10c759b9186c4355e2f749220b0e84dc6bdec22e3b9f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806192/opticastylo/productos/romano-35282c3869a0d69cb75c10c759b9186c4355e2f749220b0e84dc6bdec22e3b9f.webp",
+          "sha256": "1523bfb8e7c8a815f8f5defa5e8021dae581cb97bf2f5820065091b565554073"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1003|C4",
+      "productId": "38c91f2d-13f3-4f7e-ad5b-e95a14091679",
+      "sku": "ROM-BA38F721BD047284F834",
+      "name": "LAVANETT LT1003 C4",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-c89d1625635ade7ac733",
+          "status": "ASSOCIATED",
+          "imageId": "1854aff8-cd1f-4fb9-b0c8-f7560c622f22",
+          "assetId": "8a0f550b9b7957ad504dbd0c82987b4b",
+          "publicId": "opticastylo/productos/romano-e84d30118804513388f6adfdfd433b8ba19b91b18819ec4ae95df91616db8a24",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806194/opticastylo/productos/romano-e84d30118804513388f6adfdfd433b8ba19b91b18819ec4ae95df91616db8a24.webp",
+          "sha256": "1ff042e49dcc3902b0922d37378095a449d176e3306c523c6a4cb8f939184ebe"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1004|C1",
+      "productId": "5d380d9a-b8f7-4f3b-bf1c-f923fdbd296d",
+      "sku": "ROM-B06D8AA1F7DB458DD141",
+      "name": "LAVANETT LT1004 C1",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-b3ef3a83d6de809cc164",
+          "status": "ASSOCIATED",
+          "imageId": "869e7c46-bab0-43db-baa5-57e5a2702d04",
+          "assetId": "6d7b25116e03b52b2d56f6919f301784",
+          "publicId": "opticastylo/productos/romano-70151cbc51c2db1b6cd025efaffc8893e12f88273727c199911b4a6cd9ffb25e",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806196/opticastylo/productos/romano-70151cbc51c2db1b6cd025efaffc8893e12f88273727c199911b4a6cd9ffb25e.webp",
+          "sha256": "ea617526a9266b94b7bcb6ac087afec7b534d34e41298d360c77e35a850b589e"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1004|C2",
+      "productId": "d97e658e-35a2-4d06-ac7b-43737983ce99",
+      "sku": "ROM-922FE3C338E0F920A303",
+      "name": "LAVANETT LT1004 C2",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-a933587d691032343ed6",
+          "status": "ASSOCIATED",
+          "imageId": "fa15e38e-e6e4-4064-bbdc-4870b4e350c1",
+          "assetId": "d05bcdc6767fe8a70850327cb44e9f59",
+          "publicId": "opticastylo/productos/romano-6664cb4c478ff1ae3e1a0b52774fcd4118cb988eef51f01bb5ec2a2c80ef05ec",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806198/opticastylo/productos/romano-6664cb4c478ff1ae3e1a0b52774fcd4118cb988eef51f01bb5ec2a2c80ef05ec.webp",
+          "sha256": "9504890c2f5e85ece7d3b95befe65d1887e2564911711242efd2bf902c2f865b"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1010|C1",
+      "productId": "3d8e7efd-eac2-4657-99b7-dbb0de30aba0",
+      "sku": "ROM-55486C9DE7D901D8F517",
+      "name": "LAVANETT LT1010 C1",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-3be2e3f77ee003604d03",
+          "status": "ASSOCIATED",
+          "imageId": "daec5448-e4f5-478b-a1bd-3b6bd95b5430",
+          "assetId": "dd678f3f35f3db5693dd11963e720dd5",
+          "publicId": "opticastylo/productos/romano-0efa654ddb6d5705dff35bd8241d13f7942c8dc3423015f26b215b258c878aad",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806200/opticastylo/productos/romano-0efa654ddb6d5705dff35bd8241d13f7942c8dc3423015f26b215b258c878aad.webp",
+          "sha256": "2c396ca5d26a27feb26edabfe43df1980009403b8d480de16f7b6c0e7586193f"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1010|C2",
+      "productId": "fc03512e-a67e-4799-9f9e-098b277a981e",
+      "sku": "ROM-D2CBCE9771422300EAC8",
+      "name": "LAVANETT LT1010 C2",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-c308c82407e94a05ffc7",
+          "status": "ASSOCIATED",
+          "imageId": "3d7954b4-50d4-4b8b-babd-f3219da363ce",
+          "assetId": "32c8c255c16f959d574bbdd03b24686e",
+          "publicId": "opticastylo/productos/romano-a3c7b1c9a490d98b594bb9e146c3f2a1b058472eae7f9daaf0d8b57f0bc0cc8f",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806202/opticastylo/productos/romano-a3c7b1c9a490d98b594bb9e146c3f2a1b058472eae7f9daaf0d8b57f0bc0cc8f.webp",
+          "sha256": "58e41dbd31ea447cf495cc9f0bc86ae9d0e42c2474579ada79645a67749f6edf"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1010|C3",
+      "productId": "430c75d9-4152-49f7-96f8-12fdddecde83",
+      "sku": "ROM-0F41809ECE34F5F53DC4",
+      "name": "LAVANETT LT1010 C3",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-b876692bbf5748f7e9f0",
+          "status": "ASSOCIATED",
+          "imageId": "c7e32353-e6c6-4b86-94e2-659451072fe8",
+          "assetId": "3959cc5d0cc938146a89f89975c92598",
+          "publicId": "opticastylo/productos/romano-191235f0b36c5646f9313824a797e12cd713d1149dded8dc76cdddc0ec42b4ce",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806205/opticastylo/productos/romano-191235f0b36c5646f9313824a797e12cd713d1149dded8dc76cdddc0ec42b4ce.webp",
+          "sha256": "05c3bb3574d960ff0c4ddbf2a92f52ad4a2f729683c181a31826179ba9796218"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "LAVANETT|LT1010|C4",
+      "productId": "12a002a1-ac42-4dff-a8ee-1d91f22d4a09",
+      "sku": "ROM-B9114E5C1B0C32FF4AB1",
+      "name": "LAVANETT LT1010 C4",
+      "priceClp": 95000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-989eacf7526e8aefe497",
+          "status": "ASSOCIATED",
+          "imageId": "ea8896ae-36ae-40e6-b6c2-b02628e0edd5",
+          "assetId": "a8a8883ef1398d2e13452dd119b34ed2",
+          "publicId": "opticastylo/productos/romano-e0f220ff0635550207b315aabf88aafbdf41a9a14e59bd041511e440ba986cd9",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806206/opticastylo/productos/romano-e0f220ff0635550207b315aabf88aafbdf41a9a14e59bd041511e440ba986cd9.webp",
+          "sha256": "10fc2febe3102131c4bdf1b9bd558e9bc84ffb0c73ec50b41f96b075bb87f9f5"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "MARCIANO|GM50006|92",
+      "productId": "aedfb728-64a3-403f-bf15-9f4be2290621",
+      "sku": "ROM-2F9B753D3ADC315037C7",
+      "name": "MARCIANO GM50006 92",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-c783d37b9fa55c6c111f",
+          "status": "ASSOCIATED",
+          "imageId": "bbfe6f0b-cee3-4422-800d-efb6dff4fec4",
+          "assetId": "ee145927cb37b41933f4126540601eff",
+          "publicId": "opticastylo/productos/romano-a04137e6e18910d7ed6a20005a0d36515f4cb6afb378403f006a01d3d741dca8",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806209/opticastylo/productos/romano-a04137e6e18910d7ed6a20005a0d36515f4cb6afb378403f006a01d3d741dca8.webp",
+          "sha256": "efa4843a4f0a82e69c87fe5cdc10c8a06f63b636a3dd1e96bc54ec86d9b3d60b"
+        },
+        {
+          "candidateId": "catalogue-f3e805225ef3d171ef6d",
+          "status": "ASSOCIATED",
+          "imageId": "0d4b757c-ac00-4184-8b5a-eaf9b768c03b",
+          "assetId": "6d61ce5cac419c75686bd5677996b6f6",
+          "publicId": "opticastylo/productos/romano-a96cdb4dcc60f019f167f0eaff77adc2ab16ac7d2105792bfe2e148f54bb6925",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806211/opticastylo/productos/romano-a96cdb4dcc60f019f167f0eaff77adc2ab16ac7d2105792bfe2e148f54bb6925.webp",
+          "sha256": "3506c06a63d7d4f2a8d3adc9a4e1727fee9e41cb885be0fa785a333d0dfaa3f8"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "MARCIANO|GM50038|52",
+      "productId": "324e4d7d-8d51-4b8b-9182-83ee1f5fe8f9",
+      "sku": "ROM-D47507DE3ECB5CC59C53",
+      "name": "MARCIANO GM50038 52",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-9dba6741616561f2a114",
+          "status": "ASSOCIATED",
+          "imageId": "2080f5ef-61b7-4540-93bb-264b5996922e",
+          "assetId": "08f08fc81040489a03c95c3c058b5af1",
+          "publicId": "opticastylo/productos/romano-6d2b9f2bad4767cd7b8ac53f7b05cd0bb04d0e83f99f2cd880c986bf9a552940",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806214/opticastylo/productos/romano-6d2b9f2bad4767cd7b8ac53f7b05cd0bb04d0e83f99f2cd880c986bf9a552940.webp",
+          "sha256": "0225c093d1478eacc3de68e1f3b4cfb266dc70b141198a82d508cd3b4569090c"
+        },
+        {
+          "candidateId": "catalogue-bea22bf1eaf951e25ab1",
+          "status": "ASSOCIATED",
+          "imageId": "0c565de9-e962-4b1b-bc20-5842d6f9bb7f",
+          "assetId": "78b103124d79238a38a4efb7f7420e95",
+          "publicId": "opticastylo/productos/romano-dcdc258e413e5abf306519a3c8a5aa082a3a5df3411f268ce3b913ee2f106d4a",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806216/opticastylo/productos/romano-dcdc258e413e5abf306519a3c8a5aa082a3a5df3411f268ce3b913ee2f106d4a.webp",
+          "sha256": "8f85b4004c9eb73c8c36106d6cdf5de710cdc43500d6e1230485c406a849e9fc"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "MARCIANO|GM50039|52",
+      "productId": "ad2bf8cb-602a-4201-83f4-543767b829ab",
+      "sku": "ROM-72D463912A7976262CDC",
+      "name": "MARCIANO GM50039 52",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-9698d8af433bc4c51838",
+          "status": "ASSOCIATED",
+          "imageId": "8dfd1718-4518-4eca-8546-8e4054d404a7",
+          "assetId": "6d2a4e14902e2719595606f64407bf01",
+          "publicId": "opticastylo/productos/romano-76f3bffe92e009889a83043ddd941af55a60ff1d5e542deff541c4d981dbb7c9",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806220/opticastylo/productos/romano-76f3bffe92e009889a83043ddd941af55a60ff1d5e542deff541c4d981dbb7c9.webp",
+          "sha256": "66eb475dac51192ae790846d31e0bf0df4d2c98dfbae0ed2a690270063a6fe96"
+        },
+        {
+          "candidateId": "catalogue-d703c1358729efa36b46",
+          "status": "ASSOCIATED",
+          "imageId": "73dee92c-1ad0-497a-a278-4d821d20bbe4",
+          "assetId": "b31c76ccb76615a4679734b795ceec82",
+          "publicId": "opticastylo/productos/romano-bb7fb9ff5792b0998f93d65f414cf781ae0cfdd56d539534a4b677c4aa6e8e2d",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806222/opticastylo/productos/romano-bb7fb9ff5792b0998f93d65f414cf781ae0cfdd56d539534a4b677c4aa6e8e2d.webp",
+          "sha256": "b7ef99676f33eb20dcafdcbcb133e2bc81e2804d0c8c8349e82a5a43783629ae"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "MARCIANO|GM50039|57",
+      "productId": "7a248b83-9d82-4cc8-b4f2-3674209e5fa5",
+      "sku": "ROM-7FBF846FDD0B805A272B",
+      "name": "MARCIANO GM50039 57",
+      "priceClp": 220000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-5bb0e68f1fbd923b2d1c",
+          "status": "ASSOCIATED",
+          "imageId": "ae52eb56-d69b-4c37-bc56-1af97465a76e",
+          "assetId": "d221032d189a0ab6957f65aa064a15ca",
+          "publicId": "opticastylo/productos/romano-d2242623297230fec453341d2dbbb874a2e620de9ff79c4e76eb773da26b08cb",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806225/opticastylo/productos/romano-d2242623297230fec453341d2dbbb874a2e620de9ff79c4e76eb773da26b08cb.webp",
+          "sha256": "b47951be1a367870cf8bc8533c9ab04f683bca0d8df0829778ef47efbd69f223"
+        },
+        {
+          "candidateId": "catalogue-775efe65214ff1e523b2",
+          "status": "ASSOCIATED",
+          "imageId": "e67b1b39-8174-4c3b-a1d3-c72aef22809d",
+          "assetId": "e2b4bb897110898cfc2c18dfe812915b",
+          "publicId": "opticastylo/productos/romano-7e6077c0823dee22c654cfc0c54c81ae25d71dbb84061391d5b3567f8263029c",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806227/opticastylo/productos/romano-7e6077c0823dee22c654cfc0c54c81ae25d71dbb84061391d5b3567f8263029c.webp",
+          "sha256": "670af519ea7f2ab8e618d9b3f79ed96f536e43e6debd8b4565908caf1763ad07"
+        }
+      ]
+    },
+    {
+      "inventoryKey": "PRUNE|ROSALBA|9",
+      "productId": "3859bc26-c394-4c18-8e14-ee25c58c884d",
+      "sku": "ROM-F11EFAD6025867B7511D",
+      "name": "PRUNE ROSALBA 9",
+      "priceClp": 180000,
+      "status": "PUBLISHED",
+      "images": [
+        {
+          "candidateId": "catalogue-1eb1dfdddb6be34d7a56",
+          "status": "ASSOCIATED",
+          "imageId": "ce8bd0f6-8c3d-46fd-9e5f-76086b7a0bee",
+          "assetId": "1570fff386a39031d8d626110c8dfca1",
+          "publicId": "opticastylo/productos/romano-efd4752ec221a3b6ff76234f0e3d0bb7ba7e56ec956335eb97f1b8332e336671",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806229/opticastylo/productos/romano-efd4752ec221a3b6ff76234f0e3d0bb7ba7e56ec956335eb97f1b8332e336671.webp",
+          "sha256": "480ee363b1f4803520d99ed715e12e8a1f7a6c080348c54604061d1d459b5d80"
+        },
+        {
+          "candidateId": "catalogue-2c647834efd43fe8d06a",
+          "status": "ASSOCIATED",
+          "imageId": "90a0d19f-2a49-4fe7-8cb1-d61a74017c04",
+          "assetId": "9dc6dba1ab00ef9f4a7ed66459bbb49c",
+          "publicId": "opticastylo/productos/romano-829ded0176e32570a793622860f1edaafb1cf5c22921ff2e9f7f7d27c4423463",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806231/opticastylo/productos/romano-829ded0176e32570a793622860f1edaafb1cf5c22921ff2e9f7f7d27c4423463.webp",
+          "sha256": "f978d18f4476fb10352c6ca9201de8f53ddde0b82bc99673ff608cb71dd0137d"
+        },
+        {
+          "candidateId": "catalogue-a5c4cf6f1b1d69f30be8",
+          "status": "ASSOCIATED",
+          "imageId": "d6bc6a12-2d3c-4190-9ad1-ef14f293fc52",
+          "assetId": "6929b9f2a9d8225f8b59a6b20a478cf4",
+          "publicId": "opticastylo/productos/romano-5869753a530380f396e26ab5393d2630ccab3109e1c8ee0796fc8c1fc583f8de",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806233/opticastylo/productos/romano-5869753a530380f396e26ab5393d2630ccab3109e1c8ee0796fc8c1fc583f8de.webp",
+          "sha256": "9e10e714cb8fa097a1282c2e7babf723ee95ae12fda69fb88b4428a851a2fec5"
+        },
+        {
+          "candidateId": "catalogue-f868a8bcea4aec4466d8",
+          "status": "ASSOCIATED",
+          "imageId": "9be8fd87-8254-4ee8-824c-0eb5317531b9",
+          "assetId": "5cee90e17402cf862d5cd27ee4eae268",
+          "publicId": "opticastylo/productos/romano-f9f28355b380921c053e480ed44f5cf73d80f48b1da2f02e09370b27467959a8",
+          "url": "https://res.cloudinary.com/dr8dp4xqk/image/upload/v1792806235/opticastylo/productos/romano-f9f28355b380921c053e480ed44f5cf73d80f48b1da2f02e09370b27467959a8.webp",
+          "sha256": "cd2e6afd045f230e73ba43bda540796f8930bd0b67858e8054c9a30011847a04"
+        }
+      ]
+    }
+  ]
+}

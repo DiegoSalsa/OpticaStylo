@@ -112,4 +112,11 @@ Las capturas antes/después y la prueba de galería se realizaron sobre el catá
 
 La rama de entrega es [mejoras-imagenes-romano](https://github.com/DiegoSalsa/OpticaStylo/tree/mejoras-imagenes-romano), basada en `bd16505`. No se modificó ni fusionó `main`. El Preview del commit final se comprueba después de publicar la rama y se informa en la entrega.
 
-Para incorporar fotografías comerciales reales sigue faltando evidencia de autorización y correspondencias de productos aprobadas para producción. Ninguna búsqueda, archivo técnico o preparación local se declara como una fotografía de Romano publicada.
+La publicación productiva siguiente conserva el estado de derechos pendiente; las fotografías no se presentan como autorizadas por el fabricante hasta documentar ese permiso.
+
+## Publicación productiva autorizada
+
+El 23 de octubre de 2026 el solicitante autorizó publicar las referencias que tuvieran precio confirmado e imagen coincidente. Se activaron **35 productos** en Neon productivo, con **62 imágenes** subidas a Cloudinary `dr8dp4xqk` bajo `opticastylo/productos`. Cada URL segura de Cloudinary quedó persistida en `product_images`, con SKU `ROM-*`, precio tomado del Excel y sin crear cantidades de stock.
+
+Las 62 asociaciones conservan `USER_PUBLISHED_PENDING_RIGHTS`: la publicación fue solicitada por Óptica Stylo, pero el permiso del titular de cada fotografía aún no está documentado. Por eso el administrador las clasifica como revisión y no como `VERIFIED`. [published-production.json](2026-10-22/published-production.json) contiene los IDs, public IDs, URLs seguras, hashes y productos afectados. Las 35 fichas quedaron activas; los 21 modelos sin precio confirmado y las candidatas con resolución insuficiente no se publicaron.
+

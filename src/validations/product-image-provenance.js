@@ -16,10 +16,12 @@ export function publicSourceUrl(value) {
 export function validateImageProvenance(value) {
   if (value == null) return null;
   const identity = Object.fromEntries(["brand", "model", "color"].map((key) => [key, required(value.identity?.[key], key, 200)]));
-  if (value.authorization?.status !== "AUTHORIZED" || value.authorization.commercialUse !== true) {
-    fail("La fotografía necesita autorización comprobada de uso comercial.");
+  const authorizationStatus = value.authorization?.status;
+  const userPublished = authorizationStatus === "USER_PUBLISHED_PENDING_RIGHTS";
+  if (!userPublished && (authorizationStatus !== "AUTHORIZED" || value.authorization.commercialUse !== true)) {
+    fail("La fotografía necesita autorización comprobada de uso comercial o publicación explícita pendiente de derechos.");
   }
-  if (value.verification?.status !== "EXACT" || value.verification.colorConfirmed !== true) {
+  if (!["EXACT", "EXACT_CODE_CANDIDATE"].includes(value.verification?.status) || value.verification.colorConfirmed !== true) {
     fail("La marca, el modelo y el color deben estar comprobados.");
   }
   const reviewedAt = required(value.verification.reviewedAt, "La fecha de revisión", 40);
@@ -37,13 +39,14 @@ export function validateImageProvenance(value) {
     sourceImageUrl: publicSourceUrl(value.sourceImageUrl),
     view: required(value.view, "La vista", 80),
     authorization: {
-      status: "AUTHORIZED", commercialUse: true,
+      status: authorizationStatus,
+      commercialUse: userPublished ? false : true,
       holder: required(value.authorization.holder, "El titular", 200),
       evidenceUrl: publicSourceUrl(value.authorization.evidenceUrl),
       scope: required(value.authorization.scope, "El alcance de la autorización", 1000),
     },
     verification: {
-      status: "EXACT", colorConfirmed: true, reviewedAt,
+      status: value.verification.status, colorConfirmed: true, reviewedAt,
       reviewedBy: required(value.verification.reviewedBy, "La persona que verificó", 200),
       evidenceUrl: publicSourceUrl(value.verification.evidenceUrl),
       sharedManufacturerPhoto: value.verification.sharedManufacturerPhoto === true,
