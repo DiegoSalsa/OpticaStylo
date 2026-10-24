@@ -22,6 +22,7 @@
     "images:reconcile": "node scripts/reconcile-product-images.mjs",
     "images:stage": "node scripts/stage-romano-products.mjs",
     "images:report": "node scripts/report-romano-images.mjs",
+      "images:deconstruct": "node scripts/deconstruct-romano-images.mjs",
     "db:check": "node scripts/db-check.mjs",
     "db:baseline": "node scripts/db-baseline.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
