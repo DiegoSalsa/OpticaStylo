@@ -18,6 +18,8 @@ async function fillPrescription(page) {
     ["leftSphere", "-2"], ["leftCylinder", "0"], ["pupillaryDistance", "62"]]) await page.locator(`[name="${name}"]`).fill(value);
 }
 async function checkout(page, unique) {
+  const branchId = await page.locator('.buyer-form select[name="branchId"] option:not([disabled])').evaluateAll((options) => options.find((option) => option.value)?.value);
+  await page.locator('.buyer-form select[name="branchId"]').selectOption(branchId);
   for (const [name, value] of Object.entries({ ...buyer, rut: fixtureRut(unique), firstNames: `RecetaNavegador${unique}` })) {
     await page.locator(`.buyer-form [name="${name}"]`).fill(value);
   }

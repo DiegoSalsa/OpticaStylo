@@ -39,7 +39,8 @@ export async function addItems(cookie) {
   ] } }));
 }
 export async function configure(cookie, customer = buyer) {
-  return data(await request("/api/store/cart", { cookie, method: "PATCH", body: { buyer: customer, fulfillment: { method: "PICKUP" }, clinicalPrescriptionId: null } }));
+  const branches = await data(await request("/api/store/cart/pickup", { cookie }));
+  return data(await request("/api/store/cart", { cookie, method: "PATCH", body: { buyer: customer, fulfillment: { method: "PICKUP", branchId: branches.find((branch) => branch.available)?.id }, clinicalPrescriptionId: null } }));
 }
 export async function upload(cookie, bytes = image, type = "image/png", name = "receta-sintetica.png") {
   const form = new FormData(); form.set("image", new File([bytes], name, { type }));

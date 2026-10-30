@@ -32,7 +32,7 @@ function OrderColumn({ column, endpoint, refresh, canUpdate, pendingIds, advance
         <div className="order-card-top"><span>Pedido N.º {sale.saleNumber}</span><small>{sale.origin === "ONLINE" ? "WEB" : "POS"}</small></div>
         <h3>{customerLabel(sale)}</h3><p>{sale.customer?.rut ?? "Sin RUT"} · {new Date(sale.createdAt).toLocaleDateString("es-CL")}</p>
         <dl><div><dt>Total</dt><dd>{money.format(sale.totalCents)}</dd></div>{sale.balanceCents > 0 && <div><dt>Saldo</dt><dd>{money.format(sale.balanceCents)}</dd></div>}</dl>
-        {sale.fulfillment && <div className="order-fulfillment"><Icon name={sale.fulfillment.method === "PICKUP" ? "home" : "package"} size={15} /><span>{sale.fulfillment.method === "PICKUP" ? "Retiro en tienda" : "Despacho"}</span></div>}
+        {sale.fulfillment && <div className="order-fulfillment"><Icon name={sale.fulfillment.method === "PICKUP" ? "home" : "package"} size={15} /><span>{sale.fulfillment.method === "PICKUP" ? `Retiro: ${sale.branch?.name ?? "Sucursal no registrada"}` : "Despacho"}</span></div>}
         <button className="order-detail-button" onClick={() => showDetail(sale.id)} type="button">Ver detalle</button>
         {nextStatus[sale.status] && canUpdate && <button className="order-advance" disabled={pendingIds.includes(sale.id)} onClick={() => advance(sale)} type="button">{pendingIds.includes(sale.id) ? "Procesando…" : nextLabel[sale.status]} <Icon name="arrow" size={15} /></button>}
       </article>)}
@@ -44,6 +44,13 @@ function OrderColumn({ column, endpoint, refresh, canUpdate, pendingIds, advance
 export default function OrdersBoard() {
   const actor = useInternalActor();
   const [filters, setFilters] = useState({ origin: "", search: "", status: "", view: "active" });
+  const [branches, setBranches] = useState([]);
+  useEffect(() => {
+    if (!actor?.permissions.includes("inventory.read")) return;
+    const controller = new AbortController();
+    fetch("/api/inventory/branches", { cache: "no-store", signal: controller.signal }).then(readResponse).then((rows) => { if (!controller.signal.aborted) setBranches(rows); }).catch(() => {});
+    return () => controller.abort();
+  }, [actor]);
   const [query, setQuery] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [summary, setSummary] = useState(null);
@@ -99,6 +106,7 @@ export default function OrdersBoard() {
     <section className="app-card orders-toolbar">
       <form className="orders-search" onSubmit={(event) => { event.preventDefault(); setFilters((current) => ({ ...current, search: query.trim() })); }}><Icon name="search" /><input aria-label="Buscar pedido" maxLength={100} onChange={(event) => setQuery(event.target.value)} placeholder="N.º de venta, cliente o RUT" value={query} /><button className="app-button" type="submit">Buscar</button></form>
       <label className="field"><span>Origen</span><select onChange={(event) => setFilters((current) => ({ ...current, origin: event.target.value }))} value={filters.origin}><option value="">Todos</option><option value="ONLINE">WEB</option><option value="IN_STORE">POS</option></select></label>
+      <label className="field"><span>Sucursal del pedido</span><select value={filters.branchId ?? ""} onChange={(event) => setFilters((current) => ({ ...current, branchId: event.target.value }))}><option value="">Todas</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
       <label className="field"><span>Estado operativo</span><select onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))} value={filters.status}><option value="">Todos</option>{viewColumns.map((column) => <option key={column.code} value={column.code}>{column.label}</option>)}</select></label>
       <button className="app-button app-button--soft" disabled={!currentSummary} onClick={() => setRefresh((value) => value + 1)} type="button">Actualizar</button>
     </section>

@@ -21,6 +21,7 @@ import {
 } from "../repositories/sale-repository.js";
 import { findUserForPermissionAuthorization } from "../repositories/user-repository.js";
 import { AppError } from "../utils/app-error.js";
+import { expireInventoryReservations, inventoryBranchAccess } from "../repositories/inventory-repository.js";
 import {
   validateReceiptInput,
   validateSaleDraftInput,
@@ -130,6 +131,10 @@ export async function createSale(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_CREATE]);
   const draft = validateSaleDraftInput(input);
   const operation = validateSaleOperation(input.operation);
+  if (!dependencies.createSale) {
+    await expireInventoryReservations();
+    if (draft.branchId) await inventoryBranchAccess(actor, draft.branchId);
+  }
   return unwrap(await (dependencies.createSale ?? createSaleRepository)(
     draft,
     actor.userId,
@@ -177,6 +182,11 @@ export async function getSaleSummary(searchParams, actor, dependencies = {}) {
 export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
   const draft = validateSaleDraftInput(input);
+  if (!dependencies.updateSaleDraft) {
+    const current = await getSale(saleId, actor);
+    if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
+    if (draft.branchId) await inventoryBranchAccess(actor, draft.branchId);
+  }
   return unwrap(await (dependencies.updateSaleDraft ?? updateSaleDraftRepository)(
     validateSaleId(saleId), draft, actor.userId,
   ));
@@ -184,6 +194,11 @@ export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
 
 export async function confirmSale(saleId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
+  if (!dependencies.confirmSale) {
+    await expireInventoryReservations();
+    const current = await getSale(saleId, actor);
+    if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
+  }
   return unwrap(await (dependencies.confirmSale ?? confirmSaleRepository)(
     validateSaleId(saleId), actor.userId,
   ));
@@ -191,6 +206,11 @@ export async function confirmSale(saleId, actor, dependencies = {}) {
 
 export async function registerSalePayment(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
+  if (!dependencies.registerSalePayment) {
+    await expireInventoryReservations();
+    const current = await getSale(saleId, actor);
+    if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
+  }
   return unwrap(await (dependencies.registerSalePayment ?? registerSalePaymentRepository)(
     validateSaleId(saleId), validateSalePaymentInput(input), actor.userId,
     { requestKey: dependencies.requestKey ?? null },
@@ -199,6 +219,10 @@ export async function registerSalePayment(saleId, input, actor, dependencies = {
 
 export async function changeSaleStatus(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_UPDATE]);
+  if (!dependencies.changeSaleStatus) {
+    const current = await getSale(saleId, actor);
+    if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
+  }
   return unwrap(await (dependencies.changeSaleStatus ?? changeSaleStatusRepository)(
     validateSaleId(saleId), validateSaleStatusInput(input), actor.userId,
     dependencies.currentDate ?? new Date(),

@@ -23,6 +23,14 @@ const money = MONEY_FORMATTER;
 
 export default function PosExperience() {
   const actor = useInternalActor();
+  const [branches, setBranches] = useState([]);
+  const [branchId, setBranchId] = useState("");
+  useEffect(() => {
+    if (!actor?.permissions.includes("inventory.read")) return;
+    const controller = new AbortController();
+    fetch("/api/inventory/branches", { cache: "no-store", signal: controller.signal }).then(readResponse).then((rows) => { if (!controller.signal.aborted) setBranches(rows); }).catch((error) => { if (!controller.signal.aborted) setError(error.message); });
+    return () => controller.abort();
+  }, [actor]);
   const [customerSearch, setCustomerSearch] = useState("");
   const [patientSearch, setPatientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -389,6 +397,7 @@ export default function PosExperience() {
       setDiscountReason(quote.discount?.reason ?? "");
       setDiscountAuthorization(null);
       setPrescriptionId(quote.prescription?.id ?? "");
+      setBranchId(quote.branchId ?? "");
       setPrescriptionMode(quote.externalPrescription ? "external" : "internal");
       setExternalPrescriptionId(quote.externalPrescription?.id ?? null);
       setSale(quote);
@@ -487,6 +496,7 @@ export default function PosExperience() {
         : null;
     return {
       customerId: customer?.id ?? null,
+      branchId: branchId || null,
       discount:
         Number(discountCents || 0) > 0
           ? {
@@ -734,6 +744,7 @@ export default function PosExperience() {
         canSell,
         cancelQuotation,
         cancelReason,
+        branches, branchId, setBranchId,
         cashReceivedCents,
         cashRegister,
         checkoutBlockedReason,

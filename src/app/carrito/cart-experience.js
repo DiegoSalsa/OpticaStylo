@@ -54,6 +54,10 @@ export default function CartExperience() {
     [cart],
   );
   const prescriptionReady = cartHasReadyPrescription(cart, cart?.items);
+  const pickupBranches = (cart?.items[0]?.availability?.branches ?? []).map((branch) => ({ ...branch, available: cart.items.every((item) => {
+    const stock = item.availability?.branches.find((option) => option.id === branch.id);
+    return stock?.available && (stock.quantity === null || stock.quantity >= item.quantity);
+  }) }));
 
   useEffect(() => {
     let active = true;
@@ -71,7 +75,7 @@ export default function CartExperience() {
       setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
       setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
       setPrescriptionDirty(draft?.prescriptionDirty ?? false);
-      setBuyerDraft(draft?.buyer ?? { ...data.buyer, notes: data.fulfillment?.notes ?? "" });
+      setBuyerDraft(draft?.buyer ?? { ...data.buyer, branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
       setStatus("ready");
     }
     function refresh() {
@@ -268,7 +272,7 @@ export default function CartExperience() {
             rut: form.get("rut"),
           },
           clinicalPrescriptionId: cart.clinicalPrescriptionId,
-          fulfillment: { method: "PICKUP", notes: form.get("notes") || null },
+          fulfillment: { method: "PICKUP", branchId: form.get("branchId"), notes: form.get("notes") || null },
         }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
@@ -372,7 +376,9 @@ export default function CartExperience() {
             <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>
             <label className="field"><span>Correo</span><input defaultValue={buyerDraft.email ?? ""} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
             <label className="field"><span>Dirección de contacto</span><input defaultValue={buyerDraft.address ?? ""} name="address" placeholder="Dirección" required /></label>
-            <div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en tienda</strong><span>Sucursal por confirmar con el local después de la compra.</span></div></div>
+            <div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en una sucursal</strong><span>Todos los productos deben estar disponibles en el mismo local. La reserva sin pagos dura 30 minutos desde la creación del pedido.</span></div></div>
+            <label className="field field-full"><span>Sucursal de retiro</span><select name="branchId" required defaultValue={buyerDraft.branchId ?? ""}><option value="">Selecciona una sucursal</option>{pickupBranches.map((branch) => <option disabled={!branch.available} key={branch.id} value={branch.id}>{branch.name}{branch.available ? " — Disponible" : " — Sin disponibilidad conjunta"}</option>)}</select></label>
+            {!pickupBranches.some((branch) => branch.available) && <p className="inline-error field-full" role="alert">Ninguna sucursal tiene todos los productos disponibles. Modifica las cantidades o productos del carrito.</p>}
             <label className="field field-full"><span>Notas opcionales</span><textarea defaultValue={buyerDraft.notes ?? ""} name="notes" placeholder="Ej: Entregar en horario de oficina" rows="3" /></label>
             <button className="button button--primary field-full" disabled={status === "saving" || Boolean(prescriptionImage) || (prescriptionRequired && (!prescriptionReady || prescriptionDirty))} type="submit">Continuar a Mercado Pago</button>{prescriptionRequired && (!prescriptionReady || prescriptionDirty || prescriptionImage) && <p className="field-full">Guarda y confirma la receta antes de continuar.</p>}
           </form>

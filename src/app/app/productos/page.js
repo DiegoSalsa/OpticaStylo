@@ -20,6 +20,7 @@ const CATEGORIES = [
 ];
 const EMPTY = {
   category: "FRAME",
+  inventoryMode: "TRACKED",
   isActive: true,
   name: "",
   requiresPrescription: false,
@@ -112,6 +113,7 @@ export default function ProductsPage() {
           {
             body: JSON.stringify({
               category: form.category,
+              inventoryMode: form.inventoryMode,
               ...(selectedId ? { isActive: form.isActive } : {}),
               name: form.name,
               requiresPrescription: form.requiresPrescription,

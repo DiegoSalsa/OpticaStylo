@@ -1,4 +1,7 @@
 export const PERMISSIONS = Object.freeze({
+  INVENTORY_READ: "inventory.read",
+  INVENTORY_WRITE: "inventory.write",
+  INVENTORY_MANAGE_ALL: "inventory.manage_all",
 // Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
   APPOINTMENTS_CANCEL: "appointments.cancel",
   APPOINTMENTS_CREATE: "appointments.create",

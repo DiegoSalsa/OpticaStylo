@@ -2,6 +2,9 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "../db/prisma.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import { reserveSaleInventory, settleSaleInventory } from "./inventory-repository.js";
+import { retryTransaction } from "../db/retry-transaction.js";
+import { AppError } from "../utils/app-error.js";
 
 function mapAttempt(row) {
   if (!row) return null;
@@ -19,12 +22,14 @@ function mapAttempt(row) {
 
 export async function reserveMercadoPagoAttempt(saleId, actorUserId, expiresAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const sale = await client.sales.findUnique({
       include: { sale_payments: true }, where: { id: saleId },
     });
     if (!sale) return { attempt: null, reason: "SALE_NOT_FOUND" };
     if (sale.status !== "PENDING") return { attempt: null, reason: "SALE_NOT_PAYABLE" };
+    if (sale.branch_id) await reserveSaleInventory(client, saleId, actorUserId);
     if (sale.payment_method && sale.payment_method !== "MERCADO_PAGO") {
       return { attempt: null, reason: "PAYMENT_METHOD_MISMATCH" };
     }
@@ -114,7 +119,7 @@ async function finishProviderEvent(client, eventId, status, error = null) {
 
 export async function reconcileMercadoPagoPayment(notification, payment, options = {}) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(
+  return retryTransaction(prisma,
     (client) => reconcileMercadoPagoPaymentWithClient(client, notification, payment, options),
     // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
     { isolationLevel: "Serializable" },
@@ -139,13 +144,15 @@ export async function reconcileMercadoPagoPaymentWithClient(client, notification
     await finishProviderEvent(client, event.id, "IGNORED", "La referencia externa no es válida.");
     return { duplicate: false, result: "UNKNOWN_PAYMENT" };
   }
-  const attempt = await client.payment_attempts.findFirst({
+  let attempt = await client.payment_attempts.findFirst({
     where: { id: payment.externalReference, provider: "MERCADO_PAGO" },
   });
   if (!attempt) {
     await finishProviderEvent(client, event.id, "IGNORED", "No corresponde a un intento conocido.");
     return { duplicate: false, result: "UNKNOWN_PAYMENT" };
   }
+  await client.$queryRaw`SELECT id FROM sales WHERE id = ${attempt.sale_id}::uuid FOR UPDATE`;
+  attempt = await client.payment_attempts.findUnique({ where: { id: attempt.id } });
   if (!paymentMatchesAttempt(attempt, payment, options.expectedLiveMode)) {
     const reason = "Los datos confirmados por Mercado Pago no coinciden con el cobro reservado.";
     await client.payment_attempts.update({ data: {
@@ -198,12 +205,20 @@ export async function reconcileMercadoPagoPaymentWithClient(client, notification
       await finishProviderEvent(client, event.id, "FAILED", reason);
       return { duplicate: false, result: "REQUIRES_REVIEW" };
     }
+    try { await settleSaleInventory(client, attempt.sale_id, "PAYMENT", attempt.initiated_by); }
+    catch (error) {
+      if (!(error instanceof AppError)) throw error;
+      await client.payment_attempts.update({ where: { id: attempt.id }, data: { status: "REQUIRES_REVIEW", failure_reason: error.message } });
+      await finishProviderEvent(client, event.id, "FAILED", error.message);
+      return { duplicate: false, result: "REQUIRES_REVIEW", saleId: attempt.sale_id };
+    }
     const createdPayment = await client.sale_payments.create({ data: {
       amount_cents: attempt.amount_cents, payment_method: "MERCADO_PAGO",
       provider_attempt_id: attempt.id, received_by: attempt.initiated_by,
       reference: `MP:${payment.externalPaymentId}`, sale_id: attempt.sale_id, source: "PROVIDER",
     } });
     const newStatus = paidCents + Number(attempt.amount_cents) === totalCents ? "PAID" : "PENDING";
+    if (newStatus === "PAID" && sale.origin === "IN_STORE") await settleSaleInventory(client, attempt.sale_id, "SALE", attempt.initiated_by);
     await client.sales.update({ data: {
       payment_method: "MERCADO_PAGO", status: newStatus,
       ...(attempt.initiated_by ? { updated_by: attempt.initiated_by } : {}),
@@ -226,6 +241,7 @@ export async function reconcileMercadoPagoPaymentWithClient(client, notification
       });
     }
   }
+  if (["REJECTED","CANCELLED"].includes(mappedStatus) && !await client.sale_payments.count({ where: { sale_id: attempt.sale_id } }) && !await client.payment_attempts.count({ where: { sale_id: attempt.sale_id, status: { in: ["CREATED","PENDING"] } } })) await settleSaleInventory(client, attempt.sale_id, "RELEASE");
   await finishProviderEvent(client, event.id, "PROCESSED");
   return { duplicate: false, paymentAttemptId: attempt.id, result: mappedStatus, saleId: attempt.sale_id };
 }

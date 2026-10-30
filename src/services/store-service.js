@@ -37,6 +37,7 @@ import {
 } from "../validations/store-validation.js";
 import { findExternalPrescriptionById, findExternalPrescriptionFileById } from "../repositories/external-prescription-repository.js";
 import { findPrescriptionById } from "../repositories/prescription-repository.js";
+import { expireInventoryReservations } from "../repositories/inventory-repository.js";
 
 const CART_SECONDS = 30 * 24 * 60 * 60;
 const ERRORS = Object.freeze({
@@ -149,6 +150,7 @@ export async function createStoreCart(account, dependencies = {}) {
 }
 
 export async function getStoreCart(token, account, dependencies = {}) {
+  if (!dependencies.findCart) await expireInventoryReservations();
   const credentials = access(token, account);
   const cart = await (dependencies.findCart ?? findStoreCart)(
     credentials.tokenHash,
@@ -347,6 +349,8 @@ function publicOrder(sale) {
     createdAt: sale.createdAt,
     customer: sale.customer,
     externalPrescription: sale.externalPrescription,
+    branch: sale.branch,
+    reservation: sale.reservation,
     prescription: sale.prescription ? { id: sale.prescription.id } : null,
     fulfillment: sale.fulfillment,
     id: sale.id,
@@ -362,6 +366,7 @@ function publicOrder(sale) {
 }
 
 export async function checkoutCart(token, account, dependencies = {}) {
+  if (!dependencies.checkoutCart) await expireInventoryReservations();
   const credentials = access(token, account);
   const result = await (dependencies.checkoutCart ?? checkoutStoreCart)(
     credentials.tokenHash,

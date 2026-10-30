@@ -1,6 +1,6 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
-import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
+import { availabilityForProducts, expireInventoryReservations } from "../repositories/inventory-repository.js";
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import {
   createProduct as createProductRepository,
@@ -50,9 +50,11 @@ export async function getProduct(productId, actor, dependencies = {}) {
   const product = await (dependencies.findProductById ?? findProductById)(id);
   if (!product) notFound();
   const images = await (dependencies.listImages ?? listActiveProductImages)([id]);
+  await expireInventoryReservations();
+  const availabilityMap = await availabilityForProducts([product]);
   return {
     ...product,
-    availability: (dependencies.getAvailability ?? getMockAvailability)(product),
+    availability: dependencies.getAvailability ? dependencies.getAvailability(product) : availabilityMap.get(product.id),
     images: images.map(({ productId: _productId, ...image }) => image),
   };
 }
@@ -60,7 +62,9 @@ export async function getProduct(productId, actor, dependencies = {}) {
 export async function getProductList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
   const result = await (dependencies.listProducts ?? listProducts)(validateProductListQuery(searchParams));
-  const availability = dependencies.getAvailability ?? getMockAvailability;
+  await expireInventoryReservations();
+  const availabilityMap = await availabilityForProducts(result.items);
+  const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   return {
     ...result,
     items: result.items.map((product) => ({

@@ -3,6 +3,7 @@ import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import { assertBranch, availabilityForProducts, inventoryError, reserveSaleInventory } from "./inventory-repository.js";
 
 const TEST_DATA_AVAILABLE = canUseStoreTestData();
 const itemProduct = "products_store_cart_items_product_idToproducts";
@@ -30,6 +31,8 @@ function mapCartBase(row) {
     createdAt: row.created_at, customerAccountId: row.customer_account_id,
     expiresAt: row.expires_at,
     fulfillment: row.fulfillment_method ? {
+      branchId: row.branch_id,
+      branch: row.branches ? { id: row.branches.id, name: row.branches.name, address: row.branches.address } : null,
       address: row.delivery_address, city: row.delivery_city,
       method: row.fulfillment_method, notes: row.delivery_notes, region: row.delivery_region,
     } : null,
@@ -39,6 +42,7 @@ function mapCartBase(row) {
 }
 
 const cartInclude = {
+  branches: true,
   external_prescriptions: true,
   store_cart_items: {
     include: { [itemProduct]: true },
@@ -57,13 +61,11 @@ async function loadCart(client, tokenHash, accountId = null) {
   });
   const base = mapCartBase(row);
   if (!base) return null;
+  const availability = await availabilityForProducts(row.store_cart_items.map((item) => item[itemProduct]), client);
   const items = row.store_cart_items.map((item) => {
     const product = item[itemProduct];
     return {
-      availability: {
-        available: product.is_active && (TEST_DATA_AVAILABLE || !product.is_test_data),
-        exactQuantityKnown: false, source: "MOCK",
-      },
+      availability: availability.get(product.id),
       category: product.category,
       lineTotalCents: Number(product.unit_price_cents) * item.quantity,
       mountFrameProductId: item.mounted_on_product_id, name: product.name,
@@ -123,6 +125,11 @@ export async function upsertStoreCartItems(tokenHash, accountId, items, replaceF
     const products = new Map(productRows.map((product) => [product.id, product]));
     if (productRows.length !== productIds.length || productRows.some((product) => !product.is_active || (!TEST_DATA_AVAILABLE && product.is_test_data))) {
       return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
+    }
+    const availability = await availabilityForProducts(productRows, client);
+    for (const item of items) {
+      const stock = availability.get(item.productId);
+      if (!stock?.branches.some((branch) => branch.available && (branch.quantity === null || branch.quantity >= item.quantity))) inventoryError("INSUFFICIENT_STOCK", "El producto no tiene esa cantidad disponible en una sucursal de retiro.");
     }
     const currentFrames = await client.store_cart_items.findMany({
       select: { product_id: true },
@@ -208,7 +215,14 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
       if (!prescription) return { cart: null, reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE" };
     }
     const { buyer, fulfillment } = configuration;
+    await assertBranch(client, fulfillment.branchId, true);
+    const availableCart = await loadCart(client, tokenHash, accountId);
+    if (availableCart.items.some((item) => {
+      const stock = item.availability.branches.find((branch) => branch.id === fulfillment.branchId);
+      return !stock?.available || (stock.quantity !== null && stock.quantity < item.quantity);
+    })) inventoryError("INSUFFICIENT_STOCK", "Los productos no están disponibles juntos en la sucursal seleccionada.");
     await client.store_carts.update({ data: {
+      branch_id: fulfillment.branchId,
       buyer_address: buyer.address, buyer_email: buyer.email, buyer_first_names: buyer.firstNames,
       buyer_last_names: buyer.lastNames, buyer_phone: buyer.phone, buyer_rut: buyer.rut,
       clinical_prescription_id: configuration.clinicalPrescriptionId,
@@ -439,6 +453,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       delivery_notes: cart.delivery_notes, delivery_region: cart.delivery_region,
       external_prescription_id: cart.external_prescriptions?.id,
       fulfillment_method: cart.fulfillment_method, origin: "ONLINE",
+      branch_id: cart.branch_id,
       prescription_id: cart.clinical_prescription_id, patient_id: clinicalPrescription?.clinical_encounters.patient_id ?? null,
       shipping_fee_cents: cart.shipping_fee_cents,
       shipping_quote_source: cart.shipping_quote_source, status: "PENDING",
@@ -452,6 +467,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
         unit_price_cents: item.product.unit_price_cents,
       })) },
     } });
+    await reserveSaleInventory(client, sale.id);
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     await client.sale_events.create({ data: {
       details: JSON.stringify({ origin: "ONLINE", totalCents }), event_type: "CREATED",

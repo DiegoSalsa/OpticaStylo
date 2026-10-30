@@ -11,7 +11,8 @@ import { PrismaClient } from "@prisma/client";
 import { createCloudinaryMediaGateway } from "../src/integrations/media/cloudinary-media-gateway.js";
 
 const root = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
-const output = path.join(os.tmpdir(), "opticastylo-recetas-fase-1");
+const inventoryMode = process.argv.includes("--inventory");
+const output = path.join(os.tmpdir(), inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
 const runRoot = path.join(os.tmpdir(), `stylo-prescriptions-${randomBytes(8).toString("hex")}`);
 const appRoot = path.join(runRoot, "app");
 const pgData = path.join(runRoot, "postgres");
@@ -65,8 +66,9 @@ try {
   for (const entry of ["src", "public", "config", "prisma", "package.json", "package-lock.json", "jsconfig.json", "next.config.mjs"]) {
     await cp(path.join(root, entry), path.join(appRoot, entry), { recursive: true });
   }
-  await mkdir(path.join(appRoot, "tests"));
-  await cp(path.join(root, "tests/canonical-face.json"), path.join(appRoot, "tests/canonical-face.json"));
+  await cp(path.join(root, "tests"), path.join(appRoot, "tests"), { recursive: true });
+  await cp(path.join(root, "scripts"), path.join(appRoot, "scripts"), { recursive: true });
+  await cp(path.join(root, "playwright.evaluation.config.mjs"), path.join(appRoot, "playwright.evaluation.config.mjs"));
   await symlink(path.join(root, "node_modules"), path.join(appRoot, "node_modules"), process.platform === "win32" ? "junction" : "dir");
   console.log("Pruebas de recetas: clúster sintético local; sin conexión a la base configurada en .env.");
   await run(pg("initdb"), ["-D", pgData, "-U", "stylo_test", "-A", "trust", "--encoding=UTF8", "--no-locale"]);
@@ -74,7 +76,11 @@ try {
   pgStarted = true;
   await run(pg("createdb"), ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "stylo_test", "opticastylo_evaluation"]);
   await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], { cwd: appRoot });
-  await run(process.execPath, ["scripts/seed-evaluation.mjs"]);
+  if (inventoryMode) await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "diff", "--from-url", databaseUrl, "--to-schema-datamodel", "prisma/schema.prisma", "--script"], { cwd: appRoot, record: "migration-diff.txt" });
+  await run(process.execPath, ["scripts/seed-evaluation.mjs"], { cwd: appRoot });
+  await run(process.execPath, ["scripts/seed-inventory-demo.mjs"], { cwd: appRoot });
+  await mkdir(path.join(appRoot, "tmp/evaluation"), { recursive: true });
+  await writeFile(path.join(appRoot, "tmp/evaluation/runtime.json"), JSON.stringify({ databaseUrl, schema, appPort, pgPort }));
   await run(process.execPath, ["node_modules/next/dist/bin/next", "build", "--webpack"], { cwd: appRoot, record: "build.txt" });
   server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(appPort)], {
     cwd: appRoot, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
@@ -88,11 +94,25 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   if (!ready) throw new Error("El servidor no inició.");
-  await run(process.execPath, ["--test", "--test-concurrency=1", "tests/prescriptions/validation.test.js", "tests/prescriptions/flow.test.js"], { record: "tests.txt" });
-  await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "tests/prescriptions/playwright.config.mjs"], { record: "browser.txt" });
+  if (process.argv.includes("--demo")) {
+    console.log(`Demostración local con datos sintéticos: ${env.EVALUATION_HTTP_URL}`);
+    console.log("Cierre con Ctrl+C para detener y eliminar el clúster de demostración.");
+    await new Promise((resolve) => { process.once("SIGINT", resolve); process.once("SIGTERM", resolve); });
+  } else {
+  if (inventoryMode) {
+    await run(process.execPath, ["--test", "--test-concurrency=1", "tests/unit/rut.test.js", "tests/unit/appointment-validation.test.js", "tests/unit/availability-engine.test.js", "tests/unit/password.test.js", "tests/integration/evaluation.test.js"], { cwd: appRoot, record: "academicas.txt" });
+    await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "playwright.evaluation.config.mjs"], { cwd: appRoot, record: "academicas-e2e.txt" });
+    await cp(path.join(appRoot, "tmp/evaluation"), path.join(output, "academic-artifacts"), { recursive: true });
+    await run(process.execPath, ["--test", "--test-concurrency=1", "tests/inventory/flow.test.js"], { cwd: appRoot, record: "inventory.txt" });
+  }
+  await run(process.execPath, ["--test", "--test-concurrency=1", "tests/prescriptions/validation.test.js", "tests/prescriptions/flow.test.js"], { cwd: appRoot, record: "tests.txt" });
+  await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "tests/prescriptions/playwright.config.mjs"], { cwd: appRoot, record: "browser.txt" });
+  if (inventoryMode) await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "tests/inventory/playwright.config.mjs"], { cwd: appRoot, record: "inventory-browser.txt" });
+  }
 } catch (error) {
   console.error(error); process.exitCode = 1;
 } finally {
+  if (inventoryMode && existsSync(path.join(appRoot, "tmp/evaluation"))) await cp(path.join(appRoot, "tmp/evaluation"), path.join(output, "academic-artifacts"), { recursive: true });
   if (server?.exitCode === null) { const exited = new Promise((resolve) => server.once("exit", resolve)); server.kill(); await exited; }
   if (existsSync(output)) await writeFile(path.join(output, "server.txt"), serverOutput);
   if (pgStarted) {

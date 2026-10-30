@@ -152,6 +152,7 @@ export function validateSaleDraftInput(input) {
 
   return {
     customerId: optionalId(input.customerId, "cliente"),
+    branchId: optionalId(input.branchId, "sucursal"),
     discount: normalizedDiscount,
     discountCents: normalizedDiscount?.amountCents ?? 0,
     discountReason: normalizedDiscount?.reason ?? null,
@@ -290,6 +291,7 @@ export function validateSaleListQuery(searchParams) {
 
   return {
     customerId: rawCustomerId ? validateSaleId(rawCustomerId, "cliente") : null,
+    branchId: searchParams.get("branchId") ? validateSaleId(searchParams.get("branchId"), "sucursal") : null,
     page,
     pageSize,
     origin,

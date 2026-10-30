@@ -45,6 +45,7 @@ export default function PosTicketPanel({ model }) {
         {sale && <span className="status-chip">{sale.status}</span>}
       </div>
       <div className="ticket-lines">
+        <label className="field"><span>Sucursal de la venta</span><select disabled={pending || Boolean(sale && sale.status !== "QUOTATION")} value={model.branchId} onChange={(event) => model.setBranchId(event.target.value)}><option value="">Selecciona una sucursal</option>{model.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
         {lines.length === 0 ? (
           <div className="ticket-empty">
             <Icon name="receipt" size={32} />

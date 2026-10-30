@@ -171,6 +171,7 @@ function fulfillment(value) {
   }
   return {
     address: null,
+    branchId: uuid(value.branchId, "sucursal de retiro"),
     city: null,
     method,
     notes: text(value.notes, "Las notas de entrega", 500, { nullable: true }),

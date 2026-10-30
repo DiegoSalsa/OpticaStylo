@@ -1,12 +1,16 @@
 import { prisma } from "../db/prisma.js";
 import { rutSearchValues } from "../utils/rut-search.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import { retryTransaction } from "../db/retry-transaction.js";
+import { reserveSaleInventory, settleSaleInventory } from "./inventory-repository.js";
 import {
   consumeDiscountAuthorizationWithClient,
   lockDiscountAuthorizationWithClient,
 } from "./discount-authorization-grant-repository.js";
 
 const saleInclude = {
+  branches: true,
+  inventory_reservations: true,
   customers: true,
   external_prescriptions: true,
   optical_prescriptions: { include: { clinical_encounters: { include: { patients: true } } } },
@@ -25,6 +29,7 @@ const saleInclude = {
 // The list preserves its summary contract without loading line items, clinical
 // records, prescription files, receipt payloads or payment provider details.
 export const saleListInclude = {
+  branches: true,
   customers: { select: { email: true, first_names: true, last_names: true, phone: true, rut: true } },
   external_prescriptions: { select: { source: true, status: true } },
   optical_prescriptions: { select: {
@@ -43,10 +48,11 @@ export const saleListInclude = {
 
 export const ORDER_STATUSES = ["PENDING", "PAID", "IN_PREPARATION", "READY", "DELIVERED", "CANCELLED"];
 
-export function saleListWhere({ customerId, origin, search = "", status, view } = {}) {
+export function saleListWhere({ customerId, origin, search = "", status, view, branchId } = {}) {
   const statuses = view === "active" ? ["PENDING", "PAID", "IN_PREPARATION", "READY"]
     : view === "delivered" ? ["DELIVERED"] : view === "history" ? ORDER_STATUSES : null;
   const where = {
+    ...(branchId ? { branch_id: branchId } : {}),
     ...(customerId ? { customer_id: customerId } : {}),
     ...(origin ? { origin } : {}),
     ...(statuses ? { status: { in: statuses } } : {}),
@@ -116,9 +122,13 @@ function mapSale(row, details = true) {
       status: row.external_prescriptions?.status,
     } : null,
     fulfillment: row.fulfillment_method ? {
+      branchId: row.branch_id,
+      branch: row.branches ? { id: row.branches.id, name: row.branches.name, address: row.branches.address } : null,
       address: row.delivery_address, city: row.delivery_city,
       method: row.fulfillment_method, notes: row.delivery_notes, region: row.delivery_region,
     } : null,
+    branchId: row.branch_id, branch: row.branches ? { id: row.branches.id, name: row.branches.name, address: row.branches.address } : null,
+    reservation: row.inventory_reservations?.map((r) => ({ productId: r.product_id, quantity: r.quantity, status: r.status, expiresAt: r.expires_at })),
     id: row.id, origin: row.origin, paidCents, paymentMethod: row.payment_method,
     patient: row.patients ? {
       firstNames: row.patients.first_names, id: row.patients.id,
@@ -273,7 +283,7 @@ async function recordDiscount(client, saleId, draft, actorUserId, status = "QUOT
 
 export async function createSale(draft, actorUserId, options = {}) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     if (options.requestKey) {
       const existing = await client.sales.findFirst({ where: { created_by: actorUserId, request_key: options.requestKey } });
       if (existing) return { reason: null, sale: await findSaleWithClient(client, existing.id) };
@@ -285,6 +295,7 @@ export async function createSale(draft, actorUserId, options = {}) {
     const status = options.status === "PENDING" ? "PENDING" : "QUOTATION";
     const sale = await client.sales.create({ data: {
       created_by: actorUserId, customer_id: draft.customerId,
+      branch_id: draft.branchId,
       discount_authorized_at: authorized.discount?.authorizedAt ?? null,
       discount_authorized_by: authorized.discount?.authorizedBy ?? null,
       discount_cents: references.discountCents,
@@ -296,6 +307,7 @@ export async function createSale(draft, actorUserId, options = {}) {
       total_cents: references.totalCents, updated_by: actorUserId,
     } });
     await client.sale_items.createMany({ data: itemData(sale.id, references.lines) });
+    if (status === "PENDING") await reserveSaleInventory(client, sale.id, actorUserId);
     if (authorized.opticalAdditions.length) await client.sale_optical_additions.createMany({ data: additionData(sale.id, authorized.opticalAdditions) });
     await insertSaleEvent(client, sale.id, "CREATED", actorUserId, {
       details: {
@@ -330,6 +342,7 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
     if (!authorized) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
     await client.sale_items.deleteMany({ where: { sale_id: saleId } });
     await client.sales.update({ data: {
+      branch_id: draft.branchId,
       customer_id: authorized.customerId, discount_authorized_at: authorized.discount?.authorizedAt ?? null,
       discount_authorized_by: authorized.discount?.authorizedBy ?? null,
       discount_cents: references.discountCents, discount_reason: authorized.discount?.reason ?? null,
@@ -362,7 +375,8 @@ async function enqueueOrder(client, sale) {
 
 export async function confirmSale(saleId, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const sale = await client.sales.findUnique({
       include: {
         customers: true, external_prescriptions: true,
@@ -371,6 +385,7 @@ export async function confirmSale(saleId, actorUserId) {
       }, where: { id: saleId },
     });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
+    if (sale.status === "PENDING") return { reason: null, sale: await findSaleWithClient(client, saleId) };
     if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
     if (sale.quotation_valid_until && sale.quotation_valid_until < new Date()) return { reason: "QUOTATION_EXPIRED", sale: null };
     if (sale.sale_items.some((item) => !item.products_sale_items_product_idToproducts.is_active)) return { reason: "PRODUCT_INACTIVE", sale: null };
@@ -382,6 +397,7 @@ export async function confirmSale(saleId, actorUserId) {
       || sale.external_prescriptions.customer_id !== sale.customer_id
       || sale.external_prescriptions.patient_id !== sale.patient_id)) return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE", sale: null };
     await client.sales.update({ data: { status: "PENDING", updated_by: actorUserId }, where: { id: saleId } });
+    await reserveSaleInventory(client, saleId, actorUserId);
     await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: "PENDING", previousStatus: "QUOTATION" });
     await enqueueOrder(client, sale);
     return { reason: null, sale: await findSaleWithClient(client, saleId) };
@@ -391,7 +407,8 @@ export async function confirmSale(saleId, actorUserId) {
 
 export async function registerSalePayment(saleId, payment, actorUserId, options = {}) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const sale = await client.sales.findUnique({ include: { customers: true, sale_payments: true }, where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
     if (options.requestKey && sale.sale_payments.some((item) => item.request_key === options.requestKey)) return { reason: null, sale: await findSaleWithClient(client, saleId) };
@@ -404,6 +421,7 @@ export async function registerSalePayment(saleId, payment, actorUserId, options 
     const paidCents = sale.sale_payments.reduce((sum, item) => sum + Number(item.amount_cents), 0);
     const totalCents = Number(sale.total_cents);
     if (payment.amountCents > totalCents - paidCents) return { reason: "PAYMENT_EXCEEDS_BALANCE", sale: null };
+    await settleSaleInventory(client, saleId, "PAYMENT", actorUserId);
     const created = await client.sale_payments.create({ data: {
       amount_cents: payment.amountCents, cash_received_cents: payment.cashReceivedCents,
       change_cents: payment.changeCents, payment_method: payment.paymentMethod,
@@ -411,6 +429,9 @@ export async function registerSalePayment(saleId, payment, actorUserId, options 
       request_key: options.requestKey ?? null, sale_id: saleId,
     } });
     const newStatus = paidCents + payment.amountCents === totalCents ? "PAID" : "PENDING";
+    // En tienda se entrega al pagar. En web continúa físicamente reservado
+    // hasta DELIVERED, sin vencimiento desde el primer abono confirmado.
+    if (newStatus === "PAID" && sale.origin === "IN_STORE") await settleSaleInventory(client, saleId, "SALE", actorUserId);
     await client.sales.update({ data: { payment_method: payment.paymentMethod, status: newStatus, updated_by: actorUserId }, where: { id: saleId } });
     await insertSaleEvent(client, saleId, "PAYMENT_REGISTERED", actorUserId, {
       details: { amountCents: payment.amountCents, cashReceivedCents: payment.cashReceivedCents, changeCents: payment.changeCents, paymentMethod: payment.paymentMethod },
@@ -436,12 +457,14 @@ const ALLOWED_TRANSITIONS = Object.freeze({ PAID: ["IN_PREPARATION"], IN_PREPARA
 
 export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const current = await client.sales.findUnique({ include: { sale_payments: true }, where: { id: saleId } });
     if (!current) return { reason: "SALE_NOT_FOUND", sale: null };
     if (change.status === "CANCELLED") {
       if (!["QUOTATION", "PENDING"].includes(current.status)) return { reason: "SALE_NOT_CANCELLABLE", sale: null };
       if (current.sale_payments.length) return { reason: "SALE_HAS_PAYMENTS", sale: null };
+      await settleSaleInventory(client, saleId, "RELEASE", actorUserId);
       await client.sales.update({ data: {
         cancellation_reason: change.cancellationReason, cancelled_at: changedAt,
         status: "CANCELLED", updated_by: actorUserId,
@@ -451,6 +474,7 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
       });
     } else {
       if (!(ALLOWED_TRANSITIONS[current.status] ?? []).includes(change.status)) return { reason: "INVALID_STATUS_TRANSITION", sale: null };
+      if (change.status === "DELIVERED") await settleSaleInventory(client, saleId, "SALE", actorUserId);
       await client.sales.update({ data: { status: change.status, updated_by: actorUserId }, where: { id: saleId } });
       await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: change.status, previousStatus: current.status });
     }
