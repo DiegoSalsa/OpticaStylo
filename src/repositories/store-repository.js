@@ -13,7 +13,7 @@ function mapPrescription(row) {
     confirmedData: row.confirmed_data, createdAt: row.created_at,
     extractedData: row.extracted_data, extractionProvider: row.extraction_provider,
     extractionStatus: row.extraction_status, hasImage: row.source === "IMAGE",
-    id: row.id, mediaType: row.media_type, originalFilename: row.original_filename,
+    id: row.id, imageHash: row.file_sha256, mediaType: row.media_type, originalFilename: row.original_filename,
     source: row.source, status: row.status, updatedAt: row.updated_at,
   };
 }
@@ -278,17 +278,31 @@ export async function saveExternalPrescriptionImage(tokenHash, accountId, image)
   });
 }
 
-export async function confirmExternalPrescription(tokenHash, accountId, data, confirmedAt) {
+export async function confirmExternalPrescription(tokenHash, accountId, data, confirmedAt, imageHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const updated = await client.external_prescriptions.updateMany({
       data: { confirmed_at: confirmedAt, confirmed_data: data, status: "READY" },
-      where: { cart_id: locked.cart.id, source: "IMAGE" },
+      where: { cart_id: locked.cart.id, source: "IMAGE", file_sha256: imageHash },
     });
     if (!updated.count) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
+  });
+}
+
+export async function removeCartPrescription(tokenHash, accountId) {
+  return retryTransaction(prisma, async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return { cart: null, reason: locked.reason };
+    const existing = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
+    // Una receta ya usada por una venta forma parte de su historial permanente.
+    if (existing && await client.sales.count({ where: { external_prescription_id: existing.id } })) {
+      return { cart: null, reason: "CART_NOT_ACTIVE" };
+    }
+    await client.external_prescriptions.deleteMany({ where: { cart_id: locked.cart.id } });
+    return { cart: await loadCart(client, tokenHash, accountId), removedCloudinary: cloudinaryAsset(existing) };
   });
 }
 
@@ -299,7 +313,7 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
     if (locked.reason) return { cart: null, reason: locked.reason };
     const prescription = await client.external_prescriptions.findFirst({ where: { cart_id: locked.cart.id, source: "IMAGE" } });
     if (!prescription) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
-    if (prescription.extraction_status === "PENDING") return { cart: null, reason: "PRESCRIPTION_EXTRACTION_IN_PROGRESS" };
+    if (prescription.extraction_status === "PENDING" && Date.now() - prescription.updated_at.getTime() < 120_000) return { cart: null, reason: "PRESCRIPTION_EXTRACTION_IN_PROGRESS" };
     if (prescription.extraction_status === "COMPLETED" && prescription.extracted_data) return {
       cart: await loadCart(client, tokenHash, accountId), cached: true,
       data: prescription.extracted_data, provider: prescription.extraction_provider, reason: null,
@@ -308,7 +322,7 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
       extracted_data: null, extraction_provider: provider, extraction_status: "PENDING",
     }, where: { id: prescription.id } });
     return {
-      cached: false,
+      cached: false, imageHash: prescription.file_sha256,
       image: {
         cloudinary: cloudinaryAsset(prescription), data: prescription.file_data,
         filename: prescription.original_filename, mediaType: prescription.media_type,
@@ -318,28 +332,28 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
   }, { isolationLevel: "Serializable" });
 }
 
-export async function completeCartPrescriptionExtraction(tokenHash, accountId, provider, data) {
+export async function completeCartPrescriptionExtraction(tokenHash, accountId, provider, data, imageHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const updated = await client.external_prescriptions.updateMany({
       data: { extracted_data: data, extraction_provider: provider, extraction_status: "COMPLETED" },
-      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE" },
+      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE", file_sha256: imageHash },
     });
     if (!updated.count) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
   });
 }
 
-export async function failCartPrescriptionExtraction(tokenHash, accountId, provider) {
+export async function failCartPrescriptionExtraction(tokenHash, accountId, provider, imageHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { reason: locked.reason };
     await client.external_prescriptions.updateMany({
       data: { extracted_data: null, extraction_provider: provider, extraction_status: "FAILED" },
-      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE" },
+      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE", file_sha256: imageHash },
     });
     return { reason: null };
   });
@@ -400,6 +414,15 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
     }, items.map((item) => ({ category: item.product.category, requiresPrescription: item.product.requires_prescription })))) {
       return { reason: "PRESCRIPTION_REQUIRED", saleId: null };
     }
+    let clinicalPrescription = null;
+    if (cart.clinical_prescription_id) {
+      const account = accountId ? await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } }) : null;
+      clinicalPrescription = account?.customers.patient_id ? await client.optical_prescriptions.findFirst({
+        where: { id: cart.clinical_prescription_id, status: "ACTIVE", clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" } },
+        include: { clinical_encounters: true },
+      }) : null;
+      if (!clinicalPrescription) return { reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE", saleId: null };
+    }
     let customerId;
     if (accountId) {
       customerId = (await client.customer_accounts.findUnique({ where: { id: accountId } }))?.customer_id;
@@ -416,7 +439,8 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       delivery_notes: cart.delivery_notes, delivery_region: cart.delivery_region,
       external_prescription_id: cart.external_prescriptions?.id,
       fulfillment_method: cart.fulfillment_method, origin: "ONLINE",
-      prescription_id: cart.clinical_prescription_id, shipping_fee_cents: cart.shipping_fee_cents,
+      prescription_id: cart.clinical_prescription_id, patient_id: clinicalPrescription?.clinical_encounters.patient_id ?? null,
+      shipping_fee_cents: cart.shipping_fee_cents,
       shipping_quote_source: cart.shipping_quote_source, status: "PENDING",
       subtotal_cents: subtotalCents, total_cents: totalCents, updated_by: null,
       sale_items: { create: items.map((item, index) => ({
@@ -441,7 +465,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       }, update: {}, where: { deduplication_key: key },
     });
     await client.store_carts.update({ data: {
-      checked_out_at: checkedOutAt, sale_id: sale.id, status: "CHECKED_OUT",
+      checked_out_at: checkedOutAt, sale_id: sale.id, status: "CHECKED_OUT", customer_account_id: accountId,
     }, where: { id: cart.id } });
     return { reason: null, saleId: sale.id };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes

@@ -58,6 +58,15 @@ export async function listExternalPrescriptionsByPatient(patientId) {
   })).map(mapPrescription);
 }
 
+export async function listExternalPrescriptionsByCustomer(customerId) {
+  return (await prisma.external_prescriptions.findMany({
+    include: { patients: true }, orderBy: { created_at: "desc" },
+    // En la tienda el propietario se obtiene de la venta: el CHECK existente
+    // exige elegir cart_id o customer_id, y se conserva sin migrar datos.
+    where: { status: "READY", OR: [{ customer_id: customerId }, { sales: { some: { customer_id: customerId } } }] },
+  })).map(mapPrescription);
+}
+
 export async function findExternalPrescriptionFileById(id) {
   const row = await prisma.external_prescriptions.findFirst({
     select: {

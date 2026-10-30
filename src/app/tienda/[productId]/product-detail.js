@@ -87,7 +87,7 @@ export default function ProductDetail({ productId }) {
         ? "Marco y cristales agregados. Antes de pagar debes registrar una receta lista."
         : "Producto agregado. Tu carrito quedó guardado en este dispositivo.");
       setStatus("ready");
-      router.push("/carrito");
+      router.push(selectedPrescriptionLensId ? "/carrito#receta" : "/carrito");
     } catch (error) { setMessage(error.message); setStatus("ready"); }
   }
 

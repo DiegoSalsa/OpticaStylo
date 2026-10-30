@@ -17,6 +17,7 @@ import {
   failCartPrescriptionExtraction,
   listStoreOrders,
   removeStoreCartItem,
+  removeCartPrescription,
   saveExternalPrescriptionImage,
   saveManualExternalPrescription,
   upsertStoreCartItem,
@@ -32,7 +33,10 @@ import {
   validatePrescriptionImageBytes,
   validateStoreOrderId,
   validateStoreProductId,
+  validatePrescriptionImageHash,
 } from "../validations/store-validation.js";
+import { findExternalPrescriptionById, findExternalPrescriptionFileById } from "../repositories/external-prescription-repository.js";
+import { findPrescriptionById } from "../repositories/prescription-repository.js";
 
 const CART_SECONDS = 30 * 24 * 60 * 60;
 const ERRORS = Object.freeze({
@@ -216,12 +220,15 @@ export async function putManualPrescription(token, account, input, dependencies 
 
 export async function putPrescriptionImage(token, account, file, dependencies = {}) {
   const credentials = access(token, account);
+  const current = await getStoreCart(token, account, dependencies);
+  if (current.status !== "ACTIVE") throwReason("CART_NOT_ACTIVE");
   const image = validatePrescriptionImage(file);
   const data = validatePrescriptionImageBytes(
     Buffer.from(await image.file.arrayBuffer()),
     image.mediaType,
   );
   const sha256 = createHash("sha256").update(data).digest("hex");
+  if (data.length !== image.size) throw new AppError({ code: "INVALID_PRESCRIPTION_IMAGE", message: "El tamaño recibido no coincide con el archivo declarado.", status: 400 });
   const gateway = dependencies.mediaGateway ?? getCloudinaryMediaGateway();
   const cloudinary = await gateway.uploadPrivatePrescription({ data });
   try {
@@ -253,7 +260,16 @@ export async function completeImagePrescription(token, account, input, dependenc
     credentials.accountId,
     validateExternalPrescriptionData(input),
     dependencies.currentDate ?? new Date(),
+    validatePrescriptionImageHash(input?.imageHash),
   ));
+}
+
+export async function deletePrescriptionImage(token, account, dependencies = {}) {
+  const credentials = access(token, account);
+  const result = await (dependencies.removePrescription ?? removeCartPrescription)(credentials.tokenHash, credentials.accountId);
+  const cart = unwrap(result);
+  await deleteReplacedPrivatePrescription(result.removedCloudinary, dependencies);
+  return cart;
 }
 
 export async function getPrescriptionImage(token, account, dependencies = {}) {
@@ -303,6 +319,7 @@ export async function extractPrescriptionImage(token, account, dependencies = {}
       credentials.accountId,
       extraction.provider,
       extraction.data,
+      claim.imageHash,
     );
     if (result.reason) throwReason(result.reason);
     return {
@@ -315,6 +332,7 @@ export async function extractPrescriptionImage(token, account, dependencies = {}
         credentials.tokenHash,
         credentials.accountId,
         provider,
+        claim.imageHash,
       );
     } catch (failure) {
       console.error("No fue posible registrar el error de lectura automática de la receta.", failure);
@@ -329,6 +347,7 @@ function publicOrder(sale) {
     createdAt: sale.createdAt,
     customer: sale.customer,
     externalPrescription: sale.externalPrescription,
+    prescription: sale.prescription ? { id: sale.prescription.id } : null,
     fulfillment: sale.fulfillment,
     id: sale.id,
     items: sale.items,
@@ -392,6 +411,32 @@ export async function getStoreOrders(account, dependencies = {}) {
     dependencies.findSaleById ?? findSaleById
   )(id)));
   return sales.filter(Boolean).map(publicOrder);
+}
+
+export async function getStoreOrderPrescription(orderId, token, account, { file = false, ...dependencies } = {}) {
+  // La propiedad se comprueba antes de consultar datos clínicos o almacenamiento.
+  const order = await getStoreOrder(orderId, token, account, dependencies);
+  if (order.externalPrescription) {
+    if (file) {
+      const image = await (dependencies.findPrescriptionFile ?? findExternalPrescriptionFileById)(order.externalPrescription.id);
+      if (image) return image.cloudinary ? {
+        ...image, data: await (dependencies.mediaGateway ?? getCloudinaryMediaGateway()).downloadPrivatePrescription(image.cloudinary),
+      } : image;
+    } else {
+      const prescription = await (dependencies.findExternalPrescription ?? findExternalPrescriptionById)(order.externalPrescription.id);
+      if (prescription) return prescription;
+    }
+  }
+  if (!file && order.prescription) {
+    const prescription = await (dependencies.findPrescription ?? findPrescriptionById)(order.prescription.id);
+    if (prescription) return {
+      id: prescription.id, source: "CLINICAL", status: prescription.status,
+      patient: prescription.patient, createdAt: prescription.issuedAt, hasImage: false,
+      confirmedData: { rightEye: prescription.rightEye, leftEye: prescription.leftEye,
+        pupillaryDistance: prescription.pupillaryDistance, fulfillmentNotes: prescription.fulfillmentNotes },
+    };
+  }
+  throw new AppError({ code: "PRESCRIPTION_NOT_FOUND", message: "Este pedido no tiene una receta disponible.", status: 404 });
 }
 
 export async function retryStoreOrderCheckout(orderId, token, account, dependencies = {}) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { readResponse } from "@/components/internal/internal-shell";
+import PrescriptionDetails from "@/components/prescriptions/prescription-details";
 
 const money = new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" });
 const labels = { PENDING: "Pendiente", PAID: "Pagado", IN_PREPARATION: "En preparación", READY: "Listo", DELIVERED: "Entregado", CANCELLED: "Cancelado", QUOTATION: "Cotización" };
@@ -48,7 +49,13 @@ export default function OrderDetail({ saleId, onClose }) {
         {sale.fulfillment?.notes && <div><dt>Indicaciones de entrega</dt><dd>{sale.fulfillment.notes}</dd></div>}
       </dl>
       <h3>Historial de cambios</h3>
+      {sale.externalPrescription && <PrescriptionDetails endpoint={`/api/external-prescriptions/${sale.externalPrescription.id}`} label="Ver receta del pedido" />}
+      {sale.prescription && <ClinicalOrderPrescription prescriptionId={sale.prescription.id} />}
       {current.history.status === "rejected" ? <p className="inline-error" role="alert">No se pudo consultar el historial. <button className="app-button" onClick={() => setRevision((value) => value + 1)} type="button">Reintentar</button></p> : <ol className="order-history">{current.history.value.map((event) => <li key={event.id}><time>{new Date(event.createdAt).toLocaleString("es-CL")}</time><span>{event.previousStatus ? `${labels[event.previousStatus] ?? event.previousStatus} → ` : ""}{labels[event.newStatus] ?? event.eventType}</span></li>)}</ol>}
     </>}
   </dialog>;
+}
+
+function ClinicalOrderPrescription({ prescriptionId }) {
+  return <PrescriptionDetails endpoint={`/api/prescriptions/${prescriptionId}`} label="Ver prescripción clínica" />;
 }

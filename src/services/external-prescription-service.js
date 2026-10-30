@@ -9,6 +9,7 @@ import {
   findExternalPrescriptionById,
   findExternalPrescriptionFileById,
   listExternalPrescriptionsByPatient,
+  listExternalPrescriptionsByCustomer,
 } from "../repositories/external-prescription-repository.js";
 import { findPatientById } from "../repositories/patient-repository.js";
 import { AppError } from "../utils/app-error.js";
@@ -189,6 +190,9 @@ export async function createExternalPrescription(input, actor, dependencies = {}
 
 export async function getExternalPrescriptionList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  if (searchParams.has("customerId")) {
+    return (dependencies.listByCustomer ?? listExternalPrescriptionsByCustomer)(validateExternalPrescriptionId(searchParams.get("customerId")));
+  }
   const patientId = await ensurePatient(searchParams.get("patientId"), dependencies);
   return (dependencies.listByPatient ?? listExternalPrescriptionsByPatient)(patientId);
 }

@@ -84,7 +84,7 @@ function validateDecimal(value, fieldName, { nullable = false } = {}) {
     typeof value !== "number" ||
     !Number.isFinite(value) ||
     Math.abs(value) >= 10_000 ||
-    Math.abs(value * 100 - Math.round(value * 100)) > Number.EPSILON * 100
+    Math.abs(value * 100 - Math.round(value * 100)) > 1e-8
   ) {
     throwValidationError(`${fieldName} debe ser un número con hasta 2 decimales.`);
   }

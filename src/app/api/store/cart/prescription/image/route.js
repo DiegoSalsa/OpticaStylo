@@ -1,6 +1,6 @@
 // Capa HTTP para store/cart/prescription/image/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { authenticateCustomerRequest, getStoreCartToken } from "@/auth/store-session";
-import { getPrescriptionImage, putPrescriptionImage } from "@/services/store-service";
+import { deletePrescriptionImage, getPrescriptionImage, putPrescriptionImage } from "@/services/store-service";
 import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readMultipartFormData } from "@/utils/http-request";
@@ -40,5 +40,12 @@ export async function GET(request) {
         "X-Content-Type-Options": "nosniff",
       },
     });
+  });
+}
+
+export async function DELETE(request) {
+  return executeApiHandler(async () => {
+    const account = await authenticateCustomerRequest(request, { optional: true });
+    return createSuccessResponse(await deletePrescriptionImage(getStoreCartToken(request), account));
   });
 }

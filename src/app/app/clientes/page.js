@@ -9,6 +9,7 @@ import Pagination from "@/components/internal/pagination";
 import usePaginatedResource from "@/components/internal/use-paginated-resource";
 import { createRequestGate } from "@/utils/pagination";
 import Icon from "@/components/ui/icon";
+import CustomerPrescriptions from "@/components/prescriptions/customer-prescriptions";
 import "../management.css";
 
 const EMPTY = {
@@ -320,6 +321,7 @@ export default function CustomersPage() {
               </div>
             </form>
           )}
+          {selectedId && actor?.permissions.includes("sales.read") && <CustomerPrescriptions customerId={selectedId} key={selectedId} />}
         </section>
       </div>
     </>

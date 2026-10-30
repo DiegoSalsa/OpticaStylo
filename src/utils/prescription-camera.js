@@ -1,4 +1,5 @@
 export const PRESCRIPTION_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
+export const MAX_PRESCRIPTION_IMAGE_BYTES = 4 * 1024 * 1024;
 export const MAX_CAMERA_IMAGE_EDGE = 2200;
 
 export function getCameraConstraints(facingMode = "environment") {
