@@ -240,4 +240,3 @@ for (const type of ["OPTOMETRY", "CONTACTOLOGY"]) test(`${type}: guardar todos l
   await printPage.close();
   expect(errors).toEqual([]);
 });
-

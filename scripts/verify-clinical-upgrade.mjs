@@ -42,4 +42,3 @@ try {
 } finally {
   await prisma.$disconnect();
 }
-
