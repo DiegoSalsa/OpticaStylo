@@ -1,4 +1,5 @@
 import { PERMISSIONS } from "../auth/permissions.js";
+import { saleBranchScope } from "../auth/sale-branch-access.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getSalesReportData } from "../repositories/report-repository.js";
 import { validateSalesReportQuery } from "../validations/report-validation.js";
@@ -18,6 +19,6 @@ export async function getSalesReport(searchParams, actor, dependencies = {}) {
       status: query.status,
       to: query.to,
     },
-    ...(await (dependencies.getSalesReportData ?? getSalesReportData)(query)),
+    ...(await (dependencies.getSalesReportData ?? getSalesReportData)({...query,...(!dependencies.getSalesReportData?await saleBranchScope(actor):{})})),
   };
 }

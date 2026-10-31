@@ -37,7 +37,13 @@ async function order(id, quantity = 1, branchId = a) {
   const sale = await value(await http("/api/store/cart/checkout", { cookie: result.cookie, method: "POST" }), 201);
   return { ...result, sale: sale.order };
 }
-before(async () => { db = database(); await db.public_request_rate_limits.deleteMany(); admin = await login(evaluation.adminEmail); staff = await login(inventoryDemo.staffEmail); });
+before(async () => {
+  db = database(); await db.public_request_rate_limits.deleteMany(); admin = await login(evaluation.adminEmail); staff = await login(inventoryDemo.staffEmail);
+  for(const [index,branchId] of [a,b,c].entries()) {
+    const terminal=await value(await http("/api/cash-register/terminals",{method:"POST",body:{branchId,name:`Regresión inventario ${index+1}`}}),201);
+    await value(await http("/api/cash-register",{method:"POST",body:{branchId,terminalId:terminal.id,openingAmountCents:0}}),201);
+  }
+});
 beforeEach(async () => { await db.public_request_rate_limits.deleteMany(); });
 after(async () => { await db.$disconnect(); await prisma.$disconnect(); });
 

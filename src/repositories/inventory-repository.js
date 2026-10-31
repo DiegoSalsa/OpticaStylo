@@ -125,8 +125,8 @@ export async function expireInventoryReservations() {
   return rows.length;
 }
 
-export async function availabilityForProducts(products, client = prisma) {
-  const branches = await client.branches.findMany({ where: { is_active: true, pickup_enabled: true }, orderBy: { name: "asc" } });
+export async function availabilityForProducts(products, client = prisma, includeNonPickup = false) {
+  const branches = await client.branches.findMany({ where: { is_active: true, ...(!includeNonPickup ? { pickup_enabled: true } : {}) }, orderBy: { name: "asc" } });
   const stocks = await client.inventory_stocks.findMany({ where: { product_id: { in: products.map((p) => p.id ?? p.productId) }, branch_id: { in: branches.map((b) => b.id) } } });
   return new Map(products.map((product) => {
     const id = product.id ?? product.productId;

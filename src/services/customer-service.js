@@ -20,8 +20,8 @@ function notFound() {
 }
 
 function convertUniqueViolation(error) {
-  if (error?.code !== "23505") throw error;
-  const linkedPatient = error.constraint === "customers_patient_id_key";
+  if (!["23505","P2002"].includes(error?.code)) throw error;
+  const linkedPatient = error.constraint === "customers_patient_id_key" || error.meta?.target?.includes("patient_id");
   throw new AppError({
     code: linkedPatient ? "PATIENT_ALREADY_HAS_CUSTOMER" : "CUSTOMER_RUT_ALREADY_EXISTS",
     message: linkedPatient

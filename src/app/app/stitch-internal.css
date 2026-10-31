@@ -223,6 +223,9 @@
   }
 }
 @media (max-width: 680px) {
+  .internal-main {
+    padding: 1.25rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
   .internal-topbar {
     height: 56px;
   }

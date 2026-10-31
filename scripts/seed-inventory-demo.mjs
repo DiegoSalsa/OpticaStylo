@@ -27,4 +27,8 @@ try {
     if (mode === "TRACKED") for (const [index, branchId] of demo.branches.entries()) await mutateInventory({ branchId, productId: product.id, kind: "COUNT", quantity: index === 0 ? 1000 : index === 1 ? 3 : 0, expectedVersion: null, reason: "Conteo sintético para demostración aislada" }, actor, `seed:${branchId}:${product.id}`.slice(-80));
   }
   console.log("Tres sucursales sintéticas con conteos auditados preparadas. No se cargó inventario real.");
+  if(process.env.POS_CASH_TEST_MODE==="true") {
+    for(const [index,branchId] of demo.branches.entries()) for(const number of [1,2]) await prisma.cash_register_terminals.create({data:{branch_id:branchId,name:`Caja sintética ${index+1}.${number}`}});
+    console.log("Puntos de cobro sintéticos preparados sin sesiones abiertas para demostrar la apertura.");
+  }
 } finally { await prisma.$disconnect(); }

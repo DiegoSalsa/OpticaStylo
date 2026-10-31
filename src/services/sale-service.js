@@ -1,5 +1,6 @@
 import { verifyPassword } from "../auth/password.js";
 import { PERMISSIONS } from "../auth/permissions.js";
+import { assertSaleBranch, saleBranchScope } from "../auth/sale-branch-access.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
   beginDiscountAuthorizationAttempt,
@@ -28,14 +29,14 @@ import {
   validateSaleId,
   validateSaleListQuery,
   validateSaleOperation,
-  validateSalePaymentInput,
+  validateSalePaymentsInput,
   validateSaleStatusInput,
 } from "../validations/sale-validation.js";
 import { validateDiscountAuthorizationInput } from "../validations/discount-authorization-validation.js";
 
 const REPOSITORY_ERRORS = Object.freeze({
   CUSTOMER_NOT_FOUND: ["CUSTOMER_NOT_FOUND", "No se encontró el cliente de la venta.", 404],
-  CASH_REGISTER_CLOSED: ["CASH_REGISTER_CLOSED", "Debe abrir la caja de prueba antes de registrar efectivo.", 409],
+  CASH_REGISTER_CLOSED: ["CASH_REGISTER_CLOSED", "Abre una caja de esta sucursal antes de registrar el cobro.", 409],
   DISCOUNT_EXCEEDS_SUBTOTAL: ["DISCOUNT_EXCEEDS_SUBTOTAL", "El descuento debe ser menor que el subtotal de la venta.", 409],
   DISCOUNT_EXCEEDS_TOTAL: ["DISCOUNT_EXCEEDS_TOTAL", "El descuento debe ser menor que el total de la venta.", 409],
   DISCOUNT_AUTHORIZATION_INVALID: ["DISCOUNT_AUTHORIZATION_INVALID", "La autorización de descuento venció, ya fue utilizada o no coincide con esta operación.", 409],
@@ -49,7 +50,7 @@ const REPOSITORY_ERRORS = Object.freeze({
   PAYMENT_ATTEMPT_ACTIVE: ["PAYMENT_ATTEMPT_ACTIVE", "Existe un cobro electrónico pendiente para esta venta.", 409],
   PAYMENT_EXCEEDS_BALANCE: ["PAYMENT_EXCEEDS_BALANCE", "El abono supera el saldo pendiente.", 409],
   PAYMENT_NOT_FOUND: ["PAYMENT_NOT_FOUND", "No se encontró el abono indicado para el comprobante.", 404],
-  PAYMENT_METHOD_MISMATCH: ["PAYMENT_METHOD_MISMATCH", "Todos los abonos deben usar el mismo medio de pago.", 409],
+  PAYMENT_METHOD_MISMATCH: ["PAYMENT_METHOD_MISMATCH", "El checkout de Mercado Pago no admite combinar cobros manuales.", 409],
   PRESCRIPTION_NOT_FOUND: ["PRESCRIPTION_NOT_FOUND", "No se encontró la receta indicada.", 404],
   PRESCRIPTION_NOT_USABLE: ["PRESCRIPTION_NOT_USABLE", "La receta debe estar activa y utilizable.", 409],
   PRESCRIPTION_PATIENT_MISMATCH: ["PRESCRIPTION_PATIENT_MISMATCH", "La receta no pertenece al paciente seleccionado.", 409],
@@ -141,6 +142,7 @@ export async function createSale(input, actor, dependencies = {}) {
     {
       requestKey: dependencies.requestKey ?? null,
       status: operation === "SALE" ? "PENDING" : "QUOTATION",
+      actor,
     },
   ));
 }
@@ -166,17 +168,20 @@ export async function getSale(saleId, actor, dependencies = {}) {
   const id = validateSaleId(saleId);
   const sale = await (dependencies.findSaleById ?? findSaleById)(id);
   if (!sale) throwRepositoryReason("SALE_NOT_FOUND");
+  if (!dependencies.findSaleById) await assertSaleBranch(sale,actor);
   return sale;
 }
 
 export async function getSaleList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
-  return (dependencies.listSales ?? listSales)(validateSaleListQuery(searchParams));
+  const query=validateSaleListQuery(searchParams);
+  return (dependencies.listSales ?? listSales)({...query,...(!dependencies.listSales?await saleBranchScope(actor,query.branchId):{})});
 }
 
 export async function getSaleSummary(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
-  return (dependencies.countSalesByStatus ?? countSalesByStatus)(validateSaleListQuery(searchParams));
+  const query=validateSaleListQuery(searchParams);
+  return (dependencies.countSalesByStatus ?? countSalesByStatus)({...query,...(!dependencies.countSalesByStatus?await saleBranchScope(actor,query.branchId):{})});
 }
 
 export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
@@ -188,7 +193,7 @@ export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
     if (draft.branchId) await inventoryBranchAccess(actor, draft.branchId);
   }
   return unwrap(await (dependencies.updateSaleDraft ?? updateSaleDraftRepository)(
-    validateSaleId(saleId), draft, actor.userId,
+    validateSaleId(saleId), draft, actor.userId, actor,
   ));
 }
 
@@ -200,20 +205,22 @@ export async function confirmSale(saleId, actor, dependencies = {}) {
     if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
   }
   return unwrap(await (dependencies.confirmSale ?? confirmSaleRepository)(
-    validateSaleId(saleId), actor.userId,
+    validateSaleId(saleId), actor.userId, actor,
   ));
 }
 
 export async function registerSalePayment(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_PAYMENTS_REGISTER]);
+  if (!dependencies.registerSalePayment && !dependencies.requestKey) throw new AppError({code:"IDEMPOTENCY_KEY_REQUIRED",message:"El cobro requiere identificador de operación.",status:400});
   if (!dependencies.registerSalePayment) {
     await expireInventoryReservations();
     const current = await getSale(saleId, actor);
     if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
+    if (current.origin === "IN_STORE" || input?.cashSessionId || input?.paymentMethod === "CASH" || input?.payments?.some((p)=>p.paymentMethod === "CASH")) requirePermissions(actor,["cash.operate"]);
   }
   return unwrap(await (dependencies.registerSalePayment ?? registerSalePaymentRepository)(
-    validateSaleId(saleId), validateSalePaymentInput(input), actor.userId,
-    { requestKey: dependencies.requestKey ?? null },
+    validateSaleId(saleId), validateSalePaymentsInput(input), actor.userId,
+    { requestKey: dependencies.requestKey ?? null, actor },
   ));
 }
 
@@ -236,6 +243,7 @@ export async function getSaleHistory(saleId, actor, dependencies = {}) {
 
 export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  if (!dependencies.issueSaleReceipt) await getSale(saleId,actor);
   const id = validateSaleId(saleId);
   const receiptInput = validateReceiptInput(input);
   const result = await (dependencies.issueSaleReceipt ?? issueSaleReceiptRepository)(
@@ -247,6 +255,7 @@ export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) 
 
 export async function getSaleReceipt(saleId, receiptId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  if (!dependencies.findReceiptBySaleId) await getSale(saleId,actor);
   const receipt = await (dependencies.findReceiptBySaleId ?? findReceiptBySaleId)(
     validateSaleId(saleId),
     receiptId ? validateSaleId(receiptId, "comprobante") : null,

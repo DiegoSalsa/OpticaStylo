@@ -1,14 +1,17 @@
 import { prisma } from "../db/prisma.js";
+import { createHash } from "node:crypto";
+import { cashError, lockPaymentSession } from "./cash-register-repository.js";
 import { rutSearchValues } from "../utils/rut-search.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import { retryTransaction } from "../db/retry-transaction.js";
-import { reserveSaleInventory, settleSaleInventory } from "./inventory-repository.js";
+import { inventoryBranchAccess, reserveSaleInventory, settleSaleInventory } from "./inventory-repository.js";
 import {
   consumeDiscountAuthorizationWithClient,
   lockDiscountAuthorizationWithClient,
 } from "./discount-authorization-grant-repository.js";
 
 const saleInclude = {
+  users_sales_created_byTousers: { select: { id: true, first_name: true, last_name: true } },
   branches: true,
   inventory_reservations: true,
   customers: true,
@@ -29,6 +32,7 @@ const saleInclude = {
 // The list preserves its summary contract without loading line items, clinical
 // records, prescription files, receipt payloads or payment provider details.
 export const saleListInclude = {
+  users_sales_created_byTousers: { select: { id: true, first_name: true, last_name: true } },
   branches: true,
   customers: { select: { email: true, first_names: true, last_names: true, phone: true, rut: true } },
   external_prescriptions: { select: { source: true, status: true } },
@@ -48,7 +52,7 @@ export const saleListInclude = {
 
 export const ORDER_STATUSES = ["PENDING", "PAID", "IN_PREPARATION", "READY", "DELIVERED", "CANCELLED"];
 
-export function saleListWhere({ customerId, origin, search = "", status, view, branchId } = {}) {
+export function saleListWhere({ customerId, origin, search = "", status, view, branchId, allowedBranchIds, legacyActorId } = {}) {
   const statuses = view === "active" ? ["PENDING", "PAID", "IN_PREPARATION", "READY"]
     : view === "delivered" ? ["DELIVERED"] : view === "history" ? ORDER_STATUSES : null;
   const where = {
@@ -61,6 +65,7 @@ export function saleListWhere({ customerId, origin, search = "", status, view, b
     if (statuses) where.AND = [{ status }];
     else where.status = status;
   }
+  if (allowedBranchIds) where.AND=[...(where.AND??[]),{OR:[{branch_id:{in:allowedBranchIds}},{branch_id:null,created_by:legacyActorId}]}];
   if (!search) return where;
   const number = search.replace(/^#\s*/, "");
   // Short numeric queries identify a sale number; matching them inside every
@@ -128,6 +133,8 @@ function mapSale(row, details = true) {
       method: row.fulfillment_method, notes: row.delivery_notes, region: row.delivery_region,
     } : null,
     branchId: row.branch_id, branch: row.branches ? { id: row.branches.id, name: row.branches.name, address: row.branches.address } : null,
+    cashSessionId: row.cash_session_id, createdBy: row.created_by,
+    seller: row.users_sales_created_byTousers ? { id: row.created_by, name: `${row.users_sales_created_byTousers.first_name} ${row.users_sales_created_byTousers.last_name}` } : null,
     reservation: row.inventory_reservations?.map((r) => ({ productId: r.product_id, quantity: r.quantity, status: r.status, expiresAt: r.expires_at })),
     id: row.id, origin: row.origin, paidCents, paymentMethod: row.payment_method,
     patient: row.patients ? {
@@ -173,6 +180,7 @@ function mapSale(row, details = true) {
       unitPriceCents: Number(addition.unit_price_cents),
     })),
     payments: row.sale_payments.map((payment) => ({
+      cashSessionId: payment.cash_session_id,
       amountCents: Number(payment.amount_cents),
       cashReceivedCents: payment.cash_received_cents == null ? null : Number(payment.cash_received_cents),
       changeCents: payment.change_cents == null ? null : Number(payment.change_cents),
@@ -281,21 +289,29 @@ async function recordDiscount(client, saleId, draft, actorUserId, status = "QUOT
   await consumeDiscountAuthorizationWithClient(client, draft.discount.authorizationId, saleId);
 }
 
+async function repeatSale(client,existing,draft) {
+  const saved=await findSaleWithClient(client,existing.id);
+  if(saved.branchId!==draft.branchId || saved.customer?.id!==(draft.customerId??undefined) || saved.items.length!==draft.items.length || saved.items.some((item)=>!draft.items.some((line)=>line.productId===item.productId&&line.quantity===item.quantity))) cashError("IDEMPOTENCY_CONFLICT","La clave de venta corresponde a otro ticket.");
+  return {reason:null,sale:saved};
+}
 export async function createSale(draft, actorUserId, options = {}) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     if (options.requestKey) {
+      await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`sale:${actorUserId}:${options.requestKey}`},0))::text`;
       const existing = await client.sales.findFirst({ where: { created_by: actorUserId, request_key: options.requestKey } });
-      if (existing) return { reason: null, sale: await findSaleWithClient(client, existing.id) };
+      if (existing) return repeatSale(client,existing,draft);
     }
     const references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
     const authorized = await authorizeDiscount(client, draft, actorUserId);
     if (!authorized) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
     const status = options.status === "PENDING" ? "PENDING" : "QUOTATION";
+    if (draft.cashSessionId) await lockPaymentSession(client,{branch_id:draft.branchId},draft.cashSessionId,options.actor);
     const sale = await client.sales.create({ data: {
       created_by: actorUserId, customer_id: draft.customerId,
       branch_id: draft.branchId,
+      cash_session_id: draft.cashSessionId,
       discount_authorized_at: authorized.discount?.authorizedAt ?? null,
       discount_authorized_by: authorized.discount?.authorizedBy ?? null,
       discount_cents: references.discountCents,
@@ -320,15 +336,21 @@ export async function createSale(draft, actorUserId, options = {}) {
     await recordDiscount(client, sale.id, authorized, actorUserId, status);
     return { reason: null, sale: await findSaleWithClient(client, sale.id) };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
-  }, { isolationLevel: "Serializable" });
+  }, { isolationLevel: "Serializable" }).catch(async(error)=>{
+    if(error.code==="P2002"&&options.requestKey){const existing=await prisma.sales.findFirst({where:{created_by:actorUserId,request_key:options.requestKey}});if(existing)return repeatSale(prisma,existing,draft);}
+    throw error;
+  });
 }
 
-export async function updateSaleDraft(saleId, draft, actorUserId) {
+export async function updateSaleDraft(saleId, draft, actorUserId, actor) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM sales WHERE id=${saleId}::uuid FOR UPDATE`;
     const sale = await client.sales.findUnique({ where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
     if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_EDITABLE", sale: null };
+    if(actor&&sale.branch_id) await inventoryBranchAccess(actor,sale.branch_id,client);
+    if(draft.cashSessionId) await lockPaymentSession(client,{branch_id:draft.branchId},draft.cashSessionId,actor);
     let references = await loadDraftReferences(client, draft);
     if (references.reason) return { reason: references.reason, sale: null };
     const additions = await client.sale_optical_additions.findMany({ where: { sale_id: saleId } });
@@ -343,6 +365,7 @@ export async function updateSaleDraft(saleId, draft, actorUserId) {
     await client.sale_items.deleteMany({ where: { sale_id: saleId } });
     await client.sales.update({ data: {
       branch_id: draft.branchId,
+      cash_session_id: draft.cashSessionId,
       customer_id: authorized.customerId, discount_authorized_at: authorized.discount?.authorizedAt ?? null,
       discount_authorized_by: authorized.discount?.authorizedBy ?? null,
       discount_cents: references.discountCents, discount_reason: authorized.discount?.reason ?? null,
@@ -373,7 +396,7 @@ async function enqueueOrder(client, sale) {
   });
 }
 
-export async function confirmSale(saleId, actorUserId) {
+export async function confirmSale(saleId, actorUserId, actor) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
@@ -387,8 +410,11 @@ export async function confirmSale(saleId, actorUserId) {
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
     if (sale.status === "PENDING") return { reason: null, sale: await findSaleWithClient(client, saleId) };
     if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
+    if(actor&&sale.branch_id) await inventoryBranchAccess(actor,sale.branch_id,client);
+    if(sale.cash_session_id) await lockPaymentSession(client,sale,sale.cash_session_id,actor);
     if (sale.quotation_valid_until && sale.quotation_valid_until < new Date()) return { reason: "QUOTATION_EXPIRED", sale: null };
     if (sale.sale_items.some((item) => !item.products_sale_items_product_idToproducts.is_active)) return { reason: "PRODUCT_INACTIVE", sale: null };
+    if (sale.sale_items.some((item) => Number(item.unit_price_cents)!==Number(item.products_sale_items_product_idToproducts.unit_price_cents))) cashError("QUOTATION_PRICE_CHANGED","Los precios cambiaron. Actualice y revise la cotización antes de convertirla en venta.");
     if (sale.optical_prescriptions) {
       if (sale.optical_prescriptions.status !== "ACTIVE" || sale.optical_prescriptions.clinical_encounters.status !== "FINALIZED") return { reason: "PRESCRIPTION_NOT_USABLE", sale: null };
       if (sale.optical_prescriptions.clinical_encounters.patient_id !== sale.patient_id) return { reason: "PRESCRIPTION_PATIENT_MISMATCH", sale: null };
@@ -405,52 +431,46 @@ export async function confirmSale(saleId, actorUserId) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function registerSalePayment(saleId, payment, actorUserId, options = {}) {
-  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
+export async function registerSalePayment(saleId, batch, actorUserId, options = {}) {
+  const payments = batch.payments ?? [batch];
+  const fingerprint = createHash("sha256").update(JSON.stringify({ payments, cashSessionId: batch.cashSessionId ?? null })).digest("hex");
   return retryTransaction(prisma, async (client) => {
     await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const sale = await client.sales.findUnique({ include: { customers: true, sale_payments: true }, where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
-    if (options.requestKey && sale.sale_payments.some((item) => item.request_key === options.requestKey)) return { reason: null, sale: await findSaleWithClient(client, saleId) };
-    if (sale.status !== "PENDING") return { reason: "SALE_NOT_PAYABLE", sale: null };
-    if (sale.payment_method && sale.payment_method !== payment.paymentMethod) return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
-    if (payment.paymentMethod === "CASH" && !(await client.cash_register_sessions.findFirst({ where: { status: "OPEN" } }))) return { reason: "CASH_REGISTER_CLOSED", sale: null };
-    if (await client.payment_attempts.findFirst({ where: {
-      expires_at: { gt: new Date() }, sale_id: saleId, status: { in: ["CREATED", "PENDING"] },
-    } })) return { reason: "PAYMENT_ATTEMPT_ACTIVE", sale: null };
-    const paidCents = sale.sale_payments.reduce((sum, item) => sum + Number(item.amount_cents), 0);
-    const totalCents = Number(sale.total_cents);
-    if (payment.amountCents > totalCents - paidCents) return { reason: "PAYMENT_EXCEEDS_BALANCE", sale: null };
-    await settleSaleInventory(client, saleId, "PAYMENT", actorUserId);
-    const created = await client.sale_payments.create({ data: {
-      amount_cents: payment.amountCents, cash_received_cents: payment.cashReceivedCents,
-      change_cents: payment.changeCents, payment_method: payment.paymentMethod,
-      received_by: actorUserId, reference: payment.reference,
-      request_key: options.requestKey ?? null, sale_id: saleId,
-    } });
-    const newStatus = paidCents + payment.amountCents === totalCents ? "PAID" : "PENDING";
-    // En tienda se entrega al pagar. En web continúa físicamente reservado
-    // hasta DELIVERED, sin vencimiento desde el primer abono confirmado.
-    if (newStatus === "PAID" && sale.origin === "IN_STORE") await settleSaleInventory(client, saleId, "SALE", actorUserId);
-    await client.sales.update({ data: { payment_method: payment.paymentMethod, status: newStatus, updated_by: actorUserId }, where: { id: saleId } });
-    await insertSaleEvent(client, saleId, "PAYMENT_REGISTERED", actorUserId, {
-      details: { amountCents: payment.amountCents, cashReceivedCents: payment.cashReceivedCents, changeCents: payment.changeCents, paymentMethod: payment.paymentMethod },
-      newStatus, previousStatus: "PENDING",
-    });
-    if (sale.customers?.email) {
-      const key = transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED", created.id);
-      await client.transactional_email_outbox.upsert({
-        create: {
-          deduplication_key: key,
-          payload: { amountCents: payment.amountCents, saleNumber: Number(sale.sale_number) },
-          payment_id: created.id, recipient_email: sale.customers.email,
-          sale_id: saleId, template_code: "PAYMENT_CONFIRMED",
-        }, update: {}, where: { deduplication_key: key },
-      });
+    const previous = options.requestKey && sale.sale_payments.find((p) => p.request_key === options.requestKey);
+    if (previous) {
+      if (previous.request_hash && previous.request_hash !== fingerprint) cashError("IDEMPOTENCY_CONFLICT","La clave de cobro corresponde a otros importes, medios o caja.");
+      return { reason: null, sale: await findSaleWithClient(client, saleId) };
     }
-    return { reason: null, sale: await findSaleWithClient(client, saleId) };
-  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
-  }, { isolationLevel: "Serializable" });
+    if (sale.status !== "PENDING") return { reason: "SALE_NOT_PAYABLE", sale: null };
+    if (sale.payment_method === "MERCADO_PAGO") return { reason: "PAYMENT_METHOD_MISMATCH", sale: null };
+    if (await client.payment_attempts.findFirst({ where: { expires_at: { gt: new Date() }, sale_id: saleId, status: { in: ["CREATED", "PENDING"] } } })) return { reason: "PAYMENT_ATTEMPT_ACTIVE", sale: null };
+    const paidCents = sale.sale_payments.reduce((sum,p) => sum + Number(p.amount_cents),0);
+    const amount = payments.reduce((sum,p) => sum + p.amountCents,0);
+    if (amount > Number(sale.total_cents)-paidCents) return { reason: "PAYMENT_EXCEEDS_BALANCE", sale: null };
+    const needsSession = sale.origin === "IN_STORE" || batch.cashSessionId || payments.some((p)=>p.paymentMethod==="CASH");
+    const session = needsSession ? await lockPaymentSession(client,sale,batch.cashSessionId,options.actor) : null;
+    await settleSaleInventory(client,saleId,"PAYMENT",actorUserId);
+    const paidAt = Date.now();
+    for (const [index,payment] of payments.entries()) {
+      const key = index === 0 ? options.requestKey : createHash("sha256").update(`${options.requestKey}:${index}`).digest("hex");
+      const created = await client.sale_payments.create({ data: { amount_cents: payment.amountCents, payment_method: payment.paymentMethod,
+        cash_received_cents: payment.cashReceivedCents, change_cents: payment.changeCents, reference: payment.reference, received_by: actorUserId,
+        request_key: key, request_hash: fingerprint, cash_session_id: session?.id ?? null, sale_id: saleId, paid_at: new Date(paidAt+index) } });
+      if (payment.paymentMethod==="CASH") await client.cash_register_movements.create({data:{session_id:session.id,payment_id:created.id,movement_type:"PAYMENT",amount_cents:payment.amountCents,reason:`Cobro de venta N.º ${sale.sale_number}`,created_by:actorUserId}});
+      await insertSaleEvent(client,saleId,"PAYMENT_REGISTERED",actorUserId,{details:{amountCents:payment.amountCents,paymentMethod:payment.paymentMethod,cashSessionId:session?.id??null,paymentId:created.id},previousStatus:"PENDING",newStatus:paidCents+amount===Number(sale.total_cents)?"PAID":"PENDING"});
+      if (sale.customers?.email) {
+        const emailKey = transactionalEmailDeduplicationKey("PAYMENT_CONFIRMED",created.id);
+        await client.transactional_email_outbox.upsert({where:{deduplication_key:emailKey},update:{},create:{deduplication_key:emailKey,payload:{amountCents:payment.amountCents,saleNumber:Number(sale.sale_number)},payment_id:created.id,recipient_email:sale.customers.email,sale_id:saleId,template_code:"PAYMENT_CONFIRMED"}});
+      }
+    }
+    const methods = new Set([...sale.sale_payments.map((p)=>p.payment_method),...payments.map((p)=>p.paymentMethod)]);
+    const newStatus = paidCents+amount===Number(sale.total_cents)?"PAID":"PENDING";
+    if(newStatus==="PAID" && sale.origin==="IN_STORE") await settleSaleInventory(client,saleId,"SALE",actorUserId);
+    await client.sales.update({where:{id:saleId},data:{payment_method:methods.size===1?[...methods][0]:"MIXED",status:newStatus,updated_by:actorUserId,...(!sale.cash_session_id && session?{cash_session_id:session.id}:{})}});
+    return {reason:null,sale:await findSaleWithClient(client,saleId)};
+  }, {isolationLevel:"Serializable"});
 }
 
 const ALLOWED_TRANSITIONS = Object.freeze({ PAID: ["IN_PREPARATION"], IN_PREPARATION: ["READY"], READY: ["DELIVERED"] });
@@ -541,7 +561,8 @@ async function enqueueReceipt(client, receipt, emailedTo, saleId, paymentId, tem
 
 export async function issueSaleReceipt(saleId, request, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    await client.$queryRaw`SELECT id FROM sales WHERE id=${saleId}::uuid FOR UPDATE`;
     const locked = await client.sales.findUnique({ where: { id: saleId } });
     if (!locked) return { reason: "SALE_NOT_FOUND", receipt: null };
     if (["QUOTATION", "CANCELLED"].includes(locked.status)) return { reason: "RECEIPT_NOT_AVAILABLE", receipt: null };
@@ -559,6 +580,7 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
     const paidCents = snapshot?.paidCents ?? sale.paidCents;
     const balanceCents = snapshot?.balanceCents ?? sale.balanceCents;
     const payload = {
+      branch: sale.branch, seller: sale.seller, cashSessionId: sale.cashSessionId,
       additions: sale.opticalAdditions, balanceCents, customer: sale.customer,
       discount: sale.discount, items: sale.items, paidCents, patient: sale.patient,
       payment: snapshot?.payment ?? sale.payments.at(-1) ?? null,
@@ -581,7 +603,7 @@ export async function issueSaleReceipt(saleId, request, actorUserId) {
       const existingFinal = await client.sale_receipts.findFirst({ where: { receipt_type: "FINAL", sale_id: saleId } });
       if (!existingFinal) {
         const finalReceipt = await client.sale_receipts.create({ data: {
-          emailed_to: emailedTo, generated_by: actorUserId, payload,
+          emailed_to: emailedTo, generated_by: actorUserId, payload: {...payload,paymentMethod:sale.paymentMethod},
           payment_id: null, receipt_type: "FINAL", sale_id: saleId,
         } });
         await enqueueReceipt(client, finalReceipt, emailedTo, saleId, null, "POS_FINAL_RECEIPT");

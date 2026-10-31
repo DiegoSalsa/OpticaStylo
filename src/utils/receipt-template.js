@@ -68,6 +68,9 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
         <p><span>Cliente</span><strong>${escapeHtml(customer || "Venta sin cliente registrado")}</strong></p>
         <p><span>RUT cliente</span><strong>${escapeHtml(customerData?.rut || "No informado")}</strong></p>
         <p><span>Paciente</span><strong>${escapeHtml(patient)}</strong></p>
+        <p><span>Sucursal</span><strong>${escapeHtml(receipt.payload.branch?.name ?? "Histórica sin sucursal registrada")}</strong></p>
+        <p><span>Vendedor</span><strong>${escapeHtml(receipt.payload.seller?.name ?? "No registrado")}</strong></p>
+        <p><span>Estado al emitir</span><strong>${receipt.payload.status === "PAID" ? "Pagado" : "Pendiente"}</strong></p>
       </section>
       <table>
         <thead><tr><th>Detalle</th><th>Cant.</th><th>Unitario</th><th>Total</th></tr></thead>
@@ -80,8 +83,9 @@ export function renderReceiptHtml(receipt, { document = true } = {}) {
         <div class="total-row"><span>Pagado / abonado</span><strong>${money(receipt.payload.paidCents)}</strong></div>
         ${cashRow}
         <div class="total-row"><span>Saldo</span><strong>${money(receipt.payload.balanceCents)}</strong></div>
+        ${(receipt.payload.payments??[]).map((payment)=>`<div class="total-row"><span>${escapeHtml(({CASH:"Efectivo",BANK_TRANSFER:"Transferencia",TRANSBANK:"Transbank",GETNET:"Getnet",MERCADO_PAGO:"Mercado Pago"})[payment.paymentMethod]??payment.paymentMethod)}</span><strong>${money(payment.amountCents)}</strong></div>`).join("")}
       </section>
-      <footer>Gracias por preferir Óptica Stylo. Este comprobante inmutable conserva el estado de la operación al momento de emitirse.</footer>
+      <footer>Comprobante comercial interno. No constituye boleta tributaria ni factura. Conserva el estado de la operación al momento de emitirse.</footer>
     </main>`;
 
   if (!document) return body;

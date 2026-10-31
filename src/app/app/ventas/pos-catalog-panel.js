@@ -51,6 +51,178 @@ export default function PosCatalogPanel({ model }) {
         <div className="pos-title">
           <span>1</span>
           <div>
+            <h2>Productos</h2>
+            <p>
+              Precios controlados y existencias del local. Se revalidan al confirmar la venta.
+            </p>
+          </div>
+        </div>
+        <form className="scanner-field" onSubmit={scanSku}>
+          <Icon name="receipt" size={18} />
+          <input
+            aria-label="Ingresar SKU con escáner"
+            placeholder="Escanear SKU y presionar Enter"
+            ref={scannerRef}
+          />
+          <button
+            className="app-button app-button--primary"
+            disabled={!canEdit}
+            type="submit"
+          >
+            Agregar
+          </button>
+        </form>
+        <div className="search-field">
+          <Icon name="search" size={18} />
+          <input
+            aria-label="Buscar productos"
+            onChange={(event) => setProductSearch(event.target.value)}
+            placeholder="Buscar marcos, accesorios o SKU"
+            value={productSearch}
+          />
+        </div>
+        <div
+          className="product-categories"
+          aria-label="Filtrar catálogo por categoría"
+        >
+          <button
+            className={activeCategory === "ALL" ? "active" : ""}
+            onClick={() => setActiveCategory("ALL")}
+            type="button"
+          >
+            Todo
+          </button>
+          {[...new Set(products.items.map((item) => item.category))].map(
+            (category) => (
+              <button
+                className={activeCategory === category ? "active" : ""}
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                type="button"
+              >
+                {category === "FRAME"
+                  ? "Marcos"
+                  : category === "PRESCRIPTION_LENS"
+                    ? "Lentes"
+                    : category === "TREATMENT"
+                      ? "Tratamientos"
+                      : category === "ACCESSORY"
+                        ? "Accesorios"
+                        : "Otros"}
+              </button>
+            ),
+          )}
+        </div>
+        <div className="product-results">
+          {products.loading ? (
+            <p>Cargando productos…</p>
+          ) : products.error ? (
+            <p className="inline-error">{products.error}</p>
+          ) : (
+            products.items
+              .filter(
+                (item) =>
+                  item.isActive &&
+                  item.category !== "PRESCRIPTION_LENS" &&
+                  (activeCategory === "ALL" ||
+                    item.category === activeCategory),
+              )
+              .map((item) => (
+                <button
+                  disabled={!canEdit || !model.productStock(item).available || (model.productStock(item).quantity!==null&&(model.lines.find((l)=>l.id===item.id)?.quantity??0)>=model.productStock(item).quantity)}
+                  key={item.id}
+                  onClick={() => addProduct(item)}
+                  type="button"
+                >
+                  <span className="product-symbol">
+                    <Icon
+                      name={item.category === "FRAME" ? "eye" : "package"}
+                    />
+                  </span>
+                  <span>
+                    <strong>{item.name}</strong>
+                    <small>
+                      {item.sku}
+                      {item.requiresPrescription ? " · Receta opcional" : ""}
+                      {model.branchId ? model.productStock(item).quantity===null ? model.productStock(item).available ? " · Bajo pedido" : " · Sin inventario configurado" : ` · ${model.productStock(item).quantity} disponibles en el local` : " · Selecciona sucursal"}
+                      {item.isTestData ? " · Dato de prueba" : ""}
+                    </small>
+                  </span>
+                  <b>{money.format(item.unitPriceCents)}</b>
+                  <em>+</em>
+                </button>
+              ))
+          )}
+        </div>
+        <div className="lens-configuration">
+          <div>
+            <strong>Cristales para una montura</strong>
+            <p>
+              Se agregan como opción del marco vendido o de la montura del
+              cliente; no se venden sueltos.
+            </p>
+          </div>
+          {lensOptions.loading ? (
+            <p>Cargando opciones de cristales…</p>
+          ) : lensOptions.error ? (
+            <p className="inline-error">{lensOptions.error}</p>
+          ) : lensOptions.items.length ? (
+            <>
+              <label className="field">
+                <span>Opción de cristales</span>
+                <select
+                  disabled={!canEdit}
+                  onChange={(event) => setSelectedLensId(event.target.value)}
+                  value={selectedLensId}
+                >
+                  <option value="">Seleccionar opción</option>
+                  {lensOptions.items
+                    .filter((item) => item.isActive)
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} · {money.format(item.unitPriceCents)}
+                        {item.isTestData ? " · Datos de prueba" : ""}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Montura para los cristales</span>
+                <select
+                  disabled={!canEdit}
+                  onChange={(event) =>
+                    setSelectedLensMountId(event.target.value)
+                  }
+                  value={selectedLensMountId}
+                >
+                  <option value="">Montura del cliente</option>
+                  {soldFrames.map((frame) => (
+                    <option key={frame.id} value={frame.id}>
+                      Montura vendida: {frame.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="lens-configuration-actions">
+                <button
+                  className="app-button app-button--primary"
+                  disabled={!canEdit}
+                  onClick={addConfiguredLens}
+                  type="button"
+                >
+                  Agregar cristales
+                </button>
+              </div>
+            </>
+          ) : (
+            <p>No hay opciones de cristales configuradas para esta caja.</p>
+          )}
+        </div>
+      </article>
+      <details className="app-card pos-section pos-customer"><summary>{customer ? `Cliente: ${customer.firstNames} ${customer.lastNames ?? ""}` : "Cliente e historial (opcional)"}</summary>
+        <div className="pos-title">
+          <span>2</span>
+          <div>
             <h2>Cliente opcional</h2>
             <p>
               Úsalo para historial o contacto; la venta rápida no exige
@@ -76,6 +248,9 @@ export default function PosCatalogPanel({ model }) {
               <span>Nombre</span>
               <input name="firstNames" placeholder="Nombre completo" required />
             </label>
+            <label className="field"><span>Apellidos opcionales</span><input name="lastNames" maxLength={150}/></label>
+            <label className="field"><span>Teléfono opcional</span><input name="phone" type="tel"/></label>
+            <label className="field"><span>Correo opcional</span><input name="email" type="email"/></label>
             <button
               className="app-button app-button--primary"
               disabled={pending}
@@ -144,11 +319,13 @@ export default function PosCatalogPanel({ model }) {
             )}
           </>
         )}
-      </article>
+        {customer&&<details className="cash-section"><summary>Compras anteriores del cliente</summary>{model.customerSales.loading?<p>Consultando historial autorizado…</p>:model.customerSales.error?<p className="inline-error">{model.customerSales.error}</p>:model.customerSales.items.length?model.customerSales.items.map((previous)=><div className="customer-purchase" key={previous.id}><span>Venta N.º {previous.saleNumber} · {new Date(previous.createdAt).toLocaleDateString("es-CL")} · {money.format(previous.totalCents)} · {previous.branch?.name}</span><button className="text-button" type="button" onClick={()=>model.setHistorySaleId(previous.id)}>Ver compra N.º {previous.saleNumber}</button></div>):<p>Sin compras registradas en tus sucursales autorizadas.</p>}</details>}
+      </details>
+
       {attachPrescription && offersPrescriptionAttachment && (
         <article className="app-card pos-section">
           <div className="pos-title">
-            <span>2</span>
+            <span>3</span>
             <div>
               <h2>Paciente</h2>
               <p>
@@ -296,183 +473,7 @@ export default function PosCatalogPanel({ model }) {
           )}
         </article>
       )}
-      <article className="app-card pos-section">
-        <div className="pos-title">
-          <span>
-            {attachPrescription && offersPrescriptionAttachment ? 3 : 2}
-          </span>
-          <div>
-            <h2>Productos</h2>
-            <p>
-              Catálogo rápido con precios controlados. La disponibilidad se
-              confirma durante la preparación del pedido.
-            </p>
-          </div>
-        </div>
-        <form className="scanner-field" onSubmit={scanSku}>
-          <Icon name="receipt" size={18} />
-          <input
-            aria-label="Ingresar SKU con escáner"
-            placeholder="Escanear SKU y presionar Enter"
-            ref={scannerRef}
-          />
-          <button
-            className="app-button app-button--primary"
-            disabled={!canEdit}
-            type="submit"
-          >
-            Agregar
-          </button>
-        </form>
-        <div className="search-field">
-          <Icon name="search" size={18} />
-          <input
-            aria-label="Buscar productos"
-            onChange={(event) => setProductSearch(event.target.value)}
-            placeholder="Buscar marcos, accesorios o SKU"
-            value={productSearch}
-          />
-        </div>
-        <div
-          className="product-categories"
-          aria-label="Filtrar catálogo por categoría"
-        >
-          <button
-            className={activeCategory === "ALL" ? "active" : ""}
-            onClick={() => setActiveCategory("ALL")}
-            type="button"
-          >
-            Todo
-          </button>
-          {[...new Set(products.items.map((item) => item.category))].map(
-            (category) => (
-              <button
-                className={activeCategory === category ? "active" : ""}
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                type="button"
-              >
-                {category === "FRAME"
-                  ? "Marcos"
-                  : category === "PRESCRIPTION_LENS"
-                    ? "Lentes"
-                    : category === "TREATMENT"
-                      ? "Tratamientos"
-                      : category === "ACCESSORY"
-                        ? "Accesorios"
-                        : "Otros"}
-              </button>
-            ),
-          )}
-        </div>
-        <div className="product-results">
-          {products.loading ? (
-            <p>Cargando productos…</p>
-          ) : products.error ? (
-            <p className="inline-error">{products.error}</p>
-          ) : (
-            products.items
-              .filter(
-                (item) =>
-                  item.isActive &&
-                  item.category !== "PRESCRIPTION_LENS" &&
-                  (activeCategory === "ALL" ||
-                    item.category === activeCategory),
-              )
-              .map((item) => (
-                <button
-                  disabled={!canEdit}
-                  key={item.id}
-                  onClick={() => addProduct(item)}
-                  type="button"
-                >
-                  <span className="product-symbol">
-                    <Icon
-                      name={item.category === "FRAME" ? "eye" : "package"}
-                    />
-                  </span>
-                  <span>
-                    <strong>{item.name}</strong>
-                    <small>
-                      {item.sku}
-                      {item.requiresPrescription ? " · Receta opcional" : ""}
-                      {item.availability?.source === "MOCK"
-                        ? " · Disponibilidad referencial"
-                        : ""}
-                      {item.isTestData ? " · Dato de prueba" : ""}
-                    </small>
-                  </span>
-                  <b>{money.format(item.unitPriceCents)}</b>
-                  <em>+</em>
-                </button>
-              ))
-          )}
-        </div>
-        <div className="lens-configuration">
-          <div>
-            <strong>Cristales para una montura</strong>
-            <p>
-              Se agregan como opción del marco vendido o de la montura del
-              cliente; no se venden sueltos.
-            </p>
-          </div>
-          {lensOptions.loading ? (
-            <p>Cargando opciones de cristales…</p>
-          ) : lensOptions.error ? (
-            <p className="inline-error">{lensOptions.error}</p>
-          ) : lensOptions.items.length ? (
-            <>
-              <label className="field">
-                <span>Opción de cristales</span>
-                <select
-                  disabled={!canEdit}
-                  onChange={(event) => setSelectedLensId(event.target.value)}
-                  value={selectedLensId}
-                >
-                  <option value="">Seleccionar opción</option>
-                  {lensOptions.items
-                    .filter((item) => item.isActive)
-                    .map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} · {money.format(item.unitPriceCents)}
-                        {item.isTestData ? " · Datos de prueba" : ""}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>Montura para los cristales</span>
-                <select
-                  disabled={!canEdit}
-                  onChange={(event) =>
-                    setSelectedLensMountId(event.target.value)
-                  }
-                  value={selectedLensMountId}
-                >
-                  <option value="">Montura del cliente</option>
-                  {soldFrames.map((frame) => (
-                    <option key={frame.id} value={frame.id}>
-                      Montura vendida: {frame.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="lens-configuration-actions">
-                <button
-                  className="app-button app-button--primary"
-                  disabled={!canEdit}
-                  onClick={addConfiguredLens}
-                  type="button"
-                >
-                  Agregar cristales
-                </button>
-              </div>
-            </>
-          ) : (
-            <p>No hay opciones de cristales configuradas para esta caja.</p>
-          )}
-        </div>
-      </article>
+
     </section>
   );
 }

@@ -152,6 +152,7 @@ export function validateSaleDraftInput(input) {
 
   return {
     customerId: optionalId(input.customerId, "cliente"),
+    cashSessionId: optionalId(input.cashSessionId, "sesión de caja"),
     branchId: optionalId(input.branchId, "sucursal"),
     discount: normalizedDiscount,
     discountCents: normalizedDiscount?.amountCents ?? 0,
@@ -213,7 +214,7 @@ export function validateSalePaymentInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
   }
-  if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0) {
+  if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0 || input.amountCents > 1_000_000_000) {
     fail("El abono debe ser un entero positivo expresado en pesos chilenos.");
   }
   const paymentMethod =
@@ -240,7 +241,7 @@ export function validateSalePaymentInput(input) {
   let cashReceivedCents = null;
   let changeCents = null;
   if (paymentMethod === "CASH") {
-    if (!Number.isSafeInteger(input.cashReceivedCents) || input.cashReceivedCents < input.amountCents) {
+    if (!Number.isSafeInteger(input.cashReceivedCents) || input.cashReceivedCents < input.amountCents || input.cashReceivedCents > 1_000_000_000) {
       fail("El monto recibido en efectivo debe cubrir el abono.");
     }
     cashReceivedCents = input.cashReceivedCents;
@@ -250,11 +251,21 @@ export function validateSalePaymentInput(input) {
   }
   return {
     amountCents: input.amountCents,
+    cashSessionId: optionalId(input.cashSessionId, "sesión de caja"),
     cashReceivedCents,
     changeCents,
     paymentMethod,
     reference,
   };
+}
+
+export function validateSalePaymentsInput(input) {
+  if (!Array.isArray(input?.payments)) return { payments: [validateSalePaymentInput(input)], cashSessionId: optionalId(input?.cashSessionId,"sesión de caja") };
+  if (input.payments.length < 1 || input.payments.length > 4) fail("Un cobro dividido admite entre 1 y 4 medios.");
+  const cashSessionId=optionalId(input.cashSessionId,"sesión de caja");
+  const payments=input.payments.map((p)=>validateSalePaymentInput({...p,cashSessionId}));
+  if(new Set(payments.map((p)=>p.paymentMethod)).size!==payments.length) fail("Agrupe los importes de un mismo medio en una sola línea.");
+  return {payments,cashSessionId};
 }
 
 export function validateSaleOperation(value) {

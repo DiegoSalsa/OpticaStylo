@@ -11,8 +11,9 @@ import { PrismaClient } from "@prisma/client";
 import { createCloudinaryMediaGateway } from "../src/integrations/media/cloudinary-media-gateway.js";
 
 const root = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
-const inventoryMode = process.argv.includes("--inventory");
-const output = path.join(os.tmpdir(), inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
+const posMode = process.argv.includes("--pos");
+const inventoryMode = process.argv.includes("--inventory") || posMode;
+const output = path.join(os.tmpdir(), posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
 const runRoot = path.join(os.tmpdir(), `stylo-prescriptions-${randomBytes(8).toString("hex")}`);
 const appRoot = path.join(runRoot, "app");
 const pgData = path.join(runRoot, "postgres");
@@ -30,10 +31,12 @@ Object.assign(env, {
   STORE_INCLUDE_TEST_DATA: "true", NEXT_TELEMETRY_DISABLED: "1", NODE_ENV: "production",
   APP_TIME_ZONE: "America/Santiago", EMAIL_MODE: "disabled", OPENAI_PRESCRIPTION_READER_ENABLED: "false",
   MERCADO_PAGO_ACCESS_TOKEN: "", MERCADO_PAGO_MODE: "sandbox", MERCADO_PAGO_PRODUCTION_ENABLED: "false",
+  POS_CASH_TEST_MODE: posMode ? "true" : "false",
   DEPLOYMENT_ENVIRONMENT: "university", UNIVERSITY_INSECURE_HTTP_ALLOWED: "true",
 });
 // Solo se habilitan proveedores al solicitar pruebas reales de archivos sintéticos.
 if (process.argv.includes("--live-storage")) {
+  if(posMode) throw new Error("La fase 3 utiliza exclusivamente credenciales sintéticas; no habilite proveedores reales.");
   const configuration = nextEnv.loadEnvConfig(root).combinedEnv;
   for (const key of ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"]) env[key] = configuration[key] ?? "";
   env.PRESCRIPTION_LIVE_STORAGE = "true";
@@ -97,17 +100,20 @@ try {
   if (process.argv.includes("--demo")) {
     console.log(`Demostración local con datos sintéticos: ${env.EVALUATION_HTTP_URL}`);
     console.log("Cierre con Ctrl+C para detener y eliminar el clúster de demostración.");
-    await new Promise((resolve) => { process.once("SIGINT", resolve); process.once("SIGTERM", resolve); });
+    await new Promise((resolve) => { process.once("SIGINT", resolve); process.once("SIGTERM", resolve); process.stdin.resume(); process.stdin.on("data",(data)=>{if(data.toString().trim()==="stop")resolve();}); });
+    process.stdin.pause();
   } else {
   if (inventoryMode) {
     await run(process.execPath, ["--test", "--test-concurrency=1", "tests/unit/rut.test.js", "tests/unit/appointment-validation.test.js", "tests/unit/availability-engine.test.js", "tests/unit/password.test.js", "tests/integration/evaluation.test.js"], { cwd: appRoot, record: "academicas.txt" });
     await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "playwright.evaluation.config.mjs"], { cwd: appRoot, record: "academicas-e2e.txt" });
     await cp(path.join(appRoot, "tmp/evaluation"), path.join(output, "academic-artifacts"), { recursive: true });
     await run(process.execPath, ["--test", "--test-concurrency=1", "tests/inventory/flow.test.js"], { cwd: appRoot, record: "inventory.txt" });
+    if(posMode) await run(process.execPath,["--test","--test-concurrency=1","tests/pos/validation.test.js","tests/pos/flow.test.js"],{cwd:appRoot,record:"pos.txt"});
   }
   await run(process.execPath, ["--test", "--test-concurrency=1", "tests/prescriptions/validation.test.js", "tests/prescriptions/flow.test.js"], { cwd: appRoot, record: "tests.txt" });
   await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "tests/prescriptions/playwright.config.mjs"], { cwd: appRoot, record: "browser.txt" });
   if (inventoryMode) await run(process.execPath, ["node_modules/playwright/cli.js", "test", "--config", "tests/inventory/playwright.config.mjs"], { cwd: appRoot, record: "inventory-browser.txt" });
+  if (posMode) await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/pos/playwright.config.mjs"],{cwd:appRoot,record:"pos-browser.txt"});
   }
 } catch (error) {
   console.error(error); process.exitCode = 1;

@@ -4,10 +4,11 @@ import { prisma } from "../db/prisma.js";
 
 const n = (value) => Number(value ?? 0);
 
-export async function getSalesReportData({ fromDate, origin, status, toDate }) {
+export async function getSalesReportData({ fromDate, origin, status, toDate, allowedBranchIds, legacyActorId }) {
   const sales = await prisma.sales.findMany({
     include: { sale_items: true, sale_payments: true },
     where: {
+      ...(allowedBranchIds?{OR:[{branch_id:{in:allowedBranchIds}},{branch_id:null,created_by:legacyActorId}]}:{}),
       created_at: { gte: fromDate, lt: toDate },
       ...(origin ? { origin } : {}),
       ...(status ? { status } : {}),

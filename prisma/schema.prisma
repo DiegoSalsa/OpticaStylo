@@ -64,15 +64,21 @@ model appointments {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio cash register movements {.
 model cash_register_movements {
-  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  session_id             String                 @map("session_id") @db.Uuid
-  movement_type          String                 @map("movement_type") @db.VarChar(20)
-  amount_cents           BigInt                 @map("amount_cents")
-  reason                 String                 @map("reason") @db.VarChar(500)
-  created_by             String                 @map("created_by") @db.Uuid
-  created_at             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  users                  users                  @relation(fields: [created_by], references: [id], onUpdate: NoAction)
-  cash_register_sessions cash_register_sessions @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+  payment_id             String?                   @unique @db.Uuid
+  reversal_of            String?                   @unique @db.Uuid
+  request_key            String?                   @unique @db.VarChar(80)
+  sale_payments          sale_payments?            @relation(fields: [payment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  original               cash_register_movements?  @relation("cash_reversal", fields: [reversal_of], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reversals              cash_register_movements[] @relation("cash_reversal")
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  session_id             String                    @map("session_id") @db.Uuid
+  movement_type          String                    @map("movement_type") @db.VarChar(20)
+  amount_cents           BigInt                    @map("amount_cents")
+  reason                 String                    @map("reason") @db.VarChar(500)
+  created_by             String                    @map("created_by") @db.Uuid
+  created_at             DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  users                  users                     @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  cash_register_sessions cash_register_sessions    @relation(fields: [session_id], references: [id], onUpdate: NoAction)
 
   @@index([session_id, created_at, id], map: "cash_register_movements_session_date_index")
   @@map("cash_register_movements")
@@ -81,6 +87,13 @@ model cash_register_movements {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio cash register sessions {.
 model cash_register_sessions {
+  branch_id                                     String?                   @db.Uuid
+  terminal_id                                   String?                   @db.Uuid
+  closing_summary                               Json?
+  branches                                      branches?                 @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  cash_register_terminals                       cash_register_terminals?  @relation(fields: [terminal_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sale_payments                                 sale_payments[]
+  sales                                         sales[]
   id                                            String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   status                                        String                    @default("OPEN") @map("status") @db.VarChar(10)
   opening_amount_cents                          BigInt                    @map("opening_amount_cents")
@@ -93,12 +106,23 @@ model cash_register_sessions {
   opened_at                                     DateTime                  @default(now()) @map("opened_at") @db.Timestamptz(6)
   closed_by                                     String?                   @map("closed_by") @db.Uuid
   closed_at                                     DateTime?                 @map("closed_at") @db.Timestamptz(6)
-  is_test_configuration                         Boolean                   @default(true) @map("is_test_configuration")
+  is_test_configuration                         Boolean                   @default(false) @map("is_test_configuration")
   cash_register_movements                       cash_register_movements[]
   users_cash_register_sessions_closed_byTousers users?                    @relation("cash_register_sessions_closed_byTousers", fields: [closed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
   users_cash_register_sessions_opened_byTousers users                     @relation("cash_register_sessions_opened_byTousers", fields: [opened_by], references: [id], onUpdate: NoAction)
 
   @@map("cash_register_sessions")
+}
+
+model cash_register_terminals {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id              String                   @db.Uuid
+  name                   String                   @db.VarChar(100)
+  is_active              Boolean                  @default(true)
+  branches               branches                 @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  cash_register_sessions cash_register_sessions[]
+
+  @@unique([branch_id, name])
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
@@ -815,6 +839,10 @@ model sale_optical_additions {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio sale payments {.
 model sale_payments {
+  cash_session_id            String?                      @db.Uuid
+  request_hash               String?                      @db.VarChar(64)
+  cash_register_sessions     cash_register_sessions?      @relation(fields: [cash_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  cash_register_movements    cash_register_movements?
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                    String                       @map("sale_id") @db.Uuid
   amount_cents               BigInt                       @map("amount_cents")
@@ -835,6 +863,7 @@ model sale_payments {
   transactional_email_outbox transactional_email_outbox[]
 
   @@index([sale_id, paid_at, id], map: "sale_payments_sale_index")
+  @@index([cash_session_id, paid_at], map: "cash_register_payments_session")
   @@map("sale_payments")
 }
 
@@ -868,6 +897,8 @@ model sale_receipts {
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 /// Entidad de datos del dominio sales {.
 model sales {
+  cash_session_id                           String?                         @db.Uuid
+  cash_register_sessions                    cash_register_sessions?         @relation(fields: [cash_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   branch_id                                 String?                         @db.Uuid
   branches                                  branches?                       @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   inventory_reservations                    inventory_reservations[]
@@ -923,6 +954,7 @@ model sales {
   @@index([origin, created_at(sort: Desc)], map: "sales_origin_date_index")
   @@index([status, created_at(sort: Desc)], map: "sales_status_date_index")
   @@index([branch_id, status, created_at], map: "sales_branch_status_index")
+  @@index([cash_session_id, status], map: "cash_register_sales_session")
   @@map("sales")
 }
 
@@ -1227,20 +1259,22 @@ model virtual_try_on_3d_assets {
 }
 
 model branches {
-  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code               String                @unique @db.VarChar(80)
-  name               String                @db.VarChar(200)
-  address            String?               @db.VarChar(500)
-  information_source String
-  is_active          Boolean               @default(true)
-  pickup_enabled     Boolean               @default(false)
-  created_at         DateTime              @default(now()) @db.Timestamptz(6)
-  inventory_stocks   inventory_stocks[]
-  user_branches      user_branches[]
-  sales              sales[]
-  store_carts        store_carts[]
-  transfers_out      inventory_transfers[] @relation("transfer_source")
-  transfers_in       inventory_transfers[] @relation("transfer_destination")
+  cash_register_terminals cash_register_terminals[]
+  cash_register_sessions  cash_register_sessions[]
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                    String                    @unique @db.VarChar(80)
+  name                    String                    @db.VarChar(200)
+  address                 String?                   @db.VarChar(500)
+  information_source      String
+  is_active               Boolean                   @default(true)
+  pickup_enabled          Boolean                   @default(false)
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  inventory_stocks        inventory_stocks[]
+  user_branches           user_branches[]
+  sales                   sales[]
+  store_carts             store_carts[]
+  transfers_out           inventory_transfers[]     @relation("transfer_source")
+  transfers_in            inventory_transfers[]     @relation("transfer_destination")
 }
 
 model user_branches {

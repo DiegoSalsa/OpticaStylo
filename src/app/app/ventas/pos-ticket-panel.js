@@ -45,7 +45,6 @@ export default function PosTicketPanel({ model }) {
         {sale && <span className="status-chip">{sale.status}</span>}
       </div>
       <div className="ticket-lines">
-        <label className="field"><span>Sucursal de la venta</span><select disabled={pending || Boolean(sale && sale.status !== "QUOTATION")} value={model.branchId} onChange={(event) => model.setBranchId(event.target.value)}><option value="">Selecciona una sucursal</option>{model.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
         {lines.length === 0 ? (
           <div className="ticket-empty">
             <Icon name="receipt" size={32} />
@@ -135,7 +134,7 @@ export default function PosTicketPanel({ model }) {
                 value={discountReason}
               />
             </label>
-            {discountAuthorization ? (
+            {model.quotationUnchanged ? <p className="inline-success">Descuento autorizado de esta cotización. Si editas el ticket se solicitará una nueva aprobación.</p> : discountAuthorization ? (
               <p className="inline-success" role="status">
                 Descuento autorizado temporalmente hasta{" "}
                 {new Date(discountAuthorization.expiresAt).toLocaleTimeString(
@@ -188,7 +187,7 @@ export default function PosTicketPanel({ model }) {
         <div className="ticket-operation-actions">
           <button
             className="app-button app-button--primary ticket-action"
-            disabled={pending || !canSell || draftIncomplete}
+            disabled={pending || !canSell || draftIncomplete || Boolean(checkoutBlockedReason)}
             onClick={() => saveOperation("SALE")}
             type="button"
           >
@@ -230,7 +229,7 @@ export default function PosTicketPanel({ model }) {
           </button>
         </div>
       )}
-      <PosPaymentPanel model={model} />
+      <PosPaymentPanel key={`${sale?.id}:${sale?.paidCents}`} model={model} />
     </aside>
   );
 }
