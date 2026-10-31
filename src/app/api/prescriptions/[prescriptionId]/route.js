@@ -4,7 +4,7 @@ import {
   updatePrescription,
 } from "@/services/prescription-service";
 import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
-import { executeApiHandler } from "@/utils/error-handler";
+import { executeClinicalHandler as executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
 // GET /api/prescriptions/[prescriptionId]/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio

@@ -1,4 +1,5 @@
 export const PERMISSIONS = Object.freeze({
+  MEDICAL_RECORDS_ASSIGN_CARE: "medical_records.assign_care",
   CASH_READ: "cash.read",
   CASH_OPERATE: "cash.operate",
   CASH_ADJUST: "cash.adjust",

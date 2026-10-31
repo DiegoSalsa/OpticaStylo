@@ -3,8 +3,8 @@ import {
   getMedicalRecord,
   updateMedicalRecord,
 } from "@/services/clinical-service";
-import { createSuccessResponse } from "@/utils/api-response";
-import { executeApiHandler } from "@/utils/error-handler";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
+import { executeClinicalHandler as executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
 const CLINICAL_BODY_LIMIT = 64 * 1024;

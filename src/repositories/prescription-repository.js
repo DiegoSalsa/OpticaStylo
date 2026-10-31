@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import {retryTransaction} from "../db/retry-transaction.js";
 
 const issuerUser = "users_professional_profiles_user_idTousers";
 
@@ -77,7 +78,8 @@ function prescriptionData(data) {
 
 export async function createOrReplacePrescription(encounterId, prescription, actorUserId, issuedAt) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma,async (client) => {
+    await client.$queryRaw`SELECT id FROM clinical_encounters WHERE id=${encounterId}::uuid FOR UPDATE`;
     const encounter = await client.clinical_encounters.findUnique({ where: { id: encounterId } });
     if (!encounter) return { prescription: null, reason: "ENCOUNTER_NOT_FOUND" };
     if (encounter.professional_id !== actorUserId) return { prescription: null, reason: "NOT_ASSIGNED" };
@@ -107,7 +109,10 @@ export async function createOrReplacePrescription(encounterId, prescription, act
 
 export async function updatePrescription(prescriptionId, changes, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma,async (client) => {
+    const reference=await client.optical_prescriptions.findUnique({where:{id:prescriptionId},select:{encounter_id:true}});
+    if(!reference)return {prescription:null,reason:"NOT_FOUND"};
+    await client.$queryRaw`SELECT id FROM clinical_encounters WHERE id=${reference.encounter_id}::uuid FOR UPDATE`;
     const current = await client.optical_prescriptions.findUnique({
       include: { clinical_encounters: true }, where: { id: prescriptionId },
     });

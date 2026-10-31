@@ -283,3 +283,21 @@
     flex-direction: column;
   }
 }
+.clinical-form-section { margin: 1rem 0; padding: 1rem 0; border-top: 1px solid var(--line, #ddd); }
+.clinical-form-section > summary { font-weight: 650; cursor: pointer; padding: .5rem 0; }
+.clinical-eye-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.clinical-editable { border: 0; padding: 0; margin: 0; min-width: 0; }
+.clinical-form-section fieldset { border: 1px solid #ddd; border-radius: .5rem; padding: 1rem; margin: .5rem 0; min-width: 0; }
+.clinical-form-section legend { font-weight: 650; padding: 0 .4rem; }
+.clinical-actions { flex-wrap: wrap; }
+.clinical-layout > *, .clinical-workspace > * { min-width: 0; }
+@media (max-width: 1100px) { .clinical-layout { grid-template-columns: 1fr; } .clinical-appointments { max-height: none; position: static; } }
+@media (max-width: 650px) { .clinical-eye-pair { grid-template-columns: 1fr; } }
+.clinical-layout .management-item { display: flex; width: 100%; }
+.clinical-layout .management-item > span { flex: 1; min-width: 0; }
+.clinical-layout .management-item strong,
+.clinical-layout .management-item small { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.clinical-appointments { align-self: start; }
+.clinical-workspace > .clinical-section > details > summary { cursor: pointer; padding: .6rem 0; }
+.clinical-actions > button:not(.app-button), .clinical-actions > a { border: 1px solid #d4e2df; border-radius: 8px; padding: .55rem .8rem; background: #f6faf9; color: #174a3f; font: inherit; font-size: .8rem; cursor: pointer; }
+.clinical-actions > button:disabled { opacity: .5; cursor: default; }

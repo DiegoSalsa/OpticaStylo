@@ -1,4 +1,7 @@
 import { AppError } from "../utils/app-error.js";
+import { isOpticalDecimal } from "../utils/optical-decimal.js";
+import {clinicalDate,clinicalType,clinicalObject,clinicalVersion,validateClinicalFormData} from "./clinical-form-validation.js";
+import {clinicalDateToday} from "../config/clinical-forms.js";
 import { validateAppointmentId } from "./appointment-validation.js";
 import { validatePatientId } from "./patient-validation.js";
 
@@ -81,10 +84,7 @@ function validateDecimal(value, fieldName, { nullable = false } = {}) {
   }
 
   if (
-    typeof value !== "number" ||
-    !Number.isFinite(value) ||
-    Math.abs(value) >= 10_000 ||
-    Math.abs(value * 100 - Math.round(value * 100)) > 1e-8
+    !isOpticalDecimal(value)
   ) {
     throwValidationError(`${fieldName} debe ser un número con hasta 2 decimales.`);
   }
@@ -162,12 +162,19 @@ export function validatePrescriptionId(value) {
 
 export function validateCreateEncounterInput(input) {
   validateObject(input);
-
+  clinicalObject(input,["patientId","appointmentId","encounterType","encounterDate","formData","formVersion",...ENCOUNTER_FIELDS]);
+  const encounterType=clinicalType(input.encounterType??"GENERAL");
+  const appointmentId=input.appointmentId?validateAppointmentId(input.appointmentId):null;
+  if(!appointmentId&&!input.patientId)throwValidationError("Seleccione el paciente de la atención.");
+  if(input.formVersion!=null&&input.formVersion!==1)throwValidationError("La versión del formulario no es compatible.");
   return {
+    patientId:input.patientId?validatePatientId(input.patientId):null,
+    encounterType,encounterDate:clinicalDate(input.encounterDate??(encounterType==="GENERAL"?clinicalDateToday():null)),
+    formVersion:1,formData:validateClinicalFormData(encounterType,input.formData),
     anamnesis: Object.hasOwn(input, "anamnesis")
       ? validateOptionalText(input.anamnesis, "La anamnesis", 10000)
       : null,
-    appointmentId: validateAppointmentId(input.appointmentId),
+    appointmentId,
     diagnosis: Object.hasOwn(input, "diagnosis")
       ? validateOptionalText(input.diagnosis, "El diagnóstico", 5000)
       : null,
@@ -177,16 +184,13 @@ export function validateCreateEncounterInput(input) {
     indications: Object.hasOwn(input, "indications")
       ? validateOptionalText(input.indications, "Las indicaciones", 5000)
       : null,
-    reasonForVisit: validateRequiredText(
-      input.reasonForVisit,
-      "El motivo de consulta",
-      1000,
-    ),
+    reasonForVisit: encounterType==="GENERAL" ? validateRequiredText(input.reasonForVisit,"El motivo de consulta",1000) : validateOptionalText(input.reasonForVisit??null,"El motivo de consulta",1000)??"",
   };
 }
 
 export function validateUpdateEncounterInput(input) {
   validateObject(input);
+  clinicalObject(input,["expectedVersion","encounterDate","formData","formVersion",...ENCOUNTER_FIELDS]);
   const changes = {};
 
   for (const field of ENCOUNTER_FIELDS) {
@@ -202,16 +206,17 @@ export function validateUpdateEncounterInput(input) {
           : 5000;
 
     changes[field] =
-      field === "reasonForVisit"
-        ? validateRequiredText(input[field], "El motivo de consulta", maximumLength)
-        : validateOptionalText(input[field], field, maximumLength);
+      validateOptionalText(input[field],field,maximumLength)??(field==="reasonForVisit"?"":null);
   }
 
+  if(Object.hasOwn(input,"encounterDate"))changes.encounterDate=clinicalDate(input.encounterDate);
+  if(Object.hasOwn(input,"formData"))changes.formData=input.formData;
+  if(input.formVersion!=null&&input.formVersion!==1)throwValidationError("La versión del formulario no es compatible.");
   if (Object.keys(changes).length === 0) {
     throwValidationError("Debe indicar al menos un dato clínico para actualizar.");
   }
 
-  return changes;
+  return {changes,expectedVersion:clinicalVersion(input.expectedVersion)};
 }
 
 export function validateAddendumInput(input) {

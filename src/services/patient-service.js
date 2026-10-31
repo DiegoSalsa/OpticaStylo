@@ -23,7 +23,7 @@ function throwPatientNotFound() {
 }
 
 function convertUniqueViolation(error) {
-  if (error?.code === "23505") {
+  if (["23505","P2002"].includes(error?.code)) {
     throw new AppError({
       code: "PATIENT_RUT_ALREADY_EXISTS",
       message: "Ya existe un paciente registrado con ese RUT.",

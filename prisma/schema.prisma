@@ -128,6 +128,7 @@ model cash_register_terminals {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounter addenda {.
 model clinical_encounter_addenda {
+  request_key           String?               @unique @db.VarChar(80)
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   encounter_id          String                @map("encounter_id") @db.Uuid
   reason                String                @map("reason") @db.VarChar(500)
@@ -144,6 +145,8 @@ model clinical_encounter_addenda {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounter events {.
 model clinical_encounter_events {
+  record_version        Int?
+  record_snapshot       Json?
   id                    BigInt                @id @default(autoincrement()) @map("id")
   encounter_id          String                @map("encounter_id") @db.Uuid
   event_type            String                @map("event_type") @db.VarChar(30)
@@ -160,8 +163,18 @@ model clinical_encounter_events {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounters {.
 model clinical_encounters {
+  encounter_type                                                                   String                       @default("GENERAL") @db.VarChar(20)
+  encounter_date                                                                   DateTime?                    @db.Date
+  record_number                                                                    BigInt?                      @unique @default(autoincrement())
+  form_version                                                                     Int                          @default(1)
+  form_data                                                                        Json?
+  record_version                                                                   Int                          @default(1)
+  patient_snapshot                                                                 Json?
+  professional_snapshot                                                            Json?
+  request_key                                                                      String?                      @unique @db.VarChar(80)
+  request_hash                                                                     String?                      @db.VarChar(64)
   id                                                                               String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  appointment_id                                                                   String                       @unique @map("appointment_id") @db.Uuid
+  appointment_id                                                                   String?                      @unique @map("appointment_id") @db.Uuid
   patient_id                                                                       String                       @map("patient_id") @db.Uuid
   professional_id                                                                  String                       @map("professional_id") @db.Uuid
   status                                                                           String                       @default("DRAFT") @map("status") @db.VarChar(20)
@@ -177,7 +190,7 @@ model clinical_encounters {
   updated_at                                                                       DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
   clinical_encounter_addenda                                                       clinical_encounter_addenda[]
   clinical_encounter_events                                                        clinical_encounter_events[]
-  appointments                                                                     appointments                 @relation(fields: [appointment_id], references: [id], onUpdate: NoAction)
+  appointments                                                                     appointments?                @relation(fields: [appointment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   professional_profiles_clinical_encounters_created_byToprofessional_profiles      professional_profiles        @relation("clinical_encounters_created_byToprofessional_profiles", fields: [created_by], references: [user_id], onUpdate: NoAction)
   patients                                                                         patients                     @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
   professional_profiles_clinical_encounters_professional_idToprofessional_profiles professional_profiles        @relation("clinical_encounters_professional_idToprofessional_profiles", fields: [professional_id], references: [user_id], onUpdate: NoAction)
@@ -187,6 +200,24 @@ model clinical_encounters {
   @@index([patient_id, created_at(sort: Desc), id], map: "clinical_encounters_patient_history_index")
   @@index([professional_id, created_at(sort: Desc)], map: "clinical_encounters_professional_index")
   @@map("clinical_encounters")
+}
+
+model clinical_care_assignments {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patient_id            String                @db.Uuid
+  professional_id       String                @db.Uuid
+  assigned_by           String                @db.Uuid
+  reason                String                @db.VarChar(500)
+  created_at            DateTime              @default(now()) @db.Timestamptz(6)
+  revoked_at            DateTime?             @db.Timestamptz(6)
+  revoked_by            String?               @db.Uuid
+  revoke_reason         String?               @db.VarChar(500)
+  patients              patients              @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onDelete: Restrict, onUpdate: NoAction)
+  assigned_user         users                 @relation("care_assigned", fields: [assigned_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  revoked_user          users?                @relation("care_revoked", fields: [revoked_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([patient_id, professional_id], map: "clinical_care_assignments_lookup")
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
@@ -471,6 +502,7 @@ model patient_guardians {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio patients {.
 model patients {
+  clinical_care_assignments        clinical_care_assignments[]
   id                               String                             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   rut                              String                             @unique @map("rut") @db.VarChar(10)
   first_names                      String                             @map("first_names") @db.VarChar(150)
@@ -642,6 +674,7 @@ model products {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio professional profiles {.
 model professional_profiles {
+  clinical_care_assignments                                                      clinical_care_assignments[]
   user_id                                                                        String                            @id @map("user_id") @db.Uuid
   appointment_duration_minutes                                                   Int                               @map("appointment_duration_minutes") @db.SmallInt
   slot_interval_minutes                                                          Int                               @map("slot_interval_minutes") @db.SmallInt
@@ -1169,6 +1202,8 @@ model user_sessions {
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio users {.
 model users {
+  clinical_care_assigned                                                                    clinical_care_assignments[]       @relation("care_assigned")
+  clinical_care_revoked                                                                     clinical_care_assignments[]       @relation("care_revoked")
   inventory_transfers_created                                                               inventory_transfers[]             @relation("inventory_transfer_creator")
   inventory_transfers_completed                                                             inventory_transfers[]             @relation("inventory_transfer_completer")
   user_branches                                                                             user_branches[]

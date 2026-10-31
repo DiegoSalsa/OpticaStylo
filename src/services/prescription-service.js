@@ -1,5 +1,7 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
+import {requireClinicalProfessional} from "../auth/clinical-professional.js";
+import {getEncounter} from "./clinical-service.js";
 import { hasClinicalAssignment } from "../repositories/clinical-repository.js";
 import {
   createOrReplacePrescription,
@@ -109,6 +111,7 @@ export async function createPrescription(
 
   requirePermissions(actor, [PERMISSIONS.PRESCRIPTIONS_CREATE]);
   const normalizedEncounterId = validateEncounterId(encounterId);
+  if(!dependencies.createOrReplacePrescription){await requireClinicalProfessional(actor,PERMISSIONS.PRESCRIPTIONS_CREATE);await getEncounter(normalizedEncounterId,actor);}
   const prescriptionData = validateCreatePrescriptionInput(input);
   const result = await createRepository(
     normalizedEncounterId,
@@ -135,6 +138,7 @@ export async function updatePrescription(
 
   requirePermissions(actor, [PERMISSIONS.PRESCRIPTIONS_CREATE]);
   const normalizedId = validatePrescriptionId(prescriptionId);
+  if(!dependencies.updatePrescription){await requireClinicalProfessional(actor,PERMISSIONS.PRESCRIPTIONS_CREATE);const current=await findPrescriptionById(normalizedId);if(current)await getEncounter(current.encounterId,actor);}
   const changes = validateUpdatePrescriptionInput(input);
   const result = await updateRepository(normalizedId, changes, actor.userId);
 
@@ -167,6 +171,8 @@ export async function getPrescription(
   if (!canReadAssigned && !canReadForSale) {
     requirePermissions(actor, [PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED]);
   }
+
+  if(canReadAssigned&&!dependencies.hasClinicalAssignment)await requireClinicalProfessional(actor,PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED);
 
   const prescription = await findRepository(normalizedId);
 
@@ -234,6 +240,8 @@ export async function getPrescriptionList(
   if (!canReadAssigned && !canReadForSale) {
     requirePermissions(actor, [PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED]);
   }
+
+  if(canReadAssigned&&!dependencies.hasClinicalAssignment)await requireClinicalProfessional(actor,PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED);
 
   if (canReadAssigned) {
     assigned = await assignmentRepository(query.patientId, actor.userId);
