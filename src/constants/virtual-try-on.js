@@ -1,7 +1,11 @@
-export const MEDIAPIPE_WASM_URL =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
-export const FACE_LANDMARKER_MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const localRuntime = process.env.NEXT_PUBLIC_VTO_RUNTIME_LOCAL === "true";
+
+export const MEDIAPIPE_WASM_URL = localRuntime
+  ? "/virtual-try-on/runtime/wasm"
+  : "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
+export const FACE_LANDMARKER_MODEL_URL = localRuntime
+  ? "/virtual-try-on/runtime/face_landmarker.task"
+  : "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
 // Recurso de muestra libre del pipeline. No representa un catálogo comercial.
 export const DEMO_3D_GLASSES = Object.freeze({
