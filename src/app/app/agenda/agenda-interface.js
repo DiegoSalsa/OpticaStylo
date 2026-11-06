@@ -152,87 +152,94 @@ export default function AgendaInterface({ model }) {
             />
           )}
           <section className="app-card agenda-list agenda-list--details">
-            <h2>Detalle de reservas</h2>
+            <h2 id="agenda-details-title">Detalle de reservas</h2>
             {status === "loading" ? (
               <p className="directory-state">Cargando agenda…</p>
             ) : !appointments.length ? (
               <p className="directory-state">No hay reservas en este rango.</p>
             ) : (
-              appointments.map((appointment) => {
-                const date = new Date(appointment.startAt);
-                return (
-                  <article className="appointment-card" key={appointment.id}>
-                    <div className="appointment-date">
-                      <strong>
-                        {date.toLocaleTimeString("es-CL", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </strong>
-                      <small>
-                        {date.toLocaleDateString("es-CL", {
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </small>
-                    </div>
-                    <div className="appointment-main">
-                      <strong>
-                        {appointment.patient.firstNames}{" "}
-                        {appointment.patient.lastNames}
-                      </strong>
-                      <small>
-                        {appointment.patient.rut} ·{" "}
-                        {appointment.professional.firstName}{" "}
-                        {appointment.professional.lastName}
-                      </small>
-                      <small>
-                        {STATUS[appointment.status]} · Origen{" "}
-                        {appointment.source === "ONLINE" ? "web" : "interno"}
-                      </small>
-                    </div>
-                    <div className="appointment-actions">
-                      {appointment.status === "CONFIRMED" && (
-                        <>
-                          <button
-                            className="app-button app-button--primary"
-                            disabled={status === "saving"}
-                            onClick={() =>
-                              changeAppointment(appointment, "CHECKED_IN")
-                            }
-                            type="button"
-                          >
-                            Presente
-                          </button>
-                          <button
-                            className="app-button app-button--soft"
-                            disabled={status === "saving"}
-                            onClick={() =>
-                              changeAppointment(appointment, "NO_SHOW")
-                            }
-                            type="button"
-                          >
-                            No asistió
-                          </button>
-                          {actor?.permissions.includes(
-                            "appointments.cancel",
-                          ) && (
+              <div
+                aria-labelledby="agenda-details-title"
+                className="agenda-detail-scroll"
+                role="region"
+                tabIndex={0}
+              >
+                {appointments.map((appointment) => {
+                  const date = new Date(appointment.startAt);
+                  return (
+                    <article className="appointment-card" key={appointment.id}>
+                      <div className="appointment-date">
+                        <strong>
+                          {date.toLocaleTimeString("es-CL", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </strong>
+                        <small>
+                          {date.toLocaleDateString("es-CL", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
+                        </small>
+                      </div>
+                      <div className="appointment-main">
+                        <strong>
+                          {appointment.patient.firstNames}{" "}
+                          {appointment.patient.lastNames}
+                        </strong>
+                        <small>
+                          {appointment.patient.rut} ·{" "}
+                          {appointment.professional.firstName}{" "}
+                          {appointment.professional.lastName}
+                        </small>
+                        <small>
+                          {STATUS[appointment.status]} · Origen{" "}
+                          {appointment.source === "ONLINE" ? "web" : "interno"}
+                        </small>
+                      </div>
+                      <div className="appointment-actions">
+                        {appointment.status === "CONFIRMED" && (
+                          <>
                             <button
-                              className="app-button app-button--danger"
+                              className="app-button app-button--primary"
+                              disabled={status === "saving"}
                               onClick={() =>
-                                changeAppointment(appointment, "CANCELLED")
+                                changeAppointment(appointment, "CHECKED_IN")
                               }
                               type="button"
                             >
-                              Cancelar
+                              Presente
                             </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </article>
-                );
-              })
+                            <button
+                              className="app-button app-button--soft"
+                              disabled={status === "saving"}
+                              onClick={() =>
+                                changeAppointment(appointment, "NO_SHOW")
+                              }
+                              type="button"
+                            >
+                              No asistió
+                            </button>
+                            {actor?.permissions.includes(
+                              "appointments.cancel",
+                            ) && (
+                              <button
+                                className="app-button app-button--danger"
+                                onClick={() =>
+                                  changeAppointment(appointment, "CANCELLED")
+                                }
+                                type="button"
+                              >
+                                Cancelar
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             )}
           </section>
         </div>
