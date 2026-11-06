@@ -13,7 +13,7 @@ test("normaliza filtros acotados de reporte", () => {
   );
   assert.equal(result.origin, "ONLINE");
   assert.equal(result.status, "PAID");
-  assert.equal(result.toDate.toISOString(), "2026-08-21T00:00:00.000Z");
+  assert.equal(result.toDate.toISOString(), "2026-08-21T04:00:00.000Z");
 });
 test("rechaza reportes mayores a un año", () =>
   assert.throws(() =>

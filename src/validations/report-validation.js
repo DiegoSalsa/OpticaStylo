@@ -1,7 +1,19 @@
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { AppError } from "../utils/app-error.js";
 import { SALE_STATUSES } from "./sale-validation.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+// Summer time can skip midnight. Find the first instant of the local date.
+function localDayStart(day) {
+  const noon = fromZonedTime(`${day}T12:00:00`, "America/Santiago").getTime();
+  let low = noon - 24 * 3600000, high = noon;
+  while (high - low > 1) {
+    const middle = Math.floor((low + high) / 2);
+    if (formatInTimeZone(middle, "America/Santiago", "yyyy-MM-dd") < day) low = middle;
+    else high = middle;
+  }
+  return new Date(high);
+}
 function fail(message) {
   throw new AppError({ code: "INVALID_REPORT_QUERY", message, status: 400 });
 }
@@ -20,7 +32,7 @@ export function validateSalesReportQuery(
   searchParams,
   currentDate = new Date(),
 ) {
-  const defaultTo = currentDate.toISOString().slice(0, 10);
+  const defaultTo = formatInTimeZone(currentDate, "America/Santiago", "yyyy-MM-dd");
   const defaultFromDate = new Date(`${defaultTo}T00:00:00.000Z`);
   defaultFromDate.setUTCDate(defaultFromDate.getUTCDate() - 29);
   const from = date(
@@ -44,5 +56,5 @@ export function validateSalesReportQuery(
     fail("El origen no es válido.");
   const endExclusive = new Date(toDate);
   endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
-  return { from, fromDate, origin, status, to, toDate: endExclusive };
+  return { from, fromDate: localDayStart(from), origin, status, to, toDate: localDayStart(endExclusive.toISOString().slice(0, 10)) };
 }
