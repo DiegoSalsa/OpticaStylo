@@ -1,14 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { BufferAttribute, BufferGeometry, DoubleSide, Euler, Matrix4, Quaternion, Vector3 } from "three";
 import { landmarksToGlassesPose } from "@/utils/virtual-try-on-3d-geometry";
 import { cameraProjection } from "@/virtual-try-on-3d/camera-projection";
 import { PoseFilter } from "@/virtual-try-on-3d/pose-filter";
 
-const GlassesModel = dynamic(() => import("../glasses-model"), { ssr: false });
+const GlassesModel = lazy(() => import("../glasses-model"));
 const WIDTH = 1000, HEIGHT = 700, PIXELS_PER_MM = 2.5;
 function markLoaded(metrics, id) { metrics.current.loadedModel = id; }
 
