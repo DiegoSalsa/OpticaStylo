@@ -21,11 +21,13 @@ afterEach(async()=>{for(const id of toClose){const row=await db.cash_register_se
 after(async()=>{await db.$disconnect();});
 
 test("01 · Apertura concurrente rechaza duplicado y admite otra caja en la misma sucursal",async()=>{
-  const t=await terminal(),body={branchId:a,terminalId:t.id,openingAmountCents:100};
+  const t=await terminal(),body={branchId:a,terminalId:t.id,openingAmountCents:100,openingNotes:"Fondo de apertura sintético trazable"};
   const responses=await Promise.all([http("/api/cash-register",{method:"POST",body}),http("/api/cash-register",{method:"POST",body})]);
   assert.deepEqual(responses.map((r)=>r.status).sort(),[201,409]);const s=await value(responses.find((r)=>r.status===201),201);toClose.push(s.id);
   assert.equal(await db.cash_register_sessions.count({where:{terminal_id:t.id,status:"OPEN"}}),1);
   const second=await open();assert.notEqual(second.terminal.id,t.id);assert.equal(s.branchId,a);assert.equal(s.openedBy.id,evaluation.adminId);
+  assert.equal(s.openingAmountCents,100);assert.equal(s.openingNotes,body.openingNotes);
+  const persisted=await db.cash_register_sessions.findUniqueOrThrow({where:{id:s.id}});assert.equal(persisted.opened_by,evaluation.adminId);assert.equal(persisted.opening_notes,body.openingNotes);assert.equal(Number(persisted.opening_amount_cents),100);
 });
 test("02 · Venta en efectivo descuenta solo el local y la caja conserva el neto, separado del vuelto",async()=>{
   const session=await open(),id=await product(),s=await sale(id,session),paid=await value(await pay(s,session),201);

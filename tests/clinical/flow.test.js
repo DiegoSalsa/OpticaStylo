@@ -67,6 +67,12 @@ before(async () => {
 after(async () => {
   await db.$disconnect();
 });
+test("Antecedentes sin ficha devuelven vacío y un profesional clínico no opera caja",async()=>{
+  const empty=await data(await request(`/api/patients/${d.patientId}/medical-record`));
+  assert.equal(empty.record,null);assert.deepEqual(empty.revisions,[]);
+  assert.equal((await request("/api/cash-register",{method:"POST",body:{branchId:inventoryDemo.branches[0],openingAmountCents:100}})).status,403);
+});
+
 test("Optometría sin reserva: todos los campos, autoría e idempotencia", async () => {
   const body = base(),
     key = randomUUID();
@@ -122,6 +128,19 @@ test("Contactología con reserva: persistencia estructurada y orden explícito",
     key: randomUUID()
   })).status, 409);
 });
+test("Reserva recupera su ficha para el profesional y oculta el borrador a un colega",async()=>{
+  const path=`/api/clinical-encounters?appointmentId=${d.appointmentId}`;
+  assert.equal((await data(await request(path))).id,contact.id);
+  assert.equal((await request(path,{cookie:colleague})).status,404);
+  const notArrived=await db.appointments.create({data:{patient_id:d.otherPatientId,professional_id:d.professionalId,start_at:new Date("2042-02-01T12:00:00Z"),end_at:new Date("2042-02-01T12:30:00Z"),status:"CONFIRMED",created_by:evaluation.adminId}});
+  await db.appointments.update({where:{id:d.appointmentId},data:{status:"CONFIRMED"}});
+  try {
+    assert.equal((await request("/api/clinical-encounters",{method:"POST",key:randomUUID(),body:{...base("CONTACTOLOGY"),appointmentId:d.appointmentId}})).status,409);
+    assert.equal((await request(`/api/patients/${d.otherPatientId}/medical-record`,{method:"PATCH",body:{expectedRevision:0,allergies:"Intento sintético sin presencia ni asignación presencial"}})).status,403);
+  }
+  finally {await db.appointments.update({where:{id:d.appointmentId},data:{status:"CHECKED_IN"}});await db.appointments.delete({where:{id:notArrived.id}});}
+});
+
 test("Borrador incompleto se guarda, recupera y conserva versiones", async () => {
   const draft = await create({
     ...base("CONTACTOLOGY"),
@@ -251,6 +270,8 @@ test("Finalización exige confirmación y versión, admite receta explícita sin
       encounter_id: contact.id
     }
   }), 0);
+  assert.equal((await request(`/api/clinical-encounters/${contact.id}/finalize`,{method:"POST",body:{expectedVersion:contact.version,confirm:true,finalizedAt:"2000-01-01T00:00:00Z"}})).status,400);
+  const beforeFinalization=Date.now();
   contact = await data(await request(`/api/clinical-encounters/${contact.id}/finalize`, {
     method: "POST",
     body: {
@@ -259,6 +280,8 @@ test("Finalización exige confirmación y versión, admite receta explícita sin
     }
   }));
   assert.equal(contact.status, "FINALIZED");
+  assert.ok(new Date(contact.finalizedAt).getTime()>=beforeFinalization-1000);
+  assert.ok(new Date(contact.finalizedAt).getTime()<=Date.now()+1000);
   assert.equal((await db.appointments.findUniqueOrThrow({
     where: {
       id: d.appointmentId
@@ -426,6 +449,13 @@ test("Recepción asigna y revoca atención sin acceder a sus datos clínicos", a
     }
   }));
 });
+test("Ficha general heredada incompleta no se finaliza ni cambia su historial",async()=>{
+  const legacy=await db.clinical_encounters.create({data:{patient_id:d.patientId,professional_id:d.professionalId,created_by:d.professionalId,updated_by:d.professionalId,reason_for_visit:"Ficha general heredada exclusivamente sintética"}});
+  const response=await request(`/api/clinical-encounters/${legacy.id}/finalize`,{method:"POST",body:{expectedVersion:1,confirm:true}});
+  assert.equal(response.status,409);assert.equal((await response.json()).error.code,"CLINICAL_INCOMPLETE");
+  const saved=await db.clinical_encounters.findUniqueOrThrow({where:{id:legacy.id}});assert.equal(saved.status,"DRAFT");assert.equal(saved.record_version,1);assert.equal(saved.finalized_at,null);
+});
+
 test("Cuenta clínica deshabilitada pierde inmediatamente consulta e impresión", async () => {
   await db.users.update({
     where: {
