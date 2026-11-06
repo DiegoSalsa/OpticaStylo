@@ -35,6 +35,8 @@ import {
 import { validateDiscountAuthorizationInput } from "../validations/discount-authorization-validation.js";
 
 const REPOSITORY_ERRORS = Object.freeze({
+  SHIPMENT_CANCELLATION_REQUIRES_REVIEW: ["SHIPMENT_CANCELLATION_REQUIRES_REVIEW", "La OT requiere revisión logística. Cancelar la venta no cancela el transporte ni autoriza reponer stock.", 409],
+  SHIPMENT_DELIVERY_REQUIRES_TRACKING: ["SHIPMENT_DELIVERY_REQUIRES_TRACKING", "La entrega del despacho debe verificarse mediante seguimiento del transportista.", 409],
   CUSTOMER_NOT_FOUND: ["CUSTOMER_NOT_FOUND", "No se encontró el cliente de la venta.", 404],
   CASH_REGISTER_CLOSED: ["CASH_REGISTER_CLOSED", "Abre una caja de esta sucursal antes de registrar el cobro.", 409],
   DISCOUNT_EXCEEDS_SUBTOTAL: ["DISCOUNT_EXCEEDS_SUBTOTAL", "El descuento debe ser menor que el subtotal de la venta.", 409],

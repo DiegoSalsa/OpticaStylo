@@ -166,6 +166,7 @@ function buyer(value) {
 function fulfillment(value) {
   object(value);
   const method = typeof value.method === "string" ? value.method.trim().toUpperCase() : "";
+  if (method === "DELIVERY") return { method, quoteId: uuid(value.quoteId, "cotización de despacho"), notes: text(value.notes, "Las notas de entrega", 500, { nullable: true }) };
   if (method !== "PICKUP") {
     fail("La tienda online actualmente solo permite retiro en tienda.", "FULFILLMENT_METHOD_UNAVAILABLE");
   }

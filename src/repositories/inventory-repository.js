@@ -73,7 +73,8 @@ export async function reserveSaleInventory(client, saleId, actorId = null) {
   await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
   const sale = await client.sales.findUnique({ include: { sale_items: { include: { products_sale_items_product_idToproducts: true } } }, where: { id: saleId } });
   if (!sale || sale.status !== "PENDING") inventoryError("SALE_NOT_PAYABLE", "El pedido no admite una reserva.");
-  await assertBranch(client, sale.branch_id, sale.origin === "ONLINE");
+  const branch = await assertBranch(client, sale.branch_id, sale.origin === "ONLINE" && sale.fulfillment_method !== "DELIVERY");
+  if (sale.fulfillment_method === "DELIVERY" && (!branch.shipping_enabled || !branch.shipping_origin?.validated)) inventoryError("SHIPPING_ORIGIN_UNAVAILABLE", "La sucursal no es un origen logístico habilitado.");
   for (const item of [...sale.sale_items].sort((a,b) => a.product_id.localeCompare(b.product_id))) {
     const product = item.products_sale_items_product_idToproducts;
     if (!product.is_active || product.inventory_mode === "UNCONFIGURED") inventoryError("INVENTORY_NOT_CONFIGURED", `Falta configurar la disponibilidad de ${product.name}.`);
@@ -139,6 +140,18 @@ export async function availabilityForProducts(products, client = prisma, include
     });
     return [id, { available: options.some((b) => b.available), exactQuantityKnown: mode === "TRACKED" && options.every((b) => b.quantity !== null), source: "INVENTORY", mode, branches: options }];
   }));
+}
+
+export async function onlineAvailabilityForProducts(products, client = prisma) {
+  const result = await availabilityForProducts(products, client, true);
+  const origins = await client.branches.findMany({ where: { is_active: true, shipping_enabled: true }, select: { id: true } });
+  const shippingIds = new Set(origins.map((b) => b.id));
+  for (const value of result.values()) {
+    value.branches = value.branches.filter((b) => b.pickupEnabled || shippingIds.has(b.id));
+    value.available = value.branches.some((b) => b.available);
+    value.exactQuantityKnown = value.mode === "TRACKED" && value.branches.every((b) => b.quantity !== null);
+  }
+  return result;
 }
 
 export async function transferInventory(input, actor, requestKey) {

@@ -35,7 +35,10 @@
     "test:evaluation:ui": "node scripts/run-evaluation.mjs ui",
     "test:evaluation:server": "node scripts/run-evaluation.mjs server",
     "test:evaluation:clean": "node scripts/clean-evaluation.mjs",
-    "test:evaluation": "node scripts/run-evaluation.mjs all"
+    "test:evaluation": "node scripts/run-evaluation.mjs all",
+    "shipping:sync": "node scripts/sync-shipments.mjs",
+    "test:shipping": "node scripts/run-prescription-tests.mjs --shipping",
+    "demo:shipping": "node scripts/run-prescription-tests.mjs --shipping --demo"
   },
   "engines": {
     "node": ">=20.9.0"

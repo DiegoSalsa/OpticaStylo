@@ -651,6 +651,7 @@ model product_images {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio products {.
 model products {
+  shipping_logistics                                                Json?
   inventory_mode                                                    String                     @default("UNCONFIGURED") @db.VarChar(20)
   inventory_stocks                                                  inventory_stocks[]
   inventory_transfers                                               inventory_transfers[]
@@ -940,6 +941,9 @@ model sale_receipts {
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 /// Entidad de datos del dominio sales {.
 model sales {
+  shipping_quote_id                         String?                         @unique @db.Uuid
+  shipping_quote                            shipping_quotes?                @relation(fields: [shipping_quote_id], references: [id], onDelete: Restrict)
+  shipment                                  shipping_shipments?
   customer_order_links                      customer_order_links?
   customer_commerce_challenges              customer_commerce_challenges[]
   cash_session_id                           String?                         @db.Uuid
@@ -1116,6 +1120,9 @@ model store_cart_items {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio store carts {.
 model store_carts {
+  shipping_destination     Json?
+  shipping_quote_id        String?                 @db.Uuid
+  shipping_quotes          shipping_quotes[]
   branch_id                String?                 @db.Uuid
   branches                 branches?               @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
@@ -1389,6 +1396,8 @@ model virtual_try_on_3d_assets {
 }
 
 model branches {
+  shipping_enabled         Boolean                     @default(false)
+  shipping_origin          Json?
   customer_commercial_notes customer_commercial_notes[]
   cash_register_terminals   cash_register_terminals[]
   cash_register_sessions    cash_register_sessions[]
@@ -1406,6 +1415,88 @@ model branches {
   store_carts               store_carts[]
   transfers_out             inventory_transfers[]       @relation("transfer_source")
   transfers_in              inventory_transfers[]       @relation("transfer_destination")
+}
+
+model shipping_packaging {
+  code           String  @id @db.VarChar(40)
+  validated      Boolean @default(false)
+  tare_weight_kg Decimal @db.Decimal(8, 2)
+  height_cm      Decimal @db.Decimal(8, 2)
+  width_cm       Decimal @db.Decimal(8, 2)
+  length_cm      Decimal @db.Decimal(8, 2)
+  max_units      Int
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model shipping_quotes {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cart_id        String @db.Uuid
+  cart           store_carts @relation(fields: [cart_id], references: [id], onDelete: Restrict)
+  branch_id      String @db.Uuid
+  environment    String @db.VarChar(20)
+  fingerprint    String @db.VarChar(64)
+  snapshot       Json
+  service_code   String @db.VarChar(20)
+  service_name   String @db.VarChar(200)
+  conditions     String
+  provider_cost  BigInt
+  customer_charge BigInt
+  free_threshold BigInt
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  expires_at     DateTime @db.Timestamptz(6)
+  sale           sales?
+  shipment       shipping_shipments?
+  @@index([cart_id, expires_at])
+}
+
+model shipping_shipments {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sale_id         String @unique @db.Uuid
+  sale            sales @relation(fields: [sale_id], references: [id], onDelete: Restrict)
+  quote_id        String @unique @db.Uuid
+  quote           shipping_quotes @relation(fields: [quote_id], references: [id], onDelete: Restrict)
+  state           String @default("PENDING_PREPARATION") @db.VarChar(30)
+  reference       String @unique @db.VarChar(80)
+  ot              String? @unique @db.VarChar(80)
+  certificate     String? @db.VarChar(80)
+  label_data      Bytes?
+  label_mime      String? @db.VarChar(40)
+  issued_service  String? @db.VarChar(200)
+  last_checked_at DateTime? @db.Timestamptz(6)
+  next_sync_at    DateTime? @db.Timestamptz(6)
+  last_error_code String? @db.VarChar(80)
+  provider_status String? @db.VarChar(300)
+  failure_count   Int @default(0)
+  handed_over_at  DateTime? @db.Timestamptz(6)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @updatedAt @db.Timestamptz(6)
+  events          shipping_tracking_events[]
+  operations      shipping_operations[]
+  @@index([state, next_sync_at])
+}
+
+model shipping_tracking_events {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipment_id  String @db.Uuid
+  shipment     shipping_shipments @relation(fields: [shipment_id], references: [id], onDelete: Restrict)
+  fingerprint  String @db.VarChar(64)
+  code         String @db.VarChar(40)
+  description  String @db.VarChar(500)
+  location     String? @db.VarChar(200)
+  motive       String? @db.VarChar(300)
+  occurred_at  DateTime? @db.Timestamptz(6)
+  received_at  DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([shipment_id, fingerprint])
+}
+
+model shipping_operations {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipment_id  String @db.Uuid
+  shipment     shipping_shipments @relation(fields: [shipment_id], references: [id], onDelete: Restrict)
+  actor_id     String? @db.Uuid
+  operation    String @db.VarChar(40)
+  details      Json
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
 }
 
 model user_branches {

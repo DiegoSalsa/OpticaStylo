@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { readResponse } from "@/components/internal/internal-shell";
 import PrescriptionDetails from "@/components/prescriptions/prescription-details";
+import ShipmentPanel from "@/components/shipping/shipment-panel";
 
 const money = new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" });
 const labels = { PENDING: "Pendiente", PAID: "Pagado", IN_PREPARATION: "En preparación", READY: "Listo", DELIVERED: "Entregado", CANCELLED: "Cancelado", QUOTATION: "Cotización" };
@@ -51,6 +52,7 @@ export default function OrderDetail({ saleId, onClose }) {
         {sale.fulfillment?.address && <div><dt>Dirección de entrega</dt><dd>{[sale.fulfillment.address, sale.fulfillment.city, sale.fulfillment.region].filter(Boolean).join(", ")}</dd></div>}
         {sale.fulfillment?.notes && <div><dt>Indicaciones de entrega</dt><dd>{sale.fulfillment.notes}</dd></div>}
       </dl>
+      {sale.fulfillment?.method === "DELIVERY" && <ShipmentPanel saleId={sale.id} internal />}
       <h3>Historial de cambios</h3>
       {sale.externalPrescription && <PrescriptionDetails endpoint={`/api/external-prescriptions/${sale.externalPrescription.id}`} label="Ver receta del pedido" />}
       {sale.prescription && <ClinicalOrderPrescription prescriptionId={sale.prescription.id} />}

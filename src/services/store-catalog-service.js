@@ -1,4 +1,4 @@
-import { availabilityForProducts, expireInventoryReservations } from "../repositories/inventory-repository.js";
+import { onlineAvailabilityForProducts, expireInventoryReservations } from "../repositories/inventory-repository.js";
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import { findProductById, listProducts } from "../repositories/product-repository.js";
 import { getProductPresentation } from "../config/product-presentations.js";
@@ -57,7 +57,7 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
     },
   );
   await expireInventoryReservations();
-  const availabilityMap = await availabilityForProducts(result.items);
+  const availabilityMap = await onlineAvailabilityForProducts(result.items);
   const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const models = result.items.some((product) => product.category === "FRAME")
     ? await (dependencies.list3dModels ?? listPublished3dModels)() : [];
@@ -87,7 +87,7 @@ export async function getStoreProduct(productId, dependencies = {}) {
     });
   }
   await expireInventoryReservations();
-  const availabilityMap = await availabilityForProducts([product]);
+  const availabilityMap = await onlineAvailabilityForProducts([product]);
   const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const images = await (dependencies.listProductImages ?? listActiveProductImages)([product.id]);
   const models = product.category === "FRAME"
@@ -106,7 +106,7 @@ export async function getStoreProduct(productId, dependencies = {}) {
     pageSize: 100,
     search: "",
   });
-  const lensAvailability = await availabilityForProducts(lenses.items);
+  const lensAvailability = await onlineAvailabilityForProducts(lenses.items);
   for (const [id, data] of lensAvailability) availabilityMap.set(id, data);
   return {
     ...presentation,

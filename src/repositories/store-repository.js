@@ -4,7 +4,8 @@ import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
-import { assertBranch, availabilityForProducts, inventoryError, reserveSaleInventory } from "./inventory-repository.js";
+import { assertBranch, onlineAvailabilityForProducts, inventoryError, reserveSaleInventory } from "./inventory-repository.js";
+import { createShipment, validateShippingQuote } from "./shipping-repository.js";
 
 const TEST_DATA_AVAILABLE = canUseStoreTestData();
 const itemProduct = "products_store_cart_items_product_idToproducts";
@@ -39,6 +40,7 @@ function mapCartBase(row) {
     } : null,
     id: row.id, saleId: row.sale_id, shippingFeeCents: Number(row.shipping_fee_cents),
     shippingQuoteSource: row.shipping_quote_source, status: row.status, updatedAt: row.updated_at,
+    shippingQuoteId: row.shipping_quote_id, shippingDestination: row.shipping_destination,
   };
 }
 
@@ -62,7 +64,7 @@ async function loadCart(client, tokenHash, accountId = null) {
   });
   const base = mapCartBase(row);
   if (!base) return null;
-  const availability = await availabilityForProducts(row.store_cart_items.map((item) => item[itemProduct]), client);
+  const availability = await onlineAvailabilityForProducts(row.store_cart_items.map((item) => item[itemProduct]), client);
   const items = row.store_cart_items.map((item) => {
     const product = item[itemProduct];
     return {
@@ -127,10 +129,10 @@ export async function upsertStoreCartItems(tokenHash, accountId, items, replaceF
     if (productRows.length !== productIds.length || productRows.some((product) => !product.is_active || (!TEST_DATA_AVAILABLE && product.is_test_data))) {
       return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
     }
-    const availability = await availabilityForProducts(productRows, client);
+    const availability = await onlineAvailabilityForProducts(productRows, client);
     for (const item of items) {
       const stock = availability.get(item.productId);
-      if (!stock?.branches.some((branch) => branch.available && (branch.quantity === null || branch.quantity >= item.quantity))) inventoryError("INSUFFICIENT_STOCK", "El producto no tiene esa cantidad disponible en una sucursal de retiro.");
+      if (!stock?.branches.some((branch) => branch.available && (branch.quantity === null || branch.quantity >= item.quantity))) inventoryError("INSUFFICIENT_STOCK", "El producto no tiene esa cantidad disponible en una sucursal habilitada.");
     }
     const currentFrames = await client.store_cart_items.findMany({
       select: { product_id: true },
@@ -201,7 +203,7 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     // Mantener el bloqueo también en la capa de persistencia si un consumidor omite el validador público.
-    if (configuration.fulfillment.method !== "PICKUP") {
+    if (!["PICKUP", "DELIVERY"].includes(configuration.fulfillment.method)) {
       return { cart: null, reason: "FULFILLMENT_METHOD_UNAVAILABLE" };
     }
     if (configuration.clinicalPrescriptionId && !accountId) return { cart: null, reason: "ACCOUNT_REQUIRED_FOR_PRESCRIPTION" };
@@ -216,9 +218,16 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
       if (!prescription) return { cart: null, reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE" };
     }
     const { buyer, fulfillment } = configuration;
-    await assertBranch(client, fulfillment.branchId, true);
+    const quote = fulfillment.method === "DELIVERY" ? await validateShippingQuote(client, locked.cart, fulfillment.quoteId) : null;
+    if (quote) {
+      fulfillment.branchId = quote.branch_id;
+      const d = quote.snapshot.destination;
+      fulfillment.address = [d.street, d.number, d.supplement].filter(Boolean).join(" ");
+      fulfillment.city = d.countyName; fulfillment.region = d.regionName;
+    }
+    await assertBranch(client, fulfillment.branchId, fulfillment.method === "PICKUP");
     const availableCart = await loadCart(client, tokenHash, accountId);
-    if (availableCart.items.some((item) => {
+    if (!quote && availableCart.items.some((item) => {
       const stock = item.availability.branches.find((branch) => branch.id === fulfillment.branchId);
       return !stock?.available || (stock.quantity !== null && stock.quantity < item.quantity);
     })) inventoryError("INSUFFICIENT_STOCK", "Los productos no están disponibles juntos en la sucursal seleccionada.");
@@ -229,8 +238,9 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
       clinical_prescription_id: configuration.clinicalPrescriptionId,
       delivery_address: fulfillment.address, delivery_city: fulfillment.city,
       delivery_notes: fulfillment.notes, delivery_region: fulfillment.region,
-      fulfillment_method: fulfillment.method, shipping_fee_cents: 0,
-      shipping_quote_source: fulfillment.method === "DELIVERY" ? "MOCK" : null,
+      fulfillment_method: fulfillment.method, shipping_fee_cents: quote?.customer_charge ?? 0,
+      shipping_quote_source: quote ? quote.environment === "synthetic" ? "SYNTHETIC" : "CHILEXPRESS" : null,
+      shipping_quote_id: quote?.id ?? null, shipping_destination: quote?.snapshot.destination ?? {},
     }, where: { id: locked.cart.id } });
     if (configuration.clinicalPrescriptionId) {
       const external = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
@@ -447,6 +457,8 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       lastNames: cart.buyer_last_names, phone: cart.buyer_phone, rut: cart.buyer_rut,
     });
     const subtotalCents = items.reduce((sum, item) => sum + Number(item.product.unit_price_cents) * item.quantity, 0);
+    const shippingQuote = cart.fulfillment_method === "DELIVERY" ? await validateShippingQuote(client, cart, cart.shipping_quote_id, checkedOutAt) : null;
+    if (shippingQuote && Number(cart.shipping_fee_cents) !== Number(shippingQuote.customer_charge)) inventoryError("SHIPPING_QUOTE_STALE", "Vuelva a seleccionar la cotización de despacho.");
     const totalCents = subtotalCents + Number(cart.shipping_fee_cents);
     const sale = await client.sales.create({ data: {
       created_by: null, customer_id: customerId,
@@ -458,6 +470,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       prescription_id: cart.clinical_prescription_id, patient_id: clinicalPrescription?.clinical_encounters.patient_id ?? null,
       shipping_fee_cents: cart.shipping_fee_cents,
       shipping_quote_source: cart.shipping_quote_source, status: "PENDING",
+      shipping_quote_id: shippingQuote?.id ?? null,
       subtotal_cents: subtotalCents, total_cents: totalCents, updated_by: null,
       sale_items: { create: items.map((item, index) => ({
         mount_source: item.product.category === "PRESCRIPTION_LENS" ? "SOLD_FRAME" : null,
@@ -469,6 +482,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       })) },
     } });
     await reserveSaleInventory(client, sale.id);
+    if (shippingQuote) await createShipment(client, sale, shippingQuote);
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     await client.sale_events.create({ data: {
       details: JSON.stringify({ origin: "ONLINE", totalCents }), event_type: "CREATED",

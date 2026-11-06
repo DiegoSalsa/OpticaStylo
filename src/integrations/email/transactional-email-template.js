@@ -2,6 +2,7 @@ const BRAND_NAME = "Stylo Vivo";
 const TEMPLATE_VERSION = "2026-08-22.v1";
 
 export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
+  "SHIPPING_UPDATE",
   "ACCOUNT_CREATED",
   "CUSTOMER_PATIENT_OTP",
   "CUSTOMER_COMMERCE_OTP",
@@ -55,6 +56,8 @@ function receiptReference(payload) {
 function contentFor(email, timeZone) {
   const payload = email.payload ?? {};
   switch (email.templateCode) {
+    case "SHIPPING_UPDATE":
+      return { title: payload.synthetic ? "Actualización de despacho SINTÉTICO" : "Actualización de despacho", intro: "Consulta el progreso del despacho desde el detalle privado de tu pedido.", facts: [["OT", payload.ot], ["Etapa", ({ PREPARED: "Preparado", OT_ISSUED: "Orden de transporte emitida", HANDED_OVER: "Entregado al transportista", DELIVERED: "Entregado", EXCEPTION: "Incidencia logística" })[payload.stage] ?? "Actualización logística"]] };
     case "ACCOUNT_CREATED":
       return {
         facts: [],

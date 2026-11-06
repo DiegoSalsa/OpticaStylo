@@ -482,9 +482,15 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
     const current = await client.sales.findUnique({ include: { sale_payments: true }, where: { id: saleId } });
     if (!current) return { reason: "SALE_NOT_FOUND", sale: null };
     if (change.status === "CANCELLED") {
+      const shipment = await client.shipping_shipments.findUnique({ where: { sale_id: saleId } });
+      if (shipment && !["PENDING_PREPARATION", "PREPARED", "CANCELLED"].includes(shipment.state)) return { reason: "SHIPMENT_CANCELLATION_REQUIRES_REVIEW", sale: null };
       if (!["QUOTATION", "PENDING"].includes(current.status)) return { reason: "SALE_NOT_CANCELLABLE", sale: null };
       if (current.sale_payments.length) return { reason: "SALE_HAS_PAYMENTS", sale: null };
       await settleSaleInventory(client, saleId, "RELEASE", actorUserId);
+      if (shipment) {
+        await client.shipping_shipments.update({ where: { id: shipment.id }, data: { state: "CANCELLED" } });
+        await client.shipping_operations.create({ data: { shipment_id: shipment.id, actor_id: actorUserId, operation: "ORDER_CANCELLED", details: { reason: change.cancellationReason } } });
+      }
       await client.sales.update({ data: {
         cancellation_reason: change.cancellationReason, cancelled_at: changedAt,
         status: "CANCELLED", updated_by: actorUserId,
@@ -494,6 +500,7 @@ export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
       });
     } else {
       if (!(ALLOWED_TRANSITIONS[current.status] ?? []).includes(change.status)) return { reason: "INVALID_STATUS_TRANSITION", sale: null };
+      if (change.status === "DELIVERED" && current.fulfillment_method === "DELIVERY") return { reason: "SHIPMENT_DELIVERY_REQUIRES_TRACKING", sale: null };
       if (change.status === "DELIVERED") await settleSaleInventory(client, saleId, "SALE", actorUserId);
       await client.sales.update({ data: { status: change.status, updated_by: actorUserId }, where: { id: saleId } });
       await insertSaleEvent(client, saleId, "STATUS_CHANGED", actorUserId, { newStatus: change.status, previousStatus: current.status });

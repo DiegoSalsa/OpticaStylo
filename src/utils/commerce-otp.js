@@ -18,5 +18,5 @@ export function isolatedCommerceMailbox() {
   } catch {
     return false;
   }
-  return u.hostname === "127.0.0.1" && u.port === "55441" && u.username === "stylo_test" && u.pathname === "/opticastylo_evaluation" && /^stylo_e2e_[a-f0-9]{16}$/.test(u.searchParams.get("schema") ?? "") && process.env.EMAIL_MODE === "disabled";
+  return u.hostname === "127.0.0.1" && u.port === String(process.env.EVALUATION_PG_PORT ?? "55441") && u.username === "stylo_test" && u.pathname === "/opticastylo_evaluation" && /^stylo_e2e_[a-f0-9]{16}$/.test(u.searchParams.get("schema") ?? "") && process.env.EMAIL_MODE === "disabled";
 }

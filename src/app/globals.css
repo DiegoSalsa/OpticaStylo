@@ -504,3 +504,31 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+.shipping-choice {
+  border: 1px solid #cbded9;
+  border-radius: 14px;
+  padding: 18px;
+  min-width: 0;
+}
+.shipping-choice > label { display: inline-flex; gap: 8px; margin: 8px 20px 12px 0; }
+.shipping-fields { display: grid; gap: 14px; }
+.shipping-rate { display: grid; gap: 6px; padding: 14px; border: 1px solid #bdd7cd; border-radius: 10px; }
+.shipping-rate input { justify-self: start; }
+.shipping-test { background: #fff2d2; color: #70420a; padding: 12px; border-radius: 8px; font-weight: 700; }
+.shipment-panel {
+  background: #f5faf8;
+  border: 1px solid #cbded9;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 16px 0;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.order-row > .shipment-panel { grid-column: 1 / -1; }
+.shipment-panel dl > div { margin: 8px 0; }
+.shipment-panel dt { color: #50665e; font-size: .85rem; }
+.shipment-panel dd { margin: 4px 0; }
+.shipment-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.shipment-actions .field { flex-basis: 100%; }
+.shipment-panel li { margin: 10px 0; }

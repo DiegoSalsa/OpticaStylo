@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { readResponse, useInternalActor } from "@/components/internal/internal-shell";
 import Pagination from "@/components/internal/pagination";
@@ -34,7 +35,7 @@ function OrderColumn({ column, endpoint, refresh, canUpdate, pendingIds, advance
         <dl><div><dt>Total</dt><dd>{money.format(sale.totalCents)}</dd></div>{sale.balanceCents > 0 && <div><dt>Saldo</dt><dd>{money.format(sale.balanceCents)}</dd></div>}</dl>
         {sale.fulfillment && <div className="order-fulfillment"><Icon name={sale.fulfillment.method === "PICKUP" ? "home" : "package"} size={15} /><span>{sale.fulfillment.method === "PICKUP" ? `Retiro: ${sale.branch?.name ?? "Sucursal no registrada"}` : "Despacho"}</span></div>}
         <button className="order-detail-button" onClick={() => showDetail(sale.id)} type="button">Ver detalle</button>
-        {nextStatus[sale.status] && canUpdate && <button className="order-advance" disabled={pendingIds.includes(sale.id)} onClick={() => advance(sale)} type="button">{pendingIds.includes(sale.id) ? "Procesando…" : nextLabel[sale.status]} <Icon name="arrow" size={15} /></button>}
+        {nextStatus[sale.status] && canUpdate && !(sale.fulfillment?.method === "DELIVERY" && sale.status === "READY") && <button className="order-advance" disabled={pendingIds.includes(sale.id)} onClick={() => advance(sale)} type="button">{pendingIds.includes(sale.id) ? "Procesando…" : nextLabel[sale.status]} <Icon name="arrow" size={15} /></button>}
       </article>)}
     </div>
     <Pagination {...list} label={`pedidos ${column.label.toLowerCase()}`} />
@@ -102,7 +103,7 @@ export default function OrdersBoard() {
   const currentSummary = summary?.key === summaryKey ? summary : null;
   return <>
     <header className="app-heading"><div><p className="eyebrow">Operación</p><h1>Gestión de pedidos</h1><p>Seguimiento de ventas confirmadas desde el pago hasta la entrega.</p></div><span className="status-chip" role="status">{currentSummary?.data ? `${currentSummary.data.total} pedidos encontrados` : currentSummary?.error ? "Conteo no disponible" : "Cargando conteo…"}</span></header>
-    <div className="orders-views" role="group" aria-label="Vista de pedidos">{[["active","Pedidos activos"],["delivered","Pedidos entregados"],["history","Historial completo"]].map(([view,label]) => <button className="app-button" aria-pressed={filters.view === view} key={view} onClick={() => setFilters((current) => ({ ...current, status: "", view }))} type="button">{label}</button>)}</div>
+    <p><Link href="/app/pedidos/configuracion-despachos">Configuración logística</Link></p><div className="orders-views" role="group" aria-label="Vista de pedidos">{[["active","Pedidos activos"],["delivered","Pedidos entregados"],["history","Historial completo"]].map(([view,label]) => <button className="app-button" aria-pressed={filters.view === view} key={view} onClick={() => setFilters((current) => ({ ...current, status: "", view }))} type="button">{label}</button>)}</div>
     <section className="app-card orders-toolbar">
       <form className="orders-search" onSubmit={(event) => { event.preventDefault(); setFilters((current) => ({ ...current, search: query.trim() })); }}><Icon name="search" /><input aria-label="Buscar pedido" maxLength={100} onChange={(event) => setQuery(event.target.value)} placeholder="N.º de venta, cliente o RUT" value={query} /><button className="app-button" type="submit">Buscar</button></form>
       <label className="field"><span>Origen</span><select onChange={(event) => setFilters((current) => ({ ...current, origin: event.target.value }))} value={filters.origin}><option value="">Todos</option><option value="ONLINE">WEB</option><option value="IN_STORE">POS</option></select></label>

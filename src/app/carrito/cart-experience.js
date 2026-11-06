@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Icon from "@/components/ui/icon";
+import DeliveryChoice from "@/components/shipping/delivery-choice";
 import {
   cartHasReadyPrescription,
   cartRequiresPrescription,
@@ -37,6 +38,9 @@ function mountName(item, items) {
 export default function CartExperience() {
   const router = useRouter();
   const [cart, setCart] = useState(null);
+  const [shipping, setShipping] = useState({ method: "PICKUP", quote: null });
+  const cartSignature = JSON.stringify(cart?.items.map((i) => [i.productId, i.quantity, i.unitPriceCents]));
+  const selectedQuote = shipping.signature === cartSignature ? shipping.quote : null;
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -54,7 +58,7 @@ export default function CartExperience() {
     [cart],
   );
   const prescriptionReady = cartHasReadyPrescription(cart, cart?.items);
-  const pickupBranches = (cart?.items[0]?.availability?.branches ?? []).map((branch) => ({ ...branch, available: cart.items.every((item) => {
+  const pickupBranches = (cart?.items[0]?.availability?.branches ?? []).filter((branch) => branch.pickupEnabled).map((branch) => ({ ...branch, available: cart.items.every((item) => {
     const stock = item.availability?.branches.find((option) => option.id === branch.id);
     return stock?.available && (stock.quantity === null || stock.quantity >= item.quantity);
   }) }));
@@ -272,7 +276,7 @@ export default function CartExperience() {
             rut: form.get("rut"),
           },
           clinicalPrescriptionId: cart.clinicalPrescriptionId,
-          fulfillment: { method: "PICKUP", branchId: form.get("branchId"), notes: form.get("notes") || null },
+          fulfillment: shipping.method === "DELIVERY" ? { method: "DELIVERY", quoteId: selectedQuote?.id, notes: form.get("notes") || null } : { method: "PICKUP", branchId: form.get("branchId"), notes: form.get("notes") || null },
         }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
@@ -368,7 +372,7 @@ export default function CartExperience() {
 
         <article className="cart-card">
           <h2>Datos para la compra</h2>
-          <p className="card-lead">Puedes continuar como invitado. Las compras online se preparan para retiro en tienda.</p>
+          <p className="card-lead">Puedes continuar como invitado. Selecciona retiro o calcula el despacho antes de confirmar.</p>
           <form className="buyer-form" onChange={(event) => setBuyerDraft(Object.fromEntries(new FormData(event.currentTarget)))} onSubmit={checkout}>
             <label className="field"><span>RUT</span><input defaultValue={buyerDraft.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
             <label className="field"><span>Nombres</span><input defaultValue={buyerDraft.firstNames ?? ""} name="firstNames" placeholder="Nombres" required /></label>
@@ -376,15 +380,16 @@ export default function CartExperience() {
             <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>
             <label className="field"><span>Correo</span><input defaultValue={buyerDraft.email ?? ""} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
             <label className="field"><span>Dirección de contacto</span><input defaultValue={buyerDraft.address ?? ""} name="address" placeholder="Dirección" required /></label>
-            <div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en una sucursal</strong><span>Todos los productos deben estar disponibles en el mismo local. La reserva sin pagos dura 30 minutos desde la creación del pedido.</span></div></div>
+            <DeliveryChoice selection={shipping} onChange={setShipping} signature={cartSignature} />
+            {shipping.method === "PICKUP" && <><div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en una sucursal</strong><span>Todos los productos deben estar disponibles en el mismo local. La reserva sin pagos dura 30 minutos desde la creación del pedido.</span></div></div>
             <label className="field field-full"><span>Sucursal de retiro</span><select name="branchId" required defaultValue={buyerDraft.branchId ?? ""}><option value="">Selecciona una sucursal</option>{pickupBranches.map((branch) => <option disabled={!branch.available} key={branch.id} value={branch.id}>{branch.name}{branch.available ? " — Disponible" : " — Sin disponibilidad conjunta"}</option>)}</select></label>
-            {!pickupBranches.some((branch) => branch.available) && <p className="inline-error field-full" role="alert">Ninguna sucursal tiene todos los productos disponibles. Modifica las cantidades o productos del carrito.</p>}
+            {!pickupBranches.some((branch) => branch.available) && <p className="inline-error field-full" role="alert">Ninguna sucursal tiene todos los productos disponibles. Modifica las cantidades o productos del carrito.</p>}</>}
             <label className="field field-full"><span>Notas opcionales</span><textarea defaultValue={buyerDraft.notes ?? ""} name="notes" placeholder="Ej: Entregar en horario de oficina" rows="3" /></label>
             <button className="button button--primary field-full" disabled={status === "saving" || Boolean(prescriptionImage) || (prescriptionRequired && (!prescriptionReady || prescriptionDirty))} type="submit">Continuar a Mercado Pago</button>{prescriptionRequired && (!prescriptionReady || prescriptionDirty || prescriptionImage) && <p className="field-full">Guarda y confirma la receta antes de continuar.</p>}
           </form>
         </article>
       </section>
-      <aside className="cart-card cart-summary"><h2>Resumen</h2><dl><div><dt>Subtotal</dt><dd>{formatClp(cart.subtotalCents)}</dd></div><div><dt>Retiro</dt><dd>Sin costo</dd></div><div><dt>Total</dt><dd>{formatClp(cart.totalCents)}</dd></div></dl><p><Icon name="shield" size={17} /> Pago real procesado por Mercado Pago.</p>{error && <div className="inline-error">{error}</div>}{notice && <div className="inline-success">{notice}</div>}</aside>
+      <aside className="cart-card cart-summary"><h2>Resumen</h2><dl><div><dt>Subtotal</dt><dd>{formatClp(cart.subtotalCents)}</dd></div><div><dt>{shipping.method === "DELIVERY" ? "Despacho" : "Retiro"}</dt><dd>{shipping.method === "PICKUP" ? "Sin costo" : selectedQuote ? selectedQuote.customerCharge === 0 ? "Gratis" : formatClp(selectedQuote.customerCharge) : "Pendiente de cotizar"}</dd></div><div><dt>Total</dt><dd>{shipping.method === "DELIVERY" && !selectedQuote ? "Pendiente de cotizar" : formatClp(cart.subtotalCents + (selectedQuote?.customerCharge ?? 0))}</dd></div></dl><p><Icon name="shield" size={17} /> Pago procesado por Mercado Pago cuando esté habilitado.</p>{error && <div className="inline-error">{error}</div>}{notice && <div className="inline-success">{notice}</div>}</aside>
     </div>
   </main>;
 }
