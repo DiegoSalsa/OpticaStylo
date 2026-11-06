@@ -48,6 +48,7 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
   const publicQuery = new URLSearchParams(searchParams);
   publicQuery.set("isActive", "true");
   const includeTestData = canUseTestData(dependencies);
+  await (dependencies.expireInventoryReservations ?? expireInventoryReservations)();
   const result = await (dependencies.listProducts ?? listProducts)(
     {
       ...validateStoreCatalogQuery(publicQuery),
@@ -55,7 +56,6 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
       includeTestData,
     },
   );
-  await (dependencies.expireInventoryReservations ?? expireInventoryReservations)();
   const availabilityMap = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)(result.items);
   const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const models = result.items.some((product) => product.category === "FRAME")

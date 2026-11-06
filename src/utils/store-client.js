@@ -1,3 +1,10 @@
+export function storeAvailabilityLabel(product) {
+  if (!product.availability) return "Disponibilidad por confirmar";
+  if (product.availability.available) return product.inventoryMode === "ON_DEMAND" ? "Bajo pedido" : "Disponible";
+  if (product.inventoryMode === "UNCONFIGURED" || product.availability.branches?.some(branch => ["UNCOUNTED", "UNCONFIGURED"].includes(branch.state))) return "Sin inventario confirmado";
+  return product.availability.branches?.length ? "Agotado" : "Sin sucursal habilitada";
+}
+
 export async function readStoreResponse(response) {
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.success) {

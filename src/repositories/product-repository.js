@@ -40,15 +40,25 @@ export async function findProductById(productId) {
   return mapProduct(await prisma.products.findUnique({ where: { id: productId } }));
 }
 
-export async function listProducts({ category, excludeCategory = null, includeTestData = true, isActive, page, pageSize, search, sort = "featured", prescription = "all" }) {
+export async function listProducts({ category, excludeCategory = null, includeTestData = true, isActive, page, pageSize, search, sort = "featured", prescription = "all", availability = "all" }) {
+  const onlineBranch = { is_active: true, OR: [{ pickup_enabled: true }, { shipping_enabled: true }] };
+  const hasOnlineBranch = availability === "available" && Boolean(await prisma.branches.findFirst({where:onlineBranch,select:{id:true}}));
   const where = {
     ...(category ? { category } : {}),
     ...(excludeCategory ? { NOT: { category: excludeCategory } } : {}),
     ...(typeof isActive === "boolean" ? { is_active: isActive } : {}),
     ...(!includeTestData ? { is_test_data: false } : {}),
     // El marco permite configurar cristales; su compra individual nunca exige receta.
-    ...(prescription === "optional" ? { AND: [{ category: "FRAME" }] } : {}),
-    ...(prescription === "not-required" ? { AND: [{ category: { not: "FRAME" } }] } : {}),
+    AND: [
+      ...(prescription === "optional" ? [{ category: "FRAME" }] : []),
+      ...(prescription === "not-required" ? [{ category: { not: "FRAME" } }] : []),
+      ...(availability === "available" ? [{ OR: [
+        ...(hasOnlineBranch ? [{ inventory_mode: "ON_DEMAND" }] : []),
+        { inventory_mode: "TRACKED", inventory_stocks: { some: {
+          branches: onlineBranch, on_hand: { gt: prisma.inventory_stocks.fields.reserved },
+        } } },
+      ] }] : []),
+    ],
     ...(search ? { OR: [
       { sku: { contains: search, mode: "insensitive" } },
       { name: { contains: search, mode: "insensitive" } },

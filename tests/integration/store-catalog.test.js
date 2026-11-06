@@ -26,10 +26,10 @@ test("catálogo PostgreSQL: filtros, orden global y paginación determinista", {
       assert.equal(first.items[0].sku, "DEMO-CATALOGO-054");
       assert.deepEqual((await list("sort=newest")).items.map((item) => item.id), first.items.map((item) => item.id));
     });
-    await t.test("receta opcional identifica marcos y combina categoría y disponibilidad referencial", async () => {
+    await t.test("receta opcional identifica marcos y combina categoría e inventario real aislado", async () => {
       const frames = await list("prescription=optional&availability=available");
       assert.equal(frames.total, 27);
-      assert.ok(frames.items.every((item) => item.supportsPrescription && !item.requiresPrescription && item.availability.source === "MOCK"));
+      assert.ok(frames.items.every((item) => item.supportsPrescription && !item.requiresPrescription && item.availability.source === "INVENTORY"));
       assert.equal((await list("category=ACCESSORY&prescription=optional")).total, 0);
       assert.equal((await list("prescription=not-required")).total, 28);
     });

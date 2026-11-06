@@ -11,5 +11,5 @@ export function validateStoreCatalogQuery(params) {
     || !["all", "available"].includes(availability)) {
     throw new AppError({ code: "INVALID_PRODUCT_DATA", message: "Los filtros del catálogo no son válidos.", status: 400 });
   }
-  return { ...validateProductListQuery(params), sort, prescription };
+  return { ...validateProductListQuery(params), sort, prescription, availability };
 }
