@@ -11,11 +11,13 @@ import { PrismaClient } from "@prisma/client";
 import { createCloudinaryMediaGateway } from "../src/integrations/media/cloudinary-media-gateway.js";
 
 const root = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
-const clinicalOnly = process.argv.includes("--clinical-only");
-const clinicalMode = process.argv.includes("--clinical") || clinicalOnly;
+const customersOnly=process.argv.includes("--customers-only");
+const customersMode=process.argv.includes("--customers")||customersOnly;
+const clinicalOnly = process.argv.includes("--clinical-only")||customersOnly;
+const clinicalMode = process.argv.includes("--clinical") || clinicalOnly || customersMode;
 const posMode = process.argv.includes("--pos") || clinicalMode;
 const inventoryMode = process.argv.includes("--inventory") || posMode;
-const output = path.join(os.tmpdir(), clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
+const output = path.join(os.tmpdir(), customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
 const runRoot = path.join(os.tmpdir(), `stylo-prescriptions-${randomBytes(8).toString("hex")}`);
 const appRoot = path.join(runRoot, "app");
 const pgData = path.join(runRoot, "postgres");
@@ -35,6 +37,9 @@ Object.assign(env, {
   MERCADO_PAGO_ACCESS_TOKEN: "", MERCADO_PAGO_MODE: "sandbox", MERCADO_PAGO_PRODUCTION_ENABLED: "false",
   POS_CASH_TEST_MODE: posMode ? "true" : "false",
   CLINICAL_TEST_MODE: clinicalMode ? "true" : "false",
+  CUSTOMER_COMMERCIAL_TEST_MODE:customersMode?"true":"false",
+  CUSTOMER_COMMERCE_TEST_MAILBOX:customersMode?"true":"false",
+  CUSTOMER_COMMERCE_OTP_SECRET:randomBytes(32).toString("hex"),
   CLINICAL_DEMO_MODE: clinicalMode && process.argv.includes("--demo") ? "true" : "false",
   DEPLOYMENT_ENVIRONMENT: "university", UNIVERSITY_INSECURE_HTTP_ALLOWED: "true",
 });
@@ -83,6 +88,7 @@ try {
   pgStarted = true;
   await run(pg("createdb"), ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "stylo_test", "opticastylo_evaluation"]);
   if(clinicalMode){
+    await rename(path.join(appRoot,"prisma/migrations/20261031000000_customer_commercial_profile"),path.join(runRoot,"customer-migration"));
     await rename(path.join(appRoot,"prisma/migrations/20261030020000_clinical_forms"),path.join(runRoot,"clinical-migration"));
     await run(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{cwd:appRoot});
     await run(process.execPath,["scripts/verify-clinical-upgrade.mjs","before"],{cwd:appRoot});
@@ -90,10 +96,17 @@ try {
   }
   await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], { cwd: appRoot });
   if(clinicalMode) await run(process.execPath,["scripts/verify-clinical-upgrade.mjs","after"],{cwd:appRoot,record:"clinical-upgrade.txt"});
+  if(clinicalMode){
+    if(customersMode)await run(process.execPath,["scripts/verify-customer-upgrade.mjs","before"],{cwd:appRoot});
+    await rename(path.join(runRoot,"customer-migration"),path.join(appRoot,"prisma/migrations/20261031000000_customer_commercial_profile"));
+    await run(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{cwd:appRoot});
+    if(customersMode)await run(process.execPath,["scripts/verify-customer-upgrade.mjs","after"],{cwd:appRoot,record:"customer-upgrade.txt"});
+  }
   if (inventoryMode) await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "diff", "--from-url", databaseUrl, "--to-schema-datamodel", "prisma/schema.prisma", "--script"], { cwd: appRoot, record: "migration-diff.txt" });
   await run(process.execPath, ["scripts/seed-evaluation.mjs"], { cwd: appRoot });
   await run(process.execPath, ["scripts/seed-inventory-demo.mjs"], { cwd: appRoot });
   if(clinicalMode) await run(process.execPath,["scripts/seed-clinical-demo.mjs"],{cwd:appRoot});
+  if(customersMode)await run(process.execPath,["scripts/seed-customers-demo.mjs"],{cwd:appRoot});
   await mkdir(path.join(appRoot, "tmp/evaluation"), { recursive: true });
   await writeFile(path.join(appRoot, "tmp/evaluation/runtime.json"), JSON.stringify({ databaseUrl, schema, appPort, pgPort }));
   await run(process.execPath, ["node_modules/next/dist/bin/next", "build", "--webpack"], { cwd: appRoot, record: "build.txt" });
@@ -110,11 +123,16 @@ try {
   }
   if (!ready) throw new Error("El servidor no inició.");
   if (process.argv.includes("--demo")) {
+    if(customersMode)await run(process.execPath,["scripts/prepare-customer-demo.mjs"],{cwd:appRoot,record:"customer-demo.txt"});
     console.log(`Demostración local con datos sintéticos: ${env.EVALUATION_HTTP_URL}`);
     console.log("Cierre con Ctrl+C para detener y eliminar el clúster de demostración.");
     await new Promise((resolve) => { process.once("SIGINT", resolve); process.once("SIGTERM", resolve); process.stdin.resume(); process.stdin.on("data",(data)=>{if(data.toString().trim()==="stop")resolve();}); });
     process.stdin.pause();
   } else {
+  if(customersMode){
+    await run(process.execPath,["--test","--test-concurrency=1","tests/customers/validation.test.js","tests/customers/flow.test.js"],{cwd:appRoot,record:"customers.txt"});
+    await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/customers/playwright.config.mjs"],{cwd:appRoot,record:"customers-browser.txt"});
+  }
   if(clinicalMode) {
     await run(process.execPath,["--test","--test-concurrency=1","tests/clinical/validation.test.js","tests/clinical/flow.test.js"],{cwd:appRoot,record:"clinical.txt"});
     await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/clinical/playwright.config.mjs"],{cwd:appRoot,record:"clinical-browser.txt"});

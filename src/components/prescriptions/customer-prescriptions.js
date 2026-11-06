@@ -1,25 +1,12 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { readStoreResponse } from "@/utils/store-client";
+import usePaginatedResource from "@/components/internal/use-paginated-resource";
+import Pagination from "@/components/internal/pagination";
 import PrescriptionDetails from "./prescription-details";
-
-export default function CustomerPrescriptions({ customerId }) {
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`/api/external-prescriptions?customerId=${customerId}`, { cache: "no-store", signal: controller.signal })
-      .then(readStoreResponse).then(setResult).catch((requestError) => {
-        if (!controller.signal.aborted) setError(requestError.message);
-      });
-    return () => controller.abort();
-  }, [customerId, revision]);
+export default function CustomerPrescriptions({customerId}){
+  const list=usePaginatedResource(`/api/external-prescriptions?customerId=${customerId}`);
   return <section className="app-card"><h3>Historial de recetas comerciales</h3>
-    <p>Recetas externas y de compras del cliente. Las atenciones clínicas se consultan en su ficha.</p>
-    {error ? <p role="alert">{error} <button onClick={() => { setError(""); setRevision((value) => value + 1); }} type="button">Reintentar</button></p>
-      : !result ? <p role="status">Cargando recetas…</p> : !result.length ? <p>Sin recetas comerciales registradas.</p>
-        : result.map((prescription) => <PrescriptionDetails endpoint={`/api/external-prescriptions/${prescription.id}`} key={prescription.id} label={`Ver receta del ${new Date(prescription.createdAt).toLocaleDateString("es-CL")}`} />)}
+    <p>Recetas externas y de compras autorizadas. Las atenciones clínicas se consultan en su ficha.</p>
+    {list.status==="loading"?<p role="status">Cargando recetas…</p>:list.status==="ready"&&!list.items.length?<p>Sin recetas comerciales registradas.</p>:list.items.map(prescription=><PrescriptionDetails endpoint={`/api/external-prescriptions/${prescription.id}`} key={prescription.id} label={`Ver receta del ${new Date(prescription.createdAt).toLocaleDateString("es-CL")}`}/>)}
+    <Pagination {...list} label="recetas comerciales"/>
   </section>;
 }

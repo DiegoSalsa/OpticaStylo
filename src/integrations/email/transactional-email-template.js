@@ -4,6 +4,7 @@ const TEMPLATE_VERSION = "2026-08-22.v1";
 export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
   "ACCOUNT_CREATED",
   "CUSTOMER_PATIENT_OTP",
+  "CUSTOMER_COMMERCE_OTP",
   "APPOINTMENT_CONFIRMED",
   "APPOINTMENT_REMINDER",
   "ORDER_CONFIRMED",
@@ -68,6 +69,8 @@ function contentFor(email, timeZone) {
         intro: "Usa este código para confirmar que controlas el correo registrado en tu atención clínica. Vence en diez minutos.",
         title: "Verifica tu correo clínico",
       };
+    case "CUSTOMER_COMMERCE_OTP":
+      return {facts:[["Código de verificación",typeof payload.code==="string"?payload.code:null]],intro:"Usa este código para verificar tu correo y recuperar el acceso comercial solicitado. Vence en diez minutos. No lo compartas.",title:"Verifica tu acceso comercial"};
     case "APPOINTMENT_CONFIRMED":
       return {
         facts: [["Fecha y hora", localDate(payload.startAt, timeZone)]],

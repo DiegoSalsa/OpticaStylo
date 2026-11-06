@@ -16,6 +16,7 @@ import {
   findStoreCart,
   failCartPrescriptionExtraction,
   listStoreOrders,
+  ownsStoreOrder,storeOrderPage,
   removeStoreCartItem,
   removeCartPrescription,
   saveExternalPrescriptionImage,
@@ -396,7 +397,7 @@ export async function checkoutCart(token, account, dependencies = {}) {
 
 export async function getStoreOrder(orderId, token, account, dependencies = {}) {
   const id = validateStoreOrderId(orderId);
-  const ownedByAccount = account && (await (dependencies.listOrders ?? listStoreOrders)(account.id)).includes(id);
+  const ownedByAccount = account && (dependencies.listOrders?(await dependencies.listOrders(account.id)).includes(id):await ownsStoreOrder(account.id,id));
   if (!ownedByAccount) {
     const cart = await getStoreCart(token, account, dependencies);
     if (cart.saleId !== id) {
@@ -410,7 +411,14 @@ export async function getStoreOrder(orderId, token, account, dependencies = {}) 
   return publicOrder(sale);
 }
 
-export async function getStoreOrders(account, dependencies = {}) {
+export async function getStoreOrders(account, dependencies = {},searchParams=null) {
+  if(!dependencies.listOrders){
+    const page=Number(searchParams?.get("page")??1),pageSize=Number(searchParams?.get("pageSize")??20);
+    if(!Number.isSafeInteger(page)||page<1||page>100000||!Number.isInteger(pageSize)||pageSize<1||pageSize>50)throw new AppError({code:"INVALID_ORDER_PAGE",message:"La página de pedidos no es válida.",status:400});
+    const {ids,...meta}=await storeOrderPage(account.id,{page,pageSize});
+    const sales=await Promise.all(ids.map(id=>(dependencies.findSaleById??findSaleById)(id)));
+    const items=sales.filter(Boolean).map(publicOrder);return searchParams?{items,...meta}:items;
+  }
   const ids = await (dependencies.listOrders ?? listStoreOrders)(account.id);
   const sales = await Promise.all(ids.map((id) => (
     dependencies.findSaleById ?? findSaleById

@@ -47,7 +47,6 @@ export default function PosExperience() {
     `category=PRESCRIPTION_LENS&stockRevision=${stockRevision}&branch=${branchId}`,
   );
   const [customer, setCustomer] = useState(null);
-  const customerSales=useResourceSearch("/api/sales","",`customerId=${customer?.id??""}&revision=${stockRevision}`,Boolean(customer?.id)&&Boolean(actor?.permissions.includes("sales.read")));
   const [patient, setPatient] = useState(null);
   const [lines, setLines] = useState([]);
   const [selectedLensId, setSelectedLensId] = useState("");
@@ -383,6 +382,9 @@ export default function PosExperience() {
     }
   }
 
+  const requestedQuotation=useRef(null);
+  useEffect(()=>{requestedQuotation.current=loadQuotation;});
+  useEffect(()=>{if(actor?.permissions.includes("sales.read")){const id=new URLSearchParams(window.location.search).get("quotationId");if(id)void requestedQuotation.current?.(id);}},[actor]);
   function loadQuotations() {
     setShowQuotations("QUOTATIONS");
     quotationList.reload();
@@ -791,7 +793,7 @@ export default function PosExperience() {
         cancelQuotation,
         cancelReason,
         branches, branchId, setBranchId,
-        stockRevision, productStock, customerSales,
+        stockRevision, productStock,
         quotationUnchanged,
         historySaleId, setHistorySaleId,
         cashReceivedCents,

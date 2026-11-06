@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import {findCustomerByNormalizedRut} from "./customer-identity.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
@@ -206,7 +207,7 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
     if (configuration.clinicalPrescriptionId && !accountId) return { cart: null, reason: "ACCOUNT_REQUIRED_FOR_PRESCRIPTION" };
     if (configuration.clinicalPrescriptionId) {
       const account = await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } });
-      const prescription = account?.customers.patient_id ? await client.optical_prescriptions.findFirst({
+      const prescription = account?.customers.patient_id && !account.clinical_link_recheck_required ? await client.optical_prescriptions.findFirst({
         where: {
           id: configuration.clinicalPrescriptionId, status: "ACTIVE",
           clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" },
@@ -388,7 +389,7 @@ export async function findCartPrescriptionImage(tokenHash, accountId) {
 
 async function ensureGuestCustomer(client, buyer) {
   if (buyer.rut) {
-    const existing = await client.customers.findUnique({ where: { rut: buyer.rut } });
+    const existing = await findCustomerByNormalizedRut(client,buyer.rut,{lock:true});
     if (existing) return existing.id;
   }
   return (await client.customers.create({ data: {
@@ -431,7 +432,7 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
     let clinicalPrescription = null;
     if (cart.clinical_prescription_id) {
       const account = accountId ? await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } }) : null;
-      clinicalPrescription = account?.customers.patient_id ? await client.optical_prescriptions.findFirst({
+      clinicalPrescription = account?.customers.patient_id && !account.clinical_link_recheck_required ? await client.optical_prescriptions.findFirst({
         where: { id: cart.clinical_prescription_id, status: "ACTIVE", clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" } },
         include: { clinical_encounters: true },
       }) : null;
@@ -488,10 +489,15 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
   }, { isolationLevel: "Serializable" });
 }
 
+export function storeOrderOwnership(accountId){return {status:"CHECKED_OUT",OR:[{customer_account_id:accountId},{sales:{customer_order_links:{is:{account_id:accountId}}}}]};}
+export async function ownsStoreOrder(accountId,saleId){return !!await prisma.store_carts.findFirst({where:{sale_id:saleId,...storeOrderOwnership(accountId)},select:{id:true}});}
+export async function storeOrderPage(accountId,{page=1,pageSize=20}={}){
+ const where=storeOrderOwnership(accountId);const [rows,total]=await prisma.$transaction([prisma.store_carts.findMany({where,select:{sale_id:true},orderBy:[{checked_out_at:"desc"},{id:"desc"}],skip:(page-1)*pageSize,take:pageSize}),prisma.store_carts.count({where})]);return {ids:rows.map(r=>r.sale_id),page,pageSize,total,totalPages:Math.ceil(total/pageSize)};
+}
 export async function listStoreOrders(accountId) {
   return (await prisma.store_carts.findMany({
     orderBy: { checked_out_at: "desc" }, select: { sale_id: true },
-    where: { customer_account_id: accountId, status: "CHECKED_OUT" },
+    where: storeOrderOwnership(accountId),take:20,
   })).map((row) => row.sale_id);
 }
 

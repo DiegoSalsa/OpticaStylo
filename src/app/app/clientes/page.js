@@ -9,7 +9,7 @@ import Pagination from "@/components/internal/pagination";
 import usePaginatedResource from "@/components/internal/use-paginated-resource";
 import { createRequestGate } from "@/utils/pagination";
 import Icon from "@/components/ui/icon";
-import CustomerPrescriptions from "@/components/prescriptions/customer-prescriptions";
+import CommercialProfile from "@/components/customers/commercial-profile";
 import "../management.css";
 
 const EMPTY = {
@@ -25,19 +25,29 @@ const EMPTY = {
 export default function CustomersPage() {
   const actor = useInternalActor();
   const [query, setQuery] = useState("");
+  const [segment,setSegment]=useState("ALL"),[days,setDays]=useState(365),[profileDirty,setProfileDirty]=useState(false),[savedForm,setSavedForm]=useState(EMPTY);
+
   const [form, setForm] = useState(EMPTY);
   const [selectedId, setSelectedId] = useState(null);
   const [status, setStatus] = useState("ready");
   const [notice, setNotice] = useState(null);
+  const basicDirty=JSON.stringify(form)!==JSON.stringify(savedForm);
   const canManage = actor?.permissions.includes("customers.manage");
   const list = usePaginatedResource("/api/customers", { enabled: Boolean(actor?.permissions.includes("customers.read")) });
   const { items } = list;
   const detailGate = useRef(createRequestGate());
   const saving = useRef(false);
   useEffect(() => { const gate = detailGate.current; return () => gate.cancel(); }, []);
+  useEffect(()=>{
+    const dirty=basicDirty||profileDirty;
+    const unload=e=>{if(dirty){e.preventDefault();e.returnValue="";}};
+    const navigate=e=>{const a=e.target.closest?.("a[href]");if(dirty&&a&&a.target!=="_blank"&&e.button===0&&!e.ctrlKey&&!e.metaKey&&new URL(a.href).pathname!==window.location.pathname&&!window.confirm("Hay cambios comerciales sin guardar. ¿Salir y descartarlos?")){e.preventDefault();e.stopPropagation();}};
+    window.addEventListener("beforeunload",unload);document.addEventListener("click",navigate,true);return()=>{window.removeEventListener("beforeunload",unload);document.removeEventListener("click",navigate,true);};
+  },[basicDirty,profileDirty]);
 
   async function select(customer) {
     if (saving.current) return;
+    if((basicDirty||profileDirty)&&!window.confirm("Hay cambios comerciales sin guardar. ¿Descartarlos y continuar?"))return;
     const request = detailGate.current.begin();
     setSelectedId(customer.id);
     setForm(EMPTY);
@@ -46,7 +56,7 @@ export default function CustomersPage() {
     try {
       const detail = await readResponse(await fetch(`/api/customers/${customer.id}`, { cache: "no-store", signal: request.signal }));
       if (!request.isCurrent()) return;
-      setForm(detail);
+      setForm(detail);setSavedForm(detail);
       setStatus("ready");
     } catch (error) {
       if (!request.isCurrent()) return;
@@ -56,15 +66,16 @@ export default function CustomersPage() {
   }
   function reset() {
     if (saving.current) return;
+    if((basicDirty||profileDirty)&&!window.confirm("Hay cambios comerciales sin guardar. ¿Descartarlos y continuar?"))return;
     detailGate.current.cancel();
     setStatus("ready");
     setSelectedId(null);
-    setForm(EMPTY);
+    setForm(EMPTY);setSavedForm(EMPTY);
     setNotice(null);
   }
   function search(event) {
     event.preventDefault();
-    list.setFilters({ search: query.trim() });
+    list.setFilters({ search: query.trim(),segment,days });
   }
   async function submit(event) {
     event.preventDefault();
@@ -73,6 +84,7 @@ export default function CustomersPage() {
     setStatus("saving");
     setNotice(null);
     const payload = {
+      expectedVersion:form.version,
       address: form.address,
       email: form.email,
       firstNames: form.firstNames,
@@ -92,7 +104,7 @@ export default function CustomersPage() {
         ),
       );
       setSelectedId(saved.id);
-      setForm(saved);
+      setForm(saved);setSavedForm(saved);
       list.reload();
       setStatus("ready");
       setNotice({
@@ -160,6 +172,7 @@ export default function CustomersPage() {
               Buscar
             </button>
           </form>
+          <div className="management-fields"><label className="field"><span>Segmento comercial</span><select value={segment} onChange={e=>setSegment(e.target.value)}><option value="ALL">Todos los clientes</option><option value="NEW">Registrados en el período</option><option value="PREVIOUS">Con compras anteriores</option><option value="REPEAT">Recurrentes · dos o más compras</option><option value="INACTIVE">Sin compras recientes</option><option value="QUOTED">Con cotizaciones vigentes</option></select></label><label className="field"><span>Período del filtro, en días</span><input type="number" min="1" max="3650" value={days} onChange={e=>setDays(e.target.value)}/></label><button className="app-button app-button--soft" type="button" onClick={()=>list.setFilters({search:query.trim(),segment,days})}>Aplicar segmento</button></div>
           {list.status === "loading" ? (
             <p className="directory-state">Cargando clientes…</p>
           ) : list.status === "error" ? null : !items.length ? (
@@ -187,7 +200,7 @@ export default function CustomersPage() {
                       {customer.firstNames} {customer.lastNames}
                     </strong>
                     <small>{customer.rut}</small>
-                    <small>{customer.email}</small>
+                    <small>{customer.email}</small><small>{customer.summary?.purchaseCount??0} compras válidas{customer.summary?.recurring?" · Recurrente":""}</small>
                   </span>
                   <i className="status-dot" />
                 </button>
@@ -206,7 +219,7 @@ export default function CustomersPage() {
               Selecciona un cliente para revisar sus datos.
             </p>
           ) : (
-            <form onSubmit={submit}>
+            <details open={!selectedId}><summary>{selectedId?"Editar datos de contacto":"Registrar cliente"}</summary><form onSubmit={submit}>
               <div className="editor-heading">
                 <div>
                   <p className="eyebrow">
@@ -231,8 +244,8 @@ export default function CustomersPage() {
                     onChange={(event) =>
                       setForm({ ...form, firstNames: event.target.value })
                     }
-                    required
                     placeholder="Nombres del cliente"
+                    required
                     value={form.firstNames}
                   />
                 </label>
@@ -244,7 +257,6 @@ export default function CustomersPage() {
                     onChange={(event) =>
                       setForm({ ...form, lastNames: event.target.value })
                     }
-                    required
                     placeholder="Apellidos del cliente"
                     value={form.lastNames ?? ""}
                   />
@@ -257,7 +269,6 @@ export default function CustomersPage() {
                       setForm({ ...form, rut: event.target.value })
                     }
                     placeholder="12.345.678-5"
-                    required
                     value={form.rut ?? ""}
                   />
                 </label>
@@ -269,7 +280,6 @@ export default function CustomersPage() {
                       setForm({ ...form, phone: event.target.value })
                     }
                     placeholder="+56912345678"
-                    required
                     value={form.phone ?? ""}
                   />
                 </label>
@@ -280,7 +290,6 @@ export default function CustomersPage() {
                     onChange={(event) =>
                       setForm({ ...form, email: event.target.value })
                     }
-                    required
                     placeholder="nombre@correo.cl"
                     type="email"
                     value={form.email ?? ""}
@@ -294,7 +303,6 @@ export default function CustomersPage() {
                     onChange={(event) =>
                       setForm({ ...form, address: event.target.value })
                     }
-                    required
                     placeholder="Dirección"
                     value={form.address ?? ""}
                   />
@@ -319,9 +327,9 @@ export default function CustomersPage() {
                       : "Crear cliente"}
                 </button>
               </div>
-            </form>
+            </form></details>
           )}
-          {selectedId && actor?.permissions.includes("sales.read") && <CustomerPrescriptions customerId={selectedId} key={selectedId} />}
+          {selectedId && actor?.permissions.includes("sales.read") && <CommercialProfile customerId={selectedId} key={selectedId} onDirtyChange={setProfileDirty} onUpdated={customer=>{setForm(v=>({...v,version:customer.version}));setSavedForm(v=>({...v,version:customer.version}));list.reload();}} />}
         </section>
       </div>
     </>

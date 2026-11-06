@@ -1,4 +1,5 @@
 "use client";
+import CommercialProfile from "@/components/customers/commercial-profile";
 
 import Icon from "@/components/ui/icon";
 import { ADULT_BIRTH_DATE_CUTOFF, customerDetails } from "./pos-form-model";
@@ -319,7 +320,7 @@ export default function PosCatalogPanel({ model }) {
             )}
           </>
         )}
-        {customer&&<details className="cash-section"><summary>Compras anteriores del cliente</summary>{model.customerSales.loading?<p>Consultando historial autorizado…</p>:model.customerSales.error?<p className="inline-error">{model.customerSales.error}</p>:model.customerSales.items.length?model.customerSales.items.map((previous)=><div className="customer-purchase" key={previous.id}><span>Venta N.º {previous.saleNumber} · {new Date(previous.createdAt).toLocaleDateString("es-CL")} · {money.format(previous.totalCents)} · {previous.branch?.name}</span><button className="text-button" type="button" onClick={()=>model.setHistorySaleId(previous.id)}>Ver compra N.º {previous.saleNumber}</button></div>):<p>Sin compras registradas en tus sucursales autorizadas.</p>}</details>}
+        {customer&&<CommercialProfile key={customer.id} customerId={customer.id} compact revision={model.stockRevision}/>}
       </details>
 
       {attachPrescription && offersPrescriptionAttachment && (

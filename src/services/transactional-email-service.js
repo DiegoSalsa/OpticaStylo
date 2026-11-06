@@ -146,7 +146,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
         timeZone: config.timeZone,
       });
       // Revalidar el OTP justo antes de llamar al proveedor para suprimir desafíos obsoletos.
-      if (email.templateCode === "CUSTOMER_PATIENT_OTP") {
+      if (["CUSTOMER_PATIENT_OTP","CUSTOMER_COMMERCE_OTP"].includes(email.templateCode)) {
         const current = await (dependencies.getEmailEligibility ?? getTransactionalEmailEligibility)(email);
         if (!current.eligible) {
           await (dependencies.suppressEmail ?? suppressTransactionalEmail)(email.id, workerId, current.reason);

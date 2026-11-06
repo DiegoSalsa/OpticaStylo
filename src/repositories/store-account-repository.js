@@ -1,5 +1,9 @@
 import { prisma } from "../db/prisma.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import {findCustomerByNormalizedRut} from "./customer-identity.js";
+import {consumeRegistrationProof} from "./customer-commerce-link-repository.js";
+import {commercialError} from "../validations/customer-commercial-validation.js";
+import {retryTransaction} from "../db/retry-transaction.js";
 
 function mapAccount(row) {
   if (!row) return null;
@@ -15,14 +19,17 @@ function mapAccount(row) {
 
 export async function createCustomerAccount(account) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
-    const customer = await client.customers.create({ data: {
+  return retryTransaction(prisma,async (client) => {
+    const existing=await findCustomerByNormalizedRut(client,account.rut,{lock:true});
+    const verified=existing&&account.verification?await consumeRegistrationProof(client,account.verification,account):null;
+    if(existing&&!verified)commercialError("Este RUT requiere verificar el correo registrado antes de crear la cuenta.","CUSTOMER_ACCOUNT_REQUIRES_LINKING",409);
+    const customer = verified??await client.customers.create({ data: {
       address: account.address, created_by: null, email: account.email,
       first_names: account.firstNames, last_names: account.lastNames,
       phone: account.phone, rut: account.rut, updated_by: null,
     } });
     const created = await client.customer_accounts.create({
-      data: { customer_id: customer.id, email: account.email, password_hash: account.passwordHash },
+      data: { customer_id: customer.id, email: account.email, password_hash: account.passwordHash,email_verified_at:verified?new Date():null,clinical_link_recheck_required:!!verified?.patient_id },
       include: { customers: true },
     });
     await client.transactional_email_outbox.upsert({

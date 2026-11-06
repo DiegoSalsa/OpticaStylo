@@ -7,7 +7,7 @@ import {
 } from "@/services/external-prescription-service";
 import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { AppError } from "@/utils/app-error";
-import { executeApiHandler } from "@/utils/error-handler";
+import { executeClinicalHandler as executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody, readMultipartFormData } from "@/utils/http-request";
 import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 

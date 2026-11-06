@@ -262,6 +262,11 @@ model customer_patient_link_challenges {
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio customer accounts {.
 model customer_accounts {
+  email_verified_at                DateTime?                          @db.Timestamptz(6)
+  clinical_link_recheck_required   Boolean                            @default(false)
+  customer_commerce_challenges     customer_commerce_challenges[]
+  customer_order_links             customer_order_links[]
+  customer_contact_events          customer_contact_events[]
   id                               String                             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   customer_id                      String                             @unique @map("customer_id") @db.Uuid
   email                            String                             @map("email") @db.VarChar(254)
@@ -285,22 +290,27 @@ model customer_accounts {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio customers {.
 model customers {
-  id                                String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  patient_id                        String?                  @unique @map("patient_id") @db.Uuid
-  rut                               String?                  @unique @map("rut") @db.VarChar(10)
-  first_names                       String                   @map("first_names") @db.VarChar(150)
-  last_names                        String?                  @map("last_names") @db.VarChar(150)
-  phone                             String?                  @map("phone") @db.VarChar(16)
-  email                             String?                  @map("email") @db.VarChar(254)
-  address                           String?                  @map("address") @db.VarChar(500)
-  created_by                        String?                  @map("created_by") @db.Uuid
-  updated_by                        String?                  @map("updated_by") @db.Uuid
-  created_at                        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updated_at                        DateTime                 @default(now()) @map("updated_at") @db.Timestamptz(6)
+  record_version                    Int                            @default(1)
+  commercial_preferences            Json?
+  customer_commercial_notes         customer_commercial_notes[]
+  customer_contact_events           customer_contact_events[]
+  customer_commerce_challenges      customer_commerce_challenges[]
+  id                                String                         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  patient_id                        String?                        @unique @map("patient_id") @db.Uuid
+  rut                               String?                        @unique @map("rut") @db.VarChar(10)
+  first_names                       String                         @map("first_names") @db.VarChar(150)
+  last_names                        String?                        @map("last_names") @db.VarChar(150)
+  phone                             String?                        @map("phone") @db.VarChar(16)
+  email                             String?                        @map("email") @db.VarChar(254)
+  address                           String?                        @map("address") @db.VarChar(500)
+  created_by                        String?                        @map("created_by") @db.Uuid
+  updated_by                        String?                        @map("updated_by") @db.Uuid
+  created_at                        DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                        DateTime                       @default(now()) @map("updated_at") @db.Timestamptz(6)
   customer_accounts                 customer_accounts?
-  users_customers_created_byTousers users?                   @relation("customers_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  patients                          patients?                @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  users_customers_updated_byTousers users?                   @relation("customers_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_customers_created_byTousers users?                         @relation("customers_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  patients                          patients?                      @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_customers_updated_byTousers users?                         @relation("customers_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
   external_prescriptions            external_prescriptions[]
   sales                             sales[]
 
@@ -930,6 +940,8 @@ model sale_receipts {
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 /// Entidad de datos del dominio sales {.
 model sales {
+  customer_order_links                      customer_order_links?
+  customer_commerce_challenges              customer_commerce_challenges[]
   cash_session_id                           String?                         @db.Uuid
   cash_register_sessions                    cash_register_sessions?         @relation(fields: [cash_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   branch_id                                 String?                         @db.Uuid
@@ -993,6 +1005,86 @@ model sales {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio schema migrations {.
+model customer_commercial_events {
+  id             BigInt   @id @default(autoincrement())
+  customer_id    String   @db.Uuid
+  event_type     String   @db.VarChar(20)
+  record_version Int
+  changed_fields String[] @default([])
+  snapshot       Json
+  performed_by   String?  @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  users          users?   @relation(fields: [performed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, created_at], map: "customer_commercial_events_date")
+}
+
+model customer_commercial_notes {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id String    @db.Uuid
+  branch_id   String?   @db.Uuid
+  content     String    @db.VarChar(2000)
+  created_by  String    @db.Uuid
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  customers   customers @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users       users     @relation(fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  branches    branches? @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, created_at], map: "customer_commercial_notes_date")
+}
+
+model customer_contact_events {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id       String             @db.Uuid
+  channel           String             @db.VarChar(10)
+  decision          String             @db.VarChar(10)
+  source            String             @db.VarChar(30)
+  statement_version String             @db.VarChar(40)
+  evidence          String?            @db.VarChar(500)
+  destination       String?            @db.VarChar(254)
+  performed_by      String?            @db.Uuid
+  account_id        String?            @db.Uuid
+  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  customers         customers          @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users             users?             @relation(fields: [performed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts customer_accounts? @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, channel, created_at], map: "customer_contact_events_latest")
+}
+
+model customer_commerce_challenges {
+  customer_order_links customer_order_links?
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id          String                @db.Uuid
+  account_id           String?               @db.Uuid
+  sale_id              String?               @db.Uuid
+  purpose              String                @db.VarChar(20)
+  email                String                @db.VarChar(254)
+  code_hash            String                @db.Char(64)
+  attempt_count        Int                   @default(0) @db.SmallInt
+  expires_at           DateTime              @db.Timestamptz(6)
+  delivered_at         DateTime?             @db.Timestamptz(6)
+  consumed_at          DateTime?             @db.Timestamptz(6)
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  customers            customers             @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts    customer_accounts?    @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                sales?                @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, purpose, created_at], map: "customer_commerce_challenges_lookup")
+}
+
+model customer_order_links {
+  customer_commerce_challenges customer_commerce_challenges @relation(fields: [challenge_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sale_id                      String                       @id @db.Uuid
+  account_id                   String                       @db.Uuid
+  challenge_id                 String                       @unique @db.Uuid
+  created_at                   DateTime                     @default(now()) @db.Timestamptz(6)
+  sales                        sales                        @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts            customer_accounts            @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([account_id, created_at], map: "customer_order_links_account")
+}
+
 model schema_migrations {
   version     Int      @id @map("version")
   name        String   @map("name")
@@ -1202,6 +1294,9 @@ model user_sessions {
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio users {.
 model users {
+  customer_commercial_events                                                                customer_commercial_events[]
+  customer_commercial_notes                                                                 customer_commercial_notes[]
+  customer_contact_events                                                                   customer_contact_events[]
   clinical_care_assigned                                                                    clinical_care_assignments[]       @relation("care_assigned")
   clinical_care_revoked                                                                     clinical_care_assignments[]       @relation("care_revoked")
   inventory_transfers_created                                                               inventory_transfers[]             @relation("inventory_transfer_creator")
@@ -1294,22 +1389,23 @@ model virtual_try_on_3d_assets {
 }
 
 model branches {
-  cash_register_terminals cash_register_terminals[]
-  cash_register_sessions  cash_register_sessions[]
-  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code                    String                    @unique @db.VarChar(80)
-  name                    String                    @db.VarChar(200)
-  address                 String?                   @db.VarChar(500)
-  information_source      String
-  is_active               Boolean                   @default(true)
-  pickup_enabled          Boolean                   @default(false)
-  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
-  inventory_stocks        inventory_stocks[]
-  user_branches           user_branches[]
-  sales                   sales[]
-  store_carts             store_carts[]
-  transfers_out           inventory_transfers[]     @relation("transfer_source")
-  transfers_in            inventory_transfers[]     @relation("transfer_destination")
+  customer_commercial_notes customer_commercial_notes[]
+  cash_register_terminals   cash_register_terminals[]
+  cash_register_sessions    cash_register_sessions[]
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                      String                      @unique @db.VarChar(80)
+  name                      String                      @db.VarChar(200)
+  address                   String?                     @db.VarChar(500)
+  information_source        String
+  is_active                 Boolean                     @default(true)
+  pickup_enabled            Boolean                     @default(false)
+  created_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  inventory_stocks          inventory_stocks[]
+  user_branches             user_branches[]
+  sales                     sales[]
+  store_carts               store_carts[]
+  transfers_out             inventory_transfers[]       @relation("transfer_source")
+  transfers_in              inventory_transfers[]       @relation("transfer_destination")
 }
 
 model user_branches {
