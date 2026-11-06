@@ -122,7 +122,10 @@ try {
   await symlink(path.join(root, "node_modules"), path.join(appRoot, "node_modules"), process.platform === "win32" ? "junction" : "dir");
   console.log("Pruebas de recetas: clúster sintético local; sin conexión a la base configurada en .env.");
   await run(pg("initdb"), ["-D", pgData, "-U", "stylo_test", "-A", "trust", "--encoding=UTF8", "--no-locale"]);
-  await run(pg("pg_ctl"), ["start", "-D", pgData, "-l", path.join(runRoot, "postgres.log"), "-o", `-h 127.0.0.1 -p ${pgPort}`, "-w"]);
+  // El clúster de pruebas solo se usa por TCP. Evita el socket del sistema en Linux.
+  const socketOption = process.platform === "win32" ? "" : " -c unix_socket_directories=";
+  await run(pg("pg_ctl"), ["start", "-D", pgData, "-l", path.join(runRoot, "postgres.log"),
+    "-o", `-h 127.0.0.1 -p ${pgPort}${socketOption}`, "-w"]);
   pgStarted = true;
   await run(pg("createdb"), ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "stylo_test", "opticastylo_evaluation"]);
   if(releaseMode) await run(process.execPath,["scripts/verify-release-migrations.mjs",...(process.argv.includes("--write-reference")?["--write-reference"]:[])],{cwd:appRoot,record:"migration-certificate.txt"});
