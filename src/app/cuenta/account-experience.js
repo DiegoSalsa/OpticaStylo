@@ -42,10 +42,10 @@ export default function AccountExperience() {
     // Cargar la cuenta, pedidos y resumen clínico desde endpoints autenticados.
     async function loadAccount() {
       try {
-        const [profile, accountOrders, accountClinical] = await Promise.all([
-          readStoreResponse(await fetch("/api/store/accounts/me", { cache: "no-store" })),
-          readStoreResponse(await fetch("/api/store/orders?page=1&pageSize=10", { cache: "no-store" })),
-          readStoreResponse(await fetch("/api/store/accounts/me/clinical", { cache: "no-store" })),
+        const profile = await readStoreResponse(await fetch("/api/store/accounts/me", { cache: "no-store" }));
+        const [accountOrders, accountClinical] = await Promise.all([
+          fetch("/api/store/orders?page=1&pageSize=10", { cache: "no-store" }).then(readStoreResponse),
+          fetch("/api/store/accounts/me/clinical", { cache: "no-store" }).then(readStoreResponse),
         ]);
         if (active) { setAccount(profile); setClinical(accountClinical); setOrders(accountOrders.items);setOrderPage(accountOrders); }
       } catch (requestError) { if (active && requestError.status !== 401) setError(requestError.message); }
@@ -64,8 +64,8 @@ export default function AccountExperience() {
       const result = await readStoreResponse(await fetch(`/api/store/accounts/${endpoint}`, { body: JSON.stringify(values), headers: { "Content-Type": "application/json" }, method: "POST" }));
       setAccount(result.account);
       const [accountOrders, accountClinical] = await Promise.all([
-        readStoreResponse(await fetch("/api/store/orders?page=1&pageSize=10", { cache: "no-store" })),
-        readStoreResponse(await fetch("/api/store/accounts/me/clinical", { cache: "no-store" })),
+        fetch("/api/store/orders?page=1&pageSize=10", { cache: "no-store" }).then(readStoreResponse),
+        fetch("/api/store/accounts/me/clinical", { cache: "no-store" }).then(readStoreResponse),
       ]);
       setClinical(accountClinical); setOrders(accountOrders.items);setOrderPage(accountOrders); setStatus("ready");
     } catch (requestError) { setError(requestError.message); setStatus("ready"); }

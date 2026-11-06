@@ -7,12 +7,14 @@ const labels = { PENDING_PREPARATION: "Pendiente de preparación", PREPARED: "Pr
 export default function ShipmentPanel({ saleId, internal = false }) {
   const actor = useInternalActor();
   const [shipment, setShipment] = useState(null), [error, setError] = useState(""), [busy, setBusy] = useState(false), [evidence, setEvidence] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const endpoint = internal ? `/api/sales/${saleId}/shipment` : `/api/store/orders/${saleId}/shipment`;
   const canWrite = internal && actor?.permissions.includes("sales.update");
   useEffect(() => {
     const controller = new AbortController();
     fetch(endpoint, { cache: "no-store", signal: controller.signal }).then(readStoreResponse)
-      .then((data) => { if (!controller.signal.aborted) setShipment(data); }).catch((e) => { if (!controller.signal.aborted) setError(e.message); });
+      .then((data) => { if (!controller.signal.aborted) setShipment(data); }).catch((e) => { if (!controller.signal.aborted) setError(e.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoaded(true); });
     return () => controller.abort();
   }, [endpoint]);
   async function action(action) {
@@ -24,7 +26,7 @@ export default function ShipmentPanel({ saleId, internal = false }) {
   return <section className="shipment-panel" aria-label="Seguimiento del despacho"><h3>Despacho Chilexpress</h3>
     {shipment?.synthetic && <p className="shipping-test">PRUEBA SINTÉTICA · OT, etiqueta y eventos sin validez productiva.</p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
-    {!shipment ? <p>Consultando despacho…</p> : <>
+    {!shipment ? <p>{loaded ? "No hay seguimiento disponible. Los pedidos históricos sin despacho registrado requieren revisión antes de operar." : "Consultando despacho…"}</p> : <>
       <dl><div><dt>Estado logístico</dt><dd>{labels[shipment.state] ?? shipment.state}</dd></div><div><dt>OT</dt><dd>{shipment.ot ?? "Pendiente de emisión"}</dd></div><div><dt>Servicio cotizado</dt><dd>{shipment.service}</dd></div>{shipment.issuedService && <div><dt>Servicio emitido</dt><dd>{shipment.issuedService}</dd></div>}
         <div><dt>Última consulta válida</dt><dd>{shipment.lastCheckedAt ? new Date(shipment.lastCheckedAt).toLocaleString("es-CL") : "Sin consulta de seguimiento"}</dd></div>
         {shipment.providerStatus && <div><dt>Estado informado por proveedor</dt><dd>{shipment.providerStatus}</dd></div>}
