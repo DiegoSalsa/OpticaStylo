@@ -582,14 +582,20 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const captureTryOn = useCallback(() => {
     // Ejecutar la composición después del próximo render WebGL: una inferencia
     // recién entregada todavía puede no estar dibujada cuando se pulsa el botón.
+    if (!faceDetected || !modelReady) return;
+    const deadline = performance.now() + 1000;
     pendingCaptureRef.current = () => {
       const video = videoRef.current;
       const photo = photoImageRef.current;
       const overlay = rendererCanvasRef.current;
       const media = cameraStatus === "photo" ? photo : video;
-      const currentPose = cameraStatus === "photo" ? poseRef.current : poseFilterRef.current?.sample(performance.now());
-      if (!media || !overlay || !faceDetected || !modelReady || !currentPose || !renderedPoseRef.current
-        || currentPose.timestamp !== renderedPoseRef.current.timestamp) return;
+      // La pose válida al dibujar puede vencer durante un render lento.
+      // Esperar brevemente un fotograma con marco si el próximo queda vacío.
+      if (!renderedPoseRef.current && performance.now() < deadline) return false;
+      if (!media || !overlay || !renderedPoseRef.current) {
+        setCaptureMessage("No se pudo guardar la foto. Centra tu rostro y vuelve a intentarlo.");
+        return true;
+      }
 
       const output = document.createElement("canvas");
       output.width = cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
@@ -607,6 +613,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         setCaptureMessage("Captura guardada en tu dispositivo.");
         window.setTimeout(() => setCaptureMessage(""), 3200);
       }, "image/png");
+      return true;
     };
   }, [cameraStatus, faceDetected, modelReady, selectedModel.sku]);
 
