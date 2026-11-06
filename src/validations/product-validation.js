@@ -55,9 +55,12 @@ export function validateCreateProductInput(input) {
   if (category !== "PRESCRIPTION_LENS" && input.requiresPrescription) {
     fail("Solo los cristales ópticos pueden requerir receta.");
   }
+  const inventoryMode = input.inventoryMode ?? (category === "FRAME" ? "TRACKED" : "UNCONFIGURED");
+  if (!["TRACKED","ON_DEMAND","UNCONFIGURED"].includes(inventoryMode) || (category === "FRAME" && inventoryMode !== "TRACKED")) fail("Seleccione un control de inventario válido; los armazones requieren existencias físicas.");
 
   return {
     category,
+    inventoryMode,
     isActive: true,
     name: requiredText(input.name, "El nombre", 200),
     requiresPrescription: input.requiresPrescription,
@@ -70,7 +73,7 @@ export function validateUpdateProductInput(input, current) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     fail("El cuerpo de la solicitud no es válido.");
   }
-  const fields = ["sku", "name", "category", "requiresPrescription", "unitPriceCents", "isActive"];
+  const fields = ["sku", "name", "category", "requiresPrescription", "unitPriceCents", "isActive", "inventoryMode"];
   if (!fields.some((field) => Object.hasOwn(input, field))) {
     fail("Debe indicar al menos un dato para actualizar.");
   }
@@ -78,6 +81,7 @@ export function validateUpdateProductInput(input, current) {
   const value = (field) => Object.hasOwn(input, field) ? input[field] : current[field];
   const merged = validateCreateProductInput({
     category: value("category"),
+    inventoryMode: value("inventoryMode"),
     name: value("name"),
     requiresPrescription: value("requiresPrescription"),
     sku: value("sku"),

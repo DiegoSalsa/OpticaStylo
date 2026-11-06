@@ -17,7 +17,7 @@ function notes(value, label) {
 }
 
 function amount(value, label, minimum = 0) {
-  if (!Number.isSafeInteger(value) || value < minimum) {
+  if (!Number.isSafeInteger(value) || value < minimum || value > 1_000_000_000) {
     fail(`${label} debe ser un entero igual o mayor a ${minimum}.`);
   }
   return value;
@@ -35,6 +35,8 @@ export function validateCashRegisterOpeningInput(input) {
     fail("El cuerpo de apertura no es válido.");
   }
   return {
+    branchId: validateCashRegisterId(input.branchId),
+    terminalId: validateCashRegisterId(input.terminalId),
     openingAmountCents: amount(input.openingAmountCents, "El fondo inicial"),
     openingNotes: notes(input.openingNotes, "La observación de apertura"),
   };
@@ -47,13 +49,14 @@ export function validateCashRegisterMovementInput(input) {
   const movementType = typeof input.movementType === "string"
     ? input.movementType.trim().toUpperCase()
     : "";
-  if (!["MANUAL_IN", "MANUAL_OUT"].includes(movementType)) {
+  if (!["MANUAL_IN", "MANUAL_OUT", "WITHDRAWAL", "REVERSAL"].includes(movementType)) {
     fail("El tipo de movimiento de caja no es válido.");
   }
   const reason = notes(input.reason, "El motivo del movimiento");
   if (!reason) fail("El movimiento de caja requiere un motivo.");
   return {
-    amountCents: amount(input.amountCents, "El monto del movimiento", 1),
+    amountCents: movementType === "REVERSAL" ? null : amount(input.amountCents, "El monto del movimiento", 1),
+    reversalOf: movementType === "REVERSAL" ? validateCashRegisterId(input.reversalOf) : null,
     movementType,
     reason,
   };

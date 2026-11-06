@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import { PERMISSIONS } from "../auth/permissions.js";
+import {saleBranchScope} from "../auth/sale-branch-access.js";
+import {canAccessExternalPrescription} from "../repositories/external-prescription-repository.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getCloudinaryMediaGateway } from "../integrations/media/cloudinary-media-gateway.js";
 import { readPrescriptionImage } from "../integrations/prescriptions/prescription-reader.js";
@@ -9,6 +11,7 @@ import {
   findExternalPrescriptionById,
   findExternalPrescriptionFileById,
   listExternalPrescriptionsByPatient,
+  listExternalPrescriptionsByCustomer,
 } from "../repositories/external-prescription-repository.js";
 import { findPatientById } from "../repositories/patient-repository.js";
 import { AppError } from "../utils/app-error.js";
@@ -189,12 +192,22 @@ export async function createExternalPrescription(input, actor, dependencies = {}
 
 export async function getExternalPrescriptionList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  if (searchParams.has("customerId")) {
+    let pagination;
+    if(searchParams.has("page")){
+      const page=Number(searchParams.get("page")),pageSize=Number(searchParams.get("pageSize")??20);
+      if(!Number.isSafeInteger(page)||page<1||page>100000||!Number.isInteger(pageSize)||pageSize<1||pageSize>50)throw new AppError({code:"INVALID_PRESCRIPTION_PAGE",message:"La página de recetas no es válida.",status:400});
+      pagination={page,pageSize};
+    }
+    return (dependencies.listByCustomer ?? listExternalPrescriptionsByCustomer)(validateExternalPrescriptionId(searchParams.get("customerId")),dependencies.listByCustomer?undefined:await saleBranchScope(actor),pagination);
+  }
   const patientId = await ensurePatient(searchParams.get("patientId"), dependencies);
-  return (dependencies.listByPatient ?? listExternalPrescriptionsByPatient)(patientId);
+  return (dependencies.listByPatient ?? listExternalPrescriptionsByPatient)(patientId,dependencies.listByPatient?undefined:await saleBranchScope(actor));
 }
 
 export async function getExternalPrescription(id, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  if(!dependencies.findPrescription&&!await canAccessExternalPrescription(validateExternalPrescriptionId(id),await saleBranchScope(actor)))notFound();
   const prescription = await (dependencies.findPrescription ?? findExternalPrescriptionById)(
     validateExternalPrescriptionId(id),
   );
@@ -204,6 +217,7 @@ export async function getExternalPrescription(id, actor, dependencies = {}) {
 
 export async function getExternalPrescriptionFile(id, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.SALES_READ]);
+  if(!dependencies.findFile&&!await canAccessExternalPrescription(validateExternalPrescriptionId(id),await saleBranchScope(actor)))notFound();
   const file = await (dependencies.findFile ?? findExternalPrescriptionFileById)(
     validateExternalPrescriptionId(id),
   );

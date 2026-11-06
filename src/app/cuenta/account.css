@@ -372,6 +372,8 @@
   font-size: 0.76rem;
   text-align: right;
 }
+
+.order-row > details { grid-column: 1 / -1; }
 .account-data dl {
   display: grid;
   gap: 1rem;

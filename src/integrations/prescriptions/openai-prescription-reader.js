@@ -195,8 +195,8 @@ export async function readOpenAiPrescriptionImage(
       method: "POST",
       signal: AbortSignal.timeout(configuration.timeoutMilliseconds),
     });
-  } catch (error) {
-    console.error("No fue posible contactar el lector automático de recetas.", error);
+  } catch {
+    console.error("No fue posible contactar el lector automático de recetas.");
     throw unavailable();
   }
   if (!response.ok) {
@@ -210,7 +210,7 @@ export async function readOpenAiPrescriptionImage(
     };
   } catch (error) {
     if (error instanceof AppError) throw error;
-    console.error("El lector automático de recetas devolvió una respuesta inválida.", error);
+    console.error("El lector automático de recetas devolvió una respuesta inválida.");
     throw unavailable();
   }
 }

@@ -1,10 +1,14 @@
 import { prisma } from "../db/prisma.js";
 import { rutSearchValues } from "../utils/rut-search.js";
+import {findCustomerByNormalizedRut} from "./customer-identity.js";
+import {AppError} from "../utils/app-error.js";
+import {retryTransaction} from "../db/retry-transaction.js";
 
 function mapCustomer(row) {
   if (!row) return null;
   return {
     address: row.address,
+    version:row.record_version,
     createdAt: row.created_at,
     email: row.email,
     firstNames: row.first_names,
@@ -18,7 +22,10 @@ function mapCustomer(row) {
 }
 
 export async function createCustomer(customer, actorUserId) {
-  return mapCustomer(await prisma.customers.create({ data: {
+  return retryTransaction(prisma,async(client)=>{
+  await client.$queryRaw`SELECT set_config('stylo.customer_actor',${actorUserId},true)`;
+  if(await findCustomerByNormalizedRut(client,customer.rut,{lock:true}))throw new AppError({code:"CUSTOMER_RUT_ALREADY_EXISTS",message:"Ya existe un cliente registrado con ese RUT.",status:409});
+  return mapCustomer(await client.customers.create({ data: {
     address: customer.address,
     created_by: actorUserId,
     email: customer.email,
@@ -29,6 +36,7 @@ export async function createCustomer(customer, actorUserId) {
     rut: customer.rut,
     updated_by: actorUserId,
   } }));
+  });
 }
 
 export async function findCustomerById(customerId) {
@@ -59,10 +67,16 @@ export async function listCustomers({ page, pageSize, search }) {
   };
 }
 
-export async function updateCustomer(customerId, customer, actorUserId) {
-  const existing = await prisma.customers.findUnique({ select: { id: true }, where: { id: customerId } });
+export async function updateCustomer(customerId, customer, actorUserId,expectedVersion) {
+  return retryTransaction(prisma,async(client)=>{
+  await client.$queryRaw`SELECT set_config('stylo.customer_actor',${actorUserId},true)`;
+  await client.$queryRaw`SELECT id FROM customers WHERE id=${customerId}::uuid FOR UPDATE`;
+  const existing = await client.customers.findUnique({ where: { id: customerId } });
   if (!existing) return null;
-  return mapCustomer(await prisma.customers.update({
+  if(expectedVersion!=null&&expectedVersion!==existing.record_version)throw new AppError({code:"CUSTOMER_VERSION_CONFLICT",message:"El cliente cambió en otra sesión. Recargue sus datos antes de guardar.",status:409});
+  const duplicate=await findCustomerByNormalizedRut(client,customer.rut,{lock:true});
+  if(duplicate&&duplicate.id!==customerId)throw new AppError({code:"CUSTOMER_RUT_ALREADY_EXISTS",message:"Ya existe un cliente registrado con ese RUT.",status:409});
+  return mapCustomer(await client.customers.update({
     data: {
       address: customer.address,
       email: customer.email,
@@ -74,4 +88,5 @@ export async function updateCustomer(customerId, customer, actorUserId) {
     },
     where: { id: customerId },
   }));
+  });
 }

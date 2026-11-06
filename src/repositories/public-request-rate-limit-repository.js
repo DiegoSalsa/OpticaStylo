@@ -1,28 +1,17 @@
 import { prisma } from "../db/prisma.js";
-import { retryTransaction } from "../db/retry-transaction.js";
 
 export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }) {
-  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return retryTransaction(prisma, async (client) => {
-    const now = new Date();
-    const current = await client.public_request_rate_limits.findUnique({
-      where: { bucket_subject_hash: { bucket, subject_hash: subjectHash } },
-    });
-    const expired = !current || current.expires_at <= now;
-    const expiresAt = expired
-      ? new Date(now.getTime() + windowSeconds * 1000)
-      : current.expires_at;
-    const row = await client.public_request_rate_limits.upsert({
-      create: {
-        bucket, expires_at: expiresAt, request_count: 1,
-        subject_hash: subjectHash, window_started_at: now,
-      },
-      update: expired
-        ? { expires_at: expiresAt, request_count: 1, window_started_at: now }
-        : { request_count: { increment: 1 } },
-      where: { bucket_subject_hash: { bucket, subject_hash: subjectHash } },
-    });
-    return { attempts: row.request_count, expiresAt: row.expires_at };
-  // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
-  }, { isolationLevel: "Serializable" });
+  // One statement locks only the conflicting quota row. Concurrent identities
+  // no longer contend on a serializable read/upsert predicate. Window resets
+  // and increments cannot lose updates across serverless instances.
+  const [row] = await prisma.$queryRaw`
+    INSERT INTO public_request_rate_limits AS quota
+      (bucket,subject_hash,request_count,window_started_at,expires_at)
+    VALUES (${bucket},${subjectHash},1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP+${windowSeconds}::int*interval '1 second')
+    ON CONFLICT (bucket,subject_hash) DO UPDATE SET
+      request_count=CASE WHEN quota.expires_at<=CURRENT_TIMESTAMP THEN 1 ELSE quota.request_count+1 END,
+      window_started_at=CASE WHEN quota.expires_at<=CURRENT_TIMESTAMP THEN CURRENT_TIMESTAMP ELSE quota.window_started_at END,
+      expires_at=CASE WHEN quota.expires_at<=CURRENT_TIMESTAMP THEN EXCLUDED.expires_at ELSE quota.expires_at END
+    RETURNING request_count,expires_at`;
+  return { attempts: row.request_count, expiresAt: row.expires_at };
 }

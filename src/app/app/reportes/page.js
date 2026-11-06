@@ -6,6 +6,8 @@ import {
   useInternalActor,
 } from "@/components/internal/internal-shell";
 import Icon from "@/components/ui/icon";
+import CustomerReport from "@/components/customers/customer-report";
+import "@/components/customers/commercial-profile.css";
 import "./reports.css";
 
 const money = new Intl.NumberFormat("es-CL", {
@@ -348,6 +350,7 @@ export default function ReportsPage() {
           </>
         )
       )}
+      <CustomerReport from={applied.from} to={applied.to}/>
     </>
   );
 }

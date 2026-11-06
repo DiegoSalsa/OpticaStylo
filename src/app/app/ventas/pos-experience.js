@@ -6,7 +6,6 @@ import {
   readResponse,
   useInternalActor,
 } from "@/components/internal/internal-shell";
-import { buildPosPaymentInput } from "@/utils/pos-payment";
 import PosInterface from "./pos-interface";
 import {
   ADULT_BIRTH_DATE_CUTOFF,
@@ -23,6 +22,15 @@ const money = MONEY_FORMATTER;
 
 export default function PosExperience() {
   const actor = useInternalActor();
+  const [branches, setBranches] = useState([]);
+  const [branchId, setBranchId] = useState("");
+  const [stockRevision,setStockRevision]=useState(0);
+  useEffect(() => {
+    if (!actor?.permissions.includes("inventory.read")) return;
+    const controller = new AbortController();
+    fetch("/api/inventory/branches", { cache: "no-store", signal: controller.signal }).then(readResponse).then((rows) => { if (!controller.signal.aborted) setBranches(rows); }).catch((error) => { if (!controller.signal.aborted) setError(error.message); });
+    return () => controller.abort();
+  }, [actor]);
   const [customerSearch, setCustomerSearch] = useState("");
   const [patientSearch, setPatientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -31,12 +39,12 @@ export default function PosExperience() {
   const products = useResourceSearch(
     "/api/products",
     productSearch,
-    "excludeCategory=PRESCRIPTION_LENS",
+    `excludeCategory=PRESCRIPTION_LENS&stockRevision=${stockRevision}&branch=${branchId}`,
   );
   const lensOptions = useResourceSearch(
     "/api/products",
     "",
-    "category=PRESCRIPTION_LENS",
+    `category=PRESCRIPTION_LENS&stockRevision=${stockRevision}&branch=${branchId}`,
   );
   const [customer, setCustomer] = useState(null);
   const [patient, setPatient] = useState(null);
@@ -73,11 +81,12 @@ export default function PosExperience() {
   const [patientBirthDate, setPatientBirthDate] = useState("");
   const [quotationQuery, setQuotationQuery] = useState("");
   const [showQuotations, setShowQuotations] = useState(false);
-  const quotationList = usePaginatedResource("/api/sales?status=QUOTATION", {
+  const quotationList = usePaginatedResource(showQuotations === "SALES" ? "/api/sales?origin=IN_STORE&view=history" : "/api/sales?status=QUOTATION", {
     enabled: showQuotations && Boolean(actor?.permissions.includes("sales.read")),
   });
   const loadingQuotation = useRef(false);
   const [receipt, setReceipt] = useState(null);
+  const [historySaleId,setHistorySaleId]=useState(null);
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [cashRegister, setCashRegister] = useState(null);
   const [cashReceivedCents, setCashReceivedCents] = useState("");
@@ -105,8 +114,18 @@ export default function PosExperience() {
   );
   const canSell = actor?.permissions.includes("sales.create");
   const canEdit = !sale || sale.status === "QUOTATION";
+  const quotationUnchanged = sale?.status === "QUOTATION" && sale.branchId === branchId && (sale.cashSessionId??null) === (cashRegister?.id??null)
+    && (sale.customer?.id??null) === (customer?.id??null) && (sale.patient?.id??null) === (patient?.id??null)
+    && (sale.discount?.amountCents??0) === Number(discountCents||0) && (sale.discount?.reason??"") === discountReason
+    && (sale.prescription?.id??null) === (attachPrescription&&prescriptionMode==="internal"?prescriptionId||null:null)
+    && (sale.externalPrescription?.id??null) === (attachPrescription&&prescriptionMode==="external"?externalPrescriptionId:null)
+    && sale.items.length === lines.length && sale.items.every((item)=>lines.some((line)=>line.id===item.productId&&line.quantity===item.quantity&&line.unitPriceCents===item.unitPriceCents&&(line.mount?.source??null)===(item.mount?.source??null)&&(line.mount?.frameProductId??null)===(item.mount?.frameProductId??null)));
   const checkoutBlockedReason = !canSell
     ? "Tu cuenta no tiene permiso para registrar ventas."
+    : !branchId
+      ? "Selecciona la sucursal de la venta."
+    : lines.some((line)=>!productStock(line).available || (productStock(line).quantity!==null && line.quantity>productStock(line).quantity))
+      ? "Revisa las cantidades: faltan existencias disponibles en esta sucursal."
     : !lines.length
       ? "Agrega al menos un producto para continuar al cobro."
       : total <= 0
@@ -120,7 +139,7 @@ export default function PosExperience() {
                 !prescriptionId
               ? "Selecciona la receta interna que decidiste adjuntar."
               : Number(discountCents) > 0 &&
-                  (!discountReason.trim() || !discountAuthorization)
+                  (!discountReason.trim() || (!discountAuthorization && !quotationUnchanged))
                 ? "Indica el motivo y la autorización temporal para aplicar el descuento."
                 : "";
   const draftIncomplete =
@@ -132,7 +151,7 @@ export default function PosExperience() {
       prescriptionMode === "internal" &&
       !prescriptionId) ||
     (Number(discountCents) > 0 &&
-      (!discountReason.trim() || !discountAuthorization));
+      (!discountReason.trim() || (!discountAuthorization && !quotationUnchanged)));
 
   useEffect(() => {
     if (!sale || sale.status === "QUOTATION") scannerRef.current?.focus();
@@ -154,6 +173,7 @@ export default function PosExperience() {
     })
       .then(readResponse)
       .then((items) => {
+        if(controller.signal.aborted)return;
         setInternalPrescriptions(items);
         setPrescriptionLookup({ error: "", loading: false });
       })
@@ -194,6 +214,8 @@ export default function PosExperience() {
 
   function addLine(product, mount = null) {
     if (!canEdit) return false;
+    const stock=productStock(product), next=(lines.find((line)=>line.id===product.id)?.quantity??0)+1;
+    if(!branchId || !stock.available || (stock.quantity!==null&&next>stock.quantity) || next>1000){setError("Selecciona una sucursal con existencias suficientes para este producto.");return false;}
     const existing = lines.find((line) => line.id === product.id);
     if (
       existing &&
@@ -253,6 +275,8 @@ export default function PosExperience() {
 
   function quantity(productId, next) {
     const product = lines.find((line) => line.id === productId);
+    const stock=productStock(product);
+    if(next>0&&(!Number.isSafeInteger(next)||next>1000||!stock.available||(stock.quantity!==null&&next>stock.quantity))){setError("La cantidad supera las existencias disponibles en esta sucursal.");return;}
     const attachedLenses =
       next < 1 && product?.category === "FRAME"
         ? lines.filter(
@@ -358,8 +382,11 @@ export default function PosExperience() {
     }
   }
 
+  const requestedQuotation=useRef(null);
+  useEffect(()=>{requestedQuotation.current=loadQuotation;});
+  useEffect(()=>{if(actor?.permissions.includes("sales.read")){const id=new URLSearchParams(window.location.search).get("quotationId");if(id)void requestedQuotation.current?.(id);}},[actor]);
   function loadQuotations() {
-    setShowQuotations(true);
+    setShowQuotations("QUOTATIONS");
     quotationList.reload();
   }
 
@@ -375,9 +402,9 @@ export default function PosExperience() {
       setCustomer(quote.customer);
       choosePatient(quote.patient);
       setLines(
-        quote.items.map((item) => ({
-          ...item,
-          id: item.productId,
+        await Promise.all(quote.items.map(async(item)=>{
+          const latest=await readResponse(await fetch(`/api/products/${item.productId}`,{cache:"no-store"}));
+          return {...latest,...(quote.status === "QUOTATION" ? {} : {unitPriceCents:item.unitPriceCents}),mount:item.mount,quantity:item.quantity,id:item.productId};
         })),
       );
       setSelectedLensId("");
@@ -389,12 +416,16 @@ export default function PosExperience() {
       setDiscountReason(quote.discount?.reason ?? "");
       setDiscountAuthorization(null);
       setPrescriptionId(quote.prescription?.id ?? "");
+      setAttachPrescription(Boolean(quote.prescription || quote.externalPrescription));
+      setBranchId(quote.branchId ?? "");
+      setCashRegister(null);
       setPrescriptionMode(quote.externalPrescription ? "external" : "internal");
       setExternalPrescriptionId(quote.externalPrescription?.id ?? null);
-      setSale(quote);
+      if(quote.externalPrescription){const saved=await readResponse(await fetch(`/api/external-prescriptions/${quote.externalPrescription.id}`,{cache:"no-store"}));setExternalPrescription(externalPrescriptionDraft(saved.confirmedData));}
+      setSale(quote); setReceipt(quote.receipt??null); setStockRevision((v)=>v+1);
       setShowQuotations(false);
       setNotice(
-        `Cotización N.º ${quote.saleNumber} cargada. Puedes editarla, cancelarla o confirmarla.`,
+        `Cotización N.º ${quote.saleNumber} cargada con precios y disponibilidad actuales. Revisa los importes antes de confirmar.`,
       );
     } catch (requestError) {
       setError(requestError.message);
@@ -487,6 +518,8 @@ export default function PosExperience() {
         : null;
     return {
       customerId: customer?.id ?? null,
+      branchId: branchId || null,
+      cashSessionId: cashRegister?.status === "OPEN" ? cashRegister.id : null,
       discount:
         Number(discountCents || 0) > 0
           ? {
@@ -510,10 +543,16 @@ export default function PosExperience() {
   }
 
   async function saveOperation(operation) {
+    if(pending)return;
     setPending(true);
     setError("");
     setNotice("");
     try {
+      if(quotationUnchanged){
+        if(operation==="SALE"){setSale(await readResponse(await fetch(`/api/sales/${sale.id}/confirm`,{method:"POST"})));setStockRevision((v)=>v+1);setNotice("Cotización confirmada conservando sus condiciones autorizadas.");}
+        else setNotice(`Cotización N.º ${sale.saleNumber} sin cambios.`);
+        return;
+      }
       const draft = await buildDraft();
       if (sale?.status === "QUOTATION") {
         const updated = await readResponse(
@@ -523,6 +562,7 @@ export default function PosExperience() {
             method: "PATCH",
           }),
         );
+        if(updated.totalCents!==total){setSale(updated);setLines(updated.items.map((item)=>({...lines.find((l)=>l.id===item.productId),...item,id:item.productId})));setNotice("Los precios cambiaron. Revisa el total actualizado y vuelve a confirmar.");return;}
         if (operation === "SALE") {
           const confirmed = await readResponse(
             await fetch(`/api/sales/${updated.id}/confirm`, {
@@ -533,6 +573,7 @@ export default function PosExperience() {
           setNotice("Cotización actualizada y confirmada para cobro.");
         } else {
           setSale(updated);
+          setDiscountAuthorization(null);
           setNotice(`Cotización N.º ${updated.saleNumber} actualizada.`);
         }
       } else {
@@ -548,6 +589,7 @@ export default function PosExperience() {
           }),
         );
         setSale(created);
+        if(created.status==="QUOTATION")setDiscountAuthorization(null);
         requestKeys.current.sale = null;
         setNotice(
           operation === "SALE"
@@ -555,6 +597,7 @@ export default function PosExperience() {
             : `Cotización N.º ${created.saleNumber} creada con trazabilidad.`,
         );
       }
+      setStockRevision((v)=>v+1);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -564,14 +607,20 @@ export default function PosExperience() {
 
   async function registerPayment(event) {
     event.preventDefault();
+    if(pending)return;
     const paymentForm = event.currentTarget;
     setPending(true);
     setError("");
+    setReceipt(null);
     const form = new FormData(paymentForm);
     try {
+      const payments=Array.from({length:Number(form.get("parts")??1)},(_,i)=>{
+        const paymentMethod=form.get(`method-${i}`);
+        return {paymentMethod,amountCents:Number(form.get(`amount-${i}`)),cashReceivedCents:paymentMethod==="CASH"?Number(form.get(`received-${i}`)):null,reference:form.get(`reference-${i}`)||null};
+      });
       const updated = await readResponse(
         await fetch(`/api/sales/${sale.id}/payments`, {
-          body: JSON.stringify(buildPosPaymentInput(form, sale.paymentMethod)),
+          body: JSON.stringify({payments,cashSessionId:cashRegister?.id??null}),
           headers: {
             "Content-Type": "application/json",
             "X-Idempotency-Key": (requestKeys.current.payment ??=
@@ -581,6 +630,8 @@ export default function PosExperience() {
         }),
       );
       setSale(updated);
+      requestKeys.current.payment = null;
+      setStockRevision((v)=>v+1);
       const registeredPayment = updated.payments.at(-1);
       const emailedTo = form.get("email") || customer?.email || null;
       const issuedReceipt = await readResponse(
@@ -592,7 +643,8 @@ export default function PosExperience() {
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
-      );
+      ).catch((error)=>{setError(`El cobro quedó registrado. No se pudo emitir el comprobante: ${error.message}`);return null;});
+      if(!issuedReceipt)return;
       setReceipt(issuedReceipt);
       setSale((current) =>
         current
@@ -612,7 +664,6 @@ export default function PosExperience() {
           ? "Venta pagada y comprobante emitido."
           : `Abono registrado y comprobante emitido. Saldo: ${money.format(updated.balanceCents)}.`,
       );
-      requestKeys.current.payment = null;
       paymentForm.reset();
     } catch (requestError) {
       setError(requestError.message);
@@ -673,14 +724,14 @@ export default function PosExperience() {
     }
   }
 
-  async function issueCurrentReceipt() {
+  async function issueCurrentReceipt(paymentId = null) {
     if (!sale) return;
     setPending(true);
     setError("");
     try {
       const issuedReceipt = await readResponse(
         await fetch(`/api/sales/${sale.id}/receipt`, {
-          body: JSON.stringify({ email: customer?.email ?? null }),
+          body: JSON.stringify({ email: customer?.email ?? null, paymentId }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
@@ -721,6 +772,13 @@ export default function PosExperience() {
     setShowQuotations(false);
     setError("");
     setNotice("");
+    setStockRevision((v)=>v+1);
+  }
+
+  function productStock(product) {
+    if(!product)return {available:false,quantity:null};
+    const fresh=[...products.items,...lensOptions.items].find((p)=>p.id===product.id)??product;
+    return fresh.availability?.branches.find((b)=>b.id===branchId)??{available:false,quantity:null};
   }
 
   return (
@@ -734,6 +792,10 @@ export default function PosExperience() {
         canSell,
         cancelQuotation,
         cancelReason,
+        branches, branchId, setBranchId,
+        stockRevision, productStock,
+        quotationUnchanged,
+        historySaleId, setHistorySaleId,
         cashReceivedCents,
         cashRegister,
         checkoutBlockedReason,

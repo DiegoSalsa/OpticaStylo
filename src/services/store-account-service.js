@@ -8,6 +8,7 @@ import {
   revokeCustomerSession,
 } from "../repositories/store-account-repository.js";
 import { AppError } from "../utils/app-error.js";
+import {recordRegistrationAttempt} from "../repositories/customer-commerce-link-repository.js";
 import {
   validateStoreAccountRegistration,
   validateStoreLogin,
@@ -61,15 +62,17 @@ async function issueSession(account, metadata, dependencies) {
 export async function registerStoreAccount(input, metadata = {}, dependencies = {}) {
   const account = validateStoreAccountRegistration(input);
   const passwordHash = await (dependencies.hashPassword ?? hashPassword)(account.password);
+  if(!dependencies.createCustomerAccount&&input.challengeId&&!await recordRegistrationAttempt(input))throw new AppError({code:"COMMERCE_VERIFICATION_FAILED",message:"No fue posible verificar el código de registro.",status:409});
   try {
     const created = await (dependencies.createCustomerAccount ?? createCustomerAccount)({
       ...account,
       passwordHash,
+      ...(input.challengeId?{verification:{challengeId:input.challengeId,verificationCode:input.verificationCode}}:{}),
     });
     return issueSession(created, metadata, dependencies);
   } catch (error) {
-    if (error?.code !== "23505") throw error;
-    const emailConflict = error.constraint === "customer_accounts_email_unique";
+    if (!["23505","P2002"].includes(error?.code)) throw error;
+    const emailConflict = error.constraint === "customer_accounts_email_unique"||error.meta?.target?.some?.(v=>v.includes("email"));
     throw new AppError({
       code: emailConflict ? "CUSTOMER_ACCOUNT_EMAIL_EXISTS" : "CUSTOMER_ACCOUNT_REQUIRES_LINKING",
       message: emailConflict

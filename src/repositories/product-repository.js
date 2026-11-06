@@ -1,9 +1,11 @@
 import { prisma } from "../db/prisma.js";
+import { inventoryError } from "./inventory-repository.js";
 
 function mapProduct(row) {
   if (!row) return null;
   return {
     category: row.category, createdAt: row.created_at, id: row.id,
+    inventoryMode: row.inventory_mode,
     isActive: row.is_active, isTestData: row.is_test_data, name: row.name,
     requiresPrescription: row.requires_prescription, sku: row.sku,
     unitPriceCents: Number(row.unit_price_cents), updatedAt: row.updated_at,
@@ -25,6 +27,7 @@ export async function createProduct(product, actorUserId) {
   return prisma.$transaction(async (client) => {
     const created = await client.products.create({ data: {
       category: product.category, created_by: actorUserId, is_active: true,
+      inventory_mode: product.inventoryMode,
       name: product.name, requires_prescription: product.requiresPrescription,
       sku: product.sku, unit_price_cents: product.unitPriceCents, updated_by: actorUserId,
     } });
@@ -70,10 +73,13 @@ export async function listProducts({ category, excludeCategory = null, includeTe
 export async function updateProduct(productId, product, changedFields, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
-    const existing = await client.products.findUnique({ select: { id: true }, where: { id: productId } });
+    await client.$queryRaw`SELECT id FROM products WHERE id = ${productId}::uuid FOR UPDATE`;
+    const existing = await client.products.findUnique({ where: { id: productId } });
     if (!existing) return null;
+    if (existing.inventory_mode !== product.inventoryMode && (await client.inventory_stocks.count({ where: { product_id: productId, OR: [{ on_hand: { gt: 0 } }, { reserved: { gt: 0 } }] } }) || await client.inventory_transfers.count({ where: { product_id: productId, status: "DISPATCHED" } }))) inventoryError("INVENTORY_MODE_LOCKED", "Debe conciliar las existencias y transferencias antes de cambiar el modo de inventario.");
     const updated = await client.products.update({ data: {
       category: product.category, is_active: product.isActive, name: product.name,
+      inventory_mode: product.inventoryMode,
       requires_prescription: product.requiresPrescription, sku: product.sku,
       unit_price_cents: product.unitPriceCents, updated_by: actorUserId,
     }, where: { id: productId } });

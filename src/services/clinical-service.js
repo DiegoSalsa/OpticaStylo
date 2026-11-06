@@ -1,341 +1,163 @@
-import { PERMISSIONS } from "../auth/permissions.js";
-import { requirePermissions } from "../auth/require-permission.js";
-import {
-  addClinicalEncounterAddendum,
-  createClinicalEncounter,
-  finalizeClinicalEncounter,
-  findClinicalEncounterByAppointmentId,
-  findClinicalEncounterById,
-  findMedicalRecordByPatientId,
-  hasClinicalAssignment,
-  listMedicalRecordRevisions,
-  listPatientClinicalHistory,
-  updateClinicalEncounter,
-  upsertMedicalRecord,
-} from "../repositories/clinical-repository.js";
-import { findPatientById } from "../repositories/patient-repository.js";
-import { AppError } from "../utils/app-error.js";
-import {
-  validateAddendumInput,
-  validateClinicalPatientId,
-  validateCreateEncounterInput,
-  validateEncounterId,
-  validateMedicalRecordInput,
-  validateUpdateEncounterInput,
-} from "../validations/clinical-validation.js";
+import { requireClinicalProfessional } from "../auth/clinical-professional.js";
+import { addClinicalEncounterAddendum, createClinicalEncounter, finalizeClinicalEncounter, findClinicalEncounterByAppointmentId, findClinicalEncounterById, findMedicalRecordByPatientId, hasClinicalAssignment, listMedicalRecordRevisions, listPatientClinicalHistory, updateClinicalEncounter, upsertMedicalRecord, recordClinicalAccess } from "../repositories/clinical-repository.js";
+import { validateAddendumInput, validateClinicalPatientId, validateCreateEncounterInput, validateEncounterId, validateMedicalRecordInput, validateUpdateEncounterInput } from "../validations/clinical-validation.js";
 import { validateAppointmentId } from "../validations/appointment-validation.js";
-
-function throwClinicalAccessNotAssigned() {
-  throw new AppError({
-    code: "CLINICAL_ACCESS_NOT_ASSIGNED",
-    message: "El paciente no está asignado al profesional autenticado.",
-    status: 403,
-  });
-}
-
-function throwPatientNotFound() {
-  throw new AppError({
-    code: "PATIENT_NOT_FOUND",
-    message: "No se encontró el paciente solicitado.",
-    status: 404,
-  });
-}
-
-function throwEncounterNotFound() {
-  throw new AppError({
-    code: "CLINICAL_ENCOUNTER_NOT_FOUND",
-    message: "No se encontró la atención clínica solicitada.",
-    status: 404,
-  });
-}
-
-async function requirePatient(patientId, findRepository) {
-  const patient = await findRepository(patientId);
-
-  if (!patient) {
-    throwPatientNotFound();
-  }
-
-  return patient;
-}
-
-async function requireAssignment(
-  patientId,
-  actor,
-  assignmentRepository,
-  statuses,
-) {
-  const assigned = await assignmentRepository(patientId, actor.userId, statuses);
-
-  if (!assigned) {
-    throwClinicalAccessNotAssigned();
-  }
-}
-
-function convertEncounterRepositoryError(reason) {
+import { clinicalInvalid, clinicalObject, clinicalVersion } from "../validations/clinical-form-validation.js";
+function reasonError(reason) {
   const errors = {
-    ALREADY_FINALIZED: [
-      "CLINICAL_ENCOUNTER_ALREADY_FINALIZED",
-      "La atención clínica ya fue finalizada.",
-      409,
-    ],
-    APPOINTMENT_NOT_FOUND: [
-      "APPOINTMENT_NOT_FOUND",
-      "No se encontró la reserva solicitada.",
-      404,
-    ],
-    ENCOUNTER_ALREADY_EXISTS: [
-      "CLINICAL_ENCOUNTER_ALREADY_EXISTS",
-      "La reserva ya tiene una atención clínica asociada.",
-      409,
-    ],
-    FINALIZED: [
-      "CLINICAL_ENCOUNTER_IMMUTABLE",
-      "Una atención finalizada no puede editarse; agregue una adenda.",
-      409,
-    ],
-    INCOMPLETE: [
-      "INCOMPLETE_CLINICAL_ENCOUNTER",
-      "Debe registrar el examen y el diagnóstico antes de finalizar.",
-      409,
-    ],
-    INVALID_APPOINTMENT_STATUS: [
-      "APPOINTMENT_NOT_CHECKED_IN",
-      "La reserva debe estar marcada como presente para registrar la atención.",
-      409,
-    ],
-    NOT_ASSIGNED: [
-      "CLINICAL_ACCESS_NOT_ASSIGNED",
-      "La atención no está asignada al profesional autenticado.",
-      403,
-    ],
-    NOT_FINALIZED: [
-      "CLINICAL_ENCOUNTER_NOT_FINALIZED",
-      "Las adendas solo se agregan a atenciones finalizadas.",
-      409,
-    ],
-    NOT_FOUND: [
-      "CLINICAL_ENCOUNTER_NOT_FOUND",
-      "No se encontró la atención clínica solicitada.",
-      404,
-    ],
+    NOT_FOUND: ["No se encontró la atención clínica.", 404],
+    NOT_ASSIGNED: ["No tiene asignación clínica para esa atención.", 403],
+    APPOINTMENT_NOT_FOUND: ["No se encontró la reserva autorizada.", 404],
+    INVALID_APPOINTMENT_STATUS: ["La reserva debe estar marcada como presente.", 409],
+    ENCOUNTER_ALREADY_EXISTS: ["La reserva ya tiene una atención clínica.", 409],
+    FINALIZED: ["La ficha finalizada es inmutable; utilice una adenda.", 409],
+    NOT_FINALIZED: ["Las adendas se agregan después de finalizar la atención.", 409],
+    INCOMPLETE: ["Complete el examen y diagnóstico de la ficha general antes de finalizar.", 409]
   };
-  const [code, message, status] = errors[reason] ?? errors.NOT_FOUND;
-
-  throw new AppError({ code, message, status });
+  const [message, status] = errors[reason] ?? errors.NOT_FOUND;
+  clinicalInvalid(message, `CLINICAL_${reason}`, status);
 }
-
-export async function getMedicalRecord(patientId, actor, dependencies = {}) {
-  const findPatientRepository = dependencies.findPatientById ?? findPatientById;
-  const assignmentRepository =
-    dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
-  const findRecordRepository =
-    dependencies.findMedicalRecordByPatientId ?? findMedicalRecordByPatientId;
-  const revisionsRepository =
-    dependencies.listMedicalRecordRevisions ?? listMedicalRecordRevisions;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED]);
-  const normalizedPatientId = validateClinicalPatientId(patientId);
-  await requirePatient(normalizedPatientId, findPatientRepository);
-  await requireAssignment(normalizedPatientId, actor, assignmentRepository);
-
-  const record = await findRecordRepository(normalizedPatientId);
-  const revisions = record
-    ? await revisionsRepository(normalizedPatientId)
-    : [];
-
+const responseRecord = record => ({
+  ...record,
+  revisions: (record.revisions ?? []).map(({
+    snapshot: _snapshot,
+    ...metadata
+  }) => metadata)
+});
+async function requireAssignment(patientId, actor, statuses) {
+  if (!(await hasClinicalAssignment(patientId, actor.userId, statuses))) clinicalInvalid("No tiene asignación clínica para ese paciente.", "CLINICAL_ACCESS_NOT_ASSIGNED", 403);
+}
+export async function getMedicalRecord(patientId, actor) {
+  await requireClinicalProfessional(actor);
+  const id = validateClinicalPatientId(patientId);
+  await requireAssignment(id, actor);
+  const record = await findMedicalRecordByPatientId(id);
   return {
-    patientId: normalizedPatientId,
+    patientId: id,
     record,
-    revisions,
+    revisions: record ? await listMedicalRecordRevisions(id) : []
   };
 }
-
-export async function updateMedicalRecord(
+export async function updateMedicalRecord(patientId, input, actor) {
+  await requireClinicalProfessional(actor, "medical_records.write_assigned");
+  const id = validateClinicalPatientId(patientId);
+  await requireAssignment(id, actor, ["CHECKED_IN", "COMPLETED"]);
+  if (!Number.isSafeInteger(input?.expectedRevision) || input.expectedRevision < 0) clinicalInvalid("Indique la revisión de los antecedentes que está editando.");
+  return upsertMedicalRecord(id, validateMedicalRecordInput(input), actor.userId, input.expectedRevision);
+}
+export async function createEncounter(input, actor, {
+  requestKey
+} = {}) {
+  await requireClinicalProfessional(actor, "medical_records.write_assigned");
+  const data = validateCreateEncounterInput(input);
+  if (!requestKey && !data.appointmentId) clinicalInvalid("La atención sin reserva requiere un identificador de operación.", "IDEMPOTENCY_KEY_REQUIRED");
+  const result = await createClinicalEncounter(data, actor.userId, requestKey);
+  if (!result.encounter) reasonError(result.reason);
+  return responseRecord(await findClinicalEncounterById(result.encounter.id));
+}
+export async function getEncounter(encounterId, actor, {
   patientId,
-  input,
-  actor,
-  dependencies = {},
-) {
-  const findPatientRepository = dependencies.findPatientById ?? findPatientById;
-  const assignmentRepository =
-    dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
-  const updateRepository =
-    dependencies.upsertMedicalRecord ?? upsertMedicalRecord;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED]);
-  const normalizedPatientId = validateClinicalPatientId(patientId);
-  const changes = validateMedicalRecordInput(input);
-  await requirePatient(normalizedPatientId, findPatientRepository);
-  await requireAssignment(normalizedPatientId, actor, assignmentRepository, [
-    "CHECKED_IN",
-    "COMPLETED",
-  ]);
-
-  return updateRepository(normalizedPatientId, changes, actor.userId);
-}
-
-export async function createEncounter(input, actor, dependencies = {}) {
-  const createRepository =
-    dependencies.createClinicalEncounter ?? createClinicalEncounter;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED]);
-  const encounterData = validateCreateEncounterInput(input);
-  const result = await createRepository(encounterData, actor.userId);
-
-  if (!result.encounter) {
-    convertEncounterRepositoryError(result.reason);
+  revision,
+  accessType = "VIEWED"
+} = {}) {
+  await requireClinicalProfessional(actor);
+  const id = validateEncounterId(encounterId),
+    encounter = await findClinicalEncounterById(id);
+  if (!encounter || encounter.status === "DRAFT" && encounter.professional.id !== actor.userId || patientId && validateClinicalPatientId(patientId) !== encounter.patient.id) reasonError("NOT_FOUND");
+  await requireAssignment(encounter.patient.id, actor);
+  let result = encounter;
+  if (revision != null) {
+    const version = Number(revision);
+    clinicalVersion(version);
+    const saved = encounter.revisions.find(r => r.version === version);
+    if (!saved) reasonError("NOT_FOUND");
+    const s = saved.snapshot;
+    result = {
+      ...encounter,
+      type: s.encounter_type,
+      encounterDate: s.encounter_date,
+      recordNumber: s.record_number,
+      formVersion: s.form_version,
+      formData: s.form_data,
+      version: s.record_version,
+      currentVersion: encounter.version,
+      isHistoricalVersion: true,
+      updatedAt: saved.recordedAt,
+      reasonForVisit: s.reason_for_visit,
+      anamnesis: s.anamnesis,
+      examination: s.examination,
+      diagnosis: s.diagnosis,
+      indications: s.indications,
+      status: s.status,
+      finalizedAt: s.finalized_at,
+      patientSnapshot: s.patient_snapshot,
+      professionalSnapshot: s.professional_snapshot,
+      addenda: encounter.addenda.filter(a => new Date(a.createdAt) <= new Date(saved.recordedAt))
+    };
   }
-
-  return result.encounter;
+  await recordClinicalAccess(id, actor.userId, accessType);
+  return {
+    ...result,
+    revisions: encounter.revisions.map(({
+      snapshot: _snapshot,
+      ...metadata
+    }) => metadata)
+  };
 }
-
-export async function getEncounter(encounterId, actor, dependencies = {}) {
-  const findRepository =
-    dependencies.findClinicalEncounterById ?? findClinicalEncounterById;
-  const assignmentRepository =
-    dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED]);
-  const normalizedId = validateEncounterId(encounterId);
-  const encounter = await findRepository(normalizedId);
-
-  if (!encounter) {
-    throwEncounterNotFound();
-  }
-
-  if (
-    encounter.status === "DRAFT" &&
-    encounter.professional.id !== actor.userId
-  ) {
-    throwEncounterNotFound();
-  }
-
-  await requireAssignment(
-    encounter.patient.id,
-    actor,
-    assignmentRepository,
-  );
-  return encounter;
-}
-
-export async function getEncounterForAppointment(appointmentId, actor, dependencies = {}) {
-  const findRepository = dependencies.findClinicalEncounterByAppointmentId
-    ?? findClinicalEncounterByAppointmentId;
-  const assignmentRepository = dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED]);
-  const encounter = await findRepository(validateAppointmentId(appointmentId));
+export async function getEncounterForAppointment(appointmentId, actor) {
+  await requireClinicalProfessional(actor);
+  const encounter = await findClinicalEncounterByAppointmentId(validateAppointmentId(appointmentId));
   if (!encounter) return null;
-  if (encounter.status === "DRAFT" && encounter.professional.id !== actor.userId) {
-    return null;
-  }
-  await requireAssignment(encounter.patient.id, actor, assignmentRepository);
-  return encounter;
+  return getEncounter(encounter.id, actor);
 }
-
-export async function updateEncounter(
-  encounterId,
-  input,
-  actor,
-  dependencies = {},
-) {
-  const updateRepository =
-    dependencies.updateClinicalEncounter ?? updateClinicalEncounter;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED]);
-  const normalizedId = validateEncounterId(encounterId);
-  const changes = validateUpdateEncounterInput(input);
-  const result = await updateRepository(normalizedId, changes, actor.userId);
-
-  if (!result.encounter) {
-    convertEncounterRepositoryError(result.reason);
-  }
-
-  return result.encounter;
+export async function updateEncounter(encounterId, input, actor) {
+  await requireClinicalProfessional(actor, "medical_records.write_assigned");
+  const id = validateEncounterId(encounterId),
+    data = validateUpdateEncounterInput(input);
+  const result = await updateClinicalEncounter(id, data, actor.userId);
+  if (!result.encounter) reasonError(result.reason);
+  return findClinicalEncounterById(id).then(({
+    revisions,
+    ...record
+  }) => ({
+    ...record,
+    revisions: revisions.map(({
+      snapshot: _snapshot,
+      ...metadata
+    }) => metadata)
+  }));
 }
-
-export async function finalizeEncounter(
-  encounterId,
-  actor,
-  dependencies = {},
-) {
-  const finalizeRepository =
-    dependencies.finalizeClinicalEncounter ?? finalizeClinicalEncounter;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED]);
-  const normalizedId = validateEncounterId(encounterId);
-  const result = await finalizeRepository(
-    normalizedId,
-    actor.userId,
-    dependencies.currentDate ?? new Date(),
-  );
-
-  if (!result.encounter) {
-    convertEncounterRepositoryError(result.reason);
-  }
-
-  return result.encounter;
+export async function finalizeEncounter(encounterId, input, actor) {
+  await requireClinicalProfessional(actor, "medical_records.write_assigned");
+  clinicalObject(input, ["expectedVersion", "confirm"]);
+  if (input.confirm !== true) clinicalInvalid("Confirme la finalización profesional de la atención.");
+  const result = await finalizeClinicalEncounter(validateEncounterId(encounterId), actor.userId, new Date(), {
+    expectedVersion: clinicalVersion(input.expectedVersion)
+  });
+  if (!result.encounter) reasonError(result.reason);
+  return getEncounter(result.encounter.id, actor);
 }
-
-export async function addEncounterAddendum(
-  encounterId,
-  input,
-  actor,
-  dependencies = {},
-) {
-  const findRepository =
-    dependencies.findClinicalEncounterById ?? findClinicalEncounterById;
-  const assignmentRepository =
-    dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
-  const addRepository =
-    dependencies.addClinicalEncounterAddendum ?? addClinicalEncounterAddendum;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_WRITE_ASSIGNED]);
-  const normalizedId = validateEncounterId(encounterId);
-  const addendumData = validateAddendumInput(input);
-  const encounter = await findRepository(normalizedId);
-
-  if (!encounter) {
-    throwEncounterNotFound();
-  }
-
-  if (encounter.professional.id !== actor.userId) {
-    throwClinicalAccessNotAssigned();
-  }
-
-  await requireAssignment(
-    encounter.patient.id,
-    actor,
-    assignmentRepository,
-    ["CHECKED_IN", "COMPLETED"],
-  );
-  const result = await addRepository(normalizedId, addendumData, actor.userId);
-
-  if (!result.addendum) {
-    convertEncounterRepositoryError(result.reason);
-  }
-
+export async function addEncounterAddendum(encounterId, input, actor, {
+  requestKey
+} = {}) {
+  await requireClinicalProfessional(actor, "medical_records.write_assigned");
+  if (!requestKey) clinicalInvalid("La adenda requiere un identificador de operación.", "IDEMPOTENCY_KEY_REQUIRED");
+  const id = validateEncounterId(encounterId);
+  await getEncounter(id, actor);
+  const result = await addClinicalEncounterAddendum(id, validateAddendumInput(input), actor.userId, requestKey);
+  if (!result.addendum) reasonError(result.reason);
   return result.addendum;
 }
-
-export async function getPatientClinicalHistory(
-  patientId,
-  actor,
-  dependencies = {},
-) {
-  const findPatientRepository = dependencies.findPatientById ?? findPatientById;
-  const assignmentRepository =
-    dependencies.hasClinicalAssignment ?? hasClinicalAssignment;
-  const historyRepository =
-    dependencies.listPatientClinicalHistory ?? listPatientClinicalHistory;
-
-  requirePermissions(actor, [PERMISSIONS.MEDICAL_RECORDS_READ_ASSIGNED]);
-  const normalizedPatientId = validateClinicalPatientId(patientId);
-  await requirePatient(normalizedPatientId, findPatientRepository);
-  await requireAssignment(normalizedPatientId, actor, assignmentRepository);
-
+export async function getPatientClinicalHistory(patientId, actor, {
+  page = 1
+} = {}) {
+  await requireClinicalProfessional(actor);
+  const id = validateClinicalPatientId(patientId);
+  await requireAssignment(id, actor);
+  const value = Number(page);
+  if (!Number.isSafeInteger(value) || value < 1 || value > 100000) clinicalInvalid("La página del historial no es válida.");
   return {
-    encounters: await historyRepository(normalizedPatientId),
-    patientId: normalizedPatientId,
+    patientId: id,
+    ...(await listPatientClinicalHistory(id, actor.userId, value))
   };
 }

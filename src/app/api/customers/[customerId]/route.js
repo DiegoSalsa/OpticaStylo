@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/auth/authenticate-request";
 import { getCustomer, updateCustomer } from "@/services/customer-service";
-import { createSuccessResponse } from "@/utils/api-response";
-import { executeApiHandler } from "@/utils/error-handler";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
+import { executeClinicalHandler as executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
 // GET /api/customers/[customerId]/ - consultar el recurso aplicando autenticación, validaciones y reglas de negocio

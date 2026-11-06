@@ -137,8 +137,8 @@ export default function PrescriptionImageInput({ disabled, hasStoredImage, store
 
     {source === "FILE" && <label className="prescription-file-picker"><span><Icon name="file" size={18} />Seleccionar imagen</span><input accept={PRESCRIPTION_IMAGE_ACCEPT} disabled={disabled} onChange={selectImage} type="file" /></label>}
 
-    {previewUrl && <div className="prescription-image-preview"><Image alt="Vista previa de la receta seleccionada" height={52} src={previewUrl} unoptimized width={52} /><div><strong>{image.name}</strong><span>{Math.ceil(image.size / 1024)} KiB · lista para leer</span></div><button disabled={disabled} onClick={() => onImageChange(null)} type="button">Quitar</button></div>}
-    {!image && hasStoredImage && <div className="prescription-image-preview"><Image alt="Receta guardada de forma privada" height={120} src={`/api/store/cart/prescription/image?v=${encodeURIComponent(storedImageVersion ?? "")}`} unoptimized width={180} /><p className="prescription-current-image">Imagen guardada. Puedes conservarla o reemplazarla.</p></div>}
+    {previewUrl && <div className="prescription-image-preview"><a href={previewUrl} rel="noopener noreferrer" target="_blank">{["image/jpeg", "image/png", "image/webp"].includes(image.type) ? <Image alt="Vista previa de la receta seleccionada" height={160} src={previewUrl} unoptimized width={240} /> : "Abrir imagen HEIC / HEIF"}</a><div><strong>{image.name}</strong><span>{Math.ceil(image.size / 1024)} KiB · pendiente de guardar</span></div><button disabled={disabled} onClick={() => onImageChange(null)} type="button">Quitar</button></div>}
+    {!image && hasStoredImage && <div className="prescription-image-preview"><a href={`/api/store/cart/prescription/image?v=${encodeURIComponent(storedImageVersion ?? "")}`} rel="noopener noreferrer" target="_blank">Abrir imagen guardada</a><p className="prescription-current-image">Imagen guardada. Puedes conservarla o reemplazarla.</p></div>}
     <small className="prescription-image-help">La lectura automática usa JPEG, PNG o WEBP. HEIC y HEIF se guardan como respaldo y puedes completar sus datos manualmente.</small>
   </div>;
 }

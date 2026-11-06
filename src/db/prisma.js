@@ -3,9 +3,10 @@ import { PrismaClient } from "@prisma/client";
 const prismaGlobal = globalThis;
 
 function createPrismaClient() {
-  return new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
+  const client=new PrismaClient({log:[{emit:"event",level:"error"}]});
+  // Los errores de Prisma pueden incluir argumentos de consultas con datos de salud.
+  client.$on("error",()=>console.error("Falló una operación de base de datos."));
+  return client;
 }
 
 export const prisma = prismaGlobal.__opticaStyloPrisma ?? createPrismaClient();

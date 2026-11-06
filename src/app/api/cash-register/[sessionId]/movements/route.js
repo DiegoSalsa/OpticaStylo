@@ -1,8 +1,9 @@
 import { authenticateRequest } from "@/auth/authenticate-request";
 import { registerCashMovement } from "@/services/cash-register-service";
-import { createSuccessResponse } from "@/utils/api-response";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
+import { readIdempotencyKey } from "@/utils/idempotency-key";
 
 // POST /api/cash-register/[sessionId]/movements/ - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request, { params }) {
@@ -13,6 +14,7 @@ export async function POST(request, { params }) {
       sessionId,
       await readJsonBody(request),
       actor,
+      readIdempotencyKey(request),
     ));
   });
 }

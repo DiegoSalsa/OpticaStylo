@@ -1,34 +1,41 @@
 import { prisma } from "../db/prisma.js";
 
 export async function findActiveSessionByTokenHash(tokenHash) {
-  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
-    const now = new Date();
-    const session = await client.user_sessions.findFirst({
-      include: {
-        users: {
-          include: {
-            user_roles_user_roles_user_idTousers: {
-              include: { roles: { include: { role_permissions: { include: { permissions: true } } } } },
-            },
+  // Autenticar es una consulta: no reservar conexiones con una transacción
+  // interactiva mientras el tablero solicita varias recetas en paralelo.
+  const client = prisma;
+  const now = new Date();
+  const session = await client.user_sessions.findFirst({
+    include: {
+      users: {
+        include: {
+          user_roles_user_roles_user_idTousers: {
+            include: { roles: { include: { role_permissions: { include: { permissions: true } } } } },
           },
         },
       },
-      where: {
-        expires_at: { gt: now }, revoked_at: null, token_hash: tokenHash,
-        users: { is_active: true, OR: [{ locked_until: null }, { locked_until: { lte: now } }] },
-      },
-    });
-    if (!session) return null;
-    await client.user_sessions.update({ data: { last_used_at: now }, where: { id: session.id } });
-    const roles = session.users.user_roles_user_roles_user_idTousers.map((item) => item.roles.code);
-    const permissions = [...new Set(session.users.user_roles_user_roles_user_idTousers
-      .flatMap((item) => item.roles.role_permissions.map((entry) => entry.permissions.code)))];
-    return {
-      email: session.users.email, expiresAt: session.expires_at, permissions, roles,
-      sessionId: session.id, userId: session.user_id,
-    };
+    },
+    where: {
+      expires_at: { gt: now }, revoked_at: null, token_hash: tokenHash,
+      users: { is_active: true, OR: [{ locked_until: null }, { locked_until: { lte: now } }] },
+    },
   });
+  if (!session) return null;
+  // El detalle del pedido dispara varias consultas con la misma sesión.
+  // Evitar que todas bloqueen la misma fila solo para registrar actividad.
+  const activityThreshold = new Date(now.getTime() - 60_000);
+  if (session.last_used_at < activityThreshold) {
+    await client.user_sessions.updateMany({
+      data: { last_used_at: now }, where: { id: session.id, revoked_at: null, last_used_at: { lt: activityThreshold } },
+    });
+  }
+  const roles = session.users.user_roles_user_roles_user_idTousers.map((item) => item.roles.code);
+  const permissions = [...new Set(session.users.user_roles_user_roles_user_idTousers
+    .flatMap((item) => item.roles.role_permissions.map((entry) => entry.permissions.code)))];
+  return {
+    email: session.users.email, expiresAt: session.expires_at, permissions, roles,
+    sessionId: session.id, userId: session.user_id,
+  };
 }
 
 export async function createSessionForSuccessfulLogin({ expiresAt, ipAddress, tokenHash, userAgent, userId }) {

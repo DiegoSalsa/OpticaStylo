@@ -112,19 +112,10 @@ npm test
 npm run db:check
 npm run build
 
-# Aplicar migraciones; si la base existente requiere baseline, registrarlo y reintentar de forma explícita
-ruta_log_migracion="$(mktemp)"
-if ! npm run db:migrate 2>&1 | tee "$ruta_log_migracion"; then
-  if grep -q "P3005" "$ruta_log_migracion"; then
-    echo "Base existente detectada; validando y registrando el baseline de Prisma."
-    npm run db:baseline
-    npm run db:migrate
-  else
-    rm -f "$ruta_log_migracion"
-    fallar "Prisma Migrate no pudo actualizar la base de datos."
-  fi
-fi
-rm -f "$ruta_log_migracion"
+# El baseline de una base existente exige una auditoría y autorización separadas.
+# Nunca modificar historiales automáticamente como reacción a P3005.
+npm run db:audit || fallar "Estructura o historial sin conciliar: despliegue bloqueado."
+npm run db:migrate || fallar "Prisma Migrate no pudo actualizar la base de datos."
 
 # Conservar la release activa para poder restaurarla si el arranque o el health check fallan
 ruta_anterior=""

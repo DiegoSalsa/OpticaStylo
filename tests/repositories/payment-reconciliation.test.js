@@ -26,19 +26,23 @@ function createClient(overrides = {}) {
   };
   return {
     state,
+    async $queryRaw() { return [{id:saleId}]; },
+    inventory_reservations: { async findMany() { return []; } },
     payment_provider_events: {
       async create() { state.eventId += 1n; return { id: state.eventId }; },
       async update() {},
     },
     payment_attempts: {
       async findFirst() { return { ...state.attempt }; },
+      async findUnique() { return { ...state.attempt }; },
       async update({ data }) { Object.assign(state.attempt, data); return state.attempt; },
       async updateMany() { state.otherAttemptsBlocked += 1; return { count: 1 }; },
     },
     sales: {
       async findUnique() {
         return {
-          customers: { email: "cliente@example.com" }, sale_number: 42n,
+          customers: { email: "cliente@example.invalid" }, sale_number: 42n,
+          branch_id: null, origin: "IN_STORE", sale_items: [],
           sale_payments: state.paymentWrites ? [{ amount_cents: 49990n }] : [],
           status: "PENDING", total_cents: 49990n,
         };

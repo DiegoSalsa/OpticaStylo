@@ -1,4 +1,6 @@
 import { prisma } from "../db/prisma.js";
+export const externalPrescriptionScope=scope=>!scope?.allowedBranchIds?{}:{OR:[{sales:{some:{OR:[{branch_id:{in:scope.allowedBranchIds}},{branch_id:null,created_by:scope.legacyActorId}]}}},{created_by:scope.legacyActorId,sales:{none:{}}}]};
+export async function canAccessExternalPrescription(id,scope){return !!await prisma.external_prescriptions.findFirst({where:{id,...externalPrescriptionScope(scope)},select:{id:true}});}
 
 function mapPrescription(row) {
   if (!row) return null;
@@ -51,11 +53,23 @@ export async function findExternalPrescriptionById(id) {
   return findExternalPrescriptionWithClient(prisma, id);
 }
 
-export async function listExternalPrescriptionsByPatient(patientId) {
+export async function listExternalPrescriptionsByPatient(patientId,scope) {
   return (await prisma.external_prescriptions.findMany({
     include: { patients: true }, orderBy: { created_at: "desc" },
-    where: { patient_id: patientId, status: "READY" },
+    where: { patient_id: patientId, status: "READY",...externalPrescriptionScope(scope) },take:20,
   })).map(mapPrescription);
+}
+
+export async function listExternalPrescriptionsByCustomer(customerId,scope,pagination) {
+    // En la tienda el propietario se obtiene de la venta: el CHECK existente
+    // exige elegir cart_id o customer_id, y se conserva sin migrar datos.
+  const where={status:"READY",AND:[{OR:[{customer_id:customerId},{sales:{some:{customer_id:customerId}}}]},externalPrescriptionScope(scope)]};
+  const page=pagination?.page??1,pageSize=pagination?.pageSize??20;
+  const rows=await prisma.external_prescriptions.findMany({where,include:{patients:true},orderBy:[{created_at:"desc"},{id:"desc"}],take:pageSize,skip:(page-1)*pageSize});
+  const items=rows.map(mapPrescription);
+  if(!pagination)return items;
+  const total=await prisma.external_prescriptions.count({where});
+  return {items,page,pageSize,total,totalPages:Math.ceil(total/pageSize)};
 }
 
 export async function findExternalPrescriptionFileById(id) {

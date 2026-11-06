@@ -16,7 +16,7 @@ test("el POS no crea Checkout Pro mientras Mercado Pago presencial no está conf
 
   assert.match(route, /MERCADO_PAGO_PRESENCIAL_NOT_CONFIGURED/);
   assert.doesNotMatch(route, /createMercadoPagoCheckout/);
-  assert.match(posModule, /Pendiente de configuración comercial/);
+  assert.match(posModule, /Mercado Pago presencial requiere configurar la cuenta/);
   assert.doesNotMatch(posModule, /Generar checkout seguro/);
   assert.doesNotMatch(posModule, /checkout\/mercado-pago/);
 });
