@@ -41,6 +41,7 @@ export default function Glasses3DInterface({ model }) {
     catalogSearch,
     changeCamera,
     displayedStatusMessage,
+    captureAvailable,
     faceDetected,
     faceMeshTriangleIndices,
     filteredModels,
@@ -361,7 +362,7 @@ export default function Glasses3DInterface({ model }) {
             </button>
             <button
               className={styles.captureButton}
-              disabled={!faceDetected || !modelReady}
+              disabled={!captureAvailable || !modelReady}
               onClick={captureTryOn}
               type="button"
             >
