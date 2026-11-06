@@ -4,7 +4,7 @@
   "framework": "nextjs",
   "git": {
     "deploymentEnabled": {
-      "codex/avance-2-academico": false
+      "feature/avance-2-web": false
     }
   }
 }
