@@ -12,6 +12,7 @@ async function start(page, size = "720x1280", delay = 20) {
   page.on("pageerror", (error) => console.error(error.message));
   await page.route("**/api/store/**", (route) => route.fulfill({ json: { success: true, data: [] } }));
   await page.goto("/virtual-try-on/3d/validation/camera?vtoDebug=1");
+  await expect.poll(async () => (await snapshot(page))?.schemaVersion).toBe(1);
   await page.getByRole("checkbox", { name: "Seguimiento determinista" }).check();
   await page.getByLabel("Dimensiones de fuente").selectOption(size);
   await page.getByLabel("Latencia sintética").fill(String(delay));
@@ -106,6 +107,7 @@ test("latencia de 220 ms entrega poses, elimina las vencidas y permite usar una 
 test("MediaPipe real: modelo, WASM y backend procesan el patrón sin inventar un rostro", async ({ page }) => {
   await page.route("**/api/store/**", (route) => route.fulfill({ json: { success: true, data: [] } }));
   await page.goto("/virtual-try-on/3d/validation/camera?vtoDebug=1");
+  await expect.poll(async () => (await snapshot(page))?.schemaVersion).toBe(1);
   await page.getByRole("button", { name: "Probarme este marco", exact: true }).click();
   await expect.poll(async () => (await snapshot(page))?.detection.inferencesWithoutFace ?? 0, { timeout: 60000 }).toBeGreaterThan(2);
   const report = await snapshot(page);
@@ -119,6 +121,7 @@ test("MediaPipe real: entrada tardía, ambos GLB, pérdida y fotografía", async
   test.skip(!process.env.VTO_PORTRAIT_PATH, "Requiere el fixture público portrait.jpg de MediaPipe en una ruta local, fuera de Git.");
   await page.route("**/api/store/**", (route) => route.fulfill({ json: { success: true, data: [] } }));
   await page.goto("/virtual-try-on/3d/validation/camera?vtoDebug=1");
+  await expect.poll(async () => (await snapshot(page))?.schemaVersion).toBe(1);
   await page.getByLabel("Dimensiones de fuente").selectOption("720x1280");
   await page.getByRole("button", { name: "Probarme este marco", exact: true }).click();
   await expect.poll(async () => (await snapshot(page))?.detection.inferencesWithoutFace ?? 0, { timeout: 60000 }).toBeGreaterThan(2);
