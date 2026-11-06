@@ -6,7 +6,7 @@ import {
   PUBLIC_REQUEST_LIMIT_OPERATIONS,
 } from "@/security/public-request-rate-limit";
 import { createSuccessResponse } from "@/utils/api-response";
-import { executeApiHandler } from "@/utils/error-handler";
+import { executeClinicalHandler as executeApiHandler } from "@/utils/error-handler";
 import { readMultipartFormData } from "@/utils/http-request";
 import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 

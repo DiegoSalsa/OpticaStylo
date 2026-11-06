@@ -1,0 +1,8 @@
+.details { margin-block: 1rem; max-width: 100%; min-width: 0; overflow-wrap: anywhere; text-align: left; }
+.details summary { cursor: pointer; font-weight: 600; padding-block: .75rem; }
+.details p { margin-block: .75rem; }
+.scroll { max-width: 100%; overflow-x: auto; }
+.scroll table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.scroll th, .scroll td { padding: .6rem .4rem; border-bottom: 1px solid #ddd; text-align: left; }
+.scroll caption { text-align: left; padding-block: .5rem; }
+.image { display: block; width: 100%; max-height: 32rem; height: auto; object-fit: contain; margin-block: 1rem; }

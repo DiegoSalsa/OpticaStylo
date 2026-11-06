@@ -1,4 +1,12 @@
 export const PERMISSIONS = Object.freeze({
+  MEDICAL_RECORDS_ASSIGN_CARE: "medical_records.assign_care",
+  CASH_READ: "cash.read",
+  CASH_OPERATE: "cash.operate",
+  CASH_ADJUST: "cash.adjust",
+  CASH_MANAGE_ALL: "cash.manage_all",
+  INVENTORY_READ: "inventory.read",
+  INVENTORY_WRITE: "inventory.write",
+  INVENTORY_MANAGE_ALL: "inventory.manage_all",
 // Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
   APPOINTMENTS_CANCEL: "appointments.cancel",
   APPOINTMENTS_CREATE: "appointments.create",

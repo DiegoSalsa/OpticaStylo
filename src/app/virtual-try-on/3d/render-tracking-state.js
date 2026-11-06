@@ -8,8 +8,7 @@ import { useEffect } from "react";
 export default function RenderTrackingState({ poseRef, poseFilterRef, renderedPoseRef, debugMetricsRef, onVisibility, pendingCaptureRef }) {
   useEffect(() => addAfterEffect(() => {
     const capture = pendingCaptureRef.current;
-    pendingCaptureRef.current = null;
-    capture?.();
+    if (capture?.()) pendingCaptureRef.current = null;
   }), [pendingCaptureRef]);
   useFrame(() => {
     const pose = poseFilterRef.current ? poseFilterRef.current.sample(performance.now()) : poseRef.current;

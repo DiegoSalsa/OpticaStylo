@@ -1,5 +1,9 @@
 import { prisma } from "../db/prisma.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import {findCustomerByNormalizedRut} from "./customer-identity.js";
+import {consumeRegistrationProof} from "./customer-commerce-link-repository.js";
+import {commercialError} from "../validations/customer-commercial-validation.js";
+import {retryTransaction} from "../db/retry-transaction.js";
 
 function mapAccount(row) {
   if (!row) return null;
@@ -15,14 +19,17 @@ function mapAccount(row) {
 
 export async function createCustomerAccount(account) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
-    const customer = await client.customers.create({ data: {
+  return retryTransaction(prisma,async (client) => {
+    const existing=await findCustomerByNormalizedRut(client,account.rut,{lock:true});
+    const verified=existing&&account.verification?await consumeRegistrationProof(client,account.verification,account):null;
+    if(existing&&!verified)commercialError("Este RUT requiere verificar el correo registrado antes de crear la cuenta.","CUSTOMER_ACCOUNT_REQUIRES_LINKING",409);
+    const customer = verified??await client.customers.create({ data: {
       address: account.address, created_by: null, email: account.email,
       first_names: account.firstNames, last_names: account.lastNames,
       phone: account.phone, rut: account.rut, updated_by: null,
     } });
     const created = await client.customer_accounts.create({
-      data: { customer_id: customer.id, email: account.email, password_hash: account.passwordHash },
+      data: { customer_id: customer.id, email: account.email, password_hash: account.passwordHash,email_verified_at:verified?new Date():null,clinical_link_recheck_required:!!verified?.patient_id },
       include: { customers: true },
     });
     await client.transactional_email_outbox.upsert({
@@ -81,22 +88,25 @@ export async function createCustomerSession({ accountId, expiresAt, ipAddress, t
 }
 
 export async function findActiveCustomerSession(tokenHash) {
-  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
-    const now = new Date();
-    const session = await client.customer_account_sessions.findFirst({
-      include: { customer_accounts: { include: { customers: true } } },
-      where: {
-        expires_at: { gt: now }, revoked_at: null, token_hash: tokenHash,
-        customer_accounts: {
-          is_active: true, OR: [{ locked_until: null }, { locked_until: { lte: now } }],
-        },
+  const client = prisma;
+  const now = new Date();
+  const session = await client.customer_account_sessions.findFirst({
+    include: { customer_accounts: { include: { customers: true } } },
+    where: {
+      expires_at: { gt: now }, revoked_at: null, token_hash: tokenHash,
+      customer_accounts: {
+        is_active: true, OR: [{ locked_until: null }, { locked_until: { lte: now } }],
       },
-    });
-    if (!session) return null;
-    await client.customer_account_sessions.update({ data: { last_used_at: now }, where: { id: session.id } });
-    return { ...mapAccount(session.customer_accounts), expiresAt: session.expires_at, sessionId: session.id };
+    },
   });
+  if (!session) return null;
+  const activityThreshold = new Date(now.getTime() - 60_000);
+  if (session.last_used_at < activityThreshold) {
+    await client.customer_account_sessions.updateMany({
+      data: { last_used_at: now }, where: { id: session.id, revoked_at: null, last_used_at: { lt: activityThreshold } },
+    });
+  }
+  return { ...mapAccount(session.customer_accounts), expiresAt: session.expires_at, sessionId: session.id };
 }
 
 export async function revokeCustomerSession(sessionId, accountId) {

@@ -1,6 +1,6 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
-import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
+import { availabilityForProducts, expireInventoryReservations, listInventoryBranches } from "../repositories/inventory-repository.js";
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import {
   createProduct as createProductRepository,
@@ -17,6 +17,17 @@ import {
   validateUpdateProductInput,
 } from "../validations/product-validation.js";
 
+async function scopedAvailability(products,actor) {
+  const result=await availabilityForProducts(products,undefined,true);
+  if(actor.permissions.includes(PERMISSIONS.INVENTORY_MANAGE_ALL))return result;
+  const allowed=new Set((await listInventoryBranches(actor)).map((branch)=>branch.id));
+  for(const data of result.values()){
+    data.branches=data.branches.filter((branch)=>allowed.has(branch.id));
+    data.available=data.branches.some((branch)=>branch.available);
+    data.exactQuantityKnown=data.mode==="TRACKED"&&data.branches.length>0&&data.branches.every((branch)=>branch.quantity!==null);
+  }
+  return result;
+}
 function notFound() {
   throw new AppError({ code: "PRODUCT_NOT_FOUND", message: "No se encontró el producto.", status: 404 });
 }
@@ -50,9 +61,11 @@ export async function getProduct(productId, actor, dependencies = {}) {
   const product = await (dependencies.findProductById ?? findProductById)(id);
   if (!product) notFound();
   const images = await (dependencies.listImages ?? listActiveProductImages)([id]);
+  await expireInventoryReservations();
+  const availabilityMap = await scopedAvailability([product],actor);
   return {
     ...product,
-    availability: (dependencies.getAvailability ?? getMockAvailability)(product),
+    availability: dependencies.getAvailability ? dependencies.getAvailability(product) : availabilityMap.get(product.id),
     images: images.map(({ productId: _productId, ...image }) => image),
   };
 }
@@ -60,7 +73,9 @@ export async function getProduct(productId, actor, dependencies = {}) {
 export async function getProductList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PRODUCTS_READ]);
   const result = await (dependencies.listProducts ?? listProducts)(validateProductListQuery(searchParams));
-  const availability = dependencies.getAvailability ?? getMockAvailability;
+  await expireInventoryReservations();
+  const availabilityMap = await scopedAvailability(result.items,actor);
+  const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   return {
     ...result,
     items: result.items.map((product) => ({

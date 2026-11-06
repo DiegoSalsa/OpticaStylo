@@ -263,7 +263,7 @@ export default function HomePage() {
               <div>
                 <h3>Retiro en tienda</h3>
                 <p>
-                  Retira tus lentes en la sucursal que coordinemos
+                  Retira tus lentes en la sucursal con disponibilidad que elijas
                   después de confirmar tu compra.
                 </p>
               </div>

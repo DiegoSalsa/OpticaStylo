@@ -22,7 +22,7 @@ test("crea un producto activo", async () => {
 });
 
 test("registra qué campos del producto cambiaron", async () => {
-  const current = { ...input, id: productId, isActive: true };
+  const current = { ...input, id: productId, isActive: true, inventoryMode:"TRACKED" };
   await updateProduct(productId, { unitPriceCents: 35000 },
     { permissions: [PERMISSIONS.PRODUCTS_MANAGE], userId }, {
       findProductById: async () => current,

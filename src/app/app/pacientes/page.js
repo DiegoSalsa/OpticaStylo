@@ -9,6 +9,7 @@ import Pagination from "@/components/internal/pagination";
 import usePaginatedResource from "@/components/internal/use-paginated-resource";
 import { createRequestGate } from "@/utils/pagination";
 import Icon from "@/components/ui/icon";
+import CareAssignmentPanel from "./care-assignment-panel";
 import "../management.css";
 import "./patients.css";
 
@@ -438,6 +439,7 @@ export default function PatientsPage() {
           )}
         </section>
       </div>
+      {selectedId && status !== "loading-detail" && actor?.permissions.includes("medical_records.assign_care") && <CareAssignmentPanel key={selectedId} patientId={selectedId} />}
     </>
   );
 }

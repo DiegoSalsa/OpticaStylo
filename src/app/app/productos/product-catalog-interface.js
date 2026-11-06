@@ -206,6 +206,7 @@ export default function ProductCatalogInterface({ model }) {
                       setForm({
                         ...form,
                         category,
+                        inventoryMode: category === "FRAME" ? "TRACKED" : form.inventoryMode,
                         requiresPrescription:
                           category === "PRESCRIPTION_LENS"
                             ? form.requiresPrescription
@@ -222,6 +223,8 @@ export default function ProductCatalogInterface({ model }) {
                   </select>
                 </label>
                 <label className="field field-wide">
+                  <span>Control de existencias</span><select disabled={!canManage || status === "saving" || form.category === "FRAME"} value={form.inventoryMode ?? "UNCONFIGURED"} onChange={(event) => setForm({ ...form, inventoryMode: event.target.value })}><option value="UNCONFIGURED">Pendiente de configurar</option><option value="TRACKED">Existencias físicas por sucursal</option><option value="ON_DEMAND">Bajo pedido, sin descuento físico</option></select>
+                </label><label className="field field-wide">
                   <span>Precio publicado (CLP)</span>
                   <input
                     disabled={!canManage || status === "saving"}

@@ -1,6 +1,6 @@
 import { authenticateRequest } from "@/auth/authenticate-request";
 import { closeCashRegister } from "@/services/cash-register-service";
-import { createSuccessResponse } from "@/utils/api-response";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 

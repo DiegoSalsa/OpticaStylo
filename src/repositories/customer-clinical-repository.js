@@ -14,6 +14,7 @@ const professionalUser = "users_professional_profiles_user_idTousers";
 
 // Seleccionar únicamente la identidad comercial necesaria para resolver el vínculo.
 const accountSelect = {
+  clinical_link_recheck_required:true,
   email: true,
   customers: { select: { email: true, first_names: true, id: true, last_names: true, patient_id: true, rut: true } },
 };
@@ -98,7 +99,7 @@ export async function createCustomerPatientOtpChallenge(accountId, identity, dep
     const account = await client.customer_accounts.findUnique({ select: { ...accountSelect, id: true }, where: { id: accountId } });
     if (!account?.customers?.rut) return { reason: "IDENTITY" };
     const expectedEmail = account.email.trim().toLowerCase();
-    if (account.customers.patient_id) {
+    if (account.customers.patient_id&&!account.clinical_link_recheck_required) {
       const linked = await client.patients.findUnique({ select: { birth_date: true, email: true, first_names: true, id: true, last_names: true, rut: true }, where: { id: account.customers.patient_id } });
       if (!linked || linked.rut !== account.customers.rut || linked.email.trim().toLowerCase() !== expectedEmail || formatDateOnly(linked.birth_date) !== identity.birthDate) return { reason: "IDENTITY" };
       return { patient: publicPatient(linked), reason: "ALREADY_LINKED", samePatient: true };
@@ -177,6 +178,7 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
     const updated = await client.customers.updateMany({ data: { patient_id: patient.id }, where: { id: account.customer_id, patient_id: null } });
     await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
     if (!updated.count && account.customers.patient_id !== patient.id) return { reason: "ALREADY_LINKED" };
+    await client.customer_accounts.update({where:{id:accountId},data:{clinical_link_recheck_required:false}});
     return { patient: publicPatient(patient), reason: null };
     }, { isolationLevel: "Serializable" });
   } catch (error) {
@@ -190,7 +192,7 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
 export async function findCustomerClinicalOverview(accountId, now = new Date(), dependencies = {}) {
   const database = dependencies.client ?? prisma;
   const account = await findCustomerClinicalContext(accountId, database);
-  const patientId = account?.customers?.patient_id;
+  const patientId = account?.clinical_link_recheck_required?null:account?.customers?.patient_id;
   const patient = patientId ? await database.patients.findUnique({ select: { first_names: true, last_names: true, rut: true }, where: { id: patientId } }) : null;
   if (!patientId || !patient) return { linked: false, patient: null, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] } };
 

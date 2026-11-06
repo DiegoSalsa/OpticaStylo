@@ -4,7 +4,7 @@ import {
   getOpenCashRegister,
   openCashRegister,
 } from "@/services/cash-register-service";
-import { createSuccessResponse } from "@/utils/api-response";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
 import { executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 
@@ -12,7 +12,7 @@ import { readJsonBody } from "@/utils/http-request";
 export async function GET(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    return createSuccessResponse(await getOpenCashRegister(actor));
+    return createSuccessResponse(await getOpenCashRegister(new URL(request.url).searchParams, actor));
   });
 }
 

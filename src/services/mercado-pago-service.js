@@ -1,5 +1,6 @@
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
+import { assertSaleBranch } from "../auth/sale-branch-access.js";
 import {
   getMercadoPagoConfig,
   requireMercadoPagoCheckoutReady,
@@ -53,7 +54,7 @@ function providerUnavailable(cause) {
   });
 }
 
-async function createCheckout(saleId, initiatedBy, dependencies) {
+async function createCheckout(saleId, initiatedBy, dependencies, actor = null) {
   const id = validateSaleId(saleId);
   const config = (dependencies.getMercadoPagoConfig ?? getMercadoPagoConfig)(
     dependencies.environment,
@@ -63,6 +64,7 @@ async function createCheckout(saleId, initiatedBy, dependencies) {
   const expiresAt = new Date(currentDate.getTime() + 30 * 60 * 1000);
   const sale = await (dependencies.findSaleById ?? findSaleById)(id);
   if (!sale) throwAttemptReason("SALE_NOT_FOUND");
+  if (actor && !dependencies.findSaleById) await assertSaleBranch(sale, actor);
   const reservation = await (
     dependencies.reserveMercadoPagoAttempt ?? reserveMercadoPagoAttempt
   )(id, initiatedBy, expiresAt);
@@ -102,7 +104,7 @@ export async function createMercadoPagoCheckout(
   dependencies = {},
 ) {
   requirePermissions(actor, [PERMISSIONS.SALES_MERCADO_PAGO_CHECKOUT]);
-  return createCheckout(saleId, actor.userId, dependencies);
+  return createCheckout(saleId, actor.userId, dependencies, actor);
 }
 
 export async function createStoreMercadoPagoCheckout(saleId, dependencies = {}) {
@@ -114,7 +116,9 @@ export async function getMercadoPagoCheckouts(saleId, actor, dependencies = {}) 
   const id = validateSaleId(saleId);
   const sale = await (dependencies.findSaleById ?? findSaleById)(id);
   if (!sale) throwAttemptReason("SALE_NOT_FOUND");
+  if (!dependencies.findSaleById) await assertSaleBranch(sale, actor);
   const attempts = await (
+    // The sale's branch is checked before exposing provider preferences.
     dependencies.listPaymentAttemptsBySaleId ?? listPaymentAttemptsBySaleId
   )(id);
   return attempts.map(publicCheckoutAttempt);

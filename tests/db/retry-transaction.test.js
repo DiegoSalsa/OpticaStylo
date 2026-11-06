@@ -20,6 +20,12 @@ test("acota los reintentos y conserva errores de validación o persistencia", as
   assert.equal(attempts, 4);
   const validation = new Error("validation");
   await assert.rejects(retryTransaction({ $transaction: async () => { throw validation; } }, () => {}), (e) => e === validation);
+  for (const code of ["P1001", "P2002"]) {
+    const persistence = Object.assign(new Error("persistence failure"), { code });
+    let calls = 0;
+    await assert.rejects(retryTransaction({ $transaction: async () => { calls++; throw persistence; } }, () => {}), (error) => error === persistence);
+    assert.equal(calls, 1, "Una falla ajena a serialización conserva su identidad y no se reintenta");
+  }
 });
 
 test("reintenta SQLSTATE 40001 encapsulado por Prisma y conserva otros errores SQL", async () => {

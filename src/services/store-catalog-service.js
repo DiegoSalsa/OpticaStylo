@@ -1,4 +1,4 @@
-import { getMockAvailability } from "../integrations/inventory/mock-inventory-gateway.js";
+import { onlineAvailabilityForProducts, expireInventoryReservations } from "../repositories/inventory-repository.js";
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
 import { findProductById, listProducts } from "../repositories/product-repository.js";
 import { getProductPresentation } from "../config/product-presentations.js";
@@ -16,6 +16,7 @@ function publicProduct(product, availabilityProvider, images = [], model = null)
     description: presentation.description,
     id: product.id,
     isTestData: product.isTestData,
+    inventoryMode: product.inventoryMode,
     images: images.length > 0 ? images : presentation.images,
     name: product.name,
     requiresPrescription: product.requiresPrescription,
@@ -47,6 +48,7 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
   const publicQuery = new URLSearchParams(searchParams);
   publicQuery.set("isActive", "true");
   const includeTestData = canUseTestData(dependencies);
+  await (dependencies.expireInventoryReservations ?? expireInventoryReservations)();
   const result = await (dependencies.listProducts ?? listProducts)(
     {
       ...validateStoreCatalogQuery(publicQuery),
@@ -54,7 +56,8 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
       includeTestData,
     },
   );
-  const availability = dependencies.getAvailability ?? getMockAvailability;
+  const availabilityMap = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)(result.items);
+  const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const models = result.items.some((product) => product.category === "FRAME")
     ? await (dependencies.list3dModels ?? listPublished3dModels)() : [];
   const modelsByProduct = new Map(models.map((model) => [model.productId, model]));
@@ -82,7 +85,9 @@ export async function getStoreProduct(productId, dependencies = {}) {
       status: 404,
     });
   }
-  const availability = dependencies.getAvailability ?? getMockAvailability;
+  await (dependencies.expireInventoryReservations ?? expireInventoryReservations)();
+  const availabilityMap = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)([product]);
+  const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const images = await (dependencies.listProductImages ?? listActiveProductImages)([product.id]);
   const models = product.category === "FRAME"
     ? await (dependencies.list3dModels ?? listPublished3dModels)() : [];
@@ -100,6 +105,8 @@ export async function getStoreProduct(productId, dependencies = {}) {
     pageSize: 100,
     search: "",
   });
+  const lensAvailability = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)(lenses.items);
+  for (const [id, data] of lensAvailability) availabilityMap.set(id, data);
   return {
     ...presentation,
     lensOptions: lenses.items.map((lens) => publicProduct(lens, availability)),

@@ -18,7 +18,7 @@ const OTP_TERMINAL_STATUSES = new Set([
 // Eliminar el código únicamente después de que el correo deja de ser reintentable.
 export function sanitizeTransactionalEmailPayload(templateCode, payload, status) {
   const sanitized = { ...(payload ?? {}) };
-  if (templateCode === "CUSTOMER_PATIENT_OTP" && OTP_TERMINAL_STATUSES.has(status)) delete sanitized.code;
+  if (["CUSTOMER_PATIENT_OTP","CUSTOMER_COMMERCE_OTP"].includes(templateCode) && OTP_TERMINAL_STATUSES.has(status)) delete sanitized.code;
   return sanitized;
 }
 
@@ -34,7 +34,7 @@ export function mapEmail(row, { includeOtpCode = false } = {}) {
   const receiptPayload = receipt?.payload ?? {};
   const payload = sanitizeTransactionalEmailPayload(row.template_code, row.payload, row.status);
   // Ocultar el OTP de respuestas administrativas; solo el worker que envía el correo puede leerlo.
-  if (row.template_code === "CUSTOMER_PATIENT_OTP" && !includeOtpCode) {
+  if (["CUSTOMER_PATIENT_OTP","CUSTOMER_COMMERCE_OTP"].includes(row.template_code) && !includeOtpCode) {
     delete payload.code;
     delete payload.challengeId;
   }
@@ -232,6 +232,10 @@ export async function suppressTransactionalEmail(emailId, workerId, reasonCode) 
 export async function getTransactionalEmailEligibility(email, dependencies = {}) {
   const database = dependencies.client ?? prisma;
   const now = dependencies.now?.() ?? new Date();
+  if (email.templateCode === "CUSTOMER_COMMERCE_OTP") {
+    const proof=await database.customer_commerce_challenges.findFirst({where:{id:email.payload?.challengeId,consumed_at:null,attempt_count:{lt:5},expires_at:{gt:now},email:email.recipientEmail}});
+    return proof?{eligible:true,reason:null}:{eligible:false,reason:"OTP_CHALLENGE_INVALID"};
+  }
   if (email.templateCode === "CUSTOMER_PATIENT_OTP") {
     const challengeId = email.payload?.challengeId;
     if (typeof challengeId !== "string" || !email.accountId) return { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
@@ -313,7 +317,7 @@ export async function retryTransactionalEmail(emailId, actorId, limitPerHour = 1
     if (!email) return { email: null, reason: "NOT_FOUND" };
     if (!["FAILED", "DEAD_LETTER"].includes(email.status)) return { email: mapEmail(email), reason: "NOT_RETRYABLE" };
     // Impedir reintentos manuales de OTP terminales cuyo código ya fue eliminado del outbox.
-    if (email.template_code === "CUSTOMER_PATIENT_OTP" && email.status === "DEAD_LETTER") {
+    if (["CUSTOMER_PATIENT_OTP","CUSTOMER_COMMERCE_OTP"].includes(email.template_code) && email.status === "DEAD_LETTER") {
       return { email: mapEmail(email), reason: "NOT_RETRYABLE" };
     }
     const result = await client.transactional_email_outbox.update({ data: {

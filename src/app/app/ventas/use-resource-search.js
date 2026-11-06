@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 
 import { readResponse } from "@/components/internal/internal-shell";
 
-export default function useResourceSearch(endpoint, search, extraParams = "") {
+export default function useResourceSearch(endpoint, search, extraParams = "", enabled = true) {
   const [state, setState] = useState({ error: "", items: [], loading: true });
 
   useEffect(() => {
+    if(!enabled)return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setState((value) => ({ ...value, error: "", loading: true }));
@@ -16,11 +17,9 @@ export default function useResourceSearch(endpoint, search, extraParams = "") {
       query.set("search", search);
       fetch(`${endpoint}?${query}`, { signal: controller.signal })
         .then(readResponse)
-        .then((data) =>
-          setState({ error: "", items: data.items, loading: false }),
-        )
+        .then((data) => { if (!controller.signal.aborted) setState({ error: "", items: data.items, loading: false }); })
         .catch((error) => {
-          if (error.name !== "AbortError") {
+          if (!controller.signal.aborted) {
             setState({ error: error.message, items: [], loading: false });
           }
         });
@@ -30,7 +29,7 @@ export default function useResourceSearch(endpoint, search, extraParams = "") {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [endpoint, extraParams, search]);
+  }, [endpoint, extraParams, search, enabled]);
 
   return state;
 }

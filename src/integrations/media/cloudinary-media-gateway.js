@@ -29,7 +29,7 @@ function uploadBuffer(sdk, data, options) {
 }
 
 function uploadFailure(error) {
-  console.error("No fue posible guardar un archivo en Cloudinary.", error);
+  console.error("No fue posible guardar un archivo en Cloudinary.", { code: Number.isInteger(error?.http_code) ? error.http_code : "PROVIDER_ERROR" });
   throw new AppError({
     code: "MEDIA_STORAGE_UNAVAILABLE",
     message: "No fue posible guardar el archivo. Inténtelo nuevamente.",
@@ -66,7 +66,7 @@ export function createCloudinaryMediaGateway({
         });
         return result.result === "ok" || result.result === "not found";
       } catch (error) {
-        console.error("No fue posible eliminar una receta privada de Cloudinary.", error);
+        console.error("No fue posible eliminar una receta privada de Cloudinary.", { code: Number.isInteger(error?.http_code) ? error.http_code : "PROVIDER_ERROR" });
         return false;
       }
     },
@@ -80,7 +80,7 @@ export function createCloudinaryMediaGateway({
         });
         return result.result === "ok" || result.result === "not found";
       } catch (error) {
-        console.error("No fue posible eliminar una imagen pública de Cloudinary.", error);
+        console.error("No fue posible eliminar una imagen pública de Cloudinary.", { code: Number.isInteger(error?.http_code) ? error.http_code : "PROVIDER_ERROR" });
         return false;
       }
     },

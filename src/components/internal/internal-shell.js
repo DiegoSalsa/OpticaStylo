@@ -14,6 +14,7 @@ const NAVIGATION = [
   { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", permissions: ["sales.read"] },
   { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
   { href: "/app/productos", icon: "eye", label: "Catálogo de productos", permissions: ["products.read"] },
+  { href: "/app/inventario", icon: "package", label: "Inventario por sucursal", permissions: ["inventory.read"] },
   { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", permissions: ["users.read"] },
   { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", permissions: ["sales.reports_read"] },
 ];

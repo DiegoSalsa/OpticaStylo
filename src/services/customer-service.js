@@ -3,11 +3,13 @@ import { requirePermissions } from "../auth/require-permission.js";
 import {
   createCustomer as createCustomerRepository,
   findCustomerById,
-  listCustomers,
   updateCustomer as updateCustomerRepository,
 } from "../repositories/customer-repository.js";
 import { findPatientById } from "../repositories/patient-repository.js";
 import { AppError } from "../utils/app-error.js";
+import {commercialCustomers} from "../repositories/customer-commercial-repository.js";
+import {commercialQuery} from "../validations/customer-commercial-validation.js";
+import {saleBranchScope} from "../auth/sale-branch-access.js";
 import {
   validateCreateCustomerInput,
   validateCustomerId,
@@ -20,8 +22,8 @@ function notFound() {
 }
 
 function convertUniqueViolation(error) {
-  if (error?.code !== "23505") throw error;
-  const linkedPatient = error.constraint === "customers_patient_id_key";
+  if (!["23505","P2002"].includes(error?.code)) throw error;
+  const linkedPatient = error.constraint === "customers_patient_id_key" || error.meta?.target?.includes("patient_id");
   throw new AppError({
     code: linkedPatient ? "PATIENT_ALREADY_HAS_CUSTOMER" : "CUSTOMER_RUT_ALREADY_EXISTS",
     message: linkedPatient
@@ -70,7 +72,8 @@ export async function getCustomer(customerId, actor, dependencies = {}) {
 
 export async function getCustomerList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.CUSTOMERS_READ]);
-  return (dependencies.listCustomers ?? listCustomers)(validateCustomerListQuery(searchParams));
+  if(dependencies.listCustomers)return dependencies.listCustomers(validateCustomerListQuery(searchParams));
+  return commercialCustomers(commercialQuery(searchParams),await saleBranchScope(actor));
 }
 
 export async function updateCustomer(customerId, input, actor, dependencies = {}) {
@@ -81,7 +84,8 @@ export async function updateCustomer(customerId, input, actor, dependencies = {}
   if (!current) notFound();
   const data = validateUpdateCustomerInput(input, current);
   try {
-    const customer = await (dependencies.updateCustomer ?? updateCustomerRepository)(id, data, actor.userId);
+    if(input.expectedVersion!=null&&(!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1))throw new AppError({code:"INVALID_CUSTOMER_VERSION",message:"La versión del cliente no es válida.",status:400});
+    const customer = await (dependencies.updateCustomer ?? updateCustomerRepository)(id, data, actor.userId,input.expectedVersion);
     if (!customer) notFound();
     return customer;
   } catch (error) {

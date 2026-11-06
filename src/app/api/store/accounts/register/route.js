@@ -1,8 +1,8 @@
 // Capa HTTP para store/accounts/register/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { createStoreSessionCookie } from "@/auth/store-session";
 import { registerStoreAccount } from "@/services/store-account-service";
-import { createSuccessResponse } from "@/utils/api-response";
-import { executeApiHandler } from "@/utils/error-handler";
+import { createPrivateStoreResponse as createSuccessResponse } from "@/utils/store-response";
+import { executeClinicalHandler as executeApiHandler } from "@/utils/error-handler";
 import { readJsonBody } from "@/utils/http-request";
 import { getRequestMetadata } from "@/utils/request-metadata";
 import {

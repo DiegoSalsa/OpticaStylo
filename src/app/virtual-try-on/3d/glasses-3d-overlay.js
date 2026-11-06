@@ -70,6 +70,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const renderedPoseRef = useRef(null);
   const visibilityRef = useRef(false);
   const pendingCaptureRef = useRef(null);
+  const captureAvailabilityTimerRef = useRef(null);
   const rendererCanvasRef = useRef(null);
   const fitAdjustmentRef = useRef(DEFAULT_FIT_ADJUSTMENT);
 
@@ -94,14 +95,23 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const [selectedModel, setSelectedModel] = useState(BUILT_IN_3D_GLASSES[0]);
   const [fitAdjustment, setFitAdjustment] = useState(DEFAULT_FIT_ADJUSTMENT);
   const [captureMessage, setCaptureMessage] = useState("");
+  const [captureAvailable, setCaptureAvailable] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [facingMode, setFacingMode] = useState("user");
   const [cartMessage, setCartMessage] = useState("");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const onTrackingVisibility = useCallback((visible) => {
     const detected = visible && modelReadyRef.current;
-    if (visibilityRef.current !== detected) {
-      visibilityRef.current = detected; setFaceDetected(detected);
+    if (visibilityRef.current === detected) return;
+    visibilityRef.current = detected;
+    setFaceDetected(detected);
+    window.clearTimeout(captureAvailabilityTimerRef.current);
+    if (detected) {
+      setCaptureAvailable(true);
+    } else {
+      // Una pérdida breve no debe cancelar el clic. Guardar sigue exigiendo
+      // un fotograma con pose válida después de pulsar el botón.
+      captureAvailabilityTimerRef.current = window.setTimeout(() => setCaptureAvailable(false), 500);
     }
   }, []);
   // El proveedor inyectado sólo pertenece a la ruta de validación de desarrollo.
@@ -160,6 +170,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
     modelReadyRef.current = false;
     visibilityRef.current = false;
     pendingCaptureRef.current = null;
+    window.clearTimeout(captureAvailabilityTimerRef.current);
     poseFilterRef.current = null;
     poseRef.current = null;
     debugMetricsRef.current = {};
@@ -221,6 +232,8 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
       renderedPoseRef.current = null;
       visibilityRef.current = false;
       pendingCaptureRef.current = null;
+      window.clearTimeout(captureAvailabilityTimerRef.current);
+      setCaptureAvailable(false);
       setFaceDetected(false);
       setModelMetadata(null);
       modelMetadataRef.current = null;
@@ -582,14 +595,20 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
   const captureTryOn = useCallback(() => {
     // Ejecutar la composición después del próximo render WebGL: una inferencia
     // recién entregada todavía puede no estar dibujada cuando se pulsa el botón.
+    if (!captureAvailable || !modelReady) return;
+    const deadline = performance.now() + 1000;
     pendingCaptureRef.current = () => {
       const video = videoRef.current;
       const photo = photoImageRef.current;
       const overlay = rendererCanvasRef.current;
       const media = cameraStatus === "photo" ? photo : video;
-      const currentPose = cameraStatus === "photo" ? poseRef.current : poseFilterRef.current?.sample(performance.now());
-      if (!media || !overlay || !faceDetected || !modelReady || !currentPose || !renderedPoseRef.current
-        || currentPose.timestamp !== renderedPoseRef.current.timestamp) return;
+      // La pose válida al dibujar puede vencer durante un render lento.
+      // Esperar brevemente un fotograma con marco si el próximo queda vacío.
+      if (!renderedPoseRef.current && performance.now() < deadline) return false;
+      if (!media || !overlay || !renderedPoseRef.current) {
+        setCaptureMessage("No se pudo guardar la foto. Centra tu rostro y vuelve a intentarlo.");
+        return true;
+      }
 
       const output = document.createElement("canvas");
       output.width = cameraStatus === "photo" ? photo.naturalWidth : video.videoWidth;
@@ -607,8 +626,9 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         setCaptureMessage("Captura guardada en tu dispositivo.");
         window.setTimeout(() => setCaptureMessage(""), 3200);
       }, "image/png");
+      return true;
     };
-  }, [cameraStatus, faceDetected, modelReady, selectedModel.sku]);
+  }, [cameraStatus, captureAvailable, modelReady, selectedModel.sku]);
 
   const changeCamera = useCallback(() => {
     const nextFacingMode = facingMode === "user" ? "environment" : "user";
@@ -690,6 +710,7 @@ export default function Glasses3DOverlay({ cameraDevices = null } = {}) {
         catalogSearch,
         changeCamera,
         displayedStatusMessage,
+        captureAvailable,
         faceDetected,
         faceMeshTriangleIndices,
         filteredModels,

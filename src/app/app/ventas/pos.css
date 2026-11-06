@@ -868,3 +868,16 @@
     grid-row: 1 / span 2;
   }
 }
+/* Operación de caja y cobros por sucursal. */
+.pos-branch { display: flex; align-items: center; flex-wrap: wrap; gap: 1.5rem; padding: 1.2rem; margin-bottom: 1rem; }
+.pos-branch p { color: var(--color-text-soft); font-size: .85rem; }
+.cash-section { margin-top: 1rem; padding-block: .75rem; border-top: 1px solid #dfe9e6; }
+.cash-section > summary { cursor: pointer; font-weight: 650; }
+.cash-ledger { max-width: 100%; overflow: auto; margin-top: 1rem; }
+.cash-ledger table { width: 100%; border-collapse: collapse; text-align: left; font-size: .8rem; }
+.cash-ledger th, .cash-ledger td { padding: .75rem; border-bottom: 1px solid #dfe9e6; vertical-align: top; }
+.cash-ledger small { display: block; color: var(--color-text-soft); overflow-wrap: anywhere; }
+.payment-part { min-width: 0; border: 1px solid #dfe9e6; padding: 1rem; border-radius: 10px; display: grid; gap: .8rem; }
+.customer-purchase { display: flex; justify-content: space-between; gap: .75rem; padding-block: .5rem; }
+.pos-customer > summary { cursor: pointer; font-weight: 700; }
+.pos-customer[open] > summary { margin-bottom: 1rem; }

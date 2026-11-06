@@ -2,6 +2,7 @@ import { validateCreatePrescriptionInput } from "./clinical-validation.js";
 import { normalizeChileanRut } from "../utils/chilean-rut.js";
 import { AppError } from "../utils/app-error.js";
 import { hasSafeImageDimensions } from "./image-dimensions.js";
+import { MAX_PRESCRIPTION_IMAGE_BYTES } from "../utils/prescription-camera.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN =
@@ -13,7 +14,7 @@ const IMAGE_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
-export const MAX_PRESCRIPTION_IMAGE_BYTES = 4 * 1024 * 1024;
+export { MAX_PRESCRIPTION_IMAGE_BYTES };
 export const MAX_PRESCRIPTION_UPLOAD_BYTES = MAX_PRESCRIPTION_IMAGE_BYTES + 128 * 1024;
 
 const HEIF_BRANDS = new Set([
@@ -165,11 +166,13 @@ function buyer(value) {
 function fulfillment(value) {
   object(value);
   const method = typeof value.method === "string" ? value.method.trim().toUpperCase() : "";
+  if (method === "DELIVERY") return { method, quoteId: uuid(value.quoteId, "cotización de despacho"), notes: text(value.notes, "Las notas de entrega", 500, { nullable: true }) };
   if (method !== "PICKUP") {
     fail("La tienda online actualmente solo permite retiro en tienda.", "FULFILLMENT_METHOD_UNAVAILABLE");
   }
   return {
     address: null,
+    branchId: uuid(value.branchId, "sucursal de retiro"),
     city: null,
     method,
     notes: text(value.notes, "Las notas de entrega", 500, { nullable: true }),
@@ -196,6 +199,13 @@ export function validateExternalPrescriptionData(input) {
     pupillaryDistance: prescription.pupillaryDistance,
     rightEye: prescription.rightEye,
   };
+}
+
+export function validatePrescriptionImageHash(value) {
+  if (typeof value !== "string" || !/^[a-f0-9]{64}$/.test(value)) {
+    fail("Vuelve a abrir la imagen guardada antes de confirmar sus valores.", "INVALID_PRESCRIPTION_IMAGE");
+  }
+  return value;
 }
 
 export function validatePrescriptionImage(file) {

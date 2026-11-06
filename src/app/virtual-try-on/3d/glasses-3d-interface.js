@@ -2,10 +2,9 @@
 
 import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { formatClp } from "@/utils/store-client";
 import { cameraProjection, coverRectangle } from "@/virtual-try-on-3d/camera-projection";
@@ -15,7 +14,9 @@ import styles from "./virtual-try-on-3d.module.css";
 import CameraDiagnostics from "./camera-diagnostics";
 import RenderTrackingState from "./render-tracking-state";
 
-const GlassesModel = dynamic(() => import("./glasses-model"), { ssr: false });
+// El modelo se monta dentro de Canvas. next/dynamic introduce un recurso de
+// React DOM que el renderizador de Three no admite; lazy conserva Suspense.
+const GlassesModel = lazy(() => import("./glasses-model"));
 
 function TrackingDiagnostics({ metricsRef }) {
   const outputRef = useRef(null);
@@ -40,6 +41,7 @@ export default function Glasses3DInterface({ model }) {
     catalogSearch,
     changeCamera,
     displayedStatusMessage,
+    captureAvailable,
     faceDetected,
     faceMeshTriangleIndices,
     filteredModels,
@@ -360,7 +362,7 @@ export default function Glasses3DInterface({ model }) {
             </button>
             <button
               className={styles.captureButton}
-              disabled={!faceDetected || !modelReady}
+              disabled={!captureAvailable || !modelReady}
               onClick={captureTryOn}
               type="button"
             >

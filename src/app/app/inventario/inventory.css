@@ -1,0 +1,8 @@
+.inventory-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; margin-bottom: 1rem; }
+.inventory-toolbar form { display: flex; align-items: end; gap: .5rem; }
+.inventory-table { overflow-x: auto; max-width: 100%; margin-block: 1rem; }
+.inventory-table table { width: 100%; border-collapse: collapse; text-align: left; font-size: .85rem; }
+.inventory-table th, .inventory-table td { padding: .8rem .5rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.inventory-table small { display: block; font-weight: normal; overflow-wrap: anywhere; }
+.inventory-table caption { text-align: left; padding-block: .75rem; font-weight: 600; }
+@media (max-width: 600px) { .inventory-toolbar, .inventory-toolbar form { display: grid; width: 100%; } .inventory-table { font-size: .75rem; } }

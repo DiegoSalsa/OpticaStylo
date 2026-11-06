@@ -13,6 +13,7 @@
 # Pruebas
 /coverage
 /tmp/
+/public/virtual-try-on/runtime/
 
 # Herramientas locales
 /postman/

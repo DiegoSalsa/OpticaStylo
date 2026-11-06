@@ -64,15 +64,21 @@ model appointments {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio cash register movements {.
 model cash_register_movements {
-  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  session_id             String                 @map("session_id") @db.Uuid
-  movement_type          String                 @map("movement_type") @db.VarChar(20)
-  amount_cents           BigInt                 @map("amount_cents")
-  reason                 String                 @map("reason") @db.VarChar(500)
-  created_by             String                 @map("created_by") @db.Uuid
-  created_at             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  users                  users                  @relation(fields: [created_by], references: [id], onUpdate: NoAction)
-  cash_register_sessions cash_register_sessions @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+  payment_id             String?                   @unique @db.Uuid
+  reversal_of            String?                   @unique @db.Uuid
+  request_key            String?                   @unique @db.VarChar(80)
+  sale_payments          sale_payments?            @relation(fields: [payment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  original               cash_register_movements?  @relation("cash_reversal", fields: [reversal_of], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reversals              cash_register_movements[] @relation("cash_reversal")
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  session_id             String                    @map("session_id") @db.Uuid
+  movement_type          String                    @map("movement_type") @db.VarChar(20)
+  amount_cents           BigInt                    @map("amount_cents")
+  reason                 String                    @map("reason") @db.VarChar(500)
+  created_by             String                    @map("created_by") @db.Uuid
+  created_at             DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  users                  users                     @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  cash_register_sessions cash_register_sessions    @relation(fields: [session_id], references: [id], onUpdate: NoAction)
 
   @@index([session_id, created_at, id], map: "cash_register_movements_session_date_index")
   @@map("cash_register_movements")
@@ -81,6 +87,13 @@ model cash_register_movements {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio cash register sessions {.
 model cash_register_sessions {
+  branch_id                                     String?                   @db.Uuid
+  terminal_id                                   String?                   @db.Uuid
+  closing_summary                               Json?
+  branches                                      branches?                 @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  cash_register_terminals                       cash_register_terminals?  @relation(fields: [terminal_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sale_payments                                 sale_payments[]
+  sales                                         sales[]
   id                                            String                    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   status                                        String                    @default("OPEN") @map("status") @db.VarChar(10)
   opening_amount_cents                          BigInt                    @map("opening_amount_cents")
@@ -93,7 +106,7 @@ model cash_register_sessions {
   opened_at                                     DateTime                  @default(now()) @map("opened_at") @db.Timestamptz(6)
   closed_by                                     String?                   @map("closed_by") @db.Uuid
   closed_at                                     DateTime?                 @map("closed_at") @db.Timestamptz(6)
-  is_test_configuration                         Boolean                   @default(true) @map("is_test_configuration")
+  is_test_configuration                         Boolean                   @default(false) @map("is_test_configuration")
   cash_register_movements                       cash_register_movements[]
   users_cash_register_sessions_closed_byTousers users?                    @relation("cash_register_sessions_closed_byTousers", fields: [closed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
   users_cash_register_sessions_opened_byTousers users                     @relation("cash_register_sessions_opened_byTousers", fields: [opened_by], references: [id], onUpdate: NoAction)
@@ -101,9 +114,21 @@ model cash_register_sessions {
   @@map("cash_register_sessions")
 }
 
+model cash_register_terminals {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id              String                   @db.Uuid
+  name                   String                   @db.VarChar(100)
+  is_active              Boolean                  @default(true)
+  branches               branches                 @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  cash_register_sessions cash_register_sessions[]
+
+  @@unique([branch_id, name])
+}
+
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounter addenda {.
 model clinical_encounter_addenda {
+  request_key           String?               @unique @db.VarChar(80)
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   encounter_id          String                @map("encounter_id") @db.Uuid
   reason                String                @map("reason") @db.VarChar(500)
@@ -120,6 +145,8 @@ model clinical_encounter_addenda {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounter events {.
 model clinical_encounter_events {
+  record_version        Int?
+  record_snapshot       Json?
   id                    BigInt                @id @default(autoincrement()) @map("id")
   encounter_id          String                @map("encounter_id") @db.Uuid
   event_type            String                @map("event_type") @db.VarChar(30)
@@ -136,8 +163,18 @@ model clinical_encounter_events {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounters {.
 model clinical_encounters {
+  encounter_type                                                                   String                       @default("GENERAL") @db.VarChar(20)
+  encounter_date                                                                   DateTime?                    @db.Date
+  record_number                                                                    BigInt?                      @unique @default(autoincrement())
+  form_version                                                                     Int                          @default(1)
+  form_data                                                                        Json?
+  record_version                                                                   Int                          @default(1)
+  patient_snapshot                                                                 Json?
+  professional_snapshot                                                            Json?
+  request_key                                                                      String?                      @unique @db.VarChar(80)
+  request_hash                                                                     String?                      @db.VarChar(64)
   id                                                                               String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  appointment_id                                                                   String                       @unique @map("appointment_id") @db.Uuid
+  appointment_id                                                                   String?                      @unique @map("appointment_id") @db.Uuid
   patient_id                                                                       String                       @map("patient_id") @db.Uuid
   professional_id                                                                  String                       @map("professional_id") @db.Uuid
   status                                                                           String                       @default("DRAFT") @map("status") @db.VarChar(20)
@@ -153,7 +190,7 @@ model clinical_encounters {
   updated_at                                                                       DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
   clinical_encounter_addenda                                                       clinical_encounter_addenda[]
   clinical_encounter_events                                                        clinical_encounter_events[]
-  appointments                                                                     appointments                 @relation(fields: [appointment_id], references: [id], onUpdate: NoAction)
+  appointments                                                                     appointments?                @relation(fields: [appointment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   professional_profiles_clinical_encounters_created_byToprofessional_profiles      professional_profiles        @relation("clinical_encounters_created_byToprofessional_profiles", fields: [created_by], references: [user_id], onUpdate: NoAction)
   patients                                                                         patients                     @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
   professional_profiles_clinical_encounters_professional_idToprofessional_profiles professional_profiles        @relation("clinical_encounters_professional_idToprofessional_profiles", fields: [professional_id], references: [user_id], onUpdate: NoAction)
@@ -163,6 +200,24 @@ model clinical_encounters {
   @@index([patient_id, created_at(sort: Desc), id], map: "clinical_encounters_patient_history_index")
   @@index([professional_id, created_at(sort: Desc)], map: "clinical_encounters_professional_index")
   @@map("clinical_encounters")
+}
+
+model clinical_care_assignments {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patient_id            String                @db.Uuid
+  professional_id       String                @db.Uuid
+  assigned_by           String                @db.Uuid
+  reason                String                @db.VarChar(500)
+  created_at            DateTime              @default(now()) @db.Timestamptz(6)
+  revoked_at            DateTime?             @db.Timestamptz(6)
+  revoked_by            String?               @db.Uuid
+  revoke_reason         String?               @db.VarChar(500)
+  patients              patients              @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onDelete: Restrict, onUpdate: NoAction)
+  assigned_user         users                 @relation("care_assigned", fields: [assigned_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  revoked_user          users?                @relation("care_revoked", fields: [revoked_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([patient_id, professional_id], map: "clinical_care_assignments_lookup")
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
@@ -207,22 +262,27 @@ model customer_patient_link_challenges {
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio customer accounts {.
 model customer_accounts {
-  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  customer_id                String                       @unique @map("customer_id") @db.Uuid
-  email                      String                       @map("email") @db.VarChar(254)
-  password_hash              String                       @map("password_hash")
-  is_active                  Boolean                      @default(true) @map("is_active")
-  failed_login_attempts      Int                          @default(0) @map("failed_login_attempts") @db.SmallInt
-  locked_until               DateTime?                    @map("locked_until") @db.Timestamptz(6)
-  last_login_at              DateTime?                    @map("last_login_at") @db.Timestamptz(6)
-  password_changed_at        DateTime                     @default(now()) @map("password_changed_at") @db.Timestamptz(6)
-  created_at                 DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updated_at                 DateTime                     @default(now()) @map("updated_at") @db.Timestamptz(6)
-  customer_account_sessions  customer_account_sessions[]
+  email_verified_at                DateTime?                          @db.Timestamptz(6)
+  clinical_link_recheck_required   Boolean                            @default(false)
+  customer_commerce_challenges     customer_commerce_challenges[]
+  customer_order_links             customer_order_links[]
+  customer_contact_events          customer_contact_events[]
+  id                               String                             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  customer_id                      String                             @unique @map("customer_id") @db.Uuid
+  email                            String                             @map("email") @db.VarChar(254)
+  password_hash                    String                             @map("password_hash")
+  is_active                        Boolean                            @default(true) @map("is_active")
+  failed_login_attempts            Int                                @default(0) @map("failed_login_attempts") @db.SmallInt
+  locked_until                     DateTime?                          @map("locked_until") @db.Timestamptz(6)
+  last_login_at                    DateTime?                          @map("last_login_at") @db.Timestamptz(6)
+  password_changed_at              DateTime                           @default(now()) @map("password_changed_at") @db.Timestamptz(6)
+  created_at                       DateTime                           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                       DateTime                           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  customer_account_sessions        customer_account_sessions[]
   customer_patient_link_challenges customer_patient_link_challenges[]
-  customers                  customers                    @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
-  store_carts                store_carts[]
-  transactional_email_outbox transactional_email_outbox[]
+  customers                        customers                          @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
+  store_carts                      store_carts[]
+  transactional_email_outbox       transactional_email_outbox[]
 
   @@map("customer_accounts")
 }
@@ -230,22 +290,27 @@ model customer_accounts {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio customers {.
 model customers {
-  id                                String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  patient_id                        String?                  @unique @map("patient_id") @db.Uuid
-  rut                               String?                  @unique @map("rut") @db.VarChar(10)
-  first_names                       String                   @map("first_names") @db.VarChar(150)
-  last_names                        String?                  @map("last_names") @db.VarChar(150)
-  phone                             String?                  @map("phone") @db.VarChar(16)
-  email                             String?                  @map("email") @db.VarChar(254)
-  address                           String?                  @map("address") @db.VarChar(500)
-  created_by                        String?                  @map("created_by") @db.Uuid
-  updated_by                        String?                  @map("updated_by") @db.Uuid
-  created_at                        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updated_at                        DateTime                 @default(now()) @map("updated_at") @db.Timestamptz(6)
+  record_version                    Int                            @default(1)
+  commercial_preferences            Json?
+  customer_commercial_notes         customer_commercial_notes[]
+  customer_contact_events           customer_contact_events[]
+  customer_commerce_challenges      customer_commerce_challenges[]
+  id                                String                         @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  patient_id                        String?                        @unique @map("patient_id") @db.Uuid
+  rut                               String?                        @unique @map("rut") @db.VarChar(10)
+  first_names                       String                         @map("first_names") @db.VarChar(150)
+  last_names                        String?                        @map("last_names") @db.VarChar(150)
+  phone                             String?                        @map("phone") @db.VarChar(16)
+  email                             String?                        @map("email") @db.VarChar(254)
+  address                           String?                        @map("address") @db.VarChar(500)
+  created_by                        String?                        @map("created_by") @db.Uuid
+  updated_by                        String?                        @map("updated_by") @db.Uuid
+  created_at                        DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                        DateTime                       @default(now()) @map("updated_at") @db.Timestamptz(6)
   customer_accounts                 customer_accounts?
-  users_customers_created_byTousers users?                   @relation("customers_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  patients                          patients?                @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  users_customers_updated_byTousers users?                   @relation("customers_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_customers_created_byTousers users?                         @relation("customers_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  patients                          patients?                      @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_customers_updated_byTousers users?                         @relation("customers_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
   external_prescriptions            external_prescriptions[]
   sales                             sales[]
 
@@ -447,18 +512,19 @@ model patient_guardians {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio patients {.
 model patients {
-  id                               String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  rut                              String                   @unique @map("rut") @db.VarChar(10)
-  first_names                      String                   @map("first_names") @db.VarChar(150)
-  last_names                       String                   @map("last_names") @db.VarChar(150)
-  birth_date                       DateTime                 @map("birth_date") @db.Date
-  phone                            String                   @map("phone") @db.VarChar(16)
-  email                            String                   @map("email") @db.VarChar(254)
-  address                          String                   @map("address") @db.VarChar(500)
-  created_by                       String?                  @map("created_by") @db.Uuid
-  updated_by                       String?                  @map("updated_by") @db.Uuid
-  created_at                       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updated_at                       DateTime                 @default(now()) @map("updated_at") @db.Timestamptz(6)
+  clinical_care_assignments        clinical_care_assignments[]
+  id                               String                             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  rut                              String                             @unique @map("rut") @db.VarChar(10)
+  first_names                      String                             @map("first_names") @db.VarChar(150)
+  last_names                       String                             @map("last_names") @db.VarChar(150)
+  birth_date                       DateTime                           @map("birth_date") @db.Date
+  phone                            String                             @map("phone") @db.VarChar(16)
+  email                            String                             @map("email") @db.VarChar(254)
+  address                          String                             @map("address") @db.VarChar(500)
+  created_by                       String?                            @map("created_by") @db.Uuid
+  updated_by                       String?                            @map("updated_by") @db.Uuid
+  created_at                       DateTime                           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at                       DateTime                           @default(now()) @map("updated_at") @db.Timestamptz(6)
   appointments                     appointments[]
   clinical_encounters              clinical_encounters[]
   customers                        customers?
@@ -466,8 +532,8 @@ model patients {
   external_prescriptions           external_prescriptions[]
   medical_records                  medical_records?
   patient_guardians                patient_guardians?
-  users_patients_created_byTousers users?                   @relation("patients_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  users_patients_updated_byTousers users?                   @relation("patients_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_patients_created_byTousers users?                             @relation("patients_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_patients_updated_byTousers users?                             @relation("patients_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales                            sales[]
 
   @@index([email], map: "patients_email_index")
@@ -585,6 +651,10 @@ model product_images {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio products {.
 model products {
+  shipping_logistics                                                Json?
+  inventory_mode                                                    String                     @default("UNCONFIGURED") @db.VarChar(20)
+  inventory_stocks                                                  inventory_stocks[]
+  inventory_transfers                                               inventory_transfers[]
   id                                                                String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sku                                                               String                     @unique @map("sku") @db.VarChar(80)
   name                                                              String                     @map("name") @db.VarChar(200)
@@ -615,6 +685,7 @@ model products {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio professional profiles {.
 model professional_profiles {
+  clinical_care_assignments                                                      clinical_care_assignments[]
   user_id                                                                        String                            @id @map("user_id") @db.Uuid
   appointment_duration_minutes                                                   Int                               @map("appointment_duration_minutes") @db.SmallInt
   slot_interval_minutes                                                          Int                               @map("slot_interval_minutes") @db.SmallInt
@@ -812,6 +883,10 @@ model sale_optical_additions {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio sale payments {.
 model sale_payments {
+  cash_session_id            String?                      @db.Uuid
+  request_hash               String?                      @db.VarChar(64)
+  cash_register_sessions     cash_register_sessions?      @relation(fields: [cash_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  cash_register_movements    cash_register_movements?
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_id                    String                       @map("sale_id") @db.Uuid
   amount_cents               BigInt                       @map("amount_cents")
@@ -832,6 +907,7 @@ model sale_payments {
   transactional_email_outbox transactional_email_outbox[]
 
   @@index([sale_id, paid_at, id], map: "sale_payments_sale_index")
+  @@index([cash_session_id, paid_at], map: "cash_register_payments_session")
   @@map("sale_payments")
 }
 
@@ -865,6 +941,17 @@ model sale_receipts {
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 /// Entidad de datos del dominio sales {.
 model sales {
+  shipping_quote_id                         String?                         @unique @db.Uuid
+  shipping_quote                            shipping_quotes?                @relation(fields: [shipping_quote_id], references: [id], onDelete: Restrict)
+  shipment                                  shipping_shipments?
+  customer_order_links                      customer_order_links?
+  customer_commerce_challenges              customer_commerce_challenges[]
+  cash_session_id                           String?                         @db.Uuid
+  cash_register_sessions                    cash_register_sessions?         @relation(fields: [cash_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  branch_id                                 String?                         @db.Uuid
+  branches                                  branches?                       @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  inventory_reservations                    inventory_reservations[]
+  inventory_movements                       inventory_movements[]
   id                                        String                          @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   sale_number                               BigInt                          @unique @default(autoincrement()) @map("sale_number")
   customer_id                               String?                         @map("customer_id") @db.Uuid
@@ -915,11 +1002,93 @@ model sales {
   @@index([customer_id, created_at(sort: Desc)], map: "sales_customer_date_index")
   @@index([origin, created_at(sort: Desc)], map: "sales_origin_date_index")
   @@index([status, created_at(sort: Desc)], map: "sales_status_date_index")
+  @@index([branch_id, status, created_at], map: "sales_branch_status_index")
+  @@index([cash_session_id, status], map: "cash_register_sales_session")
   @@map("sales")
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio schema migrations {.
+model customer_commercial_events {
+  id             BigInt   @id @default(autoincrement())
+  customer_id    String   @db.Uuid
+  event_type     String   @db.VarChar(20)
+  record_version Int
+  changed_fields String[] @default([])
+  snapshot       Json
+  performed_by   String?  @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  users          users?   @relation(fields: [performed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, created_at], map: "customer_commercial_events_date")
+}
+
+model customer_commercial_notes {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id String    @db.Uuid
+  branch_id   String?   @db.Uuid
+  content     String    @db.VarChar(2000)
+  created_by  String    @db.Uuid
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  customers   customers @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users       users     @relation(fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  branches    branches? @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, created_at], map: "customer_commercial_notes_date")
+}
+
+model customer_contact_events {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id       String             @db.Uuid
+  channel           String             @db.VarChar(10)
+  decision          String             @db.VarChar(10)
+  source            String             @db.VarChar(30)
+  statement_version String             @db.VarChar(40)
+  evidence          String?            @db.VarChar(500)
+  destination       String?            @db.VarChar(254)
+  performed_by      String?            @db.Uuid
+  account_id        String?            @db.Uuid
+  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  customers         customers          @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users             users?             @relation(fields: [performed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts customer_accounts? @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, channel, created_at], map: "customer_contact_events_latest")
+}
+
+model customer_commerce_challenges {
+  customer_order_links customer_order_links?
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id          String                @db.Uuid
+  account_id           String?               @db.Uuid
+  sale_id              String?               @db.Uuid
+  purpose              String                @db.VarChar(20)
+  email                String                @db.VarChar(254)
+  code_hash            String                @db.Char(64)
+  attempt_count        Int                   @default(0) @db.SmallInt
+  expires_at           DateTime              @db.Timestamptz(6)
+  delivered_at         DateTime?             @db.Timestamptz(6)
+  consumed_at          DateTime?             @db.Timestamptz(6)
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  customers            customers             @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts    customer_accounts?    @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales                sales?                @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([customer_id, purpose, created_at], map: "customer_commerce_challenges_lookup")
+}
+
+model customer_order_links {
+  customer_commerce_challenges customer_commerce_challenges @relation(fields: [challenge_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sale_id                      String                       @id @db.Uuid
+  account_id                   String                       @db.Uuid
+  challenge_id                 String                       @unique @db.Uuid
+  created_at                   DateTime                     @default(now()) @db.Timestamptz(6)
+  sales                        sales                        @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  customer_accounts            customer_accounts            @relation(fields: [account_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([account_id, created_at], map: "customer_order_links_account")
+}
+
 model schema_migrations {
   version     Int      @id @map("version")
   name        String   @map("name")
@@ -951,6 +1120,11 @@ model store_cart_items {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio store carts {.
 model store_carts {
+  shipping_destination     Json?
+  shipping_quote_id        String?                 @db.Uuid
+  shipping_quotes          shipping_quotes[]
+  branch_id                String?                 @db.Uuid
+  branches                 branches?               @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   token_hash               String                  @unique @map("token_hash") @db.Char(64)
   customer_account_id      String?                 @map("customer_account_id") @db.Uuid
@@ -1127,6 +1301,15 @@ model user_sessions {
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio users {.
 model users {
+  customer_commercial_events                                                                customer_commercial_events[]
+  customer_commercial_notes                                                                 customer_commercial_notes[]
+  customer_contact_events                                                                   customer_contact_events[]
+  clinical_care_assigned                                                                    clinical_care_assignments[]       @relation("care_assigned")
+  clinical_care_revoked                                                                     clinical_care_assignments[]       @relation("care_revoked")
+  inventory_transfers_created                                                               inventory_transfers[]             @relation("inventory_transfer_creator")
+  inventory_transfers_completed                                                             inventory_transfers[]             @relation("inventory_transfer_completer")
+  user_branches                                                                             user_branches[]
+  inventory_movements                                                                       inventory_movements[]
   id                                                                                        String                            @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   email                                                                                     String                            @map("email") @db.VarChar(254)
   password_hash                                                                             String                            @map("password_hash")
@@ -1210,4 +1393,194 @@ model virtual_try_on_3d_assets {
   @@unique([product_id, version])
   @@index([product_id, version(sort: Desc)], map: "virtual_try_on_3d_product_history")
   @@map("virtual_try_on_3d_assets")
+}
+
+model branches {
+  shipping_enabled         Boolean                     @default(false)
+  shipping_origin          Json?
+  customer_commercial_notes customer_commercial_notes[]
+  cash_register_terminals   cash_register_terminals[]
+  cash_register_sessions    cash_register_sessions[]
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                      String                      @unique @db.VarChar(80)
+  name                      String                      @db.VarChar(200)
+  address                   String?                     @db.VarChar(500)
+  information_source        String
+  is_active                 Boolean                     @default(true)
+  pickup_enabled            Boolean                     @default(false)
+  created_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  inventory_stocks          inventory_stocks[]
+  user_branches             user_branches[]
+  sales                     sales[]
+  store_carts               store_carts[]
+  transfers_out             inventory_transfers[]       @relation("transfer_source")
+  transfers_in              inventory_transfers[]       @relation("transfer_destination")
+}
+
+model shipping_packaging {
+  code           String  @id @db.VarChar(40)
+  validated      Boolean @default(false)
+  tare_weight_kg Decimal @db.Decimal(8, 2)
+  height_cm      Decimal @db.Decimal(8, 2)
+  width_cm       Decimal @db.Decimal(8, 2)
+  length_cm      Decimal @db.Decimal(8, 2)
+  max_units      Int
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model shipping_quotes {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cart_id        String @db.Uuid
+  cart           store_carts @relation(fields: [cart_id], references: [id], onDelete: Restrict)
+  branch_id      String @db.Uuid
+  environment    String @db.VarChar(20)
+  fingerprint    String @db.VarChar(64)
+  snapshot       Json
+  service_code   String @db.VarChar(20)
+  service_name   String @db.VarChar(200)
+  conditions     String
+  provider_cost  BigInt
+  customer_charge BigInt
+  free_threshold BigInt
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  expires_at     DateTime @db.Timestamptz(6)
+  sale           sales?
+  shipment       shipping_shipments?
+  @@index([cart_id, expires_at])
+}
+
+model shipping_shipments {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sale_id         String @unique @db.Uuid
+  sale            sales @relation(fields: [sale_id], references: [id], onDelete: Restrict)
+  quote_id        String @unique @db.Uuid
+  quote           shipping_quotes @relation(fields: [quote_id], references: [id], onDelete: Restrict)
+  state           String @default("PENDING_PREPARATION") @db.VarChar(30)
+  reference       String @unique @db.VarChar(80)
+  ot              String? @unique @db.VarChar(80)
+  certificate     String? @db.VarChar(80)
+  label_data      Bytes?
+  label_mime      String? @db.VarChar(40)
+  issued_service  String? @db.VarChar(200)
+  last_checked_at DateTime? @db.Timestamptz(6)
+  next_sync_at    DateTime? @db.Timestamptz(6)
+  last_error_code String? @db.VarChar(80)
+  provider_status String? @db.VarChar(300)
+  failure_count   Int @default(0)
+  handed_over_at  DateTime? @db.Timestamptz(6)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @updatedAt @db.Timestamptz(6)
+  events          shipping_tracking_events[]
+  operations      shipping_operations[]
+  @@index([state, next_sync_at])
+}
+
+model shipping_tracking_events {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipment_id  String @db.Uuid
+  shipment     shipping_shipments @relation(fields: [shipment_id], references: [id], onDelete: Restrict)
+  fingerprint  String @db.VarChar(64)
+  code         String @db.VarChar(40)
+  description  String @db.VarChar(500)
+  location     String? @db.VarChar(200)
+  motive       String? @db.VarChar(300)
+  occurred_at  DateTime? @db.Timestamptz(6)
+  received_at  DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([shipment_id, fingerprint])
+}
+
+model shipping_operations {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipment_id  String @db.Uuid
+  shipment     shipping_shipments @relation(fields: [shipment_id], references: [id], onDelete: Restrict)
+  actor_id     String? @db.Uuid
+  operation    String @db.VarChar(40)
+  details      Json
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model user_branches {
+  user_id   String   @db.Uuid
+  branch_id String   @db.Uuid
+  users     users    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  branches  branches @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([user_id, branch_id])
+}
+
+model inventory_stocks {
+  branch_id              String                   @db.Uuid
+  product_id             String                   @db.Uuid
+  on_hand                Int
+  reserved               Int                      @default(0)
+  version                Int                      @default(1)
+  counted_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  branches               branches                 @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  products               products                 @relation(fields: [product_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  inventory_reservations inventory_reservations[]
+  inventory_movements    inventory_movements[]
+
+  @@id([branch_id, product_id])
+}
+
+model inventory_reservations {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sale_id          String           @db.Uuid
+  branch_id        String           @db.Uuid
+  product_id       String           @db.Uuid
+  quantity         Int
+  status           String           @db.VarChar(20)
+  expires_at       DateTime?        @db.Timestamptz(6)
+  created_at       DateTime         @default(now()) @db.Timestamptz(6)
+  inventory_stocks inventory_stocks @relation(fields: [branch_id, product_id], references: [branch_id, product_id], onDelete: Restrict, onUpdate: NoAction)
+  sales            sales            @relation(fields: [sale_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([sale_id, product_id])
+  @@index([status, expires_at], map: "inventory_reservations_expiration")
+}
+
+model inventory_transfers {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source_id           String                @db.Uuid
+  destination_id      String                @db.Uuid
+  product_id          String                @db.Uuid
+  quantity            Int
+  status              String                @default("DISPATCHED") @db.VarChar(20)
+  reason              String                @db.VarChar(500)
+  created_by          String                @db.Uuid
+  completed_by        String?               @db.Uuid
+  request_key         String                @unique @db.VarChar(80)
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  completed_at        DateTime?             @db.Timestamptz(6)
+  source              branches              @relation("transfer_source", fields: [source_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  destination         branches              @relation("transfer_destination", fields: [destination_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products            products              @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creator             users                 @relation("inventory_transfer_creator", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  completer           users?                @relation("inventory_transfer_completer", fields: [completed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inventory_movements inventory_movements[]
+}
+
+model inventory_movements {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id           String               @db.Uuid
+  product_id          String               @db.Uuid
+  stock_version       Int
+  kind                String               @db.VarChar(30)
+  before_on_hand      Int?
+  after_on_hand       Int
+  before_reserved     Int
+  after_reserved      Int
+  reason              String               @db.VarChar(500)
+  actor_id            String?              @db.Uuid
+  sale_id             String?              @db.Uuid
+  transfer_id         String?              @db.Uuid
+  request_key         String?              @unique @db.VarChar(80)
+  created_at          DateTime             @default(now()) @db.Timestamptz(6)
+  inventory_stocks    inventory_stocks     @relation(fields: [branch_id, product_id], references: [branch_id, product_id], onDelete: NoAction, onUpdate: NoAction)
+  users               users?               @relation(fields: [actor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sales               sales?               @relation(fields: [sale_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inventory_transfers inventory_transfers? @relation(fields: [transfer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([branch_id, product_id, stock_version])
+  @@index([branch_id, created_at(sort: Desc)], map: "inventory_movements_branch_date")
 }

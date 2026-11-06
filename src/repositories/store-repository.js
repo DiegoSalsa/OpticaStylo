@@ -1,8 +1,11 @@
 import { prisma } from "../db/prisma.js";
+import {findCustomerByNormalizedRut} from "./customer-identity.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
 import { canUseStoreTestData } from "../utils/store-test-data.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import { assertBranch, onlineAvailabilityForProducts, inventoryError, reserveSaleInventory } from "./inventory-repository.js";
+import { createShipment, validateShippingQuote } from "./shipping-repository.js";
 
 const TEST_DATA_AVAILABLE = canUseStoreTestData();
 const itemProduct = "products_store_cart_items_product_idToproducts";
@@ -13,7 +16,7 @@ function mapPrescription(row) {
     confirmedData: row.confirmed_data, createdAt: row.created_at,
     extractedData: row.extracted_data, extractionProvider: row.extraction_provider,
     extractionStatus: row.extraction_status, hasImage: row.source === "IMAGE",
-    id: row.id, mediaType: row.media_type, originalFilename: row.original_filename,
+    id: row.id, imageHash: row.file_sha256, mediaType: row.media_type, originalFilename: row.original_filename,
     source: row.source, status: row.status, updatedAt: row.updated_at,
   };
 }
@@ -30,15 +33,19 @@ function mapCartBase(row) {
     createdAt: row.created_at, customerAccountId: row.customer_account_id,
     expiresAt: row.expires_at,
     fulfillment: row.fulfillment_method ? {
+      branchId: row.branch_id,
+      branch: row.branches ? { id: row.branches.id, name: row.branches.name, address: row.branches.address } : null,
       address: row.delivery_address, city: row.delivery_city,
       method: row.fulfillment_method, notes: row.delivery_notes, region: row.delivery_region,
     } : null,
     id: row.id, saleId: row.sale_id, shippingFeeCents: Number(row.shipping_fee_cents),
     shippingQuoteSource: row.shipping_quote_source, status: row.status, updatedAt: row.updated_at,
+    shippingQuoteId: row.shipping_quote_id, shippingDestination: row.shipping_destination,
   };
 }
 
 const cartInclude = {
+  branches: true,
   external_prescriptions: true,
   store_cart_items: {
     include: { [itemProduct]: true },
@@ -57,13 +64,11 @@ async function loadCart(client, tokenHash, accountId = null) {
   });
   const base = mapCartBase(row);
   if (!base) return null;
+  const availability = await onlineAvailabilityForProducts(row.store_cart_items.map((item) => item[itemProduct]), client);
   const items = row.store_cart_items.map((item) => {
     const product = item[itemProduct];
     return {
-      availability: {
-        available: product.is_active && (TEST_DATA_AVAILABLE || !product.is_test_data),
-        exactQuantityKnown: false, source: "MOCK",
-      },
+      availability: availability.get(product.id),
       category: product.category,
       lineTotalCents: Number(product.unit_price_cents) * item.quantity,
       mountFrameProductId: item.mounted_on_product_id, name: product.name,
@@ -123,6 +128,11 @@ export async function upsertStoreCartItems(tokenHash, accountId, items, replaceF
     const products = new Map(productRows.map((product) => [product.id, product]));
     if (productRows.length !== productIds.length || productRows.some((product) => !product.is_active || (!TEST_DATA_AVAILABLE && product.is_test_data))) {
       return { cart: null, reason: "PRODUCT_NOT_AVAILABLE" };
+    }
+    const availability = await onlineAvailabilityForProducts(productRows, client);
+    for (const item of items) {
+      const stock = availability.get(item.productId);
+      if (!stock?.branches.some((branch) => branch.available && (branch.quantity === null || branch.quantity >= item.quantity))) inventoryError("INSUFFICIENT_STOCK", "El producto no tiene esa cantidad disponible en una sucursal habilitada.");
     }
     const currentFrames = await client.store_cart_items.findMany({
       select: { product_id: true },
@@ -193,13 +203,13 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     // Mantener el bloqueo también en la capa de persistencia si un consumidor omite el validador público.
-    if (configuration.fulfillment.method !== "PICKUP") {
+    if (!["PICKUP", "DELIVERY"].includes(configuration.fulfillment.method)) {
       return { cart: null, reason: "FULFILLMENT_METHOD_UNAVAILABLE" };
     }
     if (configuration.clinicalPrescriptionId && !accountId) return { cart: null, reason: "ACCOUNT_REQUIRED_FOR_PRESCRIPTION" };
     if (configuration.clinicalPrescriptionId) {
       const account = await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } });
-      const prescription = account?.customers.patient_id ? await client.optical_prescriptions.findFirst({
+      const prescription = account?.customers.patient_id && !account.clinical_link_recheck_required ? await client.optical_prescriptions.findFirst({
         where: {
           id: configuration.clinicalPrescriptionId, status: "ACTIVE",
           clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" },
@@ -208,14 +218,29 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
       if (!prescription) return { cart: null, reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE" };
     }
     const { buyer, fulfillment } = configuration;
+    const quote = fulfillment.method === "DELIVERY" ? await validateShippingQuote(client, locked.cart, fulfillment.quoteId) : null;
+    if (quote) {
+      fulfillment.branchId = quote.branch_id;
+      const d = quote.snapshot.destination;
+      fulfillment.address = [d.street, d.number, d.supplement].filter(Boolean).join(" ");
+      fulfillment.city = d.countyName; fulfillment.region = d.regionName;
+    }
+    await assertBranch(client, fulfillment.branchId, fulfillment.method === "PICKUP");
+    const availableCart = await loadCart(client, tokenHash, accountId);
+    if (!quote && availableCart.items.some((item) => {
+      const stock = item.availability.branches.find((branch) => branch.id === fulfillment.branchId);
+      return !stock?.available || (stock.quantity !== null && stock.quantity < item.quantity);
+    })) inventoryError("INSUFFICIENT_STOCK", "Los productos no están disponibles juntos en la sucursal seleccionada.");
     await client.store_carts.update({ data: {
+      branch_id: fulfillment.branchId,
       buyer_address: buyer.address, buyer_email: buyer.email, buyer_first_names: buyer.firstNames,
       buyer_last_names: buyer.lastNames, buyer_phone: buyer.phone, buyer_rut: buyer.rut,
       clinical_prescription_id: configuration.clinicalPrescriptionId,
       delivery_address: fulfillment.address, delivery_city: fulfillment.city,
       delivery_notes: fulfillment.notes, delivery_region: fulfillment.region,
-      fulfillment_method: fulfillment.method, shipping_fee_cents: 0,
-      shipping_quote_source: fulfillment.method === "DELIVERY" ? "MOCK" : null,
+      fulfillment_method: fulfillment.method, shipping_fee_cents: quote?.customer_charge ?? 0,
+      shipping_quote_source: quote ? quote.environment === "synthetic" ? "SYNTHETIC" : "CHILEXPRESS" : null,
+      shipping_quote_id: quote?.id ?? null, shipping_destination: quote?.snapshot.destination ?? {},
     }, where: { id: locked.cart.id } });
     if (configuration.clinicalPrescriptionId) {
       const external = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
@@ -278,17 +303,31 @@ export async function saveExternalPrescriptionImage(tokenHash, accountId, image)
   });
 }
 
-export async function confirmExternalPrescription(tokenHash, accountId, data, confirmedAt) {
+export async function confirmExternalPrescription(tokenHash, accountId, data, confirmedAt, imageHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const updated = await client.external_prescriptions.updateMany({
       data: { confirmed_at: confirmedAt, confirmed_data: data, status: "READY" },
-      where: { cart_id: locked.cart.id, source: "IMAGE" },
+      where: { cart_id: locked.cart.id, source: "IMAGE", file_sha256: imageHash },
     });
     if (!updated.count) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
+  });
+}
+
+export async function removeCartPrescription(tokenHash, accountId) {
+  return retryTransaction(prisma, async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return { cart: null, reason: locked.reason };
+    const existing = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
+    // Una receta ya usada por una venta forma parte de su historial permanente.
+    if (existing && await client.sales.count({ where: { external_prescription_id: existing.id } })) {
+      return { cart: null, reason: "CART_NOT_ACTIVE" };
+    }
+    await client.external_prescriptions.deleteMany({ where: { cart_id: locked.cart.id } });
+    return { cart: await loadCart(client, tokenHash, accountId), removedCloudinary: cloudinaryAsset(existing) };
   });
 }
 
@@ -299,7 +338,7 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
     if (locked.reason) return { cart: null, reason: locked.reason };
     const prescription = await client.external_prescriptions.findFirst({ where: { cart_id: locked.cart.id, source: "IMAGE" } });
     if (!prescription) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
-    if (prescription.extraction_status === "PENDING") return { cart: null, reason: "PRESCRIPTION_EXTRACTION_IN_PROGRESS" };
+    if (prescription.extraction_status === "PENDING" && Date.now() - prescription.updated_at.getTime() < 120_000) return { cart: null, reason: "PRESCRIPTION_EXTRACTION_IN_PROGRESS" };
     if (prescription.extraction_status === "COMPLETED" && prescription.extracted_data) return {
       cart: await loadCart(client, tokenHash, accountId), cached: true,
       data: prescription.extracted_data, provider: prescription.extraction_provider, reason: null,
@@ -308,7 +347,7 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
       extracted_data: null, extraction_provider: provider, extraction_status: "PENDING",
     }, where: { id: prescription.id } });
     return {
-      cached: false,
+      cached: false, imageHash: prescription.file_sha256,
       image: {
         cloudinary: cloudinaryAsset(prescription), data: prescription.file_data,
         filename: prescription.original_filename, mediaType: prescription.media_type,
@@ -318,28 +357,28 @@ export async function claimCartPrescriptionExtraction(tokenHash, accountId, prov
   }, { isolationLevel: "Serializable" });
 }
 
-export async function completeCartPrescriptionExtraction(tokenHash, accountId, provider, data) {
+export async function completeCartPrescriptionExtraction(tokenHash, accountId, provider, data, imageHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { cart: null, reason: locked.reason };
     const updated = await client.external_prescriptions.updateMany({
       data: { extracted_data: data, extraction_provider: provider, extraction_status: "COMPLETED" },
-      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE" },
+      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE", file_sha256: imageHash },
     });
     if (!updated.count) return { cart: null, reason: "PRESCRIPTION_IMAGE_NOT_FOUND" };
     return { cart: await loadCart(client, tokenHash, accountId), reason: null };
   });
 }
 
-export async function failCartPrescriptionExtraction(tokenHash, accountId, provider) {
+export async function failCartPrescriptionExtraction(tokenHash, accountId, provider, imageHash) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     const locked = await lockActiveCart(client, tokenHash, accountId);
     if (locked.reason) return { reason: locked.reason };
     await client.external_prescriptions.updateMany({
       data: { extracted_data: null, extraction_provider: provider, extraction_status: "FAILED" },
-      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE" },
+      where: { cart_id: locked.cart.id, extraction_status: "PENDING", source: "IMAGE", file_sha256: imageHash },
     });
     return { reason: null };
   });
@@ -360,7 +399,7 @@ export async function findCartPrescriptionImage(tokenHash, accountId) {
 
 async function ensureGuestCustomer(client, buyer) {
   if (buyer.rut) {
-    const existing = await client.customers.findUnique({ where: { rut: buyer.rut } });
+    const existing = await findCustomerByNormalizedRut(client,buyer.rut,{lock:true});
     if (existing) return existing.id;
   }
   return (await client.customers.create({ data: {
@@ -400,6 +439,15 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
     }, items.map((item) => ({ category: item.product.category, requiresPrescription: item.product.requires_prescription })))) {
       return { reason: "PRESCRIPTION_REQUIRED", saleId: null };
     }
+    let clinicalPrescription = null;
+    if (cart.clinical_prescription_id) {
+      const account = accountId ? await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } }) : null;
+      clinicalPrescription = account?.customers.patient_id && !account.clinical_link_recheck_required ? await client.optical_prescriptions.findFirst({
+        where: { id: cart.clinical_prescription_id, status: "ACTIVE", clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" } },
+        include: { clinical_encounters: true },
+      }) : null;
+      if (!clinicalPrescription) return { reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE", saleId: null };
+    }
     let customerId;
     if (accountId) {
       customerId = (await client.customer_accounts.findUnique({ where: { id: accountId } }))?.customer_id;
@@ -409,6 +457,8 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       lastNames: cart.buyer_last_names, phone: cart.buyer_phone, rut: cart.buyer_rut,
     });
     const subtotalCents = items.reduce((sum, item) => sum + Number(item.product.unit_price_cents) * item.quantity, 0);
+    const shippingQuote = cart.fulfillment_method === "DELIVERY" ? await validateShippingQuote(client, cart, cart.shipping_quote_id, checkedOutAt) : null;
+    if (shippingQuote && Number(cart.shipping_fee_cents) !== Number(shippingQuote.customer_charge)) inventoryError("SHIPPING_QUOTE_STALE", "Vuelva a seleccionar la cotización de despacho.");
     const totalCents = subtotalCents + Number(cart.shipping_fee_cents);
     const sale = await client.sales.create({ data: {
       created_by: null, customer_id: customerId,
@@ -416,8 +466,11 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       delivery_notes: cart.delivery_notes, delivery_region: cart.delivery_region,
       external_prescription_id: cart.external_prescriptions?.id,
       fulfillment_method: cart.fulfillment_method, origin: "ONLINE",
-      prescription_id: cart.clinical_prescription_id, shipping_fee_cents: cart.shipping_fee_cents,
+      branch_id: cart.branch_id,
+      prescription_id: cart.clinical_prescription_id, patient_id: clinicalPrescription?.clinical_encounters.patient_id ?? null,
+      shipping_fee_cents: cart.shipping_fee_cents,
       shipping_quote_source: cart.shipping_quote_source, status: "PENDING",
+      shipping_quote_id: shippingQuote?.id ?? null,
       subtotal_cents: subtotalCents, total_cents: totalCents, updated_by: null,
       sale_items: { create: items.map((item, index) => ({
         mount_source: item.product.category === "PRESCRIPTION_LENS" ? "SOLD_FRAME" : null,
@@ -428,6 +481,8 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
         unit_price_cents: item.product.unit_price_cents,
       })) },
     } });
+    await reserveSaleInventory(client, sale.id);
+    if (shippingQuote) await createShipment(client, sale, shippingQuote);
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
     await client.sale_events.create({ data: {
       details: JSON.stringify({ origin: "ONLINE", totalCents }), event_type: "CREATED",
@@ -441,17 +496,22 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
       }, update: {}, where: { deduplication_key: key },
     });
     await client.store_carts.update({ data: {
-      checked_out_at: checkedOutAt, sale_id: sale.id, status: "CHECKED_OUT",
+      checked_out_at: checkedOutAt, sale_id: sale.id, status: "CHECKED_OUT", customer_account_id: accountId,
     }, where: { id: cart.id } });
     return { reason: null, saleId: sale.id };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
 }
 
+export function storeOrderOwnership(accountId){return {status:"CHECKED_OUT",OR:[{customer_account_id:accountId},{sales:{customer_order_links:{is:{account_id:accountId}}}}]};}
+export async function ownsStoreOrder(accountId,saleId){return !!await prisma.store_carts.findFirst({where:{sale_id:saleId,...storeOrderOwnership(accountId)},select:{id:true}});}
+export async function storeOrderPage(accountId,{page=1,pageSize=20}={}){
+ const where=storeOrderOwnership(accountId);const [rows,total]=await prisma.$transaction([prisma.store_carts.findMany({where,select:{sale_id:true},orderBy:[{checked_out_at:"desc"},{id:"desc"}],skip:(page-1)*pageSize,take:pageSize}),prisma.store_carts.count({where})]);return {ids:rows.map(r=>r.sale_id),page,pageSize,total,totalPages:Math.ceil(total/pageSize)};
+}
 export async function listStoreOrders(accountId) {
   return (await prisma.store_carts.findMany({
     orderBy: { checked_out_at: "desc" }, select: { sale_id: true },
-    where: { customer_account_id: accountId, status: "CHECKED_OUT" },
+    where: storeOrderOwnership(accountId),take:20,
   })).map((row) => row.sale_id);
 }
 

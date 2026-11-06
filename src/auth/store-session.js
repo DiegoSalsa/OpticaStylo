@@ -1,4 +1,5 @@
 import { findActiveCustomerSession } from "../repositories/store-account-repository.js";
+import { assertRequestOrigin } from "../security/request-origin.js";
 // Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
 import { AppError } from "../utils/app-error.js";
 import { hashSessionToken } from "./session-token.js";
@@ -65,6 +66,7 @@ export async function authenticateCustomerRequest(
   { optional = false, findSession = findActiveCustomerSession } = {},
 ) {
   const token = cookieValue(request.headers.get("cookie"), STORE_SESSION_COOKIE_NAME);
+  assertRequestOrigin(request);
   const account = token ? await findSession(hashSessionToken(token)) : null;
   if (!account && !optional) {
     throw new AppError({
