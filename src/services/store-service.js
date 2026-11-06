@@ -134,8 +134,8 @@ async function deleteReplacedPrivatePrescription(asset, dependencies) {
     const removed = await (dependencies.mediaGateway ?? getCloudinaryMediaGateway())
       .deletePrivatePrescription(asset);
     if (!removed) console.error("Una receta privada reemplazada requiere limpieza manual en Cloudinary.", asset.assetId);
-  } catch (error) {
-    console.error("No fue posible limpiar una receta privada reemplazada.", error);
+  } catch {
+    console.error("No fue posible limpiar una receta privada reemplazada.");
   }
 }
 
@@ -337,8 +337,8 @@ export async function extractPrescriptionImage(token, account, dependencies = {}
         provider,
         claim.imageHash,
       );
-    } catch (failure) {
-      console.error("No fue posible registrar el error de lectura automática de la receta.", failure);
+    } catch {
+      console.error("No fue posible registrar el error de lectura automática de la receta.");
     }
     throw error;
   }

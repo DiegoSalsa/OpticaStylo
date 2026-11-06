@@ -47,3 +47,13 @@ test("no intenta leer una receta HEIC no admitida por el proveedor", async () =>
     (error) => error.code === "PRESCRIPTION_READER_UNSUPPORTED_IMAGE" && error.status === 422,
   );
 });
+
+test("fallos de red y respuestas inválidas no registran datos privados del proveedor",async()=>{
+  const previous=console.error,logs=[];console.error=(...values)=>logs.push(values);
+  try {
+    for(const fetchImplementation of [async()=>{throw Error("private-token patient@example.invalid");},async()=>({ok:true,json:async()=>{throw Error("private-clinical-body");}})]) {
+      await assert.rejects(()=>readOpenAiPrescriptionImage(image,{environment,fetchImplementation}),error=>error.status===503);
+    }
+  } finally {console.error=previous;}
+  assert.equal(logs.length,2);assert.doesNotMatch(JSON.stringify(logs),/private|patient@/);
+});
