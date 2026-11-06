@@ -194,7 +194,7 @@ export default function AgendaInterface({ model }) {
                         </small>
                         <small>
                           {STATUS[appointment.status]} · Origen{" "}
-                          {appointment.source === "ONLINE" ? "web" : "interno"}
+                          {appointment.source === "PUBLIC" ? "web" : "interno"}
                         </small>
                       </div>
                       <div className="appointment-actions">
