@@ -11,7 +11,7 @@ import { shippingDemo, destination } from "../tests/shipping/data.js";
 requireEvaluationDatabase(process.env.DATABASE_URL, process.env.STORE_E2E_SCHEMA);
 if (!shippingConfiguration().synthetic) throw new Error("Solo demostración sintética aislada.");
 const base = process.env.EVALUATION_HTTP_URL;
-assert.equal(base, "http://127.0.0.1:3129");
+assert.match(base, /^http:\/\/127\.0\.0\.1:(3129|3139)$/);
 const buyer = { rut: fixtureRut(9696), firstNames: "Comprador despacho", lastNames: "SINTÉTICO", email: "despachos-demo@example.invalid", phone: "+56911112222", address: "Dirección exclusivamente sintética" };
 async function request(path, method = "GET", body, cookie = "") {
   return fetch(`${base}${path}`, { method, headers: { cookie, "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}) });

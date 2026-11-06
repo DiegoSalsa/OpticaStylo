@@ -5,7 +5,7 @@ import {inventoryDemo} from "../tests/inventory/data.js";
 import {commercialDemo} from "../tests/customers/data.js";
 requireEvaluationDatabase(process.env.DATABASE_URL,process.env.STORE_E2E_SCHEMA);
 if(process.env.CUSTOMER_COMMERCIAL_TEST_MODE!=="true")throw new Error("La preparación comercial requiere el entorno sintético aislado.");
-assert.match(process.env.EVALUATION_HTTP_URL,/^http:\/\/127\.0\.0\.1:3119$/);
+assert.match(process.env.EVALUATION_HTTP_URL,/^http:\/\/127\.0\.0\.1:(3119|3139)$/);
 let cookie="";
 async function request(url,body,method="GET"){
  const response=await fetch(process.env.EVALUATION_HTTP_URL+url,{method,headers:{cookie,"Content-Type":"application/json","X-Idempotency-Key":randomUUID()},...(body?{body:JSON.stringify(body)}:{})});

@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
@@ -11,19 +11,20 @@ import { PrismaClient } from "@prisma/client";
 import { createCloudinaryMediaGateway } from "../src/integrations/media/cloudinary-media-gateway.js";
 
 const root = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
-const shippingMode = process.argv.includes("--shipping");
+const releaseMode = process.argv.includes("--release");
+const shippingMode = process.argv.includes("--shipping") || releaseMode;
 const customersOnly=process.argv.includes("--customers-only");
 const customersMode=process.argv.includes("--customers")||customersOnly||shippingMode;
 const clinicalOnly = process.argv.includes("--clinical-only")||customersOnly;
 const clinicalMode = process.argv.includes("--clinical") || clinicalOnly || customersMode;
 const posMode = process.argv.includes("--pos") || clinicalMode;
 const inventoryMode = process.argv.includes("--inventory") || posMode;
-const output = path.join(os.tmpdir(), shippingMode?"opticastylo-despachos-fase-6":customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
+const output = path.join(os.tmpdir(), releaseMode?(process.argv.includes("--demo")?"opticastylo-demo-integrada":"opticastylo-candidato-fases-1-6"):shippingMode?"opticastylo-despachos-fase-6":customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
 const runRoot = path.join(os.tmpdir(), `stylo-prescriptions-${randomBytes(8).toString("hex")}`);
 const appRoot = path.join(runRoot, "app");
 const pgData = path.join(runRoot, "postgres");
-const pgPort = shippingMode ? 55461 : 55441;
-const appPort = shippingMode ? 3129 : 3119;
+const pgPort = releaseMode ? 55471 : shippingMode ? 55461 : 55441;
+const appPort = releaseMode ? 3139 : shippingMode ? 3129 : 3119;
 const schema = `stylo_e2e_${randomBytes(8).toString("hex")}`;
 // Limitar conexiones evita crear decenas de procesos PostgreSQL simultáneos
 // en Windows. Las solicitudes HTTP concurrentes siguen ejecutándose realmente.
@@ -39,6 +40,7 @@ Object.assign(env, {
   POS_CASH_TEST_MODE: posMode ? "true" : "false",
   CLINICAL_TEST_MODE: clinicalMode ? "true" : "false",
   CHILEXPRESS_MODE: shippingMode ? "synthetic" : "disabled", CHILEXPRESS_SYNTHETIC_ALLOWED: shippingMode ? "true" : "false",
+  OPERATIONS_ENABLED: releaseMode ? "true" : "false", CRON_SECRET: releaseMode ? randomBytes(32).toString("hex") : "",
   CUSTOMER_COMMERCIAL_TEST_MODE:customersMode?"true":"false",
   CUSTOMER_COMMERCE_TEST_MAILBOX:customersMode?"true":"false",
   CUSTOMER_COMMERCE_OTP_SECRET:randomBytes(32).toString("hex"),
@@ -55,10 +57,12 @@ if (process.argv.includes("--live-storage")) {
 let server;
 let serverOutput = "";
 let pgStarted = false;
-const pgBin = [process.env.PG_BIN, ...["18", "17", "16", "15"].map((version) => `C:/Program Files/PostgreSQL/${version}/bin`),
+const pgConfig = spawnSync("pg_config", ["--bindir"], {encoding:"utf8",windowsHide:true}).stdout?.trim();
+const pgBin = [process.env.PG_BIN, pgConfig, ...["18", "17", "16", "15"].map((version) => `C:/Program Files/PostgreSQL/${version}/bin`),
   path.resolve(root, "../ESTUDIO-EVALUACION-STYLO/herramientas/pgsql/bin"), "/usr/lib/postgresql/17/bin"]
   .find((candidate) => candidate && existsSync(path.join(candidate, process.platform === "win32" ? "initdb.exe" : "initdb")));
 if (!pgBin) throw new Error("No se encontraron las herramientas locales de PostgreSQL.");
+env.RC_PG_BIN = pgBin; env.RC_REPOSITORY_ROOT = root;
 const pg = (name) => path.join(pgBin, `${name}${process.platform === "win32" ? ".exe" : ""}`);
 async function run(command, args, { cwd = root, record } = {}) {
   const child = spawn(command, args, { cwd, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
@@ -106,6 +110,9 @@ try {
   await run(pg("pg_ctl"), ["start", "-D", pgData, "-l", path.join(runRoot, "postgres.log"), "-o", `-h 127.0.0.1 -p ${pgPort}`, "-w"]);
   pgStarted = true;
   await run(pg("createdb"), ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "stylo_test", "opticastylo_evaluation"]);
+  if(releaseMode) await run(process.execPath,["scripts/verify-release-migrations.mjs",...(process.argv.includes("--write-reference")?["--write-reference"]:[])],{cwd:appRoot,record:"migration-certificate.txt"});
+  if(!process.argv.includes("--migrations-only")) {
+  if(releaseMode) await rename(path.join(appRoot,"prisma/migrations/20261106010000_legacy_migration_ledger"),path.join(runRoot,"ledger-migration"));
   if(shippingMode) await rename(path.join(appRoot,"prisma/migrations/20261106000000_shipping_chilexpress"),path.join(runRoot,"shipping-migration"));
   if(clinicalMode){
     await rename(path.join(appRoot,"prisma/migrations/20261031000000_customer_commercial_profile"),path.join(runRoot,"customer-migration"));
@@ -127,6 +134,10 @@ try {
     await rename(path.join(runRoot,"shipping-migration"),path.join(appRoot,"prisma/migrations/20261106000000_shipping_chilexpress"));
     await run(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{cwd:appRoot});
     await run(process.execPath,["scripts/verify-shipping-upgrade.mjs","after"],{cwd:appRoot,record:"shipping-upgrade.txt"});
+  }
+  if(releaseMode) {
+    await rename(path.join(runRoot,"ledger-migration"),path.join(appRoot,"prisma/migrations/20261106010000_legacy_migration_ledger"));
+    await run(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{cwd:appRoot});
   }
   if (inventoryMode) await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "diff", "--from-url", databaseUrl, "--to-schema-datamodel", "prisma/schema.prisma", "--script"], { cwd: appRoot, record: "migration-diff.txt" });
   await run(process.execPath, ["scripts/seed-evaluation.mjs"], { cwd: appRoot });
@@ -150,6 +161,7 @@ try {
   }
   if (!ready) throw new Error("El servidor no inició.");
   if (process.argv.includes("--demo")) {
+    if(releaseMode)await run(process.execPath,["scripts/prepare-customer-demo.mjs"],{cwd:appRoot,record:"customer-demo.txt"});
     if(shippingMode)await run(process.execPath,["scripts/prepare-shipping-demo.mjs"],{cwd:appRoot,record:"shipping-demo.txt"});
     if(customersMode && !shippingMode)await run(process.execPath,["scripts/prepare-customer-demo.mjs"],{cwd:appRoot,record:"customer-demo.txt"});
     console.log(`Demostración local con datos sintéticos: ${env.EVALUATION_HTTP_URL}`);
@@ -183,6 +195,11 @@ try {
     await run(process.execPath,["--test","--test-concurrency=1","tests/shipping/policy.test.js","tests/shipping/flow.test.js"],{cwd:appRoot,record:"shipping.txt"});
     await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/shipping/playwright.config.mjs"],{cwd:appRoot,record:"shipping-browser.txt"});
   }
+  if(releaseMode && !process.argv.includes("--demo")) {
+    await run(process.execPath,["--test","--test-concurrency=1","tests/release/security.test.js","tests/release/flow.test.js"],{cwd:appRoot,record:"release.txt"});
+    await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/release/playwright.config.mjs"],{cwd:appRoot,record:"release-browser.txt"});
+  }
+  }
 } catch (error) {
   console.error(error); process.exitCode = 1;
 } finally {
@@ -192,7 +209,7 @@ try {
   if (pgStarted) {
     const database = new PrismaClient({ datasourceUrl: databaseUrl });
     try {
-      const assets = await database.external_prescriptions.findMany({ where: { cloudinary_asset_id: { not: null } } });
+      const assets = process.argv.includes("--migrations-only") ? [] : await database.external_prescriptions.findMany({ where: { cloudinary_asset_id: { not: null } } });
       if (assets.length) {
         const gateway = createCloudinaryMediaGateway({ environment: env });
         for (const row of assets) if (!await gateway.deletePrivatePrescription({ publicId: row.cloudinary_public_id })) {
