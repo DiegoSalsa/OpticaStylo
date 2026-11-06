@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import net from "node:net";
@@ -11,6 +11,9 @@ import { PrismaClient } from "@prisma/client";
 import { createCloudinaryMediaGateway } from "../src/integrations/media/cloudinary-media-gateway.js";
 
 const root = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
+const gitValue=args=>spawnSync("git",args,{cwd:root,encoding:"utf8",windowsHide:true,stdio:["ignore","pipe","ignore"]}).stdout?.trim();
+const provenance={branch:gitValue(["branch","--show-current"])||"detached",commit:gitValue(["rev-parse","HEAD"])||"unavailable",dirty:Boolean(gitValue(["status","--porcelain"]))};
+if(process.argv.includes("--demo") && (provenance.dirty || provenance.commit==="unavailable"))throw new Error("La demostración reconciliada exige una revisión Git identificada y sin cambios pendientes.");
 const releaseMode = process.argv.includes("--release");
 const shippingMode = process.argv.includes("--shipping") || releaseMode;
 const customersOnly=process.argv.includes("--customers-only");
@@ -19,23 +22,30 @@ const clinicalOnly = process.argv.includes("--clinical-only")||customersOnly;
 const clinicalMode = process.argv.includes("--clinical") || clinicalOnly || customersMode;
 const posMode = process.argv.includes("--pos") || clinicalMode;
 const inventoryMode = process.argv.includes("--inventory") || posMode;
-const output = path.join(os.tmpdir(), releaseMode?(process.argv.includes("--demo")?"opticastylo-demo-integrada":"opticastylo-candidato-fases-1-6"):shippingMode?"opticastylo-despachos-fase-6":customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
+const output = path.join(os.tmpdir(), releaseMode?(process.argv.includes("--demo")?"opticastylo-demo-main-reconciliada":"opticastylo-main-reconciliada"):shippingMode?"opticastylo-despachos-fase-6":customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
 const runRoot = path.join(os.tmpdir(), `stylo-prescriptions-${randomBytes(8).toString("hex")}`);
 const appRoot = path.join(runRoot, "app");
 const pgData = path.join(runRoot, "postgres");
-const pgPort = releaseMode ? 55471 : shippingMode ? 55461 : 55441;
-const appPort = releaseMode ? 3139 : shippingMode ? 3129 : 3119;
+const pgPort = releaseMode ? 55481 : shippingMode ? 55461 : 55441;
+const appPort = releaseMode ? 3149 : shippingMode ? 3129 : 3119;
 const schema = `stylo_e2e_${randomBytes(8).toString("hex")}`;
 // Limitar conexiones evita crear decenas de procesos PostgreSQL simultáneos
 // en Windows. Las solicitudes HTTP concurrentes siguen ejecutándose realmente.
 const databaseUrl = `postgresql://stylo_test@127.0.0.1:${pgPort}/opticastylo_evaluation?schema=${schema}&connection_limit=5&connect_timeout=15`;
 const allowed = /^(path|systemroot|windir|comspec|pathext|temp|tmp|tmpdir|userprofile|home|homedrive|homepath|appdata|localappdata|programfiles|programfiles\(x86\)|programdata|allusersprofile|lang|lc_all|ci|playwright_browsers_path)$/i;
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => allowed.test(key)));
+if(process.env.VTO_PORTRAIT_PATH) {
+  const portrait=await readFile(process.env.VTO_PORTRAIT_PATH);
+  if(createHash("sha256").update(portrait).digest("hex")!=="a6f11efaa834706db23f275b6115058fa87fc7f14362681e6abe14e82749de3e")throw new Error("El fixture del probador debe ser el retrato público verificado de MediaPipe.");
+  env.VTO_PORTRAIT_PATH=path.resolve(process.env.VTO_PORTRAIT_PATH);
+}
 Object.assign(env, {
   DATABASE_URL: databaseUrl, STORE_E2E_SCHEMA: schema, EVALUATION_PG_PORT: String(pgPort),
   EVALUATION_HTTP_URL: `http://127.0.0.1:${appPort}`, PRESCRIPTION_TEST_OUTPUT: output,
+  STORE_E2E_BASE_URL:`http://127.0.0.1:${appPort}`,
   STORE_INCLUDE_TEST_DATA: "true", NEXT_TELEMETRY_DISABLED: "1", NODE_ENV: "production",
   APP_TIME_ZONE: "America/Santiago", EMAIL_MODE: "disabled", OPENAI_PRESCRIPTION_READER_ENABLED: "false",
+  DEPLOYMENT_VERSION:provenance.commit.slice(0,12),
   MERCADO_PAGO_ACCESS_TOKEN: "", MERCADO_PAGO_MODE: "sandbox", MERCADO_PAGO_PRODUCTION_ENABLED: "false",
   POS_CASH_TEST_MODE: posMode ? "true" : "false",
   CLINICAL_TEST_MODE: clinicalMode ? "true" : "false",
@@ -55,7 +65,9 @@ if (process.argv.includes("--live-storage")) {
   env.PRESCRIPTION_LIVE_STORAGE = "true";
 }
 let server;
+let vtoServer;
 let serverOutput = "";
+let vtoOutput = "";
 let pgStarted = false;
 const pgConfig = spawnSync("pg_config", ["--bindir"], {encoding:"utf8",windowsHide:true}).stdout?.trim();
 const pgBin = [process.env.PG_BIN, pgConfig, ...["18", "17", "16", "15"].map((version) => `C:/Program Files/PostgreSQL/${version}/bin`),
@@ -81,6 +93,8 @@ async function freePort(port) {
 try {
   await freePort(pgPort); await freePort(appPort);
   await mkdir(output, { recursive: true }); await mkdir(appRoot, { recursive: true });
+  await writeFile(path.join(output,"source.json"),JSON.stringify({...provenance,url:env.EVALUATION_HTTP_URL},null,2));
+  console.log(`Código reconciliado: ${provenance.branch} @ ${provenance.commit}; cambios pendientes: ${provenance.dirty}.`);
   for (const entry of ["src", "public", "config", "prisma", "package.json", "package-lock.json", "jsconfig.json", "next.config.mjs"]) {
     await cp(path.join(root, entry), path.join(appRoot, entry), { recursive: true });
   }
@@ -104,6 +118,7 @@ try {
     await adaptTestPort(path.join(appRoot, "tests"));
   }
   await cp(path.join(root, "playwright.evaluation.config.mjs"), path.join(appRoot, "playwright.evaluation.config.mjs"));
+  await cp(path.join(root, "playwright.vto.config.mjs"), path.join(appRoot, "playwright.vto.config.mjs"));
   await symlink(path.join(root, "node_modules"), path.join(appRoot, "node_modules"), process.platform === "win32" ? "junction" : "dir");
   console.log("Pruebas de recetas: clúster sintético local; sin conexión a la base configurada en .env.");
   await run(pg("initdb"), ["-D", pgData, "-U", "stylo_test", "-A", "trust", "--encoding=UTF8", "--no-locale"]);
@@ -198,11 +213,32 @@ try {
   if(releaseMode && !process.argv.includes("--demo")) {
     await run(process.execPath,["--test","--test-concurrency=1","tests/release/security.test.js","tests/release/flow.test.js"],{cwd:appRoot,record:"release.txt"});
     await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/release/playwright.config.mjs"],{cwd:appRoot,record:"release-browser.txt"});
+    await run(process.execPath,["--test","--test-concurrency=1","tests/integration/store-catalog.test.js","tests/integration/report-dates.test.js","tests/reconciliation/flow.test.js"],{cwd:appRoot,record:"reconciliation.txt"});
+    await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/reconciliation/playwright.config.mjs"],{cwd:appRoot,record:"reconciliation-browser.txt"});
+    await run(process.execPath,["scripts/db-audit.mjs"],{cwd:appRoot,record:"db-audit.txt"});
+    await run(process.execPath,["scripts/db-reconciliation.mjs"],{cwd:appRoot,record:"db-reconciliation.txt"});
+    // The validation page remains unavailable in the production build. Test
+    // synthetic camera input on a separate loopback development server.
+    const vtoPort=3159;await freePort(vtoPort);
+    vtoServer=spawn(process.execPath,["node_modules/next/dist/bin/next","dev","--webpack","--hostname","127.0.0.1","--port",String(vtoPort)],{cwd:appRoot,env:{...env,NODE_ENV:"development",OPTICASTYLO_BUILD_DIR:".next-vto-validation"},windowsHide:true,stdio:["ignore","pipe","pipe"]});
+    for(const stream of [vtoServer.stdout,vtoServer.stderr])stream.on("data",chunk=>{vtoOutput+=chunk;});
+    let vtoReady=false;
+    for(let attempt=0;attempt<100;attempt++){
+      if(vtoServer.exitCode!==null)throw new Error("El servidor aislado del probador no inició.");
+      try{vtoReady=(await fetch(`http://127.0.0.1:${vtoPort}/api/health`,{signal:AbortSignal.timeout(2000)})).ok;}catch{/* Esperar compilación de desarrollo. */}
+      if(vtoReady)break;await new Promise(resolve=>setTimeout(resolve,300));
+    }
+    if(!vtoReady)throw new Error("El probador aislado no estuvo disponible.");
+    env.VTO_BASE_URL=`http://127.0.0.1:${vtoPort}`;
+    try{await run(process.execPath,["node_modules/playwright/cli.js","test","--config","playwright.vto.config.mjs"],{cwd:appRoot,record:"vto-browser.txt"});}
+    finally{await writeFile(path.join(output,"vto-server.txt"),vtoOutput);}
   }
   }
 } catch (error) {
   console.error(error); process.exitCode = 1;
 } finally {
+  if(vtoServer?.exitCode===null){const exited=new Promise(resolve=>vtoServer.once("exit",resolve));vtoServer.kill();await exited;}
+  if(vtoServer && existsSync(output))await writeFile(path.join(output,"vto-server.txt"),vtoOutput);
   if (inventoryMode && existsSync(path.join(appRoot, "tmp/evaluation"))) await cp(path.join(appRoot, "tmp/evaluation"), path.join(output, "academic-artifacts"), { recursive: true });
   if (server?.exitCode === null) { const exited = new Promise((resolve) => server.once("exit", resolve)); server.kill(); await exited; }
   if (existsSync(output)) await writeFile(path.join(output, "server.txt"), serverOutput);

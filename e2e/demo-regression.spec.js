@@ -7,10 +7,16 @@ import { isolateBrowserNetwork } from "./isolated-network.js";
 import { formatInTimeZone } from "date-fns-tz";
 import { createSessionToken, hashSessionToken, SESSION_COOKIE_NAME } from "../src/auth/session-token.js";
 import { readFile } from "node:fs/promises";
+import { evaluation, requireEvaluationDatabase } from "../tests/evaluation-data.js";
 
-test.beforeAll(async () => { requireAcademicIsolation(); await seedCatalogData(); });
+function requireDemoIsolation() {
+  if(process.env.ACADEMIC_ISOLATION === "true") requireAcademicIsolation();
+  else requireEvaluationDatabase(process.env.DATABASE_URL,process.env.STORE_E2E_SCHEMA);
+}
+
+test.beforeAll(async () => { requireDemoIsolation(); await seedCatalogData(); });
 test.beforeEach(async ({ context }) => {
-  requireAcademicIsolation();
+  requireDemoIsolation();
   await prisma.public_request_rate_limits.deleteMany();
   await isolateBrowserNetwork(context);
 });
@@ -255,18 +261,27 @@ test("usuarios: cambiar roles revoca la sesión anterior y se rechaza autodesact
 });
 
 test("reportes: exportar un producto con separador conserva las columnas CSV", async ({ page, context }) => {
+  const actorId=process.env.ACADEMIC_ISOLATION === "true" ? people.admin : evaluation.adminId;
+  // Aislar el período permite ejecutar la regresión junto a las seis fases sin
+  // depender de que este producto quede entre sus veinte productos más vendidos.
+  const reportDay="2038-02-13";
   const token = createSessionToken();
-  await prisma.user_sessions.create({ data: { user_id: people.admin, token_hash: hashSessionToken(token), expires_at: new Date(Date.now() + 3600000) } });
+  await prisma.user_sessions.create({ data: { user_id: actorId, token_hash: hashSessionToken(token), expires_at: new Date(Date.now() + 3600000) } });
   await context.addCookies([{ name: SESSION_COOKIE_NAME, value: token, url: process.env.STORE_E2E_BASE_URL, httpOnly: true, sameSite: "Lax" }]);
   const product = await prisma.products.upsert({ where: { sku: "DEMO-CSV" }, update: {}, create: {
-    sku: "DEMO-CSV", name: "Producto;CSV", category: "ACCESSORY", unit_price_cents: 1000, is_test_data: true, created_by: people.admin, updated_by: people.admin,
+    sku: "DEMO-CSV", name: "Producto;CSV", category: "ACCESSORY", unit_price_cents: 1000, is_test_data: true, created_by: actorId, updated_by: actorId,
   } });
   const saleId = "30000000-0000-4000-8000-000000000001";
   await prisma.sales.upsert({ where: { id: saleId }, update: {}, create: {
-    id: saleId, request_key: "demo-report-csv", status: "PENDING", subtotal_cents: 1000, total_cents: 1000, created_by: people.admin,
+    id: saleId, request_key: "demo-report-csv", status: "PENDING", subtotal_cents: 1000, total_cents: 1000, created_by: actorId,created_at:new Date(`${reportDay}T12:00:00Z`),
     sale_items: { create: { product_id: product.id, product_sku: product.sku, product_name: product.name, product_category: "ACCESSORY", requires_prescription: false, quantity: 1, unit_price_cents: 1000, position: 1 } },
   } });
   await page.goto("/app/reportes");
+  await page.getByLabel("Desde",{exact:true}).fill(reportDay);
+  await page.getByLabel("Hasta",{exact:true}).fill(reportDay);
+  const report=page.waitForResponse(response=>response.url().includes(`/api/reports/sales?from=${reportDay}`)&&response.ok());
+  await page.getByRole("button",{name:"Aplicar",exact:true}).click();await report;
+  await expect(page.getByText("Cargando métricas…",{exact:true})).toHaveCount(0);
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar productos CSV" }).click();
   const file = await (await download).path();

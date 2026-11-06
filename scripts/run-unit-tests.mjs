@@ -2,7 +2,7 @@ import { readdir } from "node:fs/promises";
 import { spawn } from "node:child_process";
 
 const files=[];
-for(const directory of ["app","auth","config","db","integrations","repositories","security","services","utils","validations"]) {
+for(const directory of ["app","auth","config","db","integrations","repositories","security","services","utils","validations","virtual-try-on-3d"]) {
   for(const file of await readdir(`tests/${directory}`)) if(file.endsWith(".test.js")) files.push(`tests/${directory}/${file}`);
 }
 // A missing mock must fail, never reach the configured application database or
