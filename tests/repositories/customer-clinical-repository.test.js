@@ -45,7 +45,7 @@ function fakeClinicalClient() {
   const client = {
     state,
     $transaction: async (callback) => callback(client),
-    customer_accounts: { findUnique: async ({ where, select }) => { const row = state.accounts.get(where.id); return row ? accountRow(row, select) : null; } },
+    customer_accounts: { update: async ({where,data}) => Object.assign(state.accounts.get(where.id),data), findUnique: async ({ where, select }) => { const row = state.accounts.get(where.id); return row ? accountRow(row, select) : null; } },
     patients: {
       findFirst: async ({ where }) => [...state.patients.values()].find((row) => row.rut === where.rut && row.email.toLowerCase() === where.email.equals.toLowerCase() && row.birth_date.getTime() === where.birth_date.getTime()) ? { ...[...state.patients.values()].find((row) => row.rut === where.rut && row.email.toLowerCase() === where.email.equals.toLowerCase() && row.birth_date.getTime() === where.birth_date.getTime()), customers: [...state.patients.values()].find((item) => item.rut === where.rut)?.customerId ? { id: [...state.patients.values()].find((item) => item.rut === where.rut).customerId } : null } : null,
       findUnique: async ({ where }) => { const row = state.patients.get(where.id); return row ? { ...row, customers: row.customerId ? { id: row.customerId } : null } : null; },

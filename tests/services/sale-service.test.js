@@ -239,7 +239,7 @@ test("registra un abono con permiso específico", async () => {
     amountCents: 10000, paymentMethod: "TRANSBANK", reference: "op-1",
   }, actor, {
     registerSalePayment: async (id, payment) => ({
-      reason: null, sale: { id, paidCents: payment.amountCents, status: "PENDING" },
+      reason: null, sale: { id, paidCents: payment.payments[0].amountCents, status: "PENDING" },
     }),
   });
   assert.equal(result.paidCents, 10000);
@@ -251,10 +251,10 @@ test("conserva una clave de reintento para no duplicar un abono", async () => {
   }, actor, {
     registerSalePayment: async (id, payment, actorId, options) => {
       assert.equal(id, saleId);
-      assert.equal(payment.reference, "op-1");
+      assert.equal(payment.payments[0].reference, "op-1");
       assert.equal(actorId, userId);
       assert.equal(options.requestKey, "pago-prueba-0001");
-      return { reason: null, sale: { id, paidCents: payment.amountCents, status: "PENDING" } };
+      return { reason: null, sale: { id, paidCents: payment.payments[0].amountCents, status: "PENDING" } };
     },
     requestKey: "pago-prueba-0001",
   });

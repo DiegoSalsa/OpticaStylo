@@ -46,7 +46,7 @@ test("exige una contraseña robusta para el registro", () => {
   );
 });
 
-test("normaliza únicamente retiro en tienda para compras nuevas", () => {
+test("retiro requiere sucursal y despacho requiere una cotización válida", () => {
   const buyer = {
     address: account.address,
     email: account.email,
@@ -55,12 +55,12 @@ test("normaliza únicamente retiro en tienda para compras nuevas", () => {
     phone: account.phone,
     rut: account.rut,
   };
-  const pickup = validateCartConfiguration({ buyer, fulfillment: { method: "pickup" } });
+  const pickup = validateCartConfiguration({ buyer, fulfillment: { method: "pickup",branchId:"00000000-0000-4000-8000-000000000001" } });
   assert.equal(pickup.fulfillment.address, null);
   assert.equal(pickup.fulfillment.method, "PICKUP");
   assert.throws(
     () => validateCartConfiguration({ buyer, fulfillment: { method: "delivery" } }),
-    (error) => error.code === "FULFILLMENT_METHOD_UNAVAILABLE" && error.status === 400,
+    (error) => error.code === "INVALID_STORE_DATA" && error.status === 400,
   );
 });
 

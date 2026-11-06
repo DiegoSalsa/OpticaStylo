@@ -15,10 +15,15 @@ const product = {
   sku: "ACC-1",
   unitPriceCents: 5000,
 };
+const inventory = {
+  expireInventoryReservations: async () => 0,
+  inventoryAvailability: async products => new Map(products.map(p=>[p.id,{source:"INVENTORY",available:true}]))
+};
 
 test("solo vincula productos presentes en el catálogo VTO publicado", async () => {
   const compatible = { ...product, category: "FRAME", id: "00000000-0000-4000-8000-000000000002" };
   const result = await getStoreProducts(new URLSearchParams(), {
+    ...inventory,
     listProducts: async () => ({ items: [product, compatible, { ...compatible, id: "00000000-0000-4000-8000-000000000003" }] }),
     listProductImages: async () => [],
     list3dModels: async () => [{ assetId: "published", productId: compatible.id }],
@@ -31,6 +36,7 @@ test("solo vincula productos presentes en el catálogo VTO publicado", async () 
 test("fuerza el catálogo público a mostrar solo activos", async () => {
   const query = new URLSearchParams("isActive=false");
   const result = await getStoreProducts(query, {
+    ...inventory,
     listProductImages: async () => [],
     listProducts: async (filters) => {
       assert.equal(filters.isActive, true);
@@ -38,7 +44,7 @@ test("fuerza el catálogo público a mostrar solo activos", async () => {
       return { items: [product], page: 1, pageSize: 20, total: 1, totalPages: 1 };
     },
   });
-  assert.equal(result.items[0].availability.source, "MOCK");
+  assert.equal(result.items[0].availability.source, "INVENTORY");
 });
 
 test("oculta productos inactivos por identificador", async () => {
@@ -49,6 +55,7 @@ test("oculta productos inactivos por identificador", async () => {
 
 test("oculta los datos de prueba fuera del entorno local", async () => {
   const result = await getStoreProducts(new URLSearchParams(), {
+    ...inventory,
     includeTestData: false,
     listProductImages: async () => [],
     listProducts: async (filters) => {
@@ -81,6 +88,7 @@ test("oculta los cristales como productos independientes en la tienda", async ()
 
 test("incluye la galería y ficha del modelo HD0896-001", async () => {
   const result = await getStoreProduct(product.id, {
+    ...inventory,
     list3dModels: async () => [],
     findProductById: async () => ({ ...product, category: "FRAME", sku: "HD0896-001" }),
     listProductImages: async () => [],

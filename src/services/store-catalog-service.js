@@ -56,8 +56,8 @@ export async function getStoreProducts(searchParams, dependencies = {}) {
       includeTestData,
     },
   );
-  await expireInventoryReservations();
-  const availabilityMap = await onlineAvailabilityForProducts(result.items);
+  await (dependencies.expireInventoryReservations ?? expireInventoryReservations)();
+  const availabilityMap = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)(result.items);
   const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const models = result.items.some((product) => product.category === "FRAME")
     ? await (dependencies.list3dModels ?? listPublished3dModels)() : [];
@@ -86,8 +86,8 @@ export async function getStoreProduct(productId, dependencies = {}) {
       status: 404,
     });
   }
-  await expireInventoryReservations();
-  const availabilityMap = await onlineAvailabilityForProducts([product]);
+  await (dependencies.expireInventoryReservations ?? expireInventoryReservations)();
+  const availabilityMap = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)([product]);
   const availability = dependencies.getAvailability ?? ((product) => availabilityMap.get(product.id));
   const images = await (dependencies.listProductImages ?? listActiveProductImages)([product.id]);
   const models = product.category === "FRAME"
@@ -106,7 +106,7 @@ export async function getStoreProduct(productId, dependencies = {}) {
     pageSize: 100,
     search: "",
   });
-  const lensAvailability = await onlineAvailabilityForProducts(lenses.items);
+  const lensAvailability = await (dependencies.inventoryAvailability ?? onlineAvailabilityForProducts)(lenses.items);
   for (const [id, data] of lensAvailability) availabilityMap.set(id, data);
   return {
     ...presentation,

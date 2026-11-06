@@ -103,6 +103,7 @@ test("traduce el rechazo de cristales sin marco en el carrito", async () => {
 
 test("guarda la receta del carrito como activo privado de Cloudinary", async () => {
   const result = await putPrescriptionImage("token", null, imageFile(), {
+    findCart: async () => ({...cart,status:"ACTIVE"}),
     hashToken: () => "hash",
     mediaGateway: {
       deletePrivatePrescription: async () => assert.fail("No debe compensar una carga exitosa"),

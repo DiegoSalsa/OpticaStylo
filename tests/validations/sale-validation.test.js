@@ -168,6 +168,7 @@ test("valida abonos enteros y medios definidos", () => {
     }),
     {
       amountCents: 10000,
+      cashSessionId: null,
       cashReceivedCents: null,
       changeCents: null,
       paymentMethod: "BANK_TRANSFER",
@@ -183,10 +184,12 @@ test("valida abonos enteros y medios definidos", () => {
 test("calcula vuelto solo para efectivo y bloquea Mercado Pago manual", () => {
   assert.deepEqual(validateSalePaymentInput({
     amountCents: 15000,
+    cashSessionId: null,
     cashReceivedCents: 20000,
     paymentMethod: "CASH",
   }), {
     amountCents: 15000,
+    cashSessionId: null,
     cashReceivedCents: 20000,
     changeCents: 5000,
     paymentMethod: "CASH",

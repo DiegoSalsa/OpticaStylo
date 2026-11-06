@@ -66,8 +66,8 @@ jobs:
       - name: Ejecutar tests
         run: npm test
 
-      - name: Verificar seguridad y adaptadores sin proveedores reales
-        run: npm run test:security
+      - name: Ejecutar pruebas unitarias sin conexiones externas
+        run: npm run test:unit
 
       - name: Construir aplicación
         run: npm run build
