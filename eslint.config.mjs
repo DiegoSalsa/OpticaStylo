@@ -27,7 +27,7 @@ const eslintConfig = defineConfig([
     },
   },
   // Excluir artefactos generados para que el lint solo revise código mantenido
-  globalIgnores([".next/**", "out/**", "build/**", "tmp/**", "next-env.d.ts"]),
+  globalIgnores([".next/**", "out/**", "build/**", "tmp/**", "public/virtual-try-on/runtime/**", "next-env.d.ts"]),
 ]);
 
 export default eslintConfig;
