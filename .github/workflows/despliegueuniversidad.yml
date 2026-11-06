@@ -1,12 +1,13 @@
 name: Despliegue automatizado universidad
 
-# Ejecutar validación y despliegue cuando se actualiza una rama habilitada o manualmente
+# La publicación requiere autorización manual posterior.
 on:
-  push:
-    branches:
-      - main
-      - testgeneral
   workflow_dispatch:
+    inputs:
+      authorization:
+        description: "Autorización posterior de publicación: escribir AUTORIZAR_DESPLIEGUE"
+        required: true
+        type: string
 
 permissions:
 # Permitir únicamente leer el repositorio durante el pipeline
@@ -21,7 +22,7 @@ jobs:
   desplegar:
     name: Validar y desplegar en la universidad
 # Omitir el trabajo hasta que la variable de habilitación esté activada
-    if: vars.DESPLIEGUE_UNIVERSIDAD_HABILITADO == 'true'
+    if: github.event_name == 'workflow_dispatch' && inputs.authorization == 'AUTORIZAR_DESPLIEGUE' && vars.DESPLIEGUE_UNIVERSIDAD_HABILITADO == 'true'
 # Usar el runner Linux instalado en el servidor universitario
     runs-on: [self-hosted, linux, x64, opticastylo-universidad]
     timeout-minutes: 35

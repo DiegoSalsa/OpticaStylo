@@ -114,16 +114,25 @@ export async function settleSaleInventory(client, saleId, action, actorId = null
   }
 }
 
-export async function expireInventoryReservations() {
-  const rows = await prisma.inventory_reservations.findMany({ where: { status: "HELD", expires_at: { lte: new Date() } }, select: { sale_id: true }, distinct: ["sale_id"], take: 1000 });
-  for (const { sale_id: saleId } of rows) await retryTransaction(prisma, async (client) => {
+export async function expireInventoryReservations({ limit = 1000, deadline = Infinity } = {}) {
+  // Deduplicate and limit inside PostgreSQL, rather than Prisma's in-memory
+  // distinct, so a maintenance call cannot materialize the entire backlog.
+  const rows = await prisma.$queryRaw`SELECT sale_id FROM inventory_reservations
+    WHERE status='HELD' AND expires_at<=CURRENT_TIMESTAMP GROUP BY sale_id
+    ORDER BY min(expires_at),sale_id LIMIT ${Math.max(1, Math.min(limit, 1000))}`;
+  let processed = 0;
+  for (const { sale_id: saleId } of rows) {
+    if (Date.now() >= deadline) break;
+    await retryTransaction(prisma, async (client) => {
     await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const overdue = await client.inventory_reservations.findFirst({ where: { sale_id: saleId, status: "HELD", expires_at: { lte: new Date() } } });
     if (!overdue) return;
     if (await client.sale_payments.count({ where: { sale_id: saleId } })) { await client.inventory_reservations.updateMany({ where: { sale_id: saleId, status: "HELD" }, data: { expires_at: null } }); return; }
     await settleSaleInventory(client, saleId, "EXPIRE");
-  });
-  return rows.length;
+    });
+    processed++;
+  }
+  return processed;
 }
 
 export async function availabilityForProducts(products, client = prisma, includeNonPickup = false) {

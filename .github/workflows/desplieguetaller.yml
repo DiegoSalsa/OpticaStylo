@@ -1,15 +1,18 @@
 name: Despliegue Taller
 
-# Ejecutar el despliegue del entorno Taller al actualizar ramas habilitadas o manualmente
+# La publicación requiere autorización manual posterior.
 on:
-  push:
-    branches: [main, testgeneral]
   workflow_dispatch:
+    inputs:
+      authorization:
+        description: "Autorización posterior de publicación: escribir AUTORIZAR_DESPLIEGUE"
+        required: true
+        type: string
 
 jobs:
   deploy:
 # Mantener el entorno Taller apagado hasta que la variable de habilitación esté activa
-    if: vars.DESPLIEGUE_TALLER_HABILITADO == 'true'
+    if: github.event_name == 'workflow_dispatch' && inputs.authorization == 'AUTORIZAR_DESPLIEGUE' && vars.DESPLIEGUE_TALLER_HABILITADO == 'true'
 # Usar el runner Linux instalado en el servidor del taller
     runs-on: [self-hosted, linux, x64, opticastylo-taller]
     timeout-minutes: 25
