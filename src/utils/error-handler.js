@@ -13,7 +13,7 @@ export function handleApiError(error, {sensitive=false}={}) {
     );
   }
 
-  console.error("Error interno no controlado.", sensitive?{code:typeof error?.code==="string"?error.code:"UNEXPECTED"}:error);
+  console.error("Error interno no controlado.", { code: typeof error?.code === "string" && /^[A-Z0-9_]{1,60}$/.test(error.code) ? error.code : "UNEXPECTED", sensitive });
 
   return createErrorResponse(
     {

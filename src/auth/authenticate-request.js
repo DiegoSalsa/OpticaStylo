@@ -1,4 +1,5 @@
 import { findActiveSessionByTokenHash } from "../repositories/session-repository.js";
+import { assertRequestOrigin } from "../security/request-origin.js";
 // Utilidades de autenticación y control de acceso para proteger las operaciones de la aplicación.
 import { AppError } from "../utils/app-error.js";
 import { hashSessionToken, SESSION_COOKIE_NAME } from "./session-token.js";
@@ -34,6 +35,7 @@ function throwAuthenticationRequired() {
 }
 
 export async function authenticateRequest(request, dependencies = {}) {
+  assertRequestOrigin(request);
   const findSession =
     dependencies.findActiveSessionByTokenHash ?? findActiveSessionByTokenHash;
   const token = getCookieValue(
