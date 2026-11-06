@@ -13,8 +13,8 @@
     "prisma:generate": "prisma generate",
     "prisma:validate": "node scripts/prisma-validate.mjs",
     "lint": "eslint .",
-    "test": "node --test",
-    "test:watch": "node --test --watch",
+    "test": "node scripts/run-prescription-tests.mjs --release",
+    "test:watch": "node --test --watch tests/unit/*.test.js tests/release/security.test.js",
     "frames:import-3d": "node scripts/import-3d-frames.mjs",
     "frames:publish-3d": "node scripts/publish-3d-model.mjs",
     "db:check": "node scripts/db-check.mjs",
@@ -29,7 +29,7 @@
     "test:store:e2e": "node scripts/run-store-e2e.mjs",
     "test:management:e2e": "node scripts/run-management-e2e.mjs",
     "test:academic": "node scripts/run-academic-validation.mjs",
-    "test:evaluation:unit": "node --test tests/utils/chilean-rut.test.js tests/validations/appointment-validation.test.js tests/services/availability-engine.test.js tests/auth/password.test.js",
+    "test:evaluation:unit": "node --test tests/unit/rut.test.js tests/unit/appointment-validation.test.js tests/unit/availability-engine.test.js tests/unit/password.test.js",
     "test:evaluation:integration": "node scripts/run-evaluation.mjs integration",
     "test:evaluation:e2e": "node scripts/run-evaluation.mjs e2e",
     "test:evaluation:ui": "node scripts/run-evaluation.mjs ui",
@@ -38,14 +38,20 @@
     "test:evaluation": "node scripts/run-evaluation.mjs all",
     "shipping:sync": "node scripts/sync-shipments.mjs",
     "test:shipping": "node scripts/run-prescription-tests.mjs --shipping",
-    "demo:shipping": "node scripts/run-prescription-tests.mjs --shipping --demo"
+    "demo:shipping": "node scripts/run-prescription-tests.mjs --shipping --demo",
+    "db:audit": "node scripts/db-audit.mjs",
+    "test:release": "node scripts/run-prescription-tests.mjs --release",
+    "demo:release": "node scripts/run-prescription-tests.mjs --release --demo",
+    "staging:preflight": "node scripts/staging-preflight.mjs",
+    "db:reconciliation": "node scripts/db-reconciliation.mjs",
+    "test:security": "node --test tests/auth/authenticate-request.test.js tests/auth/session-cookie.test.js tests/auth/session-token.test.js tests/auth/store-session.test.js tests/auth/require-permission.test.js tests/services/authentication-service.test.js tests/services/mercado-pago-service.test.js tests/services/transactional-email-service.test.js tests/services/report-service.test.js tests/repositories/payment-reconciliation.test.js tests/integrations/mercado-pago-gateway.test.js tests/integrations/cloudinary-media-gateway.test.js tests/integrations/resend-email-provider.test.js tests/security/public-request-rate-limit.test.js tests/config/cloudinary.test.js tests/config/payment-providers.test.js tests/config/transactional-email.test.js tests/utils/http-request.test.js tests/utils/secret-authorization.test.js tests/validations/report-validation.test.js"
   },
   "engines": {
     "node": ">=20.9.0"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.0.1",
-    "@next/env": "^16.3.0",
+    "@next/env": "16.4.5",
     "@prisma/client": "^6.19.3",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
@@ -54,7 +60,7 @@
     "date-fns-tz": "^3.2.0",
     "mercadopago": "^3.4.0",
     "motion": "^12.43.0",
-    "next": "16.3.8",
+    "next": "16.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "svix": "^2.0.0",
@@ -63,10 +69,13 @@
   "devDependencies": {
     "@playwright/test": "1.64.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.5",
     "prisma": "^6.19.3"
   },
   "overrides": {
-    "deepmerge-ts": "8.0.0"
+    "deepmerge-ts": "8.0.0",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.1"
+    }
   }
 }
