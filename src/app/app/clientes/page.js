@@ -1,5 +1,6 @@
 "use client";
 
+import RutInput from "@/components/ui/rut-input";
 import { useEffect, useRef, useState } from "react";
 import {
   readResponse,
@@ -162,7 +163,7 @@ export default function CustomersPage() {
         <section className="app-card directory-card">
           <form className="directory-search" onSubmit={search}>
             <Icon name="search" />
-            <input
+            <RutInput
               aria-label="Buscar clientes"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Nombre, RUT, correo o teléfono"
@@ -263,7 +264,7 @@ export default function CustomersPage() {
                 </label>
                 <label className="field">
                   <span>RUT</span>
-                  <input
+                  <RutInput
                     disabled={!canManage || status === "saving"}
                     onChange={(event) =>
                       setForm({ ...form, rut: event.target.value })

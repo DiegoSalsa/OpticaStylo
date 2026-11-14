@@ -1,5 +1,6 @@
 "use client";
 
+import RutInput from "@/components/ui/rut-input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -374,7 +375,7 @@ export default function CartExperience() {
           <h2>Datos para la compra</h2>
           <p className="card-lead">Puedes continuar como invitado. Selecciona retiro o calcula el despacho antes de confirmar.</p>
           <form className="buyer-form" onChange={(event) => setBuyerDraft(Object.fromEntries(new FormData(event.currentTarget)))} onSubmit={checkout}>
-            <label className="field"><span>RUT</span><input defaultValue={buyerDraft.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
+            <label className="field"><span>RUT</span><RutInput defaultValue={buyerDraft.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
             <label className="field"><span>Nombres</span><input defaultValue={buyerDraft.firstNames ?? ""} name="firstNames" placeholder="Nombres" required /></label>
             <label className="field"><span>Apellidos</span><input defaultValue={buyerDraft.lastNames ?? ""} name="lastNames" placeholder="Apellidos" required /></label>
             <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>

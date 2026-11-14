@@ -1,4 +1,5 @@
 "use client";
+import RutInput from "@/components/ui/rut-input";
 import CommercialProfile from "@/components/customers/commercial-profile";
 
 import Icon from "@/components/ui/icon";
@@ -243,7 +244,7 @@ export default function PosCatalogPanel({ model }) {
           <form className="quick-customer" onSubmit={createCustomer}>
             <label className="field">
               <span>RUT opcional</span>
-              <input name="rut" placeholder="12.345.678-5" />
+              <RutInput name="rut" placeholder="12.345.678-5" />
             </label>
             <label className="field">
               <span>Nombre</span>
@@ -286,7 +287,7 @@ export default function PosCatalogPanel({ model }) {
               <>
                 <div className="search-field">
                   <Icon name="search" size={18} />
-                  <input
+                  <RutInput
                     aria-label="Buscar cliente"
                     onChange={(event) => setCustomerSearch(event.target.value)}
                     placeholder="Buscar por nombre, RUT, correo o teléfono"
@@ -346,7 +347,7 @@ export default function PosCatalogPanel({ model }) {
             <form className="quick-patient" onSubmit={createPatient}>
               <label className="field">
                 <span>RUT</span>
-                <input name="rut" placeholder="12.345.678-5" required />
+                <RutInput name="rut" placeholder="12.345.678-5" required />
               </label>
               <label className="field">
                 <span>Fecha de nacimiento</span>
@@ -384,7 +385,7 @@ export default function PosCatalogPanel({ model }) {
                     <legend>Responsable del paciente menor de edad</legend>
                     <label className="field">
                       <span>RUT responsable</span>
-                      <input name="guardianRut" placeholder="12.345.678-5" required />
+                      <RutInput name="guardianRut" placeholder="12.345.678-5" required />
                     </label>
                     <label className="field">
                       <span>Parentesco</span>
@@ -420,7 +421,7 @@ export default function PosCatalogPanel({ model }) {
             <>
               <div className="search-field">
                 <Icon name="search" size={18} />
-                <input
+                <RutInput
                   aria-label="Buscar paciente"
                   onChange={(event) => setPatientSearch(event.target.value)}
                   placeholder="Buscar paciente por nombre o RUT"

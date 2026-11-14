@@ -1,5 +1,6 @@
 "use client";
 
+import RutInput from "@/components/ui/rut-input";
 import { CLINICAL_TYPES } from "@/config/clinical-forms";
 import ClinicalEncounterPanel from "./clinical-encounter-panel";
 import ClinicalPrescriptionPanel from "./clinical-prescription-panel";
@@ -29,7 +30,7 @@ export default function ClinicalInterface({
           e.preventDefault();
           m.searchPatients();
         }}>
-      <label className="field"><span>Buscar nombre o RUT asignado</span><input value={m.search} onChange={e => m.setSearch(e.target.value)} /></label>
+      <label className="field"><span>Buscar nombre o RUT asignado</span><RutInput placeholder="Nombre o RUT" value={m.search} onChange={e => m.setSearch(e.target.value)} /></label>
       <button className="app-button app-button--soft">Buscar pacientes</button>
     </form>
     <div className="management-list">

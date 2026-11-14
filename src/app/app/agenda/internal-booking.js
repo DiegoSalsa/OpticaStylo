@@ -1,5 +1,6 @@
 "use client";
 
+import RutInput from "@/components/ui/rut-input";
 import { useState } from "react";
 import { readResponse } from "@/components/internal/internal-shell";
 
@@ -60,7 +61,7 @@ export default function InternalBooking({ onCreated, professionals }) {
   return <form className="app-card internal-booking" onSubmit={submit}>
     <div><h2>Nueva reserva interna</h2><p>Administración agenda a un paciente existente usando horas realmente disponibles.</p></div>
     <div className="internal-booking-grid">
-      <label className="field booking-patient"><span>Buscar paciente</span><span className="inline-search"><input onChange={(event)=>setQuery(event.target.value)} placeholder="RUT o nombre" value={query} /><button className="app-button app-button--soft" disabled={status!=="idle"} onClick={searchPatients} type="button">Buscar</button></span></label>
+      <label className="field booking-patient"><span>Buscar paciente</span><span className="inline-search"><RutInput onChange={(event)=>setQuery(event.target.value)} placeholder="RUT o nombre" value={query} /><button className="app-button app-button--soft" disabled={status!=="idle"} onClick={searchPatients} type="button">Buscar</button></span></label>
       <label className="field"><span>Paciente</span><select onChange={(event)=>setPatientId(event.target.value)} required value={patientId}><option value="">Selecciona</option>{patients.map((item)=><option key={item.id} value={item.id}>{item.firstNames} {item.lastNames} · {item.rut}</option>)}</select></label>
       <label className="field"><span>Profesional</span><select onChange={(event)=>loadSlots(event.target.value,date)} required value={professionalId}><option value="">Selecciona</option>{professionals.filter((item)=>item.isBookable).map((item)=><option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></label>
       <label className="field"><span>Fecha</span><input min={chileDate()} onChange={(event)=>loadSlots(professionalId,event.target.value)} required type="date" value={date} /></label>
