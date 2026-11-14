@@ -130,6 +130,8 @@ try {
   await run(pg("createdb"), ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "stylo_test", "opticastylo_evaluation"]);
   if(releaseMode) await run(process.execPath,["scripts/verify-release-migrations.mjs",...(process.argv.includes("--write-reference")?["--write-reference"]:[])],{cwd:appRoot,record:"migration-certificate.txt"});
   if(!process.argv.includes("--migrations-only")) {
+  const passwordResetMigration = "20261114000000_customer_password_reset";
+  if (clinicalMode) await rename(path.join(appRoot, "prisma/migrations", passwordResetMigration), path.join(runRoot, "password-reset-migration"));
   if(releaseMode) await rename(path.join(appRoot,"prisma/migrations/20261106010000_legacy_migration_ledger"),path.join(runRoot,"ledger-migration"));
   if(shippingMode) await rename(path.join(appRoot,"prisma/migrations/20261106000000_shipping_chilexpress"),path.join(runRoot,"shipping-migration"));
   if(clinicalMode){
@@ -156,6 +158,10 @@ try {
   if(releaseMode) {
     await rename(path.join(runRoot,"ledger-migration"),path.join(appRoot,"prisma/migrations/20261106010000_legacy_migration_ledger"));
     await run(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{cwd:appRoot});
+  }
+  if (clinicalMode) {
+    await rename(path.join(runRoot, "password-reset-migration"), path.join(appRoot, "prisma/migrations", passwordResetMigration));
+    await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], { cwd: appRoot });
   }
   if (inventoryMode) await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "diff", "--from-url", databaseUrl, "--to-schema-datamodel", "prisma/schema.prisma", "--script"], { cwd: appRoot, record: "migration-diff.txt" });
   await run(process.execPath, ["scripts/seed-evaluation.mjs"], { cwd: appRoot });
@@ -188,7 +194,7 @@ try {
     process.stdin.pause();
   } else {
   if(customersMode){
-    await run(process.execPath,["--test","--test-concurrency=1","tests/customers/validation.test.js","tests/customers/flow.test.js"],{cwd:appRoot,record:"customers.txt"});
+    await run(process.execPath,["--test","--test-concurrency=1","tests/customers/validation.test.js","tests/customers/flow.test.js","tests/customers/password-reset.test.js"],{cwd:appRoot,record:"customers.txt"});
     await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/customers/playwright.config.mjs"],{cwd:appRoot,record:"customers-browser.txt"});
   }
   if(clinicalMode) {

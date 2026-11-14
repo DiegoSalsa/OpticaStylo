@@ -72,13 +72,14 @@ export async function recordCustomerFailedLogin(accountId, maximumAttempts, lock
   }, { isolationLevel: "Serializable" });
 }
 
-export async function createCustomerSession({ accountId, expiresAt, ipAddress, tokenHash, userAgent }) {
+export async function createCustomerSession({ accountId, expiresAt, ipAddress, passwordHash, tokenHash, userAgent }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
-    await client.customer_accounts.update({
+    const result = await client.customer_accounts.updateMany({
       data: { failed_login_attempts: 0, last_login_at: new Date(), locked_until: null },
-      where: { id: accountId },
+      where: { id: accountId, is_active: true, password_hash: passwordHash },
     });
+    if (!result.count) return null;
     const session = await client.customer_account_sessions.create({ data: {
       account_id: accountId, created_ip: ipAddress, expires_at: expiresAt,
       token_hash: tokenHash, user_agent: userAgent,

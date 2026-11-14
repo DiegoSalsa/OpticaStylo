@@ -48,9 +48,11 @@ async function issueSession(account, metadata, dependencies) {
     accountId: account.id,
     expiresAt,
     ipAddress: metadata.ipAddress ?? null,
+    passwordHash: account.passwordHash,
     tokenHash: (dependencies.hashSessionToken ?? hashSessionToken)(token),
     userAgent: metadata.userAgent?.slice(0, 512) ?? null,
   });
+  if (!session) invalidCredentials();
   return {
     account: publicAccount(account),
     maxAgeSeconds: SESSION_SECONDS,

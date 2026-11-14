@@ -16,6 +16,8 @@ export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   PRESCRIPTION_UPLOAD: "prescription_upload",
   STORE_CART_CREATION: "store_cart_creation",
   STORE_LOGIN: "store_login",
+  STORE_PASSWORD_RESET_REQUEST: "store_password_reset_request",
+  STORE_PASSWORD_RESET_CONFIRM: "store_password_reset_confirm",
   STORE_PATIENT_LINK: "store_patient_link",
   // Separar la cuota de ingreso del código para contener intentos de fuerza bruta.
   STORE_PATIENT_LINK_VERIFY: "store_patient_link_verify",
@@ -26,6 +28,8 @@ const LIMITS = Object.freeze({
   customer_directory:{identifier:{maximumAttempts:120,windowSeconds:60},network:{maximumAttempts:500,windowSeconds:60}},
   store_commerce_link:{identifier:{maximumAttempts:5,windowSeconds:900},network:{maximumAttempts:12,windowSeconds:900}},
   store_commerce_verify:{identifier:{maximumAttempts:10,windowSeconds:900},network:{maximumAttempts:25,windowSeconds:900}},
+  store_password_reset_request: { identifier: { maximumAttempts: 3, windowSeconds: 900 }, network: { maximumAttempts: 12, windowSeconds: 900 } },
+  store_password_reset_confirm: { identifier: { maximumAttempts: 5, windowSeconds: 900 }, network: { maximumAttempts: 25, windowSeconds: 900 } },
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_LOGIN]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 4, windowSeconds: 15 * 60 }),
     network: Object.freeze({ maximumAttempts: 8, windowSeconds: 15 * 60 }),

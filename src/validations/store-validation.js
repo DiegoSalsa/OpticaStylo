@@ -107,6 +107,19 @@ export function validateStoreLogin(input) {
   return { email: email(input.email), password: password(input.password, { allowLegacy: true }) };
 }
 
+export function validateStorePasswordResetRequest(input) {
+  return email(object(input).email);
+}
+
+export function validateStorePasswordReset(input) {
+  object(input);
+  const challengeId = uuid(input.challengeId, "la solicitud de recuperación");
+  if (typeof input.code !== "string" || !/^\d{6}$/.test(input.code)) {
+    fail("Ingresa el código de seis dígitos.");
+  }
+  return { challengeId, code: input.code, password: password(input.password) };
+}
+
 export function validateStoreProductId(value) {
   return uuid(value, "producto");
 }

@@ -1,11 +1,14 @@
 const BRAND_NAME = "Stylo Vivo";
 const TEMPLATE_VERSION = "2026-08-22.v1";
 
+export const OTP_EMAIL_TEMPLATE_CODES = Object.freeze([
+  "CUSTOMER_PATIENT_OTP", "CUSTOMER_COMMERCE_OTP", "CUSTOMER_PASSWORD_RESET",
+]);
+
 export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
   "SHIPPING_UPDATE",
   "ACCOUNT_CREATED",
-  "CUSTOMER_PATIENT_OTP",
-  "CUSTOMER_COMMERCE_OTP",
+  ...OTP_EMAIL_TEMPLATE_CODES,
   "APPOINTMENT_CONFIRMED",
   "APPOINTMENT_REMINDER",
   "ORDER_CONFIRMED",
@@ -74,6 +77,12 @@ function contentFor(email, timeZone) {
       };
     case "CUSTOMER_COMMERCE_OTP":
       return {facts:[["Código de verificación",typeof payload.code==="string"?payload.code:null]],intro:"Usa este código para verificar tu correo y recuperar el acceso comercial solicitado. Vence en diez minutos. No lo compartas.",title:"Verifica tu acceso comercial"};
+    case "CUSTOMER_PASSWORD_RESET":
+      return {
+        facts: [["Código de recuperación", payload.code]],
+        intro: "Ingresa este código en la página de recuperación para cambiar tu contraseña. Vence en diez minutos. Si no lo pediste, puedes ignorar este mensaje.",
+        title: "Recupera tu contraseña",
+      };
     case "APPOINTMENT_CONFIRMED":
       return {
         facts: [["Fecha y hora", localDate(payload.startAt, timeZone)]],

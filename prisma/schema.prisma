@@ -262,6 +262,7 @@ model customer_patient_link_challenges {
 /// Este modelo contiene un índice de expresión que requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/expression-indexes.
 /// Entidad de datos del dominio customer accounts {.
 model customer_accounts {
+  customer_password_reset          customer_password_resets?
   email_verified_at                DateTime?                          @db.Timestamptz(6)
   clinical_link_recheck_required   Boolean                            @default(false)
   customer_commerce_challenges     customer_commerce_challenges[]
@@ -285,6 +286,17 @@ model customer_accounts {
   transactional_email_outbox       transactional_email_outbox[]
 
   @@map("customer_accounts")
+}
+
+model customer_password_resets {
+  account_id    String            @id @db.Uuid
+  id            String            @unique @db.Uuid
+  email         String            @db.VarChar(254)
+  code_hash     String            @db.Char(64)
+  attempt_count Int               @default(0) @db.SmallInt
+  expires_at    DateTime          @db.Timestamptz(6)
+  consumed_at   DateTime?         @db.Timestamptz(6)
+  account       customer_accounts @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.

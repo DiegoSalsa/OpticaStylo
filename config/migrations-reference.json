@@ -1218,6 +1218,22 @@
         "df7654cb47d6f0a0b34fcaa55cfccc5949bdd20f073f6f8d6fcdd2b09d0b96aa"
       ],
       "changes": {}
+    },
+    {
+      "name": "20261114000000_customer_password_reset",
+      "checksums": [
+        "257ac55aabee3963e62d24db17ad42f36327eb7bc41254d09fcbb39ac731a1ed",
+        "5db7f786e70a23679e5d4f7791a9d1cd1ea122024c7a3012513a16cbe2469fa5"
+      ],
+      "changes": {
+        "constraint:customer_password_resets:customer_password_resets_account_id_fkey": "f7772a8f0bc59bb9cc2247cd9b83d0791d90c8d91c648b0beb143e2d1824bcbf",
+        "constraint:customer_password_resets:customer_password_resets_id_key": "78c5e0d3d9b8090810c65f92ff0777e8fa39ea47867f8ae955e9f38e3f5deb9f",
+        "constraint:customer_password_resets:customer_password_resets_pkey": "fc04dafe9c6f071dead0d6cfe33581d4158e95935007013e341deca4fda985de",
+        "constraint:transactional_email_outbox:transactional_email_template": "6d08c6f6087765aeef22fccb7f4f25d635aebd1bebc0318f15e4d5da9eba9388",
+        "index:customer_password_resets:customer_password_resets_id_key": "268cfae724fefe00f7ccc0472db11512ca6df36384e7771dd6b15e66a122e194",
+        "index:customer_password_resets:customer_password_resets_pkey": "4239b43f8620cb8f9501396fde98e6de1a40faf667c41b442b1ac5114432620f",
+        "table:customer_password_resets": "6e693bef630bcc55a86189038b53ec92813b2aa4615905eaf536f8f963290809"
+      }
     }
   ],
   "legacyShape": {

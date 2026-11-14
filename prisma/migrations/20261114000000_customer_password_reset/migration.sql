@@ -1,0 +1,19 @@
+CREATE TABLE customer_password_resets (
+  account_id UUID PRIMARY KEY REFERENCES customer_accounts(id) ON DELETE CASCADE ON UPDATE NO ACTION,
+  id UUID NOT NULL UNIQUE,
+  email VARCHAR(254) NOT NULL,
+  code_hash CHAR(64) NOT NULL,
+  attempt_count SMALLINT NOT NULL DEFAULT 0,
+  expires_at TIMESTAMPTZ(6) NOT NULL,
+  consumed_at TIMESTAMPTZ(6)
+);
+
+ALTER TABLE transactional_email_outbox DROP CONSTRAINT transactional_email_template;
+ALTER TABLE transactional_email_outbox ADD CONSTRAINT transactional_email_template CHECK (
+  template_code IN (
+    'ACCOUNT_CREATED', 'CUSTOMER_PATIENT_OTP', 'CUSTOMER_COMMERCE_OTP',
+    'CUSTOMER_PASSWORD_RESET', 'APPOINTMENT_CONFIRMED', 'APPOINTMENT_REMINDER',
+    'ORDER_CONFIRMED', 'PAYMENT_CONFIRMED', 'POS_PAYMENT_RECEIPT',
+    'POS_FINAL_RECEIPT', 'SHIPPING_UPDATE'
+  )
+);
