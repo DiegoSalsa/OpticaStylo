@@ -93,6 +93,23 @@
 .fieldWide {
   grid-column: 1/-1;
 }
+.accountHelp {
+  background: #f5f8f7;
+  border-radius: 12px;
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem;
+}
+.accountHelp p {
+  margin: 0.6rem 0;
+}
+.accountActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
 .slotArea {
   border-top: 1px solid var(--color-border);
   margin-top: 1.2rem;

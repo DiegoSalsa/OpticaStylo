@@ -1,8 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
+import { normalizeChileanRut } from "@/utils/chilean-rut";
+import { readStoreResponse } from "@/utils/store-client";
 import { PUBLIC_BOOKING_CONFIRMATION_NOTE } from "./booking-copy";
+import BookingLogin from "./booking-login";
 import styles from "./booking.module.css";
 
 function chileDate(offsetDays = 0) {
@@ -40,12 +44,54 @@ export default function BookingExperience() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [slots, setSlots] = useState([]);
   const [birthDate, setBirthDate] = useState("");
+  const [rut, setRut] = useState("");
+  const [account, setAccount] = useState(undefined);
   const [status, setStatus] = useState("loading-professionals");
   const [message, setMessage] = useState("");
+  const [identityConflict, setIdentityConflict] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const availabilityRequest = useRef(null);
+  const bookingForm = useRef(null);
+  const prefilled = useRef(null);
   const selectedProfessional = useMemo(() => professionals.find((item) => item.id === professionalId), [professionalId, professionals]);
   const minor = isMinor(birthDate);
+  const normalizedRut = normalizeChileanRut(rut);
+  const matchesAccount = normalizedRut && normalizedRut === normalizeChileanRut(account?.rut);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/store/accounts/me", { cache: "no-store", signal: controller.signal })
+      .then(readStoreResponse)
+      .then(setAccount)
+      .catch((error) => { if (error.name !== "AbortError") setAccount(null); });
+    return () => controller.abort();
+  }, []);
+
+  function changeRut(event) {
+    const value = event.target.value;
+    if (prefilled.current && normalizeChileanRut(value) !== normalizeChileanRut(account?.rut)) {
+      for (const [name, previous] of Object.entries(prefilled.current)) {
+        const field = bookingForm.current.elements.namedItem(name);
+        if (field.value === previous) field.value = "";
+      }
+      prefilled.current = null;
+    }
+    setRut(value);
+    if (identityConflict) setMessage("");
+    setIdentityConflict(false);
+  }
+
+  function useAccountDetails() {
+    if (!matchesAccount) return;
+    const details = {};
+    for (const name of ["firstNames", "lastNames", "email", "phone", "address"]) {
+      const field = bookingForm.current.elements.namedItem(name);
+      if (field.value || !account[name]) continue;
+      field.value = account[name];
+      details[name] = account[name];
+    }
+    prefilled.current = { ...prefilled.current, ...details };
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,14 +138,18 @@ export default function BookingExperience() {
       email: form.get("guardianEmail"), firstNames: form.get("guardianFirstNames"), lastNames: form.get("guardianLastNames"),
       phone: form.get("guardianPhone"), relationship: form.get("guardianRelationship"), rut: form.get("guardianRut"),
     };
-    setStatus("submitting"); setMessage("");
+    setStatus("submitting"); setMessage(""); setIdentityConflict(false);
     try {
-      const data = await readApi(await fetch("/api/store/booking", {
+      const data = await readStoreResponse(await fetch("/api/store/booking", {
         body: JSON.stringify({ acceptsPrivacy: form.get("acceptsPrivacy") === "on", patient, professionalId, startAt: selectedSlot.startAt, website: form.get("website") }),
         headers: { "content-type": "application/json" }, method: "POST",
       }));
       setConfirmation(data.appointment); setStatus("confirmed");
-    } catch (error) { setMessage(error.message); setStatus("ready"); }
+    } catch (error) {
+      setIdentityConflict(error.code === "PUBLIC_BOOKING_IDENTITY_NOT_VERIFIED");
+      setMessage(error.message);
+      setStatus("ready");
+    }
   }
 
   if (confirmation) {
@@ -107,7 +157,7 @@ export default function BookingExperience() {
   }
 
   return (
-    <form className={styles.experience} onSubmit={submitBooking}>
+    <div className={styles.experience}>
       <section className={styles.scheduler}>
         <div className={styles.stepHeading}><span>1</span><div><h2>Elige profesional y fecha</h2><p>Mostramos únicamente horas realmente disponibles.</p></div></div>
         {status === "loading-professionals" && <div className={styles.inlineState}>Cargando profesionales…</div>}
@@ -120,13 +170,27 @@ export default function BookingExperience() {
 
       <section className={styles.details}>
         <div className={styles.stepHeading}><span>2</span><div><h2>Datos de la persona atendida</h2><p>Los usaremos para crear o validar su registro de paciente.</p></div></div>
-        <div className={styles.fieldGrid}><div className={styles.field}><label htmlFor="firstNames">Nombres</label><input id="firstNames" name="firstNames" placeholder="Nombres del paciente" required /></div><div className={styles.field}><label htmlFor="lastNames">Apellidos</label><input id="lastNames" name="lastNames" placeholder="Apellidos del paciente" required /></div><div className={styles.field}><label htmlFor="rut">RUT</label><input id="rut" name="rut" placeholder="12.345.678-5" required /></div><div className={styles.field}><label htmlFor="birthDate">Fecha de nacimiento</label><input id="birthDate" max={chileDate()} name="birthDate" onChange={(event) => setBirthDate(event.target.value)} required type="date" value={birthDate} /></div><div className={styles.field}><label htmlFor="email">Correo</label><input id="email" name="email" placeholder="nombre@correo.cl" required type="email" /></div><div className={styles.field}><label htmlFor="phone">Teléfono</label><input id="phone" name="phone" placeholder="+56 9 1234 5678" required type="tel" /></div><div className={`${styles.field} ${styles.fieldWide}`}><label htmlFor="address">Dirección</label><input id="address" name="address" placeholder="Dirección" required /></div></div>
+        <div className={styles.field}>
+          <label htmlFor="rut">RUT</label>
+          <input id="rut" name="rut" form="booking-details" onChange={changeRut} placeholder="12.345.678-5" required value={rut} />
+        </div>
+        {normalizedRut && account === null && <BookingLogin onLogin={setAccount} />}
+        {matchesAccount && (
+          <div className={styles.accountHelp}>
+            <button className="button button--secondary" onClick={useAccountDetails} type="button">Usar datos de mi cuenta</button>
+            <p>Confirma tu fecha de nacimiento y, si ya te atendiste, usa el correo de tu ficha de paciente.</p>
+          </div>
+        )}
+        <form id="booking-details" method="post" onSubmit={submitBooking} ref={bookingForm}>
+        <div className={styles.fieldGrid}><div className={styles.field}><label htmlFor="firstNames">Nombres</label><input id="firstNames" name="firstNames" placeholder="Nombres del paciente" required /></div><div className={styles.field}><label htmlFor="lastNames">Apellidos</label><input id="lastNames" name="lastNames" placeholder="Apellidos del paciente" required /></div><div className={styles.field}><label htmlFor="birthDate">Fecha de nacimiento</label><input id="birthDate" max={chileDate()} name="birthDate" onChange={(event) => setBirthDate(event.target.value)} required type="date" value={birthDate} /></div><div className={styles.field}><label htmlFor="email">Correo</label><input id="email" name="email" placeholder="nombre@correo.cl" required type="email" /></div><div className={styles.field}><label htmlFor="phone">Teléfono</label><input id="phone" name="phone" placeholder="+56 9 1234 5678" required type="tel" /></div><div className={`${styles.field} ${styles.fieldWide}`}><label htmlFor="address">Dirección</label><input id="address" name="address" placeholder="Dirección" required /></div></div>
         {minor && <fieldset className={styles.guardian}><legend>Responsable del paciente menor de edad</legend><div className={styles.fieldGrid}><div className={styles.field}><label htmlFor="guardianFirstNames">Nombres</label><input id="guardianFirstNames" name="guardianFirstNames" placeholder="Nombres del responsable" required /></div><div className={styles.field}><label htmlFor="guardianLastNames">Apellidos</label><input id="guardianLastNames" name="guardianLastNames" placeholder="Apellidos del responsable" required /></div><div className={styles.field}><label htmlFor="guardianRut">RUT</label><input id="guardianRut" name="guardianRut" placeholder="12.345.678-5" required /></div><div className={styles.field}><label htmlFor="guardianRelationship">Parentesco</label><input id="guardianRelationship" name="guardianRelationship" placeholder="Madre, padre o tutor" required /></div><div className={styles.field}><label htmlFor="guardianEmail">Correo</label><input id="guardianEmail" name="guardianEmail" placeholder="nombre@correo.cl" required type="email" /></div><div className={styles.field}><label htmlFor="guardianPhone">Teléfono</label><input id="guardianPhone" name="guardianPhone" placeholder="+56 9 1234 5678" required type="tel" /></div></div></fieldset>}
         <input aria-hidden="true" autoComplete="off" className={styles.honeypot} name="website" tabIndex="-1" />
         <label className={styles.consent}><input name="acceptsPrivacy" required type="checkbox" /><span>Acepto que Óptica Stylo trate estos datos para gestionar la reserva y la atención.</span></label>
         {message && status !== "error" && status !== "error-slots" && <div aria-live="polite" className={styles.submitError}>{message}</div>}
+        {identityConflict && <p><Link href="/contacto">Contactar a la óptica</Link></p>}
         <button className="button button--primary" disabled={status === "submitting" || !selectedSlot} type="submit">{status === "submitting" ? "Confirmando…" : "Confirmar reserva"}<Icon name="arrow" /></button>
+        </form>
       </section>
-    </form>
+    </div>
   );
 }

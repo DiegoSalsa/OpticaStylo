@@ -94,7 +94,7 @@ export async function createPublicBooking(input, dependencies = {}) {
   if (result.conflict === "IDENTITY") {
     throw new AppError({
       code: "PUBLIC_BOOKING_IDENTITY_NOT_VERIFIED",
-      message: "No pudimos validar los datos ingresados. Comuníquese con la óptica para reservar.",
+      message: "Revisa el RUT, la fecha de nacimiento y el correo de la persona atendida. Si ya se atendió en la óptica, usa los datos de su ficha.",
       status: 409,
     });
   }
