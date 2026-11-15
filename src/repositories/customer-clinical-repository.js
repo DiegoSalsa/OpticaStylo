@@ -1,3 +1,4 @@
+import { customerAppointmentChangeDeadline } from "../config/customer-appointments.js";
 import { prisma } from "../db/prisma.js";
 import { randomUUID } from "node:crypto";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
@@ -232,7 +233,7 @@ export async function findCustomerClinicalOverview(accountId, now = new Date(), 
   const [appointments, prescriptions] = await Promise.all([
     database.appointments.findMany({
       orderBy: [{ start_at: "asc" }, { id: "asc" }],
-      select: { end_at: true, id: true, professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } }, start_at: true, status: true },
+      select: { end_at: true, id: true, professional_id: true, professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } }, start_at: true, status: true },
       where: { patient_id: patientId },
     }),
     database.optical_prescriptions.findMany({
@@ -242,7 +243,12 @@ export async function findCustomerClinicalOverview(accountId, now = new Date(), 
     }),
   ]);
 
-  const publicAppointments = appointments.map(mapCustomerClinicalAppointment);
+  const publicAppointments = appointments.map((appointment) => ({
+    ...mapCustomerClinicalAppointment(appointment),
+    id: appointment.id,
+    professionalId: appointment.professional_id,
+    changeUntil: appointment.status === "CONFIRMED" ? customerAppointmentChangeDeadline(appointment.start_at) : null,
+  }));
   const publicPrescriptions = prescriptions.map(mapCustomerClinicalPrescription);
   return {
     appointmentHistory: publicAppointments.filter((item) => item.startAt < now || item.status === "CANCELLED"),

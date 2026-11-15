@@ -535,3 +535,23 @@
   cursor: pointer;
   font-weight: 700;
 }
+
+.clinical-row summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.clinical-row .account-appointment-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.clinical-row p,
+.clinical-row small {
+  overflow-wrap: anywhere;
+}
+
+.account-main[data-section="horas"] .clinical-columns,
+.account-main[data-section="recetas"] .clinical-columns {
+  grid-template-columns: minmax(0, 1fr);
+}

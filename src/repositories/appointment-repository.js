@@ -1,4 +1,6 @@
 import { prisma } from "../db/prisma.js";
+import { customerAppointmentChangeDeadline } from "../config/customer-appointments.js";
+import { verifiedPatientForAccount } from "./customer-clinical-repository.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 
@@ -45,9 +47,10 @@ async function findAppointmentByIdWithClient(client, appointmentId) {
   }));
 }
 
-async function enqueueAppointmentEmails(client, { appointmentId, endAt, recipientEmail, reminderHours, startAt }) {
+async function enqueueAppointmentEmails(client, { appointmentId, endAt, recipientEmail, reminderHours, startAt, revision }) {
   const payload = { appointmentId, endAt, startAt };
-  const confirmedKey = transactionalEmailDeduplicationKey("APPOINTMENT_CONFIRMED", appointmentId);
+  const emailKey = revision ? appointmentId + ":" + revision : appointmentId;
+  const confirmedKey = transactionalEmailDeduplicationKey("APPOINTMENT_CONFIRMED", emailKey);
   await client.transactional_email_outbox.upsert({
     create: {
       appointment_id: appointmentId, deduplication_key: confirmedKey, payload,
@@ -57,7 +60,7 @@ async function enqueueAppointmentEmails(client, { appointmentId, endAt, recipien
   });
   const reminderAt = new Date(startAt.getTime() - reminderHours * 3_600_000);
   const scheduledAt = new Date(Math.max(reminderAt.getTime(), Date.now()));
-  const reminderKey = transactionalEmailDeduplicationKey("APPOINTMENT_REMINDER", appointmentId);
+  const reminderKey = transactionalEmailDeduplicationKey("APPOINTMENT_REMINDER", emailKey);
   await client.transactional_email_outbox.upsert({
     create: {
       appointment_id: appointmentId, deduplication_key: reminderKey,
@@ -256,6 +259,54 @@ export async function changeAppointmentStatus(appointmentId, allowedCurrentStatu
     } });
     return { appointment: await findAppointmentByIdWithClient(client, appointmentId), currentStatus: current.status };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
+  }, { isolationLevel: "Serializable" });
+}
+
+export async function findCustomerAppointment(accountId, id, client = prisma) {
+  return client.appointments.findFirst({
+    where: { id, patients: verifiedPatientForAccount(accountId) },
+    select: { id: true, start_at: true, end_at: true, status: true, professional_id: true, patients: { select: { email: true } } },
+  });
+}
+
+export async function updateCustomerAppointment(accountId, id, { expectedStart, slot, now, noticeHours, reminderHours }) {
+  return retryTransaction(prisma, async (client) => {
+    const current = await findCustomerAppointment(accountId, id, client);
+    if (!current || current.status !== "CONFIRMED" || current.start_at.getTime() !== expectedStart.getTime()) {
+      return { reason: "STALE" };
+    }
+    if (customerAppointmentChangeDeadline(current.start_at, noticeHours) <= now) return { reason: "CLOSED" };
+    if (slot && await findCollision(client, current.professional_id, slot.startAt, slot.endAt, id)) return { reason: "SLOT_TAKEN" };
+    const updated = await client.appointments.updateMany({
+      where: { id, start_at: expectedStart, status: "CONFIRMED", patients: verifiedPatientForAccount(accountId) },
+      data: slot
+        ? { start_at: slot.startAt, end_at: slot.endAt, updated_by: null }
+        : { status: "CANCELLED", cancelled_at: now, cancellation_reason: "Cancelada desde la cuenta del cliente.", updated_by: null },
+    });
+    if (updated.count !== 1) return { reason: "STALE" };
+
+    const event = await client.appointment_events.create({
+      data: {
+        appointment_id: id,
+        details: slot ? "Reagendada desde la cuenta del cliente." : "Cancelada desde la cuenta del cliente.",
+        event_type: slot ? "RESCHEDULED" : "CANCELLED",
+        new_status: slot ? "CONFIRMED" : "CANCELLED",
+        previous_status: "CONFIRMED",
+        previous_start_at: current.start_at,
+        previous_end_at: current.end_at,
+        new_start_at: slot?.startAt,
+        new_end_at: slot?.endAt,
+      },
+    });
+    await client.transactional_email_outbox.updateMany({
+      where: { appointment_id: id, template_code: { in: ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"] }, status: { in: ["PENDING", "FAILED"] } },
+      data: { status: "SUPPRESSED", skip_reason: slot ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_CANCELLED", processing_finished_at: now },
+    });
+    if (slot) await enqueueAppointmentEmails(client, {
+      appointmentId: id, endAt: slot.endAt, startAt: slot.startAt,
+      recipientEmail: current.patients.email, reminderHours, revision: String(event.id),
+    });
+    return { reason: null };
   }, { isolationLevel: "Serializable" });
 }
 

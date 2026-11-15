@@ -142,8 +142,8 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
     }
 
     try {
-      // Revalidar el OTP justo antes de llamar al proveedor para suprimir desafíos obsoletos.
-      if (OTP_EMAIL_TEMPLATE_CODES.includes(email.templateCode)) {
+      // Revalidar códigos y reservas justo antes de entregarlos al proveedor.
+      if (OTP_EMAIL_TEMPLATE_CODES.includes(email.templateCode) || ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"].includes(email.templateCode)) {
         const current = await (dependencies.getEmailEligibility ?? getTransactionalEmailEligibility)(email);
         if (!current.eligible) {
           await (dependencies.suppressEmail ?? suppressTransactionalEmail)(email.id, workerId, current.reason);

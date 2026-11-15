@@ -275,12 +275,15 @@ export async function getTransactionalEmailEligibility(email, dependencies = {})
     });
     return challenge ? { eligible: true, reason: null } : { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
   }
-  if (email.templateCode !== "APPOINTMENT_REMINDER" || !email.appointmentId) return { eligible: true, reason: null };
+  if (!["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"].includes(email.templateCode) || !email.appointmentId) return { eligible: true, reason: null };
   // Conservar el control existente para no enviar recordatorios cancelados o ya iniciados.
   const appointment = await database.appointments.findUnique({ select: { start_at: true, status: true }, where: { id: email.appointmentId } });
   if (!appointment) return { eligible: false, reason: "APPOINTMENT_NOT_FOUND" };
   if (appointment.status !== "CONFIRMED") return { eligible: false, reason: `APPOINTMENT_${appointment.status}`.slice(0, 80) };
   if (appointment.start_at <= now) return { eligible: false, reason: "APPOINTMENT_ALREADY_STARTED" };
+  if (email.payload?.startAt && Date.parse(email.payload.startAt) !== appointment.start_at.getTime()) {
+    return { eligible: false, reason: "APPOINTMENT_RESCHEDULED" };
+  }
   return { eligible: true, reason: null };
 }
 
