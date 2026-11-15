@@ -61,7 +61,7 @@ export async function updateCustomerAccountContact(account, values) {
       data: { ...values, record_version: { increment: 1 }, updated_by: null },
     });
     if (!changed.count) return null;
-    return mapAccount(await client.customer_accounts.findUnique({ where: { id: account.id }, include: { customers: true } }));
+    return mapAccount(await client.customer_accounts.findUnique({ where: { id: account.id }, include: { customers: { include: { patients: { select: { birth_date: true } } } } } }));
   });
 }
 

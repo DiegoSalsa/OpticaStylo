@@ -126,9 +126,12 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
   await t.test("actualiza únicamente el contacto comercial de la cuenta autenticada", async () => {
     const endpoint = "/api/store/accounts/me";
     assert.equal((await request(endpoint, { method: "PATCH", body: { address: "Sin sesión" } })).status, 401);
+    await db.customer_accounts.update({ where: { id: owner.account.id }, data: { birth_date: null } });
     const profile = await data(await request(endpoint, { cookie: owner.cookie, method: "PATCH", body: { address: "Dirección sintética actualizada", email: other.email } }));
     assert.equal(profile.address, "Dirección sintética actualizada");
     assert.equal(profile.email, owner.email);
+    assert.equal(profile.birthDate, "1999-09-09");
+    assert.equal(profile.requiresAgeConfirmation, false);
     assert.equal((await data(await request(endpoint, { cookie: other.cookie }))).address, "Dirección de prueba");
     assert.equal((await db.patients.findUniqueOrThrow({ where: { id: patient.id } })).address, "Dirección de prueba");
   });
