@@ -84,10 +84,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
       setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
       setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
       setPrescriptionDirty(draft?.prescriptionDirty ?? false);
-      const buyer = Object.fromEntries(["rut", "firstNames", "lastNames", "email", "phone", "address"].map((field) =>
-        [field, data.buyer?.[field] ?? accountProfile?.[field] ?? ""],
-      ));
-      setBuyerDraft(draft?.buyer ?? { ...buyer, branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
+      setBuyerDraft(draft?.buyer ?? { ...data.buyer, branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
       setStatus("ready");
     }
     function refresh() {
@@ -329,7 +326,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
   }
 
   if (!cart?.items.length) {
-    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
+    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>{preferredPrescription ? "Agrega cristales con receta para usar la que seleccionaste." : "Explora los productos publicados y agrega los que quieras revisar."}</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
   }
 
   return <Root className="cart-page">
@@ -405,12 +402,12 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
           <h2>Datos para la compra</h2>
           <p className="card-lead">Puedes continuar como invitado. Selecciona retiro o calcula el despacho antes de confirmar.</p>
           <form className="buyer-form" onChange={(event) => setBuyerDraft(Object.fromEntries(new FormData(event.currentTarget)))} onSubmit={checkout}>
-            <label className="field"><span>RUT</span><RutInput defaultValue={buyerDraft.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
-            <label className="field"><span>Nombres</span><input defaultValue={buyerDraft.firstNames ?? ""} name="firstNames" placeholder="Nombres" required /></label>
-            <label className="field"><span>Apellidos</span><input defaultValue={buyerDraft.lastNames ?? ""} name="lastNames" placeholder="Apellidos" required /></label>
-            <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>
-            <label className="field"><span>Correo</span><input defaultValue={buyerDraft.email ?? ""} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
-            <label className="field"><span>Dirección de contacto</span><input defaultValue={buyerDraft.address ?? ""} name="address" placeholder="Dirección" required /></label>
+            <label className="field"><span>RUT</span><RutInput defaultValue={buyerDraft.rut ?? accountProfile?.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
+            <label className="field"><span>Nombres</span><input defaultValue={buyerDraft.firstNames ?? accountProfile?.firstNames ?? ""} name="firstNames" placeholder="Nombres" required /></label>
+            <label className="field"><span>Apellidos</span><input defaultValue={buyerDraft.lastNames ?? accountProfile?.lastNames ?? ""} name="lastNames" placeholder="Apellidos" required /></label>
+            <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? accountProfile?.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>
+            <label className="field"><span>Correo</span><input defaultValue={buyerDraft.email ?? accountProfile?.email ?? ""} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
+            <label className="field"><span>Dirección de contacto</span><input defaultValue={buyerDraft.address ?? accountProfile?.address ?? ""} name="address" placeholder="Dirección" required /></label>
             <DeliveryChoice selection={shipping} onChange={setShipping} signature={cartSignature} />
             {shipping.method === "PICKUP" && <><div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en una sucursal</strong><span>Todos los productos deben estar disponibles en el mismo local. La reserva sin pagos dura 30 minutos desde la creación del pedido.</span></div></div>
             <label className="field field-full"><span>Sucursal de retiro</span><select name="branchId" required defaultValue={buyerDraft.branchId ?? ""}><option value="">Selecciona una sucursal</option>{pickupBranches.map((branch) => <option disabled={!branch.available} key={branch.id} value={branch.id}>{branch.name}{branch.available ? " — Disponible" : " — Sin disponibilidad conjunta"}</option>)}</select></label>

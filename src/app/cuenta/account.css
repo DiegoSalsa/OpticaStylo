@@ -555,3 +555,14 @@
 .account-main[data-section="recetas"] .clinical-columns {
   grid-template-columns: minmax(0, 1fr);
 }
+
+.order-row > .button {
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+
+.account-profile-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
