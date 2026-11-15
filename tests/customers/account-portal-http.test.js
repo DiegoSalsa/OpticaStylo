@@ -60,7 +60,7 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     },
   });
 
-  await t.test("solo la cuenta vinculada puede descargar una receta vigente y asociarla a su carrito", async () => {
+  await t.test("solo la cuenta vinculada puede descargar una receta vigente y asociarla a su carrito", async (t) => {
     const definition = await data(await request(clinical, { cookie: owner.cookie }));
     assert.equal(definition.prescriptions.active[0].id, prescription.id);
     const pdfPath = clinical + "/prescriptions/" + prescription.id + "/pdf";
@@ -86,6 +86,38 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     const updated = await data(await request(choose, { cookie, method: "PUT", body: { prescriptionId: prescription.id } }));
     assert.equal(updated.clinicalPrescriptionId, prescription.id);
     assert.equal((await data(await request("/api/store/cart", { cookie }))).items.length, 2);
+
+    await t.test("una receta anulada impide finalizar la compra y conserva el carrito configurado", async () => {
+      const branches = await data(await request("/api/store/cart/pickup", { cookie }));
+      const pickup = branches.find((branch) => branch.available);
+      assert.ok(pickup);
+      const configured = await data(await request("/api/store/cart", {
+        cookie, method: "PATCH", body: {
+          buyer: {
+            rut: owner.rut, firstNames: "Cliente", lastNames: "Sintético", email: owner.email,
+            phone: "+56912345678", address: "Dirección de prueba",
+          },
+          fulfillment: { method: "PICKUP", branchId: pickup.id },
+          clinicalPrescriptionId: prescription.id,
+        },
+      }));
+      assert.equal(configured.clinicalPrescriptionId, prescription.id);
+      await db.optical_prescriptions.update({ where: { id: prescription.id }, data: { status: "VOIDED", voided_at: new Date() } });
+      assert.equal((await request(pdfPath, { cookie: owner.cookie })).status, 404);
+
+      const checkout = await request("/api/store/cart/checkout", { cookie, method: "POST" });
+      const checkoutError = await checkout.json();
+      assert.equal(checkout.status, 404, JSON.stringify(checkoutError));
+      assert.equal(checkoutError.error.code, "CLINICAL_PRESCRIPTION_NOT_AVAILABLE");
+      const preserved = await data(await request("/api/store/cart", { cookie }));
+      assert.equal(preserved.status, "ACTIVE");
+      assert.equal(preserved.saleId, null);
+      assert.equal(preserved.clinicalPrescriptionId, prescription.id);
+      assert.deepEqual(preserved.items, configured.items);
+      assert.deepEqual(preserved.buyer, configured.buyer);
+      assert.deepEqual(preserved.fulfillment, configured.fulfillment);
+      assert.equal(await db.sales.count({ where: { customer_id: owner.account.customerId } }), 0);
+    });
   });
 
   await t.test("actualiza únicamente el contacto comercial de la cuenta autenticada", async () => {
