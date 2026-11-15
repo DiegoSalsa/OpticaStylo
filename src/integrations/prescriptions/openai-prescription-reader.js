@@ -114,7 +114,7 @@ function normalizeDraft(value) {
 }
 
 function requestBody(image, configuration) {
-  const dataUrl = `data:${image.mediaType};base64,${image.data.toString("base64")}`;
+  const dataUrl = `data:${image.mediaType};base64,${Buffer.from(image.data).toString("base64")}`;
   const safetyIdentifier = createHash("sha256")
     .update(image.data)
     .digest("hex")

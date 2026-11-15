@@ -48,6 +48,19 @@ test("no intenta leer una receta HEIC no admitida por el proveedor", async () =>
   );
 });
 
+test("codifica los bytes de Prisma en base64 y respeta los límites de una vista Uint8Array", async () => {
+  const bytes = Uint8Array.from([0, ...image.data, 255]).subarray(1, image.data.length + 1);
+  await readOpenAiPrescriptionImage({ ...image, data: bytes }, {
+    environment,
+    fetchImplementation: async (_url, options) => {
+      const sent = JSON.parse(options.body).input[0].content[1].image_url;
+      assert.equal(sent, "data:image/png;base64," + image.data.toString("base64"));
+      assert.deepEqual(Buffer.from(sent.split(",")[1], "base64"), image.data);
+      return { ok: true, json: async () => ({ status: "completed", output_text: JSON.stringify(draft) }) };
+    },
+  });
+});
+
 test("fallos de red y respuestas inválidas no registran datos privados del proveedor",async()=>{
   const previous=console.error,logs=[];console.error=(...values)=>logs.push(values);
   try {
