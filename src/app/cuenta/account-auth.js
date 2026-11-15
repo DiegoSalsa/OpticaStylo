@@ -16,7 +16,7 @@ export default function AccountAuth({ onAuthenticated }) {
   const [remaining, setRemaining] = useState(0);
   const pending = useRef(false);
   const registering = mode === "REGISTER";
-  const needsLink = error?.code === "CUSTOMER_ACCOUNT_REQUIRES_LINKING";
+  const recoverExisting = Boolean(challenge) || ["CUSTOMER_ACCOUNT_REQUIRES_LINKING", "CUSTOMER_ACCOUNT_EMAIL_EXISTS"].includes(error?.code);
 
   useEffect(() => {
     if (!retryAt) return;
@@ -144,8 +144,8 @@ export default function AccountAuth({ onAuthenticated }) {
               <button className="button button--secondary field-full" disabled={busy} onClick={resetVerification} type="button">Volver al registro sin código</button>
             </>}
           </>}
-          {(!registering || needsLink) && <Link className="field-full" href="/cuenta/recuperar">¿Olvidaste tu contraseña?</Link>}
-          {needsLink && <button className="button button--secondary field-full" disabled={busy} onClick={() => changeMode("LOGIN")} type="button">Ya tengo cuenta</button>}
+          {(!registering || recoverExisting) && <Link className="field-full" href="/cuenta/recuperar">¿Olvidaste tu contraseña?</Link>}
+          {registering && recoverExisting && <button className="button button--secondary field-full" disabled={busy} onClick={() => changeMode("LOGIN")} type="button">Ya tengo cuenta</button>}
           {notice && <p className="field-full" role="status">{notice}</p>}
           {error && <p className="inline-error field-full" role="alert">{error.message}</p>}
           <button className="button button--primary field-full" disabled={busy} type="submit">
