@@ -54,13 +54,13 @@ export async function findAccountPrescriptionImage(accountId, id) {
   });
 }
 
-export async function claimAccountPrescriptionReading(accountId, id) {
+export async function claimAccountPrescriptionReading(accountId, id, now = new Date()) {
   return retryTransaction(prisma, async (client) => {
     await client.$queryRaw`SELECT id FROM external_prescriptions WHERE id = ${id}::uuid FOR UPDATE`;
     const row = await client.external_prescriptions.findFirst({ where: { id, ...savedPrescriptionScope(accountId) } });
     if (!row) return { reason: "NOT_FOUND" };
     if (row.extraction_status === "COMPLETED") return { prescription: publicPrescription(row), cached: true };
-    if (row.extraction_status === "PENDING" && row.updated_at > new Date(Date.now() - 120_000)) return { reason: "READING" };
+    if (row.extraction_status === "PENDING" && row.updated_at > new Date(now.getTime() - 120_000)) return { reason: "READING" };
     const requestId = randomUUID();
     await client.external_prescriptions.update({ where: { id }, data: {
       extraction_status: "PENDING", extracted_data: { requestId }, extraction_provider: "OPENAI_GPT_5_6_LUNA",

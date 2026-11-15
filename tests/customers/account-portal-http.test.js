@@ -247,8 +247,8 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     assert.equal((await db.external_prescriptions.findUniqueOrThrow({ where: { id: uploaded.id } })).extraction_status, "FAILED");
     const expiredWorker = await claimAccountPrescriptionReading(owner.account.id, uploaded.id);
     assert.equal((await claimAccountPrescriptionReading(owner.account.id, uploaded.id)).reason, "READING");
-    await db.external_prescriptions.update({ where: { id: uploaded.id }, data: { updated_at: new Date(Date.now() - 121_000) } });
-    const activeWorker = await claimAccountPrescriptionReading(owner.account.id, uploaded.id);
+    const activeWorker = await claimAccountPrescriptionReading(owner.account.id, uploaded.id, new Date(Date.now() + 121_000));
+    assert.ok(activeWorker.requestId);
     assert.notEqual(expiredWorker.requestId, activeWorker.requestId);
     assert.equal(await finishAccountPrescriptionReading(owner.account.id, uploaded.id, expiredWorker.requestId, { provider: "OPENAI_GPT_5_6_LUNA", data: opticalPrescription }), null);
     assert.equal(await finishAccountPrescriptionReading(owner.account.id, uploaded.id, expiredWorker.requestId, null), null);
