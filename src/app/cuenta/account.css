@@ -523,3 +523,15 @@
 .account-main .cart-summary {
   position: static;
 }
+
+.account-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-block: 0.65rem;
+}
+
+.prescription-row > summary {
+  cursor: pointer;
+  font-weight: 700;
+}

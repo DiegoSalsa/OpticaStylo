@@ -13,6 +13,38 @@ import {
 const professionalUser = "users_professional_profiles_user_idTousers";
 
 // Seleccionar únicamente la identidad comercial necesaria para resolver el vínculo.
+const prescriptionSelect = {
+  id: true, issued_at: true, status: true, fulfillment_notes: true, pupillary_distance: true,
+  left_addition: true, left_axis: true, left_cylinder: true, left_sphere: true,
+  right_addition: true, right_axis: true, right_cylinder: true, right_sphere: true,
+  other_optical_prescriptions: { select: { status: true } },
+  professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } },
+};
+
+export function verifiedPatientForAccount(accountId) {
+  return { customers: { customer_accounts: { id: accountId, is_active: true, clinical_link_recheck_required: false } } };
+}
+
+export async function findActiveAccountPrescription(accountId, id, database = prisma) {
+  const record = await database.optical_prescriptions.findFirst({
+    where: {
+      id,
+      status: "ACTIVE",
+      clinical_encounters: { status: "FINALIZED", patients: verifiedPatientForAccount(accountId) },
+    },
+    select: {
+      ...prescriptionSelect,
+      clinical_encounters: { select: { patients: { select: { first_names: true, last_names: true, rut: true } } } },
+    },
+  });
+  if (!record) return null;
+  const patient = record.clinical_encounters.patients;
+  return {
+    ...mapCustomerClinicalPrescription(record),
+    patient: { firstNames: patient.first_names, lastNames: patient.last_names, rut: patient.rut },
+  };
+}
+
 const accountSelect = {
   clinical_link_recheck_required:true,
   email: true,
@@ -59,6 +91,7 @@ export function mapCustomerClinicalPrescription(row) {
   const issuer = row.professional_profiles?.[professionalUser];
   const replaced = row.other_optical_prescriptions?.length > 0;
   return {
+    ...(row.id && { id: row.id }),
     issuedAt: row.issued_at,
     professional: issuer ? { firstName: issuer.first_name, lastName: issuer.last_name } : null,
     leftEye: {
@@ -204,11 +237,7 @@ export async function findCustomerClinicalOverview(accountId, now = new Date(), 
     }),
     database.optical_prescriptions.findMany({
       orderBy: [{ issued_at: "desc" }, { version: "desc" }],
-      select: {
-        fulfillment_notes: true, issued_at: true, left_addition: true, left_axis: true, left_cylinder: true, left_sphere: true,
-        other_optical_prescriptions: { select: { status: true } }, professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } },
-        pupillary_distance: true, right_addition: true, right_axis: true, right_cylinder: true, right_sphere: true, status: true,
-      },
+      select: prescriptionSelect,
       where: { status: { in: ["ACTIVE", "VOIDED"] }, clinical_encounters: { patient_id: patientId, status: "FINALIZED" } },
     }),
   ]);

@@ -21,6 +21,7 @@ import {
   removeCartPrescription,
   saveExternalPrescriptionImage,
   saveManualExternalPrescription,
+  saveCartClinicalPrescription,
   upsertStoreCartItem,
   upsertStoreCartItems,
 } from "../repositories/store-repository.js";
@@ -30,6 +31,7 @@ import {
   validateCartItemInput,
   validateCartItemsInput,
   validateExternalPrescriptionData,
+  validateExternalPrescriptionId,
   validatePrescriptionImage,
   validatePrescriptionImageBytes,
   validateStoreOrderId,
@@ -75,6 +77,11 @@ const ERRORS = Object.freeze({
     "CLINICAL_PRESCRIPTION_NOT_AVAILABLE",
     "La receta clínica no está disponible para esta cuenta.",
     404,
+  ],
+  CONFIRM_PRESCRIPTION_REPLACEMENT: [
+    "CONFIRM_PRESCRIPTION_REPLACEMENT",
+    "Confirma que quieres reemplazar la receta adjunta al carrito.",
+    409,
   ],
   CUSTOMER_ACCOUNT_NOT_FOUND: [
     "CUSTOMER_ACCOUNT_NOT_FOUND",
@@ -200,6 +207,18 @@ export async function updateStoreCart(token, account, input, dependencies = {}) 
     credentials.tokenHash,
     credentials.accountId,
     validateCartConfiguration(input),
+  );
+  const cart = unwrap(result);
+  await deleteReplacedPrivatePrescription(result.removedCloudinary, dependencies);
+  return cart;
+}
+
+export async function selectCartClinicalPrescription(token, account, input, dependencies = {}) {
+  if (!account) throwReason("ACCOUNT_REQUIRED_FOR_PRESCRIPTION");
+  const credentials = access(token, account);
+  const id = validateExternalPrescriptionId(input?.prescriptionId);
+  const result = await (dependencies.saveCartClinicalPrescription ?? saveCartClinicalPrescription)(
+    credentials.tokenHash, credentials.accountId, id, input?.replaceExisting === true,
   );
   const cart = unwrap(result);
   await deleteReplacedPrivatePrescription(result.removedCloudinary, dependencies);

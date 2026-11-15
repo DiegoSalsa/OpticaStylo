@@ -17,6 +17,7 @@ import { ensureStoreCart, formatClp, readStoreResponse, STORE_CART_CHANGED_EVENT
 import { opticalData, prescriptionFields, readCartDraft, writeCartDraft } from "@/utils/store-cart-draft";
 
 import PrescriptionImageInput from "./prescription-image-input";
+import CartClinicalPrescription from "./cart-clinical-prescription";
 import { MAX_PRESCRIPTION_IMAGE_BYTES, PRESCRIPTION_IMAGE_ACCEPT } from "@/utils/prescription-camera";
 
 
@@ -36,7 +37,7 @@ function mountName(item, items) {
     ?? "Marco seleccionado";
 }
 
-export default function CartExperience({ accountProfile } = {}) {
+export default function CartExperience({ accountProfile, clinicalPrescriptions = [], preferredPrescription } = {}) {
   const Root = accountProfile ? "section" : "main";
   const ordersHref = accountProfile ? "/cuenta?seccion=pedidos" : null;
   const router = useRouter();
@@ -347,6 +348,22 @@ export default function CartExperience({ accountProfile } = {}) {
         </article>}
 
         {prescriptionRequired && <article className="cart-card prescription-card" id="receta">
+          {clinicalPrescriptions.length > 0 && <CartClinicalPrescription
+            key={cart.id}
+            prescriptions={clinicalPrescriptions}
+            cart={cart}
+            preferredId={preferredPrescription}
+            disabled={status === "saving" || Boolean(prescriptionImage)}
+            onSelected={(updated) => {
+              setCart(updated);
+              setPrescriptionDraft(null);
+              setFields(prescriptionFields(null));
+              setPrescriptionDirty(false);
+              setNotice("Receta clínica seleccionada para esta compra.");
+              setError("");
+            }}
+          />}
+          {cart.clinicalPrescriptionId && <p role="status">Estás usando una receta de tu cuenta.</p>}
           <div className="cart-card-heading">
             <div>
               <h2>Receta óptica obligatoria</h2>

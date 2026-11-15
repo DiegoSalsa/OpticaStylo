@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { findActiveAccountPrescription } from "./customer-clinical-repository.js";
 import {findCustomerByNormalizedRut} from "./customer-identity.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
@@ -195,6 +196,24 @@ function cloudinaryAsset(row) {
     assetId: row.cloudinary_asset_id, format: row.cloudinary_format,
     publicId: row.cloudinary_public_id, version: Number(row.cloudinary_version),
   } : null;
+}
+
+export async function saveCartClinicalPrescription(tokenHash, accountId, id, replaceExisting) {
+  return retryTransaction(prisma, async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return locked;
+    const prescription = await findActiveAccountPrescription(accountId, id, client);
+    if (!prescription) return { reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE" };
+    const previous = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
+    if (previous && !replaceExisting) return { reason: "CONFIRM_PRESCRIPTION_REPLACEMENT" };
+
+    await client.store_carts.update({
+      data: { clinical_prescription_id: prescription.id, customer_account_id: accountId },
+      where: { id: locked.cart.id },
+    });
+    if (previous) await client.external_prescriptions.delete({ where: { id: previous.id } });
+    return { cart: await loadCart(client, tokenHash, accountId), removedCloudinary: cloudinaryAsset(previous) };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function configureStoreCart(tokenHash, accountId, configuration) {
