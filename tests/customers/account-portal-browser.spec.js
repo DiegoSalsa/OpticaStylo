@@ -78,3 +78,25 @@ test("una ficha caída y un cierre fallido dejan abierta la cuenta con un mensaj
   await expect(page.getByText(/No pudimos cerrar tu sesión/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Hola, Cliente" })).toBeVisible();
 });
+
+test("un fallo al actualizar pedidos oculta el estado vacío anterior", async ({ page }) => {
+  let linked = false;
+  await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
+  await page.route("**/api/store/orders?*", (route) => linked
+    ? fail(route, "No pudimos actualizar tus pedidos.")
+    : ok(route, { items: [], page: 1, totalPages: 0 }));
+  await page.route("**/api/store/accounts/me/orders-link/request-code", (route) => ok(route, { challengeId: "fixture", message: "Consulta el correo de la compra." }));
+  await page.route("**/api/store/accounts/me/orders-link", (route) => {
+    linked = true;
+    return ok(route, { linked: true });
+  });
+  await page.goto("/cuenta?seccion=pedidos");
+  await expect(page.getByRole("heading", { name: "Aún no tienes pedidos" })).toBeVisible();
+  await page.getByText("Recuperar una compra anterior como invitado", { exact: true }).click();
+  await page.getByRole("textbox", { name: "Número del pedido anterior" }).fill("42");
+  await page.getByRole("button", { name: "Solicitar código del pedido" }).click();
+  await page.getByRole("textbox", { name: "Código del pedido anterior" }).fill("123456");
+  await page.getByRole("button", { name: "Confirmar recuperación" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "No pudimos actualizar tus pedidos." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Aún no tienes pedidos" })).toHaveCount(0);
+});
