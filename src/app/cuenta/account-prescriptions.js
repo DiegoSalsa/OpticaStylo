@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { rememberClinicalPrescription } from "@/utils/store-cart-draft";
+import { ensureStoreCart } from "@/utils/store-client";
 
 const labels = { REPLACED: "Reemplazada", VOIDED: "Anulada" };
 const date = (value) => new Date(value).toLocaleDateString("es-CL", { timeZone: "America/Santiago" });
@@ -10,7 +14,28 @@ function EyeValues({ label, eye }) {
   return <small>{label} · Esfera {value(eye.sphere)} · Cilindro {value(eye.cylinder)} · Eje {value(eye.axis)} · Adición {value(eye.addition)}</small>;
 }
 
-export default function AccountPrescriptions({ prescriptions, onUse, standalone }) {
+export default function AccountPrescriptions({ accountId, prescriptions, standalone }) {
+  const router = useRouter();
+  const pending = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function chooseRecipeForCart(prescriptionId) {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const cart = await ensureStoreCart({ forShopping: true });
+      rememberClinicalPrescription(accountId, cart.id, prescriptionId);
+      router.push("/cuenta?seccion=carrito");
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
+  }
   return <section id="recetas">
     {standalone ? <h2>Mis recetas</h2> : <h3>Mis recetas</h3>}
     {prescriptions.active.length === 0
@@ -21,7 +46,7 @@ export default function AccountPrescriptions({ prescriptions, onUse, standalone 
           <summary>Receta vigente · {date(prescription.issuedAt)}</summary>
           <div className="account-card-actions">
             <a className="button button--secondary" href={"/api/store/accounts/me/clinical/prescriptions/" + prescription.id + "/pdf"} download>Descargar PDF</a>
-            <button className="button button--primary" type="button" onClick={() => onUse(prescription.id)}>Usar en mi carrito</button>
+            <button className="button button--primary" type="button" disabled={busy} onClick={() => chooseRecipeForCart(prescription.id)}>{busy ? "Abriendo carrito…" : "Usar en mi carrito"}</button>
           </div>
           {prescription.professional && <p>Profesional: {prescription.professional.firstName} {prescription.professional.lastName}</p>}
           <EyeValues label="Ojo derecho" eye={prescription.rightEye} />
@@ -30,6 +55,7 @@ export default function AccountPrescriptions({ prescriptions, onUse, standalone 
           {prescription.fulfillmentNotes && <small>Preparación: {prescription.fulfillmentNotes}</small>}
         </details>
       ))}
+    {error && <p className="inline-error" role="alert">{error}</p>}
     {prescriptions.history.length > 0 && <>
       <h4>Versiones anteriores</h4>
       {prescriptions.history.map((prescription) => <article className="prescription-row" key={prescription.id ?? (prescription.issuedAt + prescription.status)}>

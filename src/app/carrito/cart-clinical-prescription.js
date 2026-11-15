@@ -2,13 +2,14 @@
 
 import { useRef, useState } from "react";
 import { readStoreResponse } from "@/utils/store-client";
+import { readPendingClinicalPrescription, rememberClinicalPrescription } from "@/utils/store-cart-draft";
 
 function dateLabel(value) {
   return new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date(value));
 }
 
-export default function CartClinicalPrescription({ prescriptions, cart, preferredId, disabled, onSelected, onPending }) {
-  const [selectedId, setSelectedId] = useState(preferredId ?? cart.clinicalPrescriptionId ?? "");
+export default function CartClinicalPrescription({ prescriptions, cart, accountId, disabled, onSelected, onPending }) {
+  const [selectedId, setSelectedId] = useState(() => readPendingClinicalPrescription(accountId, cart.id) ?? cart.clinicalPrescriptionId ?? "");
   const [replace, setReplace] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -27,6 +28,7 @@ export default function CartClinicalPrescription({ prescriptions, cart, preferre
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prescriptionId: selected, replaceExisting: replace }),
       }));
+      rememberClinicalPrescription(accountId, cart.id);
       onSelected(result);
       setReplace(false);
     } catch (requestError) {
@@ -42,7 +44,12 @@ export default function CartClinicalPrescription({ prescriptions, cart, preferre
     <legend>Usar una receta de mi cuenta</legend>
     <label className="field field-full">
       <span>Receta clínica vigente</span>
-      <select value={selected} onChange={(event) => setSelectedId(event.target.value)}>
+      <select value={selected} onChange={(event) => {
+        const value = event.target.value;
+        rememberClinicalPrescription(accountId, cart.id, value === cart.clinicalPrescriptionId ? null : value);
+        setSelectedId(value);
+        setReplace(false);
+      }}>
         <option value="">Elige una receta</option>
         {prescriptions.map(({ id, issuedAt, professional }) => <option key={id} value={id}>
           {dateLabel(issuedAt)}{professional && " · " + professional.firstName + " " + professional.lastName}

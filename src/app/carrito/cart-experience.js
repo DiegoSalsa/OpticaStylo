@@ -38,7 +38,7 @@ function mountName(item, items) {
     ?? "Marco seleccionado";
 }
 
-export default function CartExperience({ accountProfile, clinicalPrescriptions = [], preferredPrescription } = {}) {
+export default function CartExperience({ accountProfile, clinicalPrescriptions = [] } = {}) {
   const Root = accountProfile ? "section" : "main";
   const ordersHref = accountProfile ? "/cuenta?seccion=pedidos" : null;
   const router = useRouter();
@@ -326,7 +326,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
   }
 
   if (!cart?.items.length) {
-    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>{preferredPrescription ? "Agrega cristales con receta para usar la que seleccionaste." : "Explora los productos publicados y agrega los que quieras revisar."}</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
+    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
   }
 
   return <Root className="cart-page">
@@ -359,7 +359,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
             key={cart.id}
             prescriptions={clinicalPrescriptions}
             cart={cart}
-            preferredId={preferredPrescription}
+            accountId={accountProfile.id}
             disabled={status === "saving" || Boolean(prescriptionImage)}
             onPending={(pending) => setStatus(pending ? "saving" : "ready")}
             onSelected={(updated) => {

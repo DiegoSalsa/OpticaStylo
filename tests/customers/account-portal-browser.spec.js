@@ -48,6 +48,8 @@ test("reserva y carrito conservan el panel y una receta de la cuenta llega al ca
   await page.getByRole("button", { name: "Usar en mi carrito" }).click();
   await expect(menu.getByRole("link", { name: "Mi carrito" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("combobox", { name: "Receta clínica vigente" })).toHaveValue(recipeId);
+  await page.reload();
+  await expect(page.getByRole("combobox", { name: "Receta clínica vigente" })).toHaveValue(recipeId);
   await page.getByRole("button", { name: "Usar esta receta" }).click();
   await expect(page.getByText("Estás usando una receta de tu cuenta.")).toBeVisible();
 
