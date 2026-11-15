@@ -183,7 +183,7 @@ test("cliente autenticado: registro público, receta y pedido propio", async ({ 
   await page.goto("/cuenta");
   await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
   const rut = test.info().project.name === "desktop" ? "22222222-2" : "33333333-3";
-  for (const [field, value] of Object.entries({ rut, firstNames: "Cliente", lastNames: "Prueba", phone: "+56912345678", email: `${test.info().project.name}@example.invalid`, address: "Calle prueba 123", password: "ClavePruebaSegura2026!" })) {
+  for (const [field, value] of Object.entries({ rut, birthDate: "1990-01-01", firstNames: "Cliente", lastNames: "Prueba", phone: "+56912345678", email: `${test.info().project.name}@example.invalid`, address: "Calle prueba 123", password: "ClavePruebaSegura2026!" })) {
     await page.locator(`form [name="${field}"]`).fill(value);
   }
   await page.getByRole("button", { name: "Crear cuenta segura" }).click();
