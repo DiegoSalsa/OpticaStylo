@@ -93,7 +93,8 @@ for (const occupied of [false, true]) {
     await expect(page.getByLabel("Profesional", { exact: true })).toHaveValue(professionalId);
     await expect(page.getByLabel("Fecha", { exact: true })).toHaveValue(date);
     await expect(page.locator("#rut")).toHaveValue("");
-    expect(await page.evaluate((key) => sessionStorage.getItem(key), draftKey)).toBeNull();
+    const saved = await page.evaluate((key) => JSON.parse(sessionStorage.getItem(key)), draftKey);
+    expect(saved).toEqual(occupied ? null : draft);
     const confirm = page.getByRole("button", { name: "Confirmar reserva" });
     if (occupied) {
       await expect(page.getByRole("status").filter({ hasText: "ya no está disponible" })).toBeVisible();
@@ -131,6 +132,62 @@ test("la agenda permite reservar como invitado y para un tercero sin rellenar da
   await expect(page.getByRole("button", { name: "Usar datos de mi cuenta" })).toHaveCount(0);
   const submitted = await submitBooking(page, { ...account, firstNames: "Otra persona", email: "otro@example.invalid" });
   expect(submitted.patient).toMatchObject({ rut: "12.345.684-K", firstNames: "Otra persona", email: "otro@example.invalid" });
+});
+
+test("la recarga y el retroceso conservan el borrador y vuelven a consultar el horario", async ({ page }) => {
+  const occupy = await mockBooking(page);
+  await selectSlot(page);
+  const availability = () => page.waitForResponse((response) => response.url().includes(`/availability?date=${date}`));
+  const reloading = availability();
+  await page.reload();
+  await reloading;
+  const confirm = page.getByRole("button", { name: "Confirmar reserva" });
+  await expect(confirm).toBeEnabled();
+
+  await page.locator("#rut").fill("123456785");
+  await page.getByRole("button", { name: "Iniciar sesión", exact: true }).click();
+  await page.getByRole("link", { name: "¿Olvidaste tu contraseña?" }).click();
+  await expect(page.getByRole("heading", { name: "Recupera tu contraseña" })).toBeVisible();
+  occupy();
+  const returning = availability();
+  await page.goBack();
+  await returning;
+  await expect(confirm).toBeDisabled();
+  await expect(page.getByRole("status").filter({ hasText: "ya no está disponible" })).toBeVisible();
+});
+
+test("una pestaña independiente recupera la contraseña con un formulario de reserva nuevo", async ({ page, context }) => {
+  await mockBooking(page);
+  await selectSlot(page);
+  await page.locator("#rut").fill("123456785");
+  await page.getByRole("button", { name: "Iniciar sesión", exact: true }).click();
+  const link = page.getByRole("link", { name: "¿Olvidaste tu contraseña?" });
+  await expect(link).toHaveAttribute("rel", "noopener");
+  await expect(page.getByText("Abre la recuperación en esta pestaña para conservar tu hora.")).toBeVisible();
+  const other = await context.newPage();
+  try {
+    await mockBooking(other);
+    await other.goto(await link.getAttribute("href"));
+    await other.getByRole("link", { name: "Volver a la reserva" }).click();
+    await expect(other.getByLabel("Profesional", { exact: true })).toHaveValue("");
+    await expect(other.getByRole("button", { name: "Confirmar reserva" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Confirmar reserva" })).toBeEnabled();
+  } finally {
+    await other.close();
+  }
+});
+
+test("el regreso ignora y elimina borradores caducados o inválidos", async ({ page }) => {
+  await mockBooking(page);
+  await page.goto("/reservar");
+  const expired = JSON.stringify({ professionalId, date, startAt, expiresAt: Date.parse("2030-10-09T15:59:59Z") });
+  for (const data of [expired, "{JSON inválido", JSON.stringify({ professionalId: "../../", date, startAt, expiresAt: Date.parse("2030-10-09T16:30:00Z") })]) {
+    await page.evaluate(([key, value]) => sessionStorage.setItem(key, value), [draftKey, data]);
+    await page.reload();
+    await expect(page.getByLabel("Profesional", { exact: true })).toHaveValue("");
+    await expect(page.getByRole("button", { name: "Confirmar reserva" })).toBeDisabled();
+    await expect.poll(() => page.evaluate((key) => sessionStorage.getItem(key), draftKey)).toBeNull();
+  }
 });
 
 test("el RUT conserva entradas inválidas y entrega el valor visible tanto controlado como no controlado", async ({ page }) => {

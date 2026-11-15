@@ -7,7 +7,7 @@ import Icon from "@/components/ui/icon";
 import { normalizeChileanRut } from "@/utils/chilean-rut";
 import { readStoreResponse } from "@/utils/store-client";
 import { PUBLIC_BOOKING_CONFIRMATION_NOTE } from "./booking-copy";
-import { saveBookingDraft, takeBookingDraft } from "./booking-draft";
+import { clearBookingDraft, readBookingDraft, saveBookingDraft } from "./booking-draft";
 import BookingLogin from "./booking-login";
 import styles from "./booking.module.css";
 
@@ -114,7 +114,10 @@ export default function BookingExperience() {
         if (previousStartAt) {
           const availableSlot = data.slots.find((slot) => Date.parse(slot.startAt) === Date.parse(previousStartAt));
           setSelectedSlot(availableSlot ?? null);
-          if (!availableSlot) setSelectionNotice("La hora que habías seleccionado ya no está disponible. Elige otra hora.");
+          if (!availableSlot) {
+            clearBookingDraft();
+            setSelectionNotice("La hora que habías seleccionado ya no está disponible. Elige otra hora.");
+          }
         }
         setStatus("ready");
       }
@@ -125,31 +128,64 @@ export default function BookingExperience() {
 
   useEffect(() => {
     const controller = new AbortController();
+    let knownProfessionals = null;
+    function restoreSelection(data) {
+      const draft = readBookingDraft();
+      if (!draft) {
+        setSelectedSlot(null);
+        setStatus("ready");
+        return;
+      }
+      if (!data.some((item) => item.id === draft.professionalId) || draft.date < chileDate(1) || draft.date > chileDate(60)) {
+        clearBookingDraft();
+        setSelectedSlot(null);
+        setSlots([]);
+        setSelectionNotice("La hora que habías seleccionado ya no está disponible. Elige otra hora.");
+        setStatus("ready");
+        return;
+      }
+      setProfessionalId(draft.professionalId);
+      setSelectedDate(draft.date);
+      return loadSlots(draft.professionalId, draft.date, draft.startAt);
+    }
+
+    function onPageShow(event) {
+      // Al volver desde la caché de navegación se conserva la vista, pero no su disponibilidad.
+      if (event.persisted && knownProfessionals) void restoreSelection(knownProfessionals);
+    }
+    window.addEventListener("pageshow", onPageShow);
     fetch("/api/store/booking/professionals", { signal: controller.signal })
       .then(readApi)
       .then((data) => {
         if (controller.signal.aborted) return;
+        knownProfessionals = data;
         setProfessionals(data);
-        const draft = takeBookingDraft();
-        if (!draft) { setStatus("ready"); return; }
-        if (!data.some((item) => item.id === draft.professionalId) || draft.date < chileDate(1)) {
-          setSelectionNotice("La hora que habías seleccionado ya no está disponible. Elige otra hora.");
-          setStatus("ready");
-          return;
-        }
-        setProfessionalId(draft.professionalId);
-        setSelectedDate(draft.date);
-        return loadSlots(draft.professionalId, draft.date, draft.startAt);
+        return restoreSelection(data);
       })
       .catch((error) => { if (!controller.signal.aborted) { setMessage(error.message); setStatus("error"); } });
     return () => {
       controller.abort();
       availabilityRequest.current?.abort();
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, [loadSlots]);
 
-  function chooseProfessional(value) { setProfessionalId(value); loadSlots(value, selectedDate); }
-  function chooseDate(value) { setSelectedDate(value); loadSlots(professionalId, value); }
+  function chooseProfessional(value) {
+    clearBookingDraft();
+    setProfessionalId(value);
+    loadSlots(value, selectedDate);
+  }
+
+  function chooseDate(value) {
+    clearBookingDraft();
+    setSelectedDate(value);
+    loadSlots(professionalId, value);
+  }
+
+  function chooseSlot(slot) {
+    saveBookingDraft({ professionalId, date: selectedDate, startAt: slot.startAt });
+    setSelectedSlot(slot);
+  }
 
   async function submitBooking(event) {
     event.preventDefault();
@@ -169,6 +205,7 @@ export default function BookingExperience() {
         body: JSON.stringify({ acceptsPrivacy: form.get("acceptsPrivacy") === "on", patient, professionalId, startAt: selectedSlot.startAt, website: form.get("website") }),
         headers: { "content-type": "application/json" }, method: "POST",
       }));
+      clearBookingDraft();
       setConfirmation(data.appointment); setStatus("confirmed");
     } catch (error) {
       setIdentityConflict(error.code === "PUBLIC_BOOKING_IDENTITY_NOT_VERIFIED");
@@ -189,7 +226,7 @@ export default function BookingExperience() {
         {status === "error" && <div className={styles.inlineError}><Icon name="shield" /><p>{message}</p></div>}
         {status !== "loading-professionals" && <div className={styles.field}><label htmlFor="professional">Profesional</label><select id="professional" onChange={(event) => chooseProfessional(event.target.value)} required value={professionalId}><option value="">Selecciona un profesional</option>{professionals.map((item) => <option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></div>}
         <div className={styles.field}><label htmlFor="booking-date">Fecha</label><input id="booking-date" max={chileDate(60)} min={chileDate(1)} onChange={(event) => chooseDate(event.target.value)} required type="date" value={selectedDate} /></div>
-        <div className={styles.slotArea}><div className={styles.slotLabel}><span>Horas disponibles</span>{selectedDate && <small>{formatLongDate(selectedDate)}</small>}</div>{status === "loading-slots" && <div className={styles.inlineState}>Consultando agenda…</div>}{status === "error-slots" && <div className={styles.inlineError}><Icon name="shield" /><p>{message}</p></div>}{status === "ready" && professionalId && selectedDate && slots.length === 0 && <div className={styles.inlineState}>No hay horas disponibles para esta fecha.</div>}{slots.length > 0 && <div className={styles.slots}>{slots.map((slot) => <button className={selectedSlot?.startAt === slot.startAt ? styles.slotActive : ""} key={slot.startAt} onClick={() => setSelectedSlot(slot)} type="button">{formatTime(slot.startAt)}</button>)}</div>}</div>
+        <div className={styles.slotArea}><div className={styles.slotLabel}><span>Horas disponibles</span>{selectedDate && <small>{formatLongDate(selectedDate)}</small>}</div>{status === "loading-slots" && <div className={styles.inlineState}>Consultando agenda…</div>}{status === "error-slots" && <div className={styles.inlineError}><Icon name="shield" /><p>{message}</p></div>}{status === "ready" && professionalId && selectedDate && slots.length === 0 && <div className={styles.inlineState}>No hay horas disponibles para esta fecha.</div>}{slots.length > 0 && <div className={styles.slots}>{slots.map((slot) => <button className={selectedSlot?.startAt === slot.startAt ? styles.slotActive : ""} key={slot.startAt} onClick={() => chooseSlot(slot)} type="button">{formatTime(slot.startAt)}</button>)}</div>}</div>
         {selectionNotice && !selectedSlot && <p className={styles.inlineState} role="status">{selectionNotice}</p>}
         <div className={styles.summary}><Icon name="calendar" /><div><small>Tu selección</small><strong>{selectedProfessional ? `${selectedProfessional.firstName} ${selectedProfessional.lastName}` : "Selecciona un profesional"}</strong><span>{selectedSlot ? `${formatLongDate(selectedDate)}, ${formatTime(selectedSlot.startAt)}` : "Selecciona fecha y hora"}</span></div></div>
       </section>
@@ -200,11 +237,7 @@ export default function BookingExperience() {
           <label htmlFor="rut">RUT</label>
           <RutInput id="rut" name="rut" form="booking-details" onChange={changeRut} placeholder="12.345.678-5" required value={rut} />
         </div>
-        {normalizedRut && account === null && (
-          <BookingLogin onLogin={setAccount} onRecovery={() => saveBookingDraft({
-            professionalId, date: selectedDate, startAt: selectedSlot?.startAt,
-          })} />
-        )}
+        {normalizedRut && account === null && <BookingLogin onLogin={setAccount} />}
         {matchesAccount && (
           <div className={styles.accountHelp}>
             <button className="button button--secondary" onClick={useAccountDetails} type="button">Usar datos de mi cuenta</button>
