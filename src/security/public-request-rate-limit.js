@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { reservePublicRequestQuota } from "../repositories/public-request-rate-limit-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { getRequestMetadata } from "../utils/request-metadata.js";
+import { PASSWORD_RESET_RESEND_SECONDS } from "../utils/store-password-reset-policy.js";
 
 export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   CUSTOMER_DIRECTORY:"customer_directory",
@@ -17,6 +18,7 @@ export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   STORE_CART_CREATION: "store_cart_creation",
   STORE_LOGIN: "store_login",
   STORE_PASSWORD_RESET_REQUEST: "store_password_reset_request",
+  STORE_PASSWORD_RESET_RESEND: "store_password_reset_resend",
   STORE_PASSWORD_RESET_CONFIRM: "store_password_reset_confirm",
   STORE_PATIENT_LINK: "store_patient_link",
   // Separar la cuota de ingreso del código para contener intentos de fuerza bruta.
@@ -29,6 +31,10 @@ const LIMITS = Object.freeze({
   store_commerce_link:{identifier:{maximumAttempts:5,windowSeconds:900},network:{maximumAttempts:12,windowSeconds:900}},
   store_commerce_verify:{identifier:{maximumAttempts:10,windowSeconds:900},network:{maximumAttempts:25,windowSeconds:900}},
   store_password_reset_request: { identifier: { maximumAttempts: 3, windowSeconds: 900 }, network: { maximumAttempts: 12, windowSeconds: 900 } },
+  store_password_reset_resend: {
+    identifier: { maximumAttempts: 1, windowSeconds: PASSWORD_RESET_RESEND_SECONDS },
+    network: { maximumAttempts: 12, windowSeconds: PASSWORD_RESET_RESEND_SECONDS },
+  },
   store_password_reset_confirm: { identifier: { maximumAttempts: 5, windowSeconds: 900 }, network: { maximumAttempts: 25, windowSeconds: 900 } },
   [PUBLIC_REQUEST_LIMIT_OPERATIONS.INTERNAL_LOGIN]: Object.freeze({
     identifier: Object.freeze({ maximumAttempts: 4, windowSeconds: 15 * 60 }),

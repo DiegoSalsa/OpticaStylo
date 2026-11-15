@@ -20,7 +20,10 @@ const OTP_TERMINAL_STATUSES = new Set([
 // Eliminar el código únicamente después de que el correo deja de ser reintentable.
 export function sanitizeTransactionalEmailPayload(templateCode, payload, status) {
   const sanitized = { ...(payload ?? {}) };
-  if (OTP_EMAIL_TEMPLATE_CODES.includes(templateCode) && OTP_TERMINAL_STATUSES.has(status)) delete sanitized.code;
+  if (OTP_EMAIL_TEMPLATE_CODES.includes(templateCode) && OTP_TERMINAL_STATUSES.has(status)) {
+    delete sanitized.code;
+    if (templateCode === "CUSTOMER_PASSWORD_RESET") delete sanitized.encryptedCode;
+  }
   return sanitized;
 }
 
@@ -39,6 +42,7 @@ export function mapEmail(row, { includeOtpCode = false } = {}) {
   if (OTP_EMAIL_TEMPLATE_CODES.includes(row.template_code) && !includeOtpCode) {
     delete payload.code;
     delete payload.challengeId;
+    if (row.template_code === "CUSTOMER_PASSWORD_RESET") delete payload.encryptedCode;
   }
   return {
     accountId: row.account_id, appointmentId: row.appointment_id,
@@ -236,7 +240,9 @@ export async function getTransactionalEmailEligibility(email, dependencies = {})
   const now = dependencies.now?.() ?? new Date();
   if (email.templateCode === "CUSTOMER_PASSWORD_RESET") {
     const challengeId = email.payload?.challengeId;
-    if (email.deliveryMode !== "live" || typeof challengeId !== "string" || !email.accountId || !email.payload?.code) {
+    const hasCode = typeof email.payload?.encryptedCode === "string"
+      || (typeof email.payload?.code === "string" && /^\d{6}$/.test(email.payload.code));
+    if (email.deliveryMode !== "live" || typeof challengeId !== "string" || !email.accountId || !hasCode) {
       return { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
     }
     const proof = await database.customer_password_resets.findFirst({

@@ -54,6 +54,7 @@ Object.assign(env, {
   CUSTOMER_COMMERCIAL_TEST_MODE:customersMode?"true":"false",
   CUSTOMER_COMMERCE_TEST_MAILBOX:customersMode?"true":"false",
   CUSTOMER_COMMERCE_OTP_SECRET:randomBytes(32).toString("hex"),
+  CUSTOMER_PASSWORD_RESET_ENCRYPTION_KEY:randomBytes(32).toString("hex"),
   CLINICAL_DEMO_MODE: clinicalMode && process.argv.includes("--demo") ? "true" : "false",
   DEPLOYMENT_ENVIRONMENT: "university", UNIVERSITY_INSECURE_HTTP_ALLOWED: "true",
 });

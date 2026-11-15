@@ -11,6 +11,7 @@ import {
   createResendEmailProvider,
 } from "../integrations/email/resend-email-provider.js";
 import { OTP_EMAIL_TEMPLATE_CODES, renderTransactionalEmail } from "../integrations/email/transactional-email-template.js";
+import { decryptPasswordResetCode, PasswordResetEncryptionConfigError } from "../utils/store-password-reset-code.js";
 import {
   claimTransactionalEmailBatch,
   completeTransactionalEmail,
@@ -141,10 +142,6 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
     }
 
     try {
-      const rendered = (dependencies.renderEmail ?? renderTransactionalEmail)(email, {
-        mode: config.mode,
-        timeZone: config.timeZone,
-      });
       // Revalidar el OTP justo antes de llamar al proveedor para suprimir desafíos obsoletos.
       if (OTP_EMAIL_TEMPLATE_CODES.includes(email.templateCode)) {
         const current = await (dependencies.getEmailEligibility ?? getTransactionalEmailEligibility)(email);
@@ -154,6 +151,15 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
           continue;
         }
       }
+      let renderInput = email;
+      if (email.templateCode === "CUSTOMER_PASSWORD_RESET" && email.payload.encryptedCode) {
+        const code = decryptPasswordResetCode(email.payload.challengeId, email.payload.encryptedCode, dependencies.environment);
+        renderInput = { ...email, payload: { code } };
+      }
+      const rendered = (dependencies.renderEmail ?? renderTransactionalEmail)(renderInput, {
+        mode: config.mode,
+        timeZone: config.timeZone,
+      });
       const recipient = config.mode === "test"
         ? config.testRecipient
         : email.recipientEmail;
@@ -172,9 +178,14 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
       summary.sent += 1;
       logTransition(logger, email.id, status);
     } catch (error) {
-      const providerError = error instanceof EmailProviderError
-        ? error
-        : new EmailProviderError({ code: "template_or_worker_error", retryable: false });
+      const configurationMissing = error instanceof PasswordResetEncryptionConfigError;
+      const providerError = error instanceof EmailProviderError ? error : new EmailProviderError({
+        code: configurationMissing ? "password_reset_encryption_key_unavailable" : "template_or_worker_error",
+        retryable: configurationMissing,
+      });
+      const errorCode = email.templateCode === "CUSTOMER_PASSWORD_RESET" && error instanceof EmailProviderError
+        ? (providerError.retryable ? "password_reset_delivery_retryable" : "password_reset_delivery_rejected")
+        : providerError.code;
       const delaySeconds = calculateRetryDelaySeconds({
         attemptCount: email.attemptCount,
         baseSeconds: config.retryBaseSeconds,
@@ -186,7 +197,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
         email.id,
         workerId,
         {
-          errorCode: providerError.code,
+          errorCode,
           maxAttempts: config.maxAttempts,
           nextAttemptAt: new Date((dependencies.now?.() ?? Date.now()) + delaySeconds * 1_000),
           permanent: !providerError.retryable,
@@ -194,7 +205,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
       );
       if (failed?.status === "DEAD_LETTER") summary.deadLetter += 1;
       else summary.failed += 1;
-      logTransition(logger, email.id, failed?.status ?? "FAILED", providerError.code);
+      logTransition(logger, email.id, failed?.status ?? "FAILED", errorCode);
     }
   }
 
@@ -210,7 +221,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
 // Procesar inmediatamente un correo puntual para no depender del worker periódico.
 export async function processTransactionalEmailById(emailId, dependencies = {}) {
-  return processTransactionalEmailBatch({ emailId, triggerSource: "interactive" }, dependencies);
+  return processTransactionalEmailBatch({ emailId, triggerSource: "manual" }, dependencies);
 }
 
 export async function getTransactionalEmailOperations(actor, dependencies = {}) {

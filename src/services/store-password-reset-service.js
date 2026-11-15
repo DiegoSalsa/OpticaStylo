@@ -1,41 +1,80 @@
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
+import { setTimeout as wait } from "node:timers/promises";
 import { hashPassword } from "../auth/password.js";
 import { getTransactionalEmailConfig } from "../config/transactional-email.js";
 import { consumePasswordReset, queuePasswordReset } from "../repositories/store-password-reset-repository.js";
 import { AppError } from "../utils/app-error.js";
-import { commerceCode, commerceCodeHash } from "../utils/commerce-otp.js";
+import { commerceCode, commerceCodeHash, verifyCommerceCode } from "../utils/commerce-otp.js";
+import { encryptPasswordResetCode, PasswordResetEncryptionConfigError } from "../utils/store-password-reset-code.js";
+import { PASSWORD_RESET_RESEND_SECONDS } from "../utils/store-password-reset-policy.js";
 import { validateStorePasswordReset } from "../validations/store-validation.js";
 import { processTransactionalEmailById } from "./transactional-email-service.js";
 
-export function preparePasswordReset(email, schedule, dependencies = {}) {
+function unavailable() {
+  return new AppError({
+    code: "PASSWORD_RESET_EMAIL_UNAVAILABLE",
+    message: "La recuperación por correo no está disponible. Comunícate con la óptica.",
+    status: 503,
+  });
+}
+
+function responseDelay(delay = wait) {
+  const deadline = performance.now() + randomInt(220, 321);
+  return () => delay(Math.max(0, deadline - performance.now()));
+}
+
+export async function preparePasswordReset(email, schedule, dependencies = {}) {
+  if ((dependencies.getEmailConfig ?? getTransactionalEmailConfig)().mode !== "live") throw unavailable();
+
+  // Atenuar diferencias habituales entre buscar un correo y confirmar la escritura.
+  const delayResponse = responseDelay(dependencies.wait);
   const challengeId = randomUUID();
   const code = commerceCode();
-  if ((dependencies.getEmailConfig ?? getTransactionalEmailConfig)().mode !== "live") {
-    throw new AppError({
-      code: "PASSWORD_RESET_EMAIL_UNAVAILABLE",
-      message: "La recuperación por correo no está disponible. Comunícate con la óptica.",
-      status: 503,
+  let emailId;
+  try {
+    const protect = (value) => ({
+      codeHash: commerceCodeHash(`password-reset:${challengeId}`, value),
+      encryptedCode: encryptPasswordResetCode(challengeId, value, dependencies.environment),
+    });
+    // Validar ambas claves para cualquier correo. Nunca enviar los mismos dígitos que el desafío reemplazado.
+    const candidate = protect(code);
+    const protectCode = (previous) => {
+      if (!previous || !verifyCommerceCode(`password-reset:${previous.id}`, code, previous.code_hash)) return candidate;
+      const replacement = (Number(code) + randomInt(1, 1_000_000)) % 1_000_000;
+      return protect(String(replacement).padStart(6, "0"));
+    };
+    const expiresAt = new Date(Date.now() + 10 * 60_000);
+    emailId = await (dependencies.queueReset ?? queuePasswordReset)({ challengeId, protectCode, email, expiresAt });
+  } catch (error) {
+    if (error instanceof PasswordResetEncryptionConfigError) throw unavailable();
+    throw error;
+  } finally {
+    await delayResponse();
+  }
+  if (emailId) {
+    schedule(async () => {
+      try {
+        await (dependencies.sendEmail ?? processTransactionalEmailById)(emailId);
+      } catch {
+        // El worker periódico puede recuperar el mensaje y cualquier bloqueo abandonado.
+        (dependencies.logger ?? console).error("Falló el despacho inmediato del correo de recuperación.");
+      }
     });
   }
-  // Validar la configuración del secreto antes de responder, incluso para correos desconocidos.
-  commerceCodeHash(`password-reset:${challengeId}`, code);
-  const expiresAt = new Date(Date.now() + 10 * 60_000);
-
-  schedule(async () => {
-    const emailId = await (dependencies.queueReset ?? queuePasswordReset)({ challengeId, code, email, expiresAt });
-    if (emailId) await (dependencies.sendEmail ?? processTransactionalEmailById)(emailId);
-  });
-  return { challengeId };
+  return { challengeId, retryAfterSeconds: PASSWORD_RESET_RESEND_SECONDS };
 }
 
 export async function resetStorePassword(input, dependencies = {}) {
   const { challengeId, code, password } = validateStorePasswordReset(input);
+  const delayResponse = responseDelay(dependencies.wait);
   const updated = await (dependencies.consumeReset ?? consumePasswordReset)({
     challengeId,
     code,
     makePasswordHash: () => (dependencies.hashPassword ?? hashPassword)(password),
   });
   if (!updated) {
+    // Un identificador sintético y un código incorrecto deben fallar de forma parecida.
+    await delayResponse();
     throw new AppError({
       code: "PASSWORD_RESET_INVALID",
       message: "El código es incorrecto, venció o alcanzó su límite de intentos. Puedes solicitar uno nuevo.",

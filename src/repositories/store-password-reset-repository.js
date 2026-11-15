@@ -1,5 +1,5 @@
 import { prisma } from "../db/prisma.js";
-import { commerceCodeHash, verifyCommerceCode } from "../utils/commerce-otp.js";
+import { verifyCommerceCode } from "../utils/commerce-otp.js";
 
 export const PASSWORD_RESET_MAX_ATTEMPTS = 5;
 
@@ -11,7 +11,7 @@ async function lockAccount(client, id) {
   });
 }
 
-export async function queuePasswordReset({ challengeId, code, email, expiresAt }, database = prisma) {
+export async function queuePasswordReset({ challengeId, protectCode, email, expiresAt }, database = prisma) {
   return database.$transaction(async (client) => {
     const match = await client.customer_accounts.findFirst({
       where: { email, is_active: true },
@@ -22,14 +22,13 @@ export async function queuePasswordReset({ challengeId, code, email, expiresAt }
     if (!account?.is_active || account.email !== email) return null;
     const previous = await client.customer_password_resets.findUnique({
       where: { account_id: account.id },
-      select: { expires_at: true },
+      select: { id: true, code_hash: true },
     });
-    if (previous?.expires_at > expiresAt || expiresAt <= new Date()) return null;
-
+    const { codeHash, encryptedCode } = protectCode(previous);
     const proof = {
       id: challengeId,
       email: account.email,
-      code_hash: commerceCodeHash(`password-reset:${challengeId}`, code),
+      code_hash: codeHash,
       expires_at: expiresAt,
       attempt_count: 0,
       consumed_at: null,
@@ -43,7 +42,7 @@ export async function queuePasswordReset({ challengeId, code, email, expiresAt }
       data: {
         account_id: account.id,
         deduplication_key: `CUSTOMER_PASSWORD_RESET:${challengeId}`,
-        payload: { challengeId, code },
+        payload: { challengeId, encryptedCode },
         recipient_email: account.email,
         template_code: "CUSTOMER_PASSWORD_RESET",
       },

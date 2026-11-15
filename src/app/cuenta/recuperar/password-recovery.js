@@ -1,49 +1,91 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readStoreResponse } from "@/utils/store-client";
 
-function submitReset(endpoint, values) {
-  return fetch(`/api/store/accounts/password-reset/${endpoint}`, {
+async function submitReset(endpoint, values) {
+  const response = await fetch(`/api/store/accounts/password-reset/${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
-  }).then(readStoreResponse);
+  });
+  try {
+    return await readStoreResponse(response);
+  } catch (error) {
+    if (response.status === 429) error.retryAfterSeconds = Number(response.headers.get("Retry-After"));
+    throw error;
+  }
 }
 
-export default function PasswordRecovery() {
+export default function PasswordRecovery({ fromBooking }) {
   const [email, setEmail] = useState("");
   const [challengeId, setChallengeId] = useState("");
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [retryUntil, setRetryUntil] = useState(0);
+  const [clock, setClock] = useState(0);
+  const pending = useRef(false);
+  const retrySeconds = Math.max(0, Math.ceil((retryUntil - clock) / 1000));
+
+  useEffect(() => {
+    if (!retryUntil) return;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      setClock(now);
+      if (now >= retryUntil) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryUntil]);
+
+  function waitBeforeResend(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0) return;
+    const now = Date.now();
+    setClock(now);
+    setRetryUntil(now + seconds * 1000);
+  }
+
+  async function perform(operation, { requesting = false } = {}) {
+    if (pending.current) return;
+    pending.current = true;
+    setSaving(true);
+    setError("");
+    try {
+      await operation();
+    } catch (requestError) {
+      if (requesting) waitBeforeResend(requestError.retryAfterSeconds);
+      setError(requestError.message);
+    } finally {
+      pending.current = false;
+      setSaving(false);
+    }
+  }
+
+  function requestCode(address) {
+    if (Date.now() < retryUntil) return;
+    return perform(async () => {
+      setEmail(address);
+      const result = await submitReset("request", { email: address });
+      waitBeforeResend(result.retryAfterSeconds);
+      setChallengeId(result.challengeId);
+    }, { requesting: true });
+  }
 
   async function submit(event) {
     event.preventDefault();
-    if (saving) return;
+    if (pending.current) return;
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    setError("");
+    if (!challengeId) return requestCode(values.email);
     if (challengeId && values.password !== values.confirmPassword) {
       setError("Las contraseñas deben coincidir.");
       return;
     }
 
-    setSaving(true);
-    try {
-      if (challengeId) {
-        await submitReset("confirm", { challengeId, code: values.code, password: values.password });
-        setDone(true);
-      } else {
-        setEmail(values.email);
-        const result = await submitReset("request", { email: values.email });
-        setChallengeId(result.challengeId);
-      }
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setSaving(false);
-    }
+    return perform(async () => {
+      await submitReset("confirm", { challengeId, code: values.code, password: values.password });
+      setDone(true);
+    });
   }
 
   return (
@@ -55,7 +97,9 @@ export default function PasswordRecovery() {
       </section>
       <section className="account-auth">
         {done ? (
-          <Link className="button button--primary" href="/cuenta">Ir a iniciar sesión</Link>
+          <Link className="button button--primary" href={fromBooking ? "/reservar" : "/cuenta"}>
+            {fromBooking ? "Volver a la reserva" : "Ir a iniciar sesión"}
+          </Link>
         ) : (
           <form key={challengeId || "request"} method="post" onSubmit={submit}>
             {challengeId ? (
@@ -81,15 +125,24 @@ export default function PasswordRecovery() {
               </label>
             )}
             {error && <p className="inline-error field-full" role="alert">{error}</p>}
-            <button className="button button--primary field-full" disabled={saving} type="submit">
+            <button className="button button--primary field-full" disabled={saving || (!challengeId && retrySeconds > 0)} type="submit">
               {saving ? "Procesando…" : challengeId ? "Cambiar contraseña" : "Enviar código"}
             </button>
             {challengeId && (
-              <button className="button button--secondary field-full" disabled={saving} type="button" onClick={() => { setChallengeId(""); setError(""); }}>
-                Solicitar otro código
-              </button>
+              <>
+                <p className="field-full">Solicitar otro código invalida el anterior. Usa el código de la solicitud más reciente, aunque los correos lleguen en otro orden.</p>
+                <button className="button button--secondary field-full" disabled={saving || retrySeconds > 0} type="button" onClick={() => requestCode(email)}>
+                  Solicitar otro código
+                </button>
+                <button className="button button--secondary field-full" disabled={saving} type="button" onClick={() => { setChallengeId(""); setError(""); }}>
+                  Cambiar correo
+                </button>
+              </>
             )}
-            <Link className="field-full" href="/cuenta">Volver a iniciar sesión</Link>
+            {retrySeconds > 0 && <p className="field-full">Podrás solicitar un código en {retrySeconds} s.</p>}
+            <Link className="field-full" href={fromBooking ? "/reservar" : "/cuenta"}>
+              {fromBooking ? "Volver a la reserva" : "Volver a iniciar sesión"}
+            </Link>
           </form>
         )}
       </section>

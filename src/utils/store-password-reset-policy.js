@@ -1,0 +1,1 @@
+export const PASSWORD_RESET_RESEND_SECONDS = 60;
