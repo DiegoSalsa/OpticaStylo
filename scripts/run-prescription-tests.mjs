@@ -195,7 +195,7 @@ try {
     process.stdin.pause();
   } else {
   if(customersMode){
-    await run(process.execPath,["--test","--test-concurrency=1","tests/customers/validation.test.js","tests/customers/flow.test.js","tests/customers/password-reset.test.js"],{cwd:appRoot,record:"customers.txt"});
+    await run(process.execPath,["--test","--test-concurrency=1","tests/customers/validation.test.js","tests/customers/flow.test.js","tests/customers/password-reset.test.js","tests/customers/account-portal-http.test.js"],{cwd:appRoot,record:"customers.txt"});
     await run(process.execPath,["node_modules/playwright/cli.js","test","--config","tests/customers/playwright.config.mjs"],{cwd:appRoot,record:"customers-browser.txt"});
   }
   if(clinicalMode) {

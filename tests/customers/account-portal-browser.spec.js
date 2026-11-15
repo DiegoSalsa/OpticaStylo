@@ -1,0 +1,78 @@
+import { expect, test } from "@playwright/test";
+
+const profile = {
+  id: "20000000-0000-4000-8000-000000000087",
+  firstNames: "Cliente", lastNames: "Sintético", email: "portal@example.invalid",
+  rut: "20000087-6", address: "Dirección sintética", phone: "+56912345678",
+};
+const recipeId = "20000000-0000-4000-8000-000000000088";
+const orderId = "20000000-0000-4000-8000-000000000089";
+const eye = { sphere: -1.25, cylinder: -0.50, axis: 90, addition: null };
+const patient = { firstNames: "Paciente", lastNames: "Sintético", rutMasked: "•••••87-6" };
+const order = {
+  id: orderId, saleNumber: 412, status: "PENDING",
+  createdAt: "2026-11-10T12:00:00.000Z", items: [{ quantity: 1, name: "Cristal sintético" }],
+  totalCents: 20000, balanceCents: 12000, paidCents: 8000,
+};
+const cart = {
+  id: "20000000-0000-4000-8000-000000000090", status: "ACTIVE", subtotalCents: 20000,
+  items: [{ productId: "20000000-0000-4000-8000-000000000091", name: "Cristal sintético", category: "PRESCRIPTION_LENS", requiresPrescription: true, quantity: 1, unitPriceCents: 20000, lineTotalCents: 20000 }],
+};
+const ok = (route, data) => route.fulfill({ json: { success: true, data } });
+const fail = (route, message) => route.fulfill({ status: 503, json: { success: false, error: { message } } });
+
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/store/accounts/me", (route) => ok(route, profile));
+  await page.route("**/api/store/accounts/me/contact", (route) => ok(route, { channels: [] }));
+});
+
+test("reserva y carrito conservan el panel y una receta de la cuenta llega al carrito", async ({ page }) => {
+  await page.route("**/api/store/orders?*", (route) => ok(route, { items: [order], page: 1, totalPages: 1 }));
+  await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, {
+    linked: true, patient, upcomingAppointments: [], appointmentHistory: [],
+    prescriptions: { active: [{ id: recipeId, issuedAt: "2026-11-10T12:00:00.000Z", rightEye: eye, leftEye: eye, pupillaryDistance: 62 }], history: [] },
+  }));
+  await page.route("**/api/store/cart", (route) => ok(route, cart));
+  await page.route("**/api/store/booking/professionals", (route) => ok(route, []));
+  await page.route("**/api/store/orders/" + orderId, (route) => ok(route, order));
+  await page.route("**/api/store/cart/prescription/clinical", async (route) => {
+    expect(route.request().method()).toBe("PUT");
+    expect(route.request().postDataJSON()).toEqual({ prescriptionId: recipeId, replaceExisting: false });
+    await ok(route, { ...cart, clinicalPrescriptionId: recipeId });
+  });
+  await page.goto("/cuenta");
+  const menu = page.getByRole("navigation", { name: "Navegación de mi cuenta" });
+  await menu.getByRole("link", { name: "Mis recetas" }).click();
+  await page.locator("#recetas summary").click();
+  await expect(page.getByRole("link", { name: "Descargar PDF" })).toHaveAttribute("href", new RegExp(recipeId + "/pdf$"));
+  await page.getByRole("button", { name: "Usar en mi carrito" }).click();
+  await expect(menu.getByRole("link", { name: "Mi carrito" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("combobox", { name: "Receta clínica vigente" })).toHaveValue(recipeId);
+  await page.getByRole("button", { name: "Usar esta receta" }).click();
+  await expect(page.getByText("Estás usando una receta de tu cuenta.")).toBeVisible();
+
+  await menu.getByRole("link", { name: "Reservar hora" }).click();
+  await expect(page.getByRole("heading", { name: "Elige profesional y fecha" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Reservar hora" })).toHaveAttribute("aria-current", "page");
+  await page.reload();
+  await expect(menu.getByRole("link", { name: "Reservar hora" })).toHaveAttribute("aria-current", "page");
+
+  await menu.getByRole("link", { name: "Mis pedidos" }).click();
+  await page.getByRole("link", { name: "Ver pedido y pagar" }).click();
+  await expect(page.getByRole("heading", { name: "Pedido N.º 412" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pagar saldo pendiente" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Mis pedidos" })).toHaveAttribute("aria-current", "page");
+});
+
+test("una ficha caída y un cierre fallido dejan abierta la cuenta con un mensaje", async ({ page }) => {
+  await page.route("**/api/store/orders?*", (route) => ok(route, { items: [order], page: 1, totalPages: 1 }));
+  await page.route("**/api/store/accounts/me/clinical", (route) => fail(route, "Ficha temporalmente no disponible."));
+  await page.route("**/api/store/accounts/logout", (route) => fail(route, "Sesión temporalmente no disponible."));
+  await page.goto("/cuenta");
+  await expect(page.getByRole("heading", { name: "Hola, Cliente" })).toBeVisible();
+  await expect(page.getByText("Ficha temporalmente no disponible.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ver pedido y pagar" })).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar sesión", exact: true }).click();
+  await expect(page.getByText(/No pudimos cerrar tu sesión/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hola, Cliente" })).toBeVisible();
+});
