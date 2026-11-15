@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { savedPrescriptionScope } from "./account-prescription-repository.js";
 import { findActiveAccountPrescription } from "./customer-clinical-repository.js";
 import {findCustomerByNormalizedRut} from "./customer-identity.js";
 import { retryTransaction } from "../db/retry-transaction.js";
@@ -226,6 +227,29 @@ export async function saveCartClinicalPrescription(tokenHash, accountId, id, rep
     if (previous) await client.external_prescriptions.delete({ where: { id: previous.id } });
     return { cart: await loadCart(client, tokenHash, accountId), removedCloudinary: cloudinaryAsset(previous) };
   }, { isolationLevel: "Serializable" });
+}
+
+export async function saveAccountPrescriptionToCart(tokenHash, accountId, id, replaceExisting) {
+  return retryTransaction(prisma, async (client) => {
+    const locked = await lockActiveCart(client, tokenHash, accountId);
+    if (locked.reason) return locked;
+    const saved = await client.external_prescriptions.findFirst({ where: { id, status: "READY", ...savedPrescriptionScope(accountId) } });
+    if (!saved) return { reason: "SAVED_PRESCRIPTION_NOT_AVAILABLE" };
+    if (!locked.cart.customer_account_id && await client.store_carts.count({ where: { customer_account_id: accountId, status: "ACTIVE", id: { not: locked.cart.id } } })) return { reason: "ACCOUNT_CART_ALREADY_ACTIVE" };
+    const previous = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
+    if ((previous || locked.cart.clinical_prescription_id) && !replaceExisting) return { reason: "CONFIRM_PRESCRIPTION_REPLACEMENT" };
+    const data = {
+      source: "IMAGE", status: "READY", original_filename: saved.original_filename,
+      media_type: saved.media_type, file_data: saved.file_data, file_size_bytes: saved.file_size_bytes,
+      file_sha256: saved.file_sha256, cloudinary_asset_id: null, cloudinary_public_id: null,
+      cloudinary_version: null, cloudinary_format: null, extraction_status: "COMPLETED",
+      extraction_provider: saved.extraction_provider, extracted_data: saved.extracted_data,
+      confirmed_data: saved.confirmed_data, confirmed_at: saved.confirmed_at,
+    };
+    await client.external_prescriptions.upsert({ where: { cart_id: locked.cart.id }, create: { ...data, cart_id: locked.cart.id }, update: data });
+    await client.store_carts.update({ where: { id: locked.cart.id }, data: { clinical_prescription_id: null, customer_account_id: accountId } });
+    return { cart: await loadCart(client, tokenHash, accountId), removedCloudinary: cloudinaryAsset(previous) };
+  });
 }
 
 export async function configureStoreCart(tokenHash, accountId, configuration) {

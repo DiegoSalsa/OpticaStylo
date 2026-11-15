@@ -22,6 +22,7 @@ import {
   saveExternalPrescriptionImage,
   saveManualExternalPrescription,
   saveCartClinicalPrescription,
+  saveAccountPrescriptionToCart,
   upsertStoreCartItem,
   upsertStoreCartItems,
 } from "../repositories/store-repository.js";
@@ -239,6 +240,17 @@ export async function putManualPrescription(token, account, input, dependencies 
   );
   const cart = unwrap(result);
   await deleteReplacedPrivatePrescription(result.replacedCloudinary, dependencies);
+  return cart;
+}
+
+export async function selectSavedAccountPrescription(token, account, input) {
+  if (!account) throwReason("ACCOUNT_REQUIRED_FOR_PRESCRIPTION");
+  const credentials = access(token, account);
+  const id = validateExternalPrescriptionId(input?.prescriptionId);
+  const result = await saveAccountPrescriptionToCart(credentials.tokenHash, credentials.accountId, id, input?.replaceExisting === true);
+  if (result.reason === "SAVED_PRESCRIPTION_NOT_AVAILABLE") throw new AppError({ code: result.reason, message: "No encontramos una receta revisada y guardada en esta cuenta.", status: 404 });
+  const cart = unwrap(result);
+  await deleteReplacedPrivatePrescription(result.removedCloudinary, {});
   return cart;
 }
 
