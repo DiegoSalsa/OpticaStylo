@@ -90,6 +90,13 @@ export async function requestCustomerPatientLinkCode(account, input, dependencie
       throwOtpDeliveryReason();
     }
   }
+  if (!dependencies.createChallenge && ((dependencies.repositoryDependencies?.environment ?? process.env).CUSTOMER_PATIENT_OTP_SECRET?.trim().length ?? 0) < 32) {
+    throw new AppError({
+      code: "CUSTOMER_PATIENT_LINK_UNAVAILABLE",
+      message: "La verificación clínica por correo no está disponible. Contacta a la óptica.",
+      status: 503,
+    });
+  }
   const result = await (dependencies.createChallenge ?? createCustomerPatientOtpChallenge)(authenticatedAccountId, normalized, dependencies.repositoryDependencies ?? {});
   if (result.reason === "ALREADY_LINKED" && result.samePatient) return { challengeSent: false, linked: true, patient: result.patient };
   if (result.reason === "ALREADY_LINKED") throwLinkReason(result.reason);

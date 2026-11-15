@@ -15,6 +15,7 @@ import AccountPrescriptions from "./account-prescriptions";
 import AccountAppointments from "./account-appointments";
 import AccountOrderDetails from "./account-order-details";
 import AccountProfile from "./account-profile";
+import AccountClinicalLink from "./account-clinical-link";
 import { accountOrderHref } from "@/utils/account-order-navigation";
 
 const sections = [
@@ -80,10 +81,6 @@ function AccountDashboard({ account, onLogout, onProfileUpdated }) {
   const [preferredPrescription, setPreferredPrescription] = useState(null);
   const [clinicalError, setClinicalError] = useState("");
   const clinicalRequest = useRef(null);
-  const [linkStep, setLinkStep] = useState("identity");
-  const [maskedEmail, setMaskedEmail] = useState("");
-  const [linkStatus, setLinkStatus] = useState("idle");
-  const [linkError, setLinkError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
 
@@ -151,33 +148,6 @@ function AccountDashboard({ account, onLogout, onProfileUpdated }) {
     }
   }
 
-  async function linkClinical(event) {
-    event.preventDefault();
-    setLinkError("");
-    setLinkStatus("saving");
-    const values = Object.fromEntries(new FormData(event.currentTarget));
-    const endpoint = linkStep === "identity" ? "patient-link/request-code" : "patient-link";
-    try {
-      const result = await readStoreResponse(await fetch("/api/store/accounts/me/" + endpoint, {
-        body: JSON.stringify(values), headers: { "Content-Type": "application/json" }, method: "POST",
-      }));
-      if (result.linked) {
-        setLinkStep("identity");
-        setMaskedEmail("");
-        await loadClinical();
-      } else {
-        setMaskedEmail(result.maskedEmail);
-        setLinkStep("otp");
-      }
-    } catch (error) {
-      if (error.status === 401) onLogout();
-      else setLinkError(error.message);
-    } finally {
-      setLinkStatus("idle");
-    }
-  }
-
-
   return <main className="account-page account-dashboard">
     <aside className="account-sidebar"><div><span className="account-avatar">{account.firstNames?.[0]}{account.lastNames?.[0]}</span><strong>{account.firstNames} {account.lastNames}</strong><small>{account.email}</small></div><nav aria-label="Navegación de mi cuenta">
       {sections.map(({ id, icon, label }) => <Link
@@ -195,7 +165,7 @@ function AccountDashboard({ account, onLogout, onProfileUpdated }) {
     {isOverview && <><header><p className="eyebrow">Mi cuenta</p><h1>Hola, {account.firstNames}</h1><p>Revisa tus compras y continúa con las acciones disponibles.</p></header>
       <div className="account-banner"><span><Icon name="sparkle" /></span><div><strong>Tu experiencia Stylo en un solo lugar</strong><p>Los pedidos mostrados aquí provienen de tu cuenta real. La agenda clínica se muestra únicamente después de verificar tu identidad.</p></div></div></>}
       {/* Mostrar la verificación de correo antes de exponer reservas o recetas. */}
-      {(isOverview || section === "horas" || section === "recetas") && <section className="account-card clinical-card" id="atencion-clinica"><div className="account-card-heading"><div><p className="eyebrow">Atención clínica</p><h2>{clinical ? clinical.linked ? "Atención clínica vinculada" : "Vincular atención clínica" : "Atención clínica"}</h2></div></div>{clinicalError ? <><p className="inline-error" role="alert">{clinicalError}</p><button className="button button--secondary" onClick={loadClinical} type="button">Reintentar atención clínica</button></> : !clinical ? <p role="status">Cargando atención clínica…</p> : !clinical.linked ? <>{linkStep === "identity" ? <><p className="clinical-copy">Verifica tu fecha de nacimiento y recibe un código en el correo registrado en tu atención clínica.</p><form className="clinical-link-form" onSubmit={linkClinical}><label className="field"><span>Fecha de nacimiento</span><input max={new Date().toISOString().slice(0, 10)} name="birthDate" required type="date" /></label>{linkError && <p className="inline-error">{linkError}</p>}<button className="button button--primary" disabled={linkStatus === "saving"} type="submit">{linkStatus === "saving" ? "Verificando…" : "Enviar código"}</button></form></> : <><p className="clinical-copy">Enviamos un código temporal a {maskedEmail}. No compartas ese código.</p><form className="clinical-link-form" onSubmit={linkClinical}><label className="field"><span>Código de verificación</span><input autoComplete="one-time-code" inputMode="numeric" maxLength={6} name="code" pattern="[0-9]{6}" required /></label>{linkError && <p className="inline-error">{linkError}</p>}<button className="button button--primary" disabled={linkStatus === "saving"} type="submit">{linkStatus === "saving" ? "Confirmando…" : "Confirmar código"}</button></form></>}</> : <><p className="clinical-copy">Paciente: {clinical.patient.firstNames} {clinical.patient.lastNames} · RUT {clinical.patient.rutMasked}</p><div className="clinical-columns">{section !== "recetas" && <AccountAppointments clinical={clinical} standalone={!isOverview} reload={loadClinical} />}{section !== "horas" && <AccountPrescriptions prescriptions={clinical.prescriptions} standalone={!isOverview} onUse={(id) => {
+      {(isOverview || section === "horas" || section === "recetas") && <section className="account-card clinical-card" id="atencion-clinica"><div className="account-card-heading"><div><p className="eyebrow">Atención clínica</p><h2>{clinical ? clinical.linked ? "Atención clínica vinculada" : "Vincular atención clínica" : "Atención clínica"}</h2></div></div>{clinicalError ? <><p className="inline-error" role="alert">{clinicalError}</p><button className="button button--secondary" onClick={loadClinical} type="button">Reintentar atención clínica</button></> : !clinical ? <p role="status">Cargando atención clínica…</p> : !clinical.linked ? <AccountClinicalLink onLinked={loadClinical} onExpired={onLogout} /> : <><p className="clinical-copy">Paciente: {clinical.patient.firstNames} {clinical.patient.lastNames} · RUT {clinical.patient.rutMasked}</p><div className="clinical-columns">{section !== "recetas" && <AccountAppointments clinical={clinical} standalone={!isOverview} reload={loadClinical} />}{section !== "horas" && <AccountPrescriptions prescriptions={clinical.prescriptions} standalone={!isOverview} onUse={(id) => {
         setPreferredPrescription(id);
         router.push(sectionHref("carrito") + "#receta");
       }} />}</div></>}</section>}
