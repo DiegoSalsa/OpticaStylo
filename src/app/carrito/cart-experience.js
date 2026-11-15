@@ -18,6 +18,7 @@ import { opticalData, prescriptionFields, readCartDraft, writeCartDraft } from "
 
 import PrescriptionImageInput from "./prescription-image-input";
 import CartClinicalPrescription from "./cart-clinical-prescription";
+import { accountOrderHref, rememberAccountPayment } from "@/utils/account-order-navigation";
 import { MAX_PRESCRIPTION_IMAGE_BYTES, PRESCRIPTION_IMAGE_ACCEPT } from "@/utils/prescription-camera";
 
 
@@ -83,7 +84,10 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
       setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
       setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
       setPrescriptionDirty(draft?.prescriptionDirty ?? false);
-      setBuyerDraft(draft?.buyer ?? { ...accountProfile, ...Object.fromEntries(Object.entries(data.buyer ?? {}).filter(([, value]) => value != null)), branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
+      const buyer = Object.fromEntries(["rut", "firstNames", "lastNames", "email", "phone", "address"].map((field) =>
+        [field, data.buyer?.[field] ?? accountProfile?.[field] ?? ""],
+      ));
+      setBuyerDraft(draft?.buyer ?? { ...buyer, branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
       setStatus("ready");
     }
     function refresh() {
@@ -293,8 +297,14 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
       setCart(completedCart);
       setStatus("ready");
       writeCartDraft(window.sessionStorage, completedCart, {});
-      if (result.payment?.checkoutUrl) window.location.assign(result.payment.checkoutUrl);
-      else router.push(`/checkout/mercado-pago/pending?orderId=${result.order.id}`);
+      if (result.payment?.checkoutUrl) {
+        rememberAccountPayment(accountProfile ? result.order.id : null);
+        window.location.assign(result.payment.checkoutUrl);
+      } else if (accountProfile) {
+        router.push(accountOrderHref(result.order.id));
+      } else {
+        router.push("/checkout/mercado-pago/pending?orderId=" + result.order.id);
+      }
     } catch (requestError) {
       setError(requestError.message);
       // El checkout puede haber confirmado el pedido antes de fallar la conexión.
@@ -315,7 +325,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
   }
 
   if (cart?.status === "CHECKED_OUT") {
-    return <Root className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href={`/checkout/mercado-pago/pending?orderId=${cart.saleId}`}>Ver estado del pago</Link><Link className="button button--secondary" href={ordersHref ?? "/tienda"}>{ordersHref ? "Volver a Mis pedidos" : "Volver al catálogo"}</Link></div></div></Root>;
+    return <Root className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href={accountProfile ? accountOrderHref(cart.saleId) : "/checkout/mercado-pago/pending?orderId=" + cart.saleId}>Ver estado del pago</Link><Link className="button button--secondary" href={ordersHref ?? "/tienda"}>{ordersHref ? "Volver a Mis pedidos" : "Volver al catálogo"}</Link></div></div></Root>;
   }
 
   if (!cart?.items.length) {

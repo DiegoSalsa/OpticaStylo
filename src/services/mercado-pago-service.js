@@ -76,7 +76,7 @@ async function createCheckout(saleId, initiatedBy, dependencies, actor = null) {
   try {
     const preference = await (
       dependencies.createMercadoPagoPreference ?? createMercadoPagoPreference
-    )({ attempt, config, sale });
+    )({ attempt, config, sale, ...(!actor && { storeOrderId: id }) });
     if (!preference.externalPreferenceId || !preference.checkoutUrl) {
       throw new Error("Mercado Pago devolvió una preferencia incompleta.");
     }

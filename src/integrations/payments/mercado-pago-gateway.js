@@ -14,23 +14,24 @@ function createClient(accessToken) {
   });
 }
 
-function checkoutUrls(publicUrl) {
+function checkoutUrls(publicUrl, storeOrderId) {
   if (!publicUrl) return {};
+  const orderQuery = storeOrderId ? "?orderId=" + encodeURIComponent(storeOrderId) : "";
   return {
     auto_return: "approved",
     back_urls: {
-      failure: `${publicUrl}/checkout/mercado-pago/failure`,
-      pending: `${publicUrl}/checkout/mercado-pago/pending`,
-      success: `${publicUrl}/checkout/mercado-pago/success`,
+      failure: `${publicUrl}/checkout/mercado-pago/failure${orderQuery}`,
+      pending: `${publicUrl}/checkout/mercado-pago/pending${orderQuery}`,
+      success: `${publicUrl}/checkout/mercado-pago/success${orderQuery}`,
     },
     notification_url: `${publicUrl}/api/webhooks/mercado-pago?source_news=webhooks`,
   };
 }
 
-export async function createMercadoPagoPreference({ attempt, config, sale }) {
+export async function createMercadoPagoPreference({ attempt, config, sale, storeOrderId }) {
   const preference = new Preference(createClient(config.accessToken));
   const response = await preference.create({
-    body: createMercadoPagoPreferenceBody({ attempt, config, sale }),
+    body: createMercadoPagoPreferenceBody({ attempt, config, sale, storeOrderId }),
     requestOptions: { idempotencyKey: attempt.idempotencyKey },
   });
 
@@ -45,14 +46,14 @@ export function selectMercadoPagoCheckoutUrl(preference) {
   return preference.init_point ?? preference.sandbox_init_point ?? null;
 }
 
-export function createMercadoPagoPreferenceBody({ attempt, config, sale }) {
+export function createMercadoPagoPreferenceBody({ attempt, config, sale, storeOrderId }) {
   const payer = sale.customer ? {
     email: sale.customer.email,
     name: sale.customer.firstNames,
     surname: sale.customer.lastNames,
   } : null;
   return {
-      ...checkoutUrls(config.publicUrl),
+      ...checkoutUrls(config.publicUrl, storeOrderId),
       external_reference: attempt.id,
       expires: true,
       expiration_date_to: attempt.expiresAt.toISOString(),
