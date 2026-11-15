@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { normalizeChileanRut } from "@/utils/chilean-rut";
-
-function formatRut(value) {
-  const normalized = normalizeChileanRut(value);
-  if (!normalized) return value;
-  const [body, digit] = normalized.split("-");
-  const grouped = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${grouped}-${digit}`;
-}
+import { formatChileanRut } from "@/utils/chilean-rut";
 
 export default function RutInput({ defaultValue, value, onChange, onBlur, ...props }) {
   const [editing, setEditing] = useState(false);
@@ -21,15 +13,15 @@ export default function RutInput({ defaultValue, value, onChange, onBlur, ...pro
       placeholder="12.345.678-5"
       spellCheck={false}
       {...props}
-      defaultValue={formatRut(defaultValue)}
-      value={editing ? value : formatRut(value)}
+      defaultValue={formatChileanRut(defaultValue)}
+      value={editing ? value : formatChileanRut(value)}
       onChange={(event) => {
         if (controlled) setEditing(true);
         onChange?.(event);
       }}
       onBlur={(event) => {
         if (controlled) setEditing(false);
-        else event.currentTarget.value = formatRut(event.currentTarget.value);
+        else event.currentTarget.value = formatChileanRut(event.currentTarget.value);
         onBlur?.(event);
       }}
     />

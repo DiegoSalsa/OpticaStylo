@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { readStoreResponse } from "@/utils/store-client";
 export function RecoverOrder({
   onRecovered
@@ -42,7 +43,7 @@ export function RecoverOrder({
   }
   return <details className="account-card">
   <summary>Recuperar una compra anterior como invitado</summary>
-  <p>Indique el número del pedido. La recuperación exige un código en el correo de esa compra y coincidencia con la identidad de esta cuenta.</p>
+<p>Usa el número de tu pedido en línea. Para recuperarlo, el RUT y el correo de esa compra deben coincidir con los de tu cuenta.</p><p>¿Compraste con otro correo o falta un pedido? <Link href="/contacto">Pide ayuda a la óptica</Link>.</p>
   <form onSubmit={submit}>
     {step === "request" ? <label className="field"><span>Número del pedido anterior</span><input name="orderId" inputMode="numeric" pattern="[0-9]{1,18}" required /></label> : <label className="field"><span>Código del pedido anterior</span><input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /></label>}
     <button className="button button--primary" disabled={busy}>{step === "request" ? "Solicitar código del pedido" : "Confirmar recuperación"}</button>
@@ -52,45 +53,55 @@ export function RecoverOrder({
 </details>;
 }
 export function AccountContactPreferences() {
-  const [data, setData] = useState(null),
-    [error, setError] = useState("");
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busyChannel, setBusyChannel] = useState("");
+  const [retry, setRetry] = useState(0);
+  const pending = useRef(false);
+
   useEffect(() => {
-    let active = true;
-    fetch("/api/store/accounts/me/contact", {
-      cache: "no-store"
-    }).then(readStoreResponse).then(d => {
-      if (active) setData(d);
-    }).catch(e => {
-      if (active) setError(e.message);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+    const controller = new AbortController();
+    fetch("/api/store/accounts/me/contact", { cache: "no-store", signal: controller.signal })
+      .then(readStoreResponse)
+      .then((result) => { if (!controller.signal.aborted) setData(result); })
+      .catch((failure) => { if (!controller.signal.aborted) setError(failure.message); });
+    return () => controller.abort();
+  }, [retry]);
+
   async function revoke(channel) {
+    if (pending.current) return;
+    pending.current = true;
+    setError("");
+    setNotice("");
+    setBusyChannel(channel);
     try {
-      const d = await readStoreResponse(await fetch("/api/store/accounts/me/contact", {
+      const result = await readStoreResponse(await fetch("/api/store/accounts/me/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          channel,
-          decision: "REVOKED"
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel, decision: "REVOKED" }),
       }));
-      setData(d);
-    } catch (e) {
-      setError(e.message);
+      setData(result);
+      setNotice(channel === "EMAIL" ? "Guardamos tu oposición a la publicidad por correo." : "Guardamos tu oposición a la publicidad por teléfono.");
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      pending.current = false;
+      setBusyChannel("");
     }
   }
+
   return <details className="account-card">
-  <summary>Mis preferencias de comunicación comercial</summary>
-  <p>Comprar o crear una cuenta no autoriza publicidad. Los correos necesarios para tus pedidos se gestionan por separado.</p>
-  {data?.channels.map(c => <div key={c.channel}>
-    <p>{c.channel === "EMAIL" ? "Correo" : "Teléfono"}: {c.state === "GRANTED" ? "Autorización registrada" : c.state === "REVOKED" ? "Revocada / oposición" : "Sin autorización vigente"}</p>
-    <button className="button button--secondary" type="button" onClick={() => revoke(c.channel)}>Revocar comunicaciones por {c.channel === "EMAIL" ? "correo" : "teléfono"}</button>
-  </div>)}
-  {error && <p role="alert">{error}</p>}
-</details>;
+    <summary>Mis preferencias de comunicación comercial</summary>
+    <p>Comprar o crear una cuenta no autoriza publicidad. Los correos necesarios para tus pedidos se gestionan por separado.</p>
+    {!data && !error && <p role="status">Cargando preferencias…</p>}
+    {data?.channels.map(({ channel, state }) => <div key={channel}>
+      <p>{channel === "EMAIL" ? "Correo" : "Teléfono"}: {state === "GRANTED" ? "Autorización registrada" : state === "REVOKED" ? "Revocada / oposición" : "Sin autorización vigente"}</p>
+      {state !== "REVOKED" && <button className="button button--secondary" disabled={Boolean(busyChannel)} type="button" onClick={() => revoke(channel)}>
+        {busyChannel === channel ? "Guardando…" : "Revocar comunicaciones por " + (channel === "EMAIL" ? "correo" : "teléfono")}
+      </button>}
+    </div>)}
+    {notice && <p role="status">{notice}</p>}
+    {error && <p role="alert">{error} {!data && <button type="button" onClick={() => { setError(""); setRetry((value) => value + 1); }}>Reintentar</button>}</p>}
+  </details>;
 }

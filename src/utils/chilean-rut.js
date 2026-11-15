@@ -43,3 +43,13 @@ export function normalizeChileanRut(value) {
   return `${normalizedBody}-${checkDigit}`;
 }
 // Calcular calculate check digit a partir de los datos de entrada
+
+export function formatChileanRut(value) {
+  const normalized = normalizeChileanRut(value);
+  if (!normalized) return value;
+  const [body, digit] = normalized.split("-");
+  const grouped = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${grouped}-${digit}`;
+}
+
+

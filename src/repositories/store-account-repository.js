@@ -47,6 +47,17 @@ export async function createCustomerAccount(account) {
   });
 }
 
+export async function updateCustomerAccountContact(account, values) {
+  return prisma.$transaction(async (client) => {
+    const changed = await client.customers.updateMany({
+      where: { id: account.customerId, customer_accounts: { id: account.id, is_active: true } },
+      data: { ...values, record_version: { increment: 1 }, updated_by: null },
+    });
+    if (!changed.count) return null;
+    return mapAccount(await client.customer_accounts.findUnique({ where: { id: account.id }, include: { customers: true } }));
+  });
+}
+
 export async function findCustomerAccountForAuthentication(email) {
   return mapAccount(await prisma.customer_accounts.findFirst({
     include: { customers: true }, where: { email },

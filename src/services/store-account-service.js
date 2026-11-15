@@ -6,12 +6,14 @@ import {
   findCustomerAccountForAuthentication,
   recordCustomerFailedLogin,
   revokeCustomerSession,
+  updateCustomerAccountContact,
 } from "../repositories/store-account-repository.js";
 import { AppError } from "../utils/app-error.js";
 import {recordRegistrationAttempt} from "../repositories/customer-commerce-link-repository.js";
 import {
   validateStoreAccountRegistration,
   validateStoreLogin,
+  validateStoreContactChanges,
 } from "../validations/store-validation.js";
 
 const SESSION_SECONDS = 30 * 24 * 60 * 60;
@@ -117,4 +119,10 @@ export async function logoutStoreAccount(account, dependencies = {}) {
 
 export function getStoreAccountProfile(account) {
   return publicAccount(account);
+}
+
+export async function updateStoreAccountContact(account, input) {
+  const updated = await updateCustomerAccountContact(account, validateStoreContactChanges(input));
+  if (!updated) throw new AppError({ code: "CUSTOMER_AUTHENTICATION_REQUIRED", message: "Vuelve a iniciar sesión para guardar tus datos.", status: 401 });
+  return publicAccount(updated);
 }

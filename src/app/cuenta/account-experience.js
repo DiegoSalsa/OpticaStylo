@@ -14,6 +14,7 @@ import AccountAuth from "./account-auth";
 import AccountPrescriptions from "./account-prescriptions";
 import AccountAppointments from "./account-appointments";
 import AccountOrderDetails from "./account-order-details";
+import AccountProfile from "./account-profile";
 import { accountOrderHref } from "@/utils/account-order-navigation";
 
 const sections = [
@@ -60,10 +61,10 @@ export default function AccountExperience() {
     }} type="button">Reintentar cargar mi cuenta</button>
   </main>;
   if (!account) return <AccountAuth onAuthenticated={setAccount} />;
-  return <AccountDashboard account={account} key={account.id} onLogout={clearSession} />;
+  return <AccountDashboard account={account} key={account.id} onLogout={clearSession} onProfileUpdated={setAccount} />;
 }
 
-function AccountDashboard({ account, onLogout }) {
+function AccountDashboard({ account, onLogout, onProfileUpdated }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const section = sections.find(({ id }) => id === searchParams.get("seccion"))?.id ?? "resumen";
@@ -201,7 +202,7 @@ function AccountDashboard({ account, onLogout }) {
       {isOverview && <div className="account-shortcuts"><article><span><Icon name="calendar" /></span><div><p>Próxima atención</p><strong>Consulta horas disponibles</strong></div><Link href={sectionHref("reservar")}>Reservar <Icon name="arrow" size={16} /></Link></article><article><span><Icon name="eye" /></span><div><p>Probador virtual</p><strong>Compara marcos en 3D</strong></div><Link href="/virtual-try-on/3d">Abrir <Icon name="arrow" size={16} /></Link></article></div>}
       {selectedOrderId && <AccountOrderDetails id={selectedOrderId} key={selectedOrderId} />}{(isOverview || (section === "pedidos" && !selectedOrderId)) && <><section className="account-card orders-card" id="pedidos"><div className="account-card-heading"><div><p className="eyebrow">Compras</p><h2>Mis pedidos</h2></div><Link href="/tienda">Seguir comprando <Icon name="arrow" size={16} /></Link></div>{ordersError && <p className="inline-error" role="alert">{ordersError} <button onClick={() => loadOrders(requestedOrderPage.current)} type="button">Reintentar pedidos</button></p>}{ordersLoading && <p role="status">Cargando pedidos…</p>}{!orders || ordersLoading ? null : orders.length === 0 ? <div className="orders-empty"><Icon name="receipt" /><h3>Aún no tienes pedidos</h3><p>Cuando compres con esta cuenta, tus pedidos aparecerán aquí.</p><Link className="button button--primary" href="/tienda">Explorar catálogo</Link></div> : orders.map((order) => <article className="order-row" key={order.id}><span className="order-icon"><Icon name="package" /></span><div><strong>Pedido N.º {order.saleNumber}</strong><small>{new Date(order.createdAt).toLocaleDateString("es-CL")} · {order.items.length} productos · {order.branch?.name ?? "Sucursal anterior no registrada"}</small></div><span className="status-chip">{orderLabels[order.status] || order.status}</span><b>{formatClp(order.totalCents)}</b><Link className="button button--secondary" href={accountOrderHref(order.id)}>{order.status === "PENDING" && order.balanceCents > 0 ? "Ver pedido y pagar" : "Ver pedido"}</Link>{order.fulfillment?.method === "DELIVERY" && <ShipmentPanel saleId={order.id} />}{(order.externalPrescription || order.prescription) && <PrescriptionDetails endpoint={`/api/store/orders/${order.id}/prescription`} label="Ver receta del pedido" />}</article>)}</section>
       <div className="commercial-actions"><button className="button button--secondary" disabled={ordersLoading || orderPage.page <= 1} onClick={()=>loadOrders(orderPage.page-1)} type="button">Pedidos anteriores</button><span>Página {orderPage.page} / {orderPage.totalPages||1}</span><button className="button button--secondary" disabled={ordersLoading || orderPage.page >= orderPage.totalPages} onClick={()=>loadOrders(orderPage.page+1)} type="button">Pedidos siguientes</button></div><RecoverOrder onRecovered={() => loadOrders(1)} /></>}
-      {(isOverview || section === "datos") && <><AccountContactPreferences /><section className="account-card account-data" id="datos"><div className="account-card-heading"><div><p className="eyebrow">Información personal</p><h2>Mis datos</h2></div></div><dl><div><dt>Nombre</dt><dd>{account.firstNames} {account.lastNames}</dd></div><div><dt>RUT</dt><dd>{account.rut}</dd></div><div><dt>Teléfono</dt><dd>{account.phone}</dd></div><div><dt>Dirección</dt><dd>{account.address}</dd></div></dl></section></>}
+      {(isOverview || section === "datos") && <><AccountProfile account={account} onUpdated={onProfileUpdated}/><AccountContactPreferences key={account.phone} /></>}
     </>}
     </section>
   </main>;

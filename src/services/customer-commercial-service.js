@@ -237,6 +237,10 @@ export async function saveContactEvent(customerId, input, actor, {
     const destination = data.channel === "EMAIL" ? customer.email : customer.phone;
     if (data.decision === "GRANTED" && !destination) commercialError("Registre primero un contacto válido para ese canal.");
     if (data.decision === "GRANTED" && !account && !data.evidence) commercialError("Registre la referencia de la autorización expresa.");
+    if (account && data.decision === "REVOKED") {
+      const current = await contactState(id, c);
+      if (current.channels.some((channel) => channel.channel === data.channel && channel.state === "REVOKED")) return current;
+    }
     await c.customer_contact_events.create({
       data: {
         ...data,

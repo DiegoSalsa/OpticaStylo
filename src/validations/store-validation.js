@@ -102,6 +102,17 @@ export function validateStoreAccountRegistration(input) {
   };
 }
 
+export function validateStoreContactChanges(input) {
+  object(input);
+  const hasPhone = Object.hasOwn(input, "phone");
+  const hasAddress = Object.hasOwn(input, "address");
+  if (!hasPhone && !hasAddress) fail("Indica un teléfono o una dirección para actualizar.");
+  return {
+    ...(hasPhone && { phone: phone(input.phone) }),
+    ...(hasAddress && { address: text(input.address, "La dirección", 500) }),
+  };
+}
+
 export function validateStoreLogin(input) {
   object(input);
   return { email: email(input.email), password: password(input.password, { allowLegacy: true }) };
