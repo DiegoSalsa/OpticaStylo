@@ -203,13 +203,15 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
       });
       return { reason: "OTP_INVALID" };
     }
-    const account = await client.customer_accounts.findUnique({ select: { customer_id: true, customers: { select: { patient_id: true } } }, where: { id: accountId } });
+    const account = await client.customer_accounts.findUnique({ select: { customer_id: true, email: true, customers: { select: { patient_id: true, rut: true } } }, where: { id: accountId } });
     if (!account) return { reason: "IDENTITY" };
     const patient = await client.patients.findUnique({
       select: { birth_date: true, email: true, first_names: true, id: true, last_names: true, rut: true, customers: { select: { id: true } } },
       where: { id: challenge.patient_id },
     });
-    if (!patient || (patient.customers && patient.customers.id !== account.customer_id)) {
+    if (!patient || patient.rut !== account.customers.rut
+      || patient.email.trim().toLowerCase() !== account.email.trim().toLowerCase()
+      || (patient.customers && patient.customers.id !== account.customer_id)) {
       await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
       return { reason: "PATIENT_LINKED" };
     }

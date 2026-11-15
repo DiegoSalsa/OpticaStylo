@@ -40,7 +40,7 @@ function fakeClinicalClient() {
     ],
   };
   const accountRow = (row, select) => select?.customer_id
-    ? { customer_id: row.customerId, customers: { patient_id: row.customer.patient_id } }
+    ? { customer_id: row.customerId, email: row.email, customers: { patient_id: row.customer.patient_id, rut: row.customer.rut } }
     : { id: row.id, email: row.email, customers: { ...row.customer } };
   const client = {
     state,
@@ -130,6 +130,19 @@ test("el repository consume el OTP correcto una sola vez y vincula al paciente",
   assert.ok(client.state.challenges[0].consumed_at);
   const reused = await verifyCustomerPatientOtpChallenge(accountA, "654321", { client, environment, now: () => new Date("2026-09-24T12:06:00.000Z") });
   assert.equal(reused.reason, "OTP_INVALID");
+});
+
+test("un cambio de correo entre el envío y la confirmación impide acreditar el correo nuevo", async () => {
+  const client = fakeClinicalClient();
+  const environment = { CUSTOMER_PATIENT_OTP_SECRET: "s".repeat(32) };
+  await createCustomerPatientOtpChallenge(accountA, { birthDate: "1990-05-20" }, {
+    client, environment, createChallengeId: () => "30000000-0000-4000-8000-000000000019", generateCode: () => "654321", now: () => new Date("2026-09-24T12:00:00Z"),
+  });
+  client.state.accounts.get(accountA).email = "nuevo@example.invalid";
+  const result = await verifyCustomerPatientOtpChallenge(accountA, "654321", { client, environment, now: () => new Date("2026-09-24T12:05:00Z") });
+  assert.equal(result.reason, "PATIENT_LINKED");
+  assert.equal(client.state.accounts.get(accountA).customer.patient_id, null);
+  assert.equal(client.state.accounts.get(accountA).email_verified_at, undefined);
 });
 
 test("el repository rechaza OTP incorrectos y bloquea el quinto intento", async () => {
