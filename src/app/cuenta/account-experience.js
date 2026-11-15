@@ -166,7 +166,7 @@ function AccountDashboard({ account, onLogout, onProfileUpdated }) {
     {section === "menores" ? <AccountFamily account={account} onExpired={onLogout} /> : section === "reservar" ? <>
       <header><h1>Reservar hora</h1><p>Elige un profesional, fecha y hora para tu evaluación.</p></header>
       <BookingExperience accountProfile={account} accountHoursHref={sectionHref("horas")} onBooked={loadClinical} />
-    </> : section === "carrito" ? <CartExperience accountProfile={account} clinicalPrescriptions={clinical?.prescriptions.active} /> : <>
+    </> : section === "carrito" ? <CartExperience accountProfile={account} clinicalPrescriptions={clinical?.prescriptions?.active} /> : <>
     {isOverview && <><header><p className="eyebrow">Mi cuenta</p><h1>Hola, {account.firstNames}</h1><p>Revisa tus compras y continúa con las acciones disponibles.</p></header>
       <div className="account-banner"><span><Icon name="sparkle" /></span><div><strong>Horas y recetas</strong><p>Consulta tus horas y guarda las recetas que usarás en tus próximas compras.</p></div></div></>}
       {section === "recetas" && <AccountSavedPrescriptions />}
