@@ -94,6 +94,11 @@ test("Reporte de 12.000 ventas: agregados exactos, sucursal aislada, fecha Chile
   console.log(JSON.stringify({syntheticSales:12000,reportMs:elapsed,resultBytes:JSON.stringify(report).length,plan:plan[0]["QUERY PLAN"]}));
 });
 
-test("Auditoría final reconoce ocho migraciones sin drift y conserva el ledger histórico",async()=>{
-  const audit=await auditDatabase(prisma,await loadReference());assert.equal(audit.status,"PRISMA_MANAGED",JSON.stringify(audit));assert.equal(audit.applied.length,8);assert.equal(audit.legacyCount,0);assert.deepEqual(audit.pending,[]);
+test("Auditoría final reconoce las migraciones certificadas y conserva el ledger histórico", async () => {
+  const reference = await loadReference();
+  const audit = await auditDatabase(prisma, reference);
+  assert.equal(audit.status, "PRISMA_MANAGED", JSON.stringify(audit));
+  assert.deepEqual(audit.applied, reference.stages.map(({ name }) => name));
+  assert.equal(audit.legacyCount, 0);
+  assert.deepEqual(audit.pending, []);
 });
