@@ -89,7 +89,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
     }
     function refresh() {
       const revision = ++refreshRevisionRef.current;
-      ensureStoreCart().then((data) => {
+      ensureStoreCart({ forShopping: Boolean(accountProfile) }).then((data) => {
         if (revision === refreshRevisionRef.current) hydrate(data);
       })
       .catch((requestError) => {
@@ -326,7 +326,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
   }
 
   if (!cart?.items.length) {
-    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
+    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><h1>{accountProfile ? "Mi carrito" : "Completa tu compra"}</h1></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
   }
 
   return <Root className="cart-page">
