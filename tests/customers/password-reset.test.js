@@ -224,6 +224,9 @@ test("solicitudes concurrentes respetan la espera y el reenvío invalida el cód
 test("el worker reintenta de forma segura con un proveedor simulado y limpia el código al enviar", async () => {
   const account = await accountFor("worker");
   const { mail, code } = await issue(account.email);
+  // Esta prueba verifica el reintento; el correo debe estar vencido para el
+  // reloj del worker, independientemente de la precisión temporal de PostgreSQL.
+  await prisma.transactional_email_outbox.update({ where: { id: mail.id }, data: { next_attempt_at: new Date(0) } });
   const workerEmail = mapEmail(mail, { includeOtpCode: true });
   assert.equal(mail.payload.code, undefined);
   assert.equal(mapEmail(mail).payload.encryptedCode, undefined);
@@ -245,7 +248,8 @@ test("el worker reintenta de forma segura con un proveedor simulado y limpia el 
       },
     },
   };
-  assert.equal((await processTransactionalEmailById(mail.id, dependencies)).failed, 1);
+  const firstAttempt = await processTransactionalEmailById(mail.id, dependencies);
+  assert.equal(firstAttempt.failed, 1, JSON.stringify({ ...firstAttempt, logs }));
   const failed = await outbox(mail.payload.challengeId);
   assert.equal(failed.status, "FAILED");
   assert.equal(failed.last_error_code, "password_reset_delivery_retryable");
