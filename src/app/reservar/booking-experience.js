@@ -39,7 +39,7 @@ async function readApi(response) {
   return payload.data;
 }
 
-export default function BookingExperience() {
+export default function BookingExperience({ accountProfile, accountHoursHref, onBooked } = {}) {
   const [professionals, setProfessionals] = useState([]);
   const [professionalId, setProfessionalId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -48,7 +48,7 @@ export default function BookingExperience() {
   const [selectionNotice, setSelectionNotice] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [rut, setRut] = useState("");
-  const [account, setAccount] = useState(undefined);
+  const [account, setAccount] = useState(accountProfile);
   const [status, setStatus] = useState("loading-professionals");
   const [message, setMessage] = useState("");
   const [identityConflict, setIdentityConflict] = useState(false);
@@ -62,13 +62,14 @@ export default function BookingExperience() {
   const matchesAccount = normalizedRut && normalizedRut === normalizeChileanRut(account?.rut);
 
   useEffect(() => {
+    if (accountProfile) return;
     const controller = new AbortController();
     fetch("/api/store/accounts/me", { cache: "no-store", signal: controller.signal })
       .then(readStoreResponse)
       .then(setAccount)
       .catch((error) => { if (error.name !== "AbortError") setAccount(null); });
     return () => controller.abort();
-  }, []);
+  }, [accountProfile]);
 
   function changeRut(event) {
     const value = event.target.value;
@@ -85,7 +86,8 @@ export default function BookingExperience() {
   }
 
   function useAccountDetails() {
-    if (!matchesAccount) return;
+    if (!matchesAccount && !(accountProfile && !rut.trim())) return;
+    if (!matchesAccount) setRut(accountProfile.rut);
     const details = {};
     for (const name of ["firstNames", "lastNames", "email", "phone", "address"]) {
       const field = bookingForm.current.elements.namedItem(name);
@@ -207,6 +209,7 @@ export default function BookingExperience() {
       }));
       clearBookingDraft();
       setConfirmation(data.appointment); setStatus("confirmed");
+      onBooked?.();
     } catch (error) {
       setIdentityConflict(error.code === "PUBLIC_BOOKING_IDENTITY_NOT_VERIFIED");
       setMessage(error.message);
@@ -215,7 +218,7 @@ export default function BookingExperience() {
   }
 
   if (confirmation) {
-    return <section className={styles.confirmation}><span><Icon name="check" size={32} /></span><p className="eyebrow">Reserva confirmada</p><h2>Tu hora quedó agendada</h2><p>Te esperamos el {new Intl.DateTimeFormat("es-CL", { dateStyle: "long", timeStyle: "short", timeZone: "America/Santiago" }).format(new Date(confirmation.startAt))}.</p><dl><div><dt>Profesional</dt><dd>{confirmation.professional.firstName} {confirmation.professional.lastName}</dd></div><div><dt>Referencia</dt><dd>{confirmation.id}</dd></div></dl><p className={styles.confirmationNote}>{PUBLIC_BOOKING_CONFIRMATION_NOTE}</p></section>;
+    return <section className={styles.confirmation}><span><Icon name="check" size={32} /></span><p className="eyebrow">Reserva confirmada</p><h2>Tu hora quedó agendada</h2><p>Te esperamos el {new Intl.DateTimeFormat("es-CL", { dateStyle: "long", timeStyle: "short", timeZone: "America/Santiago" }).format(new Date(confirmation.startAt))}.</p><dl><div><dt>Profesional</dt><dd>{confirmation.professional.firstName} {confirmation.professional.lastName}</dd></div><div><dt>Referencia</dt><dd>{confirmation.id}</dd></div></dl><p className={styles.confirmationNote}>{PUBLIC_BOOKING_CONFIRMATION_NOTE}</p>{accountHoursHref && <Link className="button button--primary" href={accountHoursHref}>Volver a Mis horas</Link>}</section>;
   }
 
   return (
@@ -238,7 +241,7 @@ export default function BookingExperience() {
           <RutInput id="rut" name="rut" form="booking-details" onChange={changeRut} placeholder="12.345.678-5" required value={rut} />
         </div>
         {normalizedRut && account === null && <BookingLogin onLogin={setAccount} />}
-        {matchesAccount && (
+        {(matchesAccount || (accountProfile && !rut.trim())) && (
           <div className={styles.accountHelp}>
             <button className="button button--secondary" onClick={useAccountDetails} type="button">Usar datos de mi cuenta</button>
             <p>Confirma tu fecha de nacimiento y, si ya te atendiste, usa el correo de tu ficha de paciente.</p>

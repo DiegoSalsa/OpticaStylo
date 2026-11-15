@@ -504,3 +504,22 @@
     gap: 0.65rem;
   }
 }
+
+.account-main {
+  min-width: 0;
+}
+
+.account-main .cart-page {
+  margin: 0;
+  max-width: none;
+  padding-inline: 0;
+  width: 100%;
+}
+
+.account-main .cart-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.account-main .cart-summary {
+  position: static;
+}

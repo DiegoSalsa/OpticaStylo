@@ -36,7 +36,9 @@ function mountName(item, items) {
     ?? "Marco seleccionado";
 }
 
-export default function CartExperience() {
+export default function CartExperience({ accountProfile } = {}) {
+  const Root = accountProfile ? "section" : "main";
+  const ordersHref = accountProfile ? "/cuenta?seccion=pedidos" : null;
   const router = useRouter();
   const [cart, setCart] = useState(null);
   const [shipping, setShipping] = useState({ method: "PICKUP", quote: null });
@@ -80,7 +82,7 @@ export default function CartExperience() {
       setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
       setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
       setPrescriptionDirty(draft?.prescriptionDirty ?? false);
-      setBuyerDraft(draft?.buyer ?? { ...data.buyer, branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
+      setBuyerDraft(draft?.buyer ?? { ...accountProfile, ...Object.fromEntries(Object.entries(data.buyer ?? {}).filter(([, value]) => value != null)), branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
       setStatus("ready");
     }
     function refresh() {
@@ -99,7 +101,7 @@ export default function CartExperience() {
       hydrate(event.detail);
     }
     function returned() {
-      if (["/carrito", "/checkout"].includes(window.location.pathname)) refresh();
+      refresh();
     }
     window.addEventListener(STORE_CART_CHANGED_EVENT, changed);
     window.addEventListener("popstate", returned);
@@ -111,7 +113,7 @@ export default function CartExperience() {
       window.removeEventListener("popstate", returned);
       window.removeEventListener("pageshow", returned);
     };
-  }, []);
+  }, [accountProfile]);
 
   useEffect(() => {
     if (cart) writeCartDraft(window.sessionStorage, cart, { fields, buyer: buyerDraft, prescriptionDirty, prescriptionMode });
@@ -304,23 +306,23 @@ export default function CartExperience() {
   }
 
   if (status === "loading") {
-    return <main className="cart-page"><p>Cargando tu carrito…</p></main>;
+    return <Root className="cart-page"><p>Cargando tu carrito…</p></Root>;
   }
 
   if (status === "error" && !cart) {
-    return <main className="cart-page"><div className="cart-empty"><h1>No pudimos abrir el carrito</h1><p>{error}</p></div></main>;
+    return <Root className="cart-page"><div className="cart-empty"><h1>No pudimos abrir el carrito</h1><p>{error}</p></div></Root>;
   }
 
   if (cart?.status === "CHECKED_OUT") {
-    return <main className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href={`/checkout/mercado-pago/pending?orderId=${cart.saleId}`}>Ver estado del pago</Link><Link className="button button--secondary" href="/tienda">Volver al catálogo</Link></div></div></main>;
+    return <Root className="cart-page"><header><p className="eyebrow">Compra en línea</p><h1>Tu pedido ya fue creado</h1><p>Este carrito quedó cerrado para impedir cobros o pedidos duplicados.</p></header><div className="cart-empty"><Icon name="receipt" size={42} /><h2>Pedido en proceso</h2><p>Consulta el estado confirmado de forma segura por Mercado Pago. Si el pago falló, podrás reintentarlo desde esa pantalla.</p><div className="result-actions"><Link className="button button--primary" href={`/checkout/mercado-pago/pending?orderId=${cart.saleId}`}>Ver estado del pago</Link><Link className="button button--secondary" href={ordersHref ?? "/tienda"}>{ordersHref ? "Volver a Mis pedidos" : "Volver al catálogo"}</Link></div></div></Root>;
   }
 
   if (!cart?.items.length) {
-    return <main className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></main>;
+    return <Root className="cart-page"><nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav><header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header><div className="cart-empty"><Icon name="cart" size={42} /><h2>Tu carrito está vacío</h2><p>Explora los productos publicados y agrega los que quieras revisar.</p><Link className="button button--primary" href="/tienda">Ver catálogo</Link></div></Root>;
   }
 
-  return <main className="cart-page">
-    <nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href="/">Inicio</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Checkout</span></nav>
+  return <Root className="cart-page">
+    <nav className="cart-breadcrumb" aria-label="Migas de pan"><Link href={accountProfile ? "/cuenta" : "/"}>{accountProfile ? "Mi cuenta" : "Inicio"}</Link><span>/</span><Link href="/tienda">Catálogo</Link><span>/</span><span>Carrito</span></nav>
     <header><p className="eyebrow">Compra en línea</p><h1>Completa tu compra</h1><p>Tu carrito se conserva en este dispositivo durante 30 días, aunque compres como invitado.</p></header>
     <ol className="checkout-progress" aria-label="Progreso de compra"><li className="complete"><span>1</span><div><strong>Carrito</strong><small>Productos</small></div></li><li className={prescriptionRequired && !prescriptionReady ? "active" : "complete"}><span>2</span><div><strong>Receta</strong><small>{prescriptionRequired ? prescriptionReady ? "Lista" : "Obligatoria" : "No necesaria"}</small></div></li><li className="active"><span>3</span><div><strong>Datos</strong><small>Comprador</small></div></li><li><span>4</span><div><strong>Retiro</strong><small>Entrega</small></div></li><li><span>5</span><div><strong>Pago</strong><small>Mercado Pago</small></div></li></ol>
     <div className="cart-layout">
@@ -392,5 +394,5 @@ export default function CartExperience() {
       </section>
       <aside className="cart-card cart-summary"><h2>Resumen</h2><dl><div><dt>Subtotal</dt><dd>{formatClp(cart.subtotalCents)}</dd></div><div><dt>{shipping.method === "DELIVERY" ? "Despacho" : "Retiro"}</dt><dd>{shipping.method === "PICKUP" ? "Sin costo" : selectedQuote ? selectedQuote.customerCharge === 0 ? "Gratis" : formatClp(selectedQuote.customerCharge) : "Pendiente de cotizar"}</dd></div><div><dt>Total</dt><dd>{shipping.method === "DELIVERY" && !selectedQuote ? "Pendiente de cotizar" : formatClp(cart.subtotalCents + (selectedQuote?.customerCharge ?? 0))}</dd></div></dl><p><Icon name="shield" size={17} /> El pago se confirma después de la validación de Mercado Pago.</p>{error && <div className="inline-error">{error}</div>}{notice && <div className="inline-success">{notice}</div>}</aside>
     </div>
-  </main>;
+  </Root>;
 }
