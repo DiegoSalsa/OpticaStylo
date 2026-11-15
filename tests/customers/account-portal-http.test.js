@@ -10,6 +10,7 @@ import { database, data, ids } from "../prescriptions/helpers.js";
 import { evaluation } from "../evaluation-data.js";
 import { fixtureRut } from "../rut-fixture.js";
 import { readAccountPrescription } from "../../src/services/account-prescription-service.js";
+import { claimAccountPrescriptionReading, finishAccountPrescriptionReading } from "../../src/repositories/account-prescription-repository.js";
 import { createDependantLinkChallenge, verifyDependantLinkChallenge } from "../../src/repositories/account-family-repository.js";
 import { image, prescription as opticalPrescription } from "../prescriptions/helpers.js";
 
@@ -239,6 +240,19 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: other.cookie })).status, 404);
     assert.equal((await request(endpoint + "/" + uploaded.id)).status, 401);
     assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: owner.cookie })).status, 200);
+
+    const unavailableReading = await request(endpoint + "/" + uploaded.id + "/read", { cookie: owner.cookie, method: "POST" });
+    assert.equal(unavailableReading.status, 503);
+    assert.match((await unavailableReading.json()).error.message, /archivo sigue guardado/);
+    assert.equal((await db.external_prescriptions.findUniqueOrThrow({ where: { id: uploaded.id } })).extraction_status, "FAILED");
+    const expiredWorker = await claimAccountPrescriptionReading(owner.account.id, uploaded.id);
+    assert.equal((await claimAccountPrescriptionReading(owner.account.id, uploaded.id)).reason, "READING");
+    await db.external_prescriptions.update({ where: { id: uploaded.id }, data: { updated_at: new Date(Date.now() - 121_000) } });
+    const activeWorker = await claimAccountPrescriptionReading(owner.account.id, uploaded.id);
+    assert.notEqual(expiredWorker.requestId, activeWorker.requestId);
+    assert.equal(await finishAccountPrescriptionReading(owner.account.id, uploaded.id, expiredWorker.requestId, { provider: "OPENAI_GPT_5_6_LUNA", data: opticalPrescription }), null);
+    assert.equal(await finishAccountPrescriptionReading(owner.account.id, uploaded.id, expiredWorker.requestId, null), null);
+    await finishAccountPrescriptionReading(owner.account.id, uploaded.id, activeWorker.requestId, null);
 
     let reads = 0;
     const dependencies = { readImage: async (source) => {

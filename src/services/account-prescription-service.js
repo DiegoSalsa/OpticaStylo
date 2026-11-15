@@ -48,6 +48,10 @@ export async function readAccountPrescription(account, prescriptionId, dependenc
     return record;
   } catch (error) {
     await finish(owner, id, claim.requestId, null);
+    if (error?.code?.startsWith("PRESCRIPTION_READER_")) throw new AppError({
+      code: error.code, status: error.status,
+      message: "No pudimos leer la receta en este momento. Tu archivo sigue guardado; vuelve a intentar la lectura.",
+    });
     throw error;
   }
 }
