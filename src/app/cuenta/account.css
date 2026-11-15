@@ -577,15 +577,68 @@
   margin-block: 1.5rem;
 }
 
+.prescription-review > h2,
+.prescription-review > p {
+  margin: 0;
+}
+
+.prescription-eyes,
+.account-family-form {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-family-form {
+  align-items: end;
+}
+
+.account-family-back {
+  color: var(--color-primary-dark);
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
 .prescription-review fieldset {
   border: 1px solid var(--color-border, #d9e5e3);
   border-radius: 12px;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-width: 0;
   padding: 1rem;
 }
 
+.prescription-review legend {
+  color: var(--color-primary-dark);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.prescription-row {
+  overflow-wrap: anywhere;
+}
+
+.account-family-form .field {
+  min-width: 0;
+}
+
 .saved-prescriptions input[type="file"] {
   max-width: 100%;
+}
+
+@media (max-width: 700px) {
+  .prescription-eyes,
+  .account-family-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .saved-prescriptions .clinical-link-form .field {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .account-order-back {

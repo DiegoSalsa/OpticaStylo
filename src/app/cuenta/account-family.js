@@ -88,9 +88,9 @@ export default function AccountFamily({ account, onExpired }) {
     {error && <p role="alert" className="inline-error">{error} <button onClick={() => { setError(""); setAttempt((current) => current + 1); }} type="button">Reintentar</button></p>}
     {!records && !error && <p role="status">Cargando los perfiles…</p>}
     {selected ? <>
-      <Link href={familyHref}>Volver a Menores a mi cargo</Link>
-      <section className="account-card"><h2>{selected.firstNames} {selected.lastNames}</h2>
-        <dl className="account-data-grid"><div><dt>RUT</dt><dd>{formatChileanRut(selected.rut)}</dd></div><div><dt>Fecha de nacimiento</dt><dd>{new Date(selected.birthDate + "T00:00:00Z").toLocaleDateString("es-CL", { timeZone: "UTC" })}</dd></div><div><dt>Tu relación</dt><dd>{selected.relationship}</dd></div></dl>
+      <Link className="account-family-back" href={familyHref}>Volver a Menores a mi cargo</Link>
+      <section className="account-card account-data"><h2>{selected.firstNames} {selected.lastNames}</h2>
+        <dl><div><dt>RUT</dt><dd>{formatChileanRut(selected.rut)}</dd></div><div><dt>Fecha de nacimiento</dt><dd>{new Date(selected.birthDate + "T00:00:00Z").toLocaleDateString("es-CL", { timeZone: "UTC" })}</dd></div><div><dt>Tu relación</dt><dd>{selected.relationship}</dd></div></dl>
       </section>
       <AccountSavedPrescriptions key={selected.id} dependantId={selected.id} title={"Recetas de " + selected.firstNames} />
       <DependantHistory account={account} dependant={selected} key={selected.id} onExpired={onExpired} />
@@ -102,7 +102,7 @@ export default function AccountFamily({ account, onExpired }) {
           <Link className="button button--secondary" href={familyHref + "&menor=" + item.id}>Ver datos, recetas y atenciones</Link>
         </article>)}
       </section>
-      <section className="account-card"><h2>Añadir menor a mi cargo</h2><form className="clinical-link-form" onSubmit={add}>
+      <section className="account-card"><h2>Añadir menor a mi cargo</h2><form className="account-family-form" onSubmit={add}>
         <label className="field"><span>Nombres del menor</span><input name="firstNames" required maxLength={150} disabled={busy} /></label>
         <label className="field"><span>Apellidos del menor</span><input name="lastNames" required maxLength={150} disabled={busy} /></label>
         <label className="field"><span>RUT del menor</span><RutInput name="rut" required disabled={busy} /></label>

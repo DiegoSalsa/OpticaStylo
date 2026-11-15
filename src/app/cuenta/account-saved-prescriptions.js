@@ -117,7 +117,7 @@ export default function AccountSavedPrescriptions({ dependantId = null, title = 
       <p>Compara cada valor con el documento original antes de confirmar.</p>
       <a href={endpoint + "/" + editing.id} target="_blank" rel="noreferrer">Descargar original</a>
       {editing.extractedData?.warnings?.map((warning, index) => <p key={index}>{warning}</p>)}
-      <div className="clinical-columns">{[["right", "Ojo derecho"], ["left", "Ojo izquierdo"]].map(([eye, title]) => <fieldset key={eye} disabled={busy}>
+      <div className="prescription-eyes">{[["right", "Ojo derecho"], ["left", "Ojo izquierdo"]].map(([eye, title]) => <fieldset key={eye} disabled={busy}>
         <legend>{title}</legend>{parameters.map(([name, label, step]) => <label className="field" key={name}><span>{label}</span><input defaultValue={values[eye + name]} name={eye + name} type="number" step={step} required={name === "Sphere" || name === "Cylinder"} /></label>)}
       </fieldset>)}</div>
       <label className="field"><span>Distancia pupilar</span><input defaultValue={values.pupillaryDistance} name="pupillaryDistance" step="0.1" type="number" /></label>
