@@ -283,7 +283,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
             phone: form.get("phone"),
             rut: form.get("rut"),
           },
-          clinicalPrescriptionId: cart.clinicalPrescriptionId,
+          clinicalPrescriptionId: prescriptionRequired ? cart.clinicalPrescriptionId : null,
           fulfillment: shipping.method === "DELIVERY" ? { method: "DELIVERY", quoteId: selectedQuote?.id, notes: form.get("notes") || null } : { method: "PICKUP", branchId: form.get("branchId"), notes: form.get("notes") || null },
         }),
         headers: { "Content-Type": "application/json" },
@@ -364,6 +364,7 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
             cart={cart}
             preferredId={preferredPrescription}
             disabled={status === "saving" || Boolean(prescriptionImage)}
+            onPending={(pending) => setStatus(pending ? "saving" : "ready")}
             onSelected={(updated) => {
               setCart(updated);
               setPrescriptionDraft(null);

@@ -71,6 +71,8 @@ const ERRORS = Object.freeze({
     "Este cristal ya está asociado a otro marco del carrito. Elija otra opción o complete esa compra primero.",
     409,
   ],
+  ACCOUNT_CART_ALREADY_ACTIVE: ["ACCOUNT_CART_ALREADY_ACTIVE", "Tu cuenta ya tiene otro carrito activo. Este carrito conserva sus productos. Puedes adjuntar la receta manualmente o continuar desde el otro carrito.", 409],
+  CART_PRESCRIPTION_NOT_REQUIRED: ["CART_PRESCRIPTION_NOT_REQUIRED", "Agrega cristales que requieran receta para usar esta opción.", 409],
   CART_NOT_ACTIVE: ["CART_NOT_ACTIVE", "El carrito ya no está activo.", 409],
   CART_NOT_FOUND: ["CART_NOT_FOUND", "No se encontró un carrito accesible.", 404],
   CLINICAL_PRESCRIPTION_NOT_AVAILABLE: [

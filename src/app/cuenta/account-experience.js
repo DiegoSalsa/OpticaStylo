@@ -177,4 +177,3 @@ function AccountDashboard({ account, onLogout, onProfileUpdated }) {
     </section>
   </main>;
 }
-

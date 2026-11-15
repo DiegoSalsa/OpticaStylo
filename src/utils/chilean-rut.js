@@ -51,5 +51,3 @@ export function formatChileanRut(value) {
   const grouped = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   return `${grouped}-${digit}`;
 }
-
-

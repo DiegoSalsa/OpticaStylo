@@ -204,6 +204,18 @@ export async function saveCartClinicalPrescription(tokenHash, accountId, id, rep
     if (locked.reason) return locked;
     const prescription = await findActiveAccountPrescription(accountId, id, client);
     if (!prescription) return { reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE" };
+    const lens = await client.store_cart_items.findFirst({
+      where: { cart_id: locked.cart.id, [itemProduct]: { category: "PRESCRIPTION_LENS", requires_prescription: true } },
+      select: { id: true },
+    });
+    if (!lens) return { reason: "CART_PRESCRIPTION_NOT_REQUIRED" };
+    if (!locked.cart.customer_account_id) {
+      const active = await client.store_carts.findFirst({
+        where: { customer_account_id: accountId, status: "ACTIVE", id: { not: locked.cart.id } },
+        select: { id: true },
+      });
+      if (active) return { reason: "ACCOUNT_CART_ALREADY_ACTIVE" };
+    }
     const previous = await client.external_prescriptions.findUnique({ where: { cart_id: locked.cart.id } });
     if (previous && !replaceExisting) return { reason: "CONFIRM_PRESCRIPTION_REPLACEMENT" };
 

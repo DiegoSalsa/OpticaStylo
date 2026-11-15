@@ -7,7 +7,7 @@ function dateLabel(value) {
   return new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date(value));
 }
 
-export default function CartClinicalPrescription({ prescriptions, cart, preferredId, disabled, onSelected }) {
+export default function CartClinicalPrescription({ prescriptions, cart, preferredId, disabled, onSelected, onPending }) {
   const [selectedId, setSelectedId] = useState(preferredId ?? cart.clinicalPrescriptionId ?? "");
   const [replace, setReplace] = useState(false);
   const [error, setError] = useState("");
@@ -20,6 +20,7 @@ export default function CartClinicalPrescription({ prescriptions, cart, preferre
     pending.current = true;
     setError("");
     setSaving(true);
+    onPending(true);
     try {
       const result = await readStoreResponse(await fetch("/api/store/cart/prescription/clinical", {
         method: "PUT",
@@ -33,6 +34,7 @@ export default function CartClinicalPrescription({ prescriptions, cart, preferre
     } finally {
       pending.current = false;
       setSaving(false);
+      onPending(false);
     }
   }
 
