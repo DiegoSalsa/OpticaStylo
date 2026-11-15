@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import path from "node:path";
 
 const profile = {
   id: "20000000-0000-4000-8000-000000000087",
@@ -27,7 +28,7 @@ test.beforeEach(async ({ page }) => {
   await page.route(/\/api\/store\/accounts\/me\/prescriptions(?:\?|$)/, (route) => ok(route, []));
 });
 
-test("Mi carrito abre un carrito vacío después de una compra terminada", async ({ page }) => {
+test("Mi carrito abre un carrito vacío después de una compra terminada", async ({ page }, info) => {
   await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
   await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
   let created = 0;
@@ -42,9 +43,10 @@ test("Mi carrito abre un carrito vacío después de una compra terminada", async
   await expect(page.getByRole("heading", { name: "Tu carrito está vacío", exact: true })).toBeVisible();
   expect(created).toBe(1);
   await expect(page.getByText("Tu pedido ya fue creado", { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: path.join(process.env.PRESCRIPTION_TEST_OUTPUT ?? "tmp", "carrito-cuenta-" + info.project.name + ".png"), fullPage: true });
 });
 
-test("Mis recetas lee con OpenAI y permite corregir valores antes de guardarlos sin ficha clínica", async ({ page }) => {
+test("Mis recetas lee con OpenAI y permite corregir valores antes de guardarlos sin ficha clínica", async ({ page }, info) => {
   await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
   await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
   const saved = { id: recipeId, filename: "receta-prueba.png", createdAt: "2026-11-15T12:00:00Z", imageHash: "a".repeat(64), status: "DRAFT" };
@@ -63,6 +65,7 @@ test("Mis recetas lee con OpenAI y permite corregir valores antes de guardarlos 
   const right = page.getByRole("group", { name: "Ojo derecho", exact: true });
   await expect(right.getByLabel("Esfera", { exact: true })).toHaveValue("-1.25");
   await right.getByLabel("Esfera", { exact: true }).fill("-2.25");
+  await page.screenshot({ path: path.join(process.env.PRESCRIPTION_TEST_OUTPUT ?? "tmp", "receta-openai-" + info.project.name + ".png"), fullPage: true });
   await page.getByRole("button", { name: "Confirmar y guardar receta", exact: true }).click();
   await expect(page.getByText("Revisada y guardada", { exact: false })).toBeVisible();
   expect(confirmed.rightEye.sphere).toBe(-2.25);
@@ -70,7 +73,7 @@ test("Mis recetas lee con OpenAI y permite corregir valores antes de guardarlos 
   await expect(page.getByRole("button", { name: "Usar en mi carrito", exact: true })).toBeVisible();
 });
 
-test("Menores a mi cargo mantiene separados los datos y las recetas del adulto", async ({ page }) => {
+test("Menores a mi cargo mantiene separados los datos y las recetas del adulto", async ({ page }, info) => {
   const dependantId = "20000000-0000-4000-8000-000000000099";
   await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
   await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
@@ -87,6 +90,7 @@ test("Menores a mi cargo mantiene separados los datos y las recetas del adulto",
   await expect(page.getByRole("heading", { name: "Recetas de Hijo", exact: true })).toBeVisible();
   await expect(page.getByText("Control visual del menor", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: path.join(process.env.PRESCRIPTION_TEST_OUTPUT ?? "tmp", "menores-cuenta-" + info.project.name + ".png"), fullPage: true });
 });
 
 test("reserva y carrito conservan el panel y una receta de la cuenta llega al carrito", async ({ page }) => {

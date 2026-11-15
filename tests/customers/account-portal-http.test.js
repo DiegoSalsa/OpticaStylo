@@ -306,6 +306,21 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     const pdf = clinical + "/prescriptions/" + childPrescription.id + "/pdf";
     assert.equal((await request(pdf, { cookie: owner.cookie })).status, 200);
     assert.equal((await request(pdf, { cookie: other.cookie })).status, 404);
+    const cartResponse = await request("/api/store/cart", { cookie: owner.cookie, method: "POST" });
+    await data(cartResponse, 201);
+    const cartCookie = owner.cookie + "; " + cartResponse.headers.getSetCookie()[0].split(";")[0];
+    await data(await request("/api/store/cart/prescription/clinical", { cookie: cartCookie, method: "PUT", body: { prescriptionId: childPrescription.id } }));
+    const branches = await data(await request("/api/store/cart/pickup", { cookie: cartCookie }));
+    await data(await request("/api/store/cart", { cookie: cartCookie, method: "PATCH", body: {
+      buyer: { rut: owner.rut, firstNames: "Cliente", lastNames: "Sintético", email: owner.email, phone: "+56912345678", address: "Dirección sintética" },
+      fulfillment: { method: "PICKUP", branchId: branches.find((branch) => branch.available).id },
+      clinicalPrescriptionId: childPrescription.id,
+    } }));
+    const checkout = await data(await request("/api/store/cart/checkout", { cookie: cartCookie, method: "POST" }), 201);
+    const sale = await db.sales.findUniqueOrThrow({ where: { id: checkout.order.id } });
+    assert.equal(sale.customer_id, owner.account.customerId);
+    assert.equal(sale.patient_id, child.id);
+    assert.equal(sale.prescription_id, childPrescription.id);
     await db.patient_guardians.update({ where: { patient_id: child.id }, data: { account_id: null, email: "otro-responsable@example.invalid" } });
     assert.equal((await data(await request(childPath, { cookie: owner.cookie }))).linked, false);
     assert.equal((await request(pdf, { cookie: owner.cookie })).status, 404);
