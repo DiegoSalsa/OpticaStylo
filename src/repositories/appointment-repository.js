@@ -277,6 +277,16 @@ export async function updateCustomerAppointment(accountId, id, { expectedStart, 
     }
     if (customerAppointmentChangeDeadline(current.start_at, noticeHours) <= now) return { reason: "CLOSED" };
     if (slot && await findCollision(client, current.professional_id, slot.startAt, slot.endAt, id)) return { reason: "SLOT_TAKEN" };
+    // Reclamar un correo y cambiar su hora compiten por las mismas filas de la cola.
+    const emails = await client.$queryRaw`SELECT id, status, attempt_count, lock_expires_at
+      FROM transactional_email_outbox
+      WHERE appointment_id = ${id}::uuid
+        AND template_code IN ('APPOINTMENT_CONFIRMED', 'APPOINTMENT_REMINDER')
+        AND status IN ('PENDING', 'FAILED', 'PROCESSING')
+      ORDER BY id FOR UPDATE`;
+    if (emails.some((email) => email.status === "PROCESSING" && email.lock_expires_at > now)) {
+      return { reason: "EMAIL_PROCESSING" };
+    }
     const updated = await client.appointments.updateMany({
       where: { id, start_at: expectedStart, status: "CONFIRMED", patients: verifiedPatientForAccount(accountId) },
       data: slot
@@ -298,10 +308,22 @@ export async function updateCustomerAppointment(accountId, id, { expectedStart, 
         new_end_at: slot?.endAt,
       },
     });
-    await client.transactional_email_outbox.updateMany({
-      where: { appointment_id: id, template_code: { in: ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"] }, status: { in: ["PENDING", "FAILED"] } },
-      data: { status: "SUPPRESSED", skip_reason: slot ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_CANCELLED", processing_finished_at: now },
-    });
+    if (emails.length) {
+      const reason = slot ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_CANCELLED";
+      await client.transactional_email_outbox.updateMany({
+        where: { id: { in: emails.map((email) => email.id) } },
+        data: {
+          status: "SUPPRESSED", skip_reason: reason, processing_finished_at: now,
+          locked_at: null, locked_by: null, lock_expires_at: null,
+        },
+      });
+      await client.transactional_email_transitions.createMany({
+        data: emails.map((email) => ({
+          email_id: email.id, from_status: email.status, to_status: "SUPPRESSED",
+          attempt_count: email.attempt_count, reason_code: reason,
+        })),
+      });
+    }
     if (slot) await enqueueAppointmentEmails(client, {
       appointmentId: id, endAt: slot.endAt, startAt: slot.startAt,
       recipientEmail: current.patients.email, reminderHours, revision: String(event.id),

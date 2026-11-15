@@ -3,6 +3,9 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { formatInTimeZone } from "date-fns-tz";
 import { PDFDocument } from "pdf-lib";
+import { disconnectPrisma } from "../../src/db/prisma.js";
+import { findRecipientSuppression, renewAppointmentEmailClaim } from "../../src/repositories/transactional-email-repository.js";
+import { processTransactionalEmailById } from "../../src/services/transactional-email-service.js";
 import { database, data, ids } from "../prescriptions/helpers.js";
 import { evaluation } from "../evaluation-data.js";
 import { fixtureRut } from "../rut-fixture.js";
@@ -35,6 +38,7 @@ async function register(index) {
 test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas y editar contacto", { skip: !base }, async (t) => {
   const db = database();
   t.after(() => db.$disconnect());
+  t.after(disconnectPrisma);
   const owner = await register(9761);
   const other = await register(9762);
   const professionalId = evaluation.professionalId;
@@ -120,13 +124,68 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     assert.equal((await request(endpoint, { cookie: other.cookie, method: "PATCH", body: reschedule })).status, 404);
     assert.equal((await request(endpoint, { cookie: owner.cookie, method: "PATCH", body: { ...reschedule, startAt: to.endAt.slice(0, 10) + "T02:00:00.000Z" } })).status, 409);
     assert.equal((await db.appointments.findUniqueOrThrow({ where: { id: appointment.id } })).start_at.toISOString(), from.startAt);
+
+    const reminder = await db.transactional_email_outbox.create({
+      data: {
+        appointment_id: appointment.id, template_code: "APPOINTMENT_REMINDER",
+        deduplication_key: "portal-race:" + appointment.id, recipient_email: owner.email,
+        payload: { appointmentId: appointment.id, startAt: from.startAt, endAt: from.endAt },
+      },
+    });
+    await db.transactional_email_outbox.create({
+      data: {
+        appointment_id: appointment.id, template_code: "APPOINTMENT_CONFIRMED", status: "FAILED", delivery_mode: "live",
+        deduplication_key: "portal-retry:" + appointment.id, recipient_email: owner.email,
+        payload: { appointmentId: appointment.id, startAt: from.startAt, endAt: from.endAt },
+      },
+    });
+    const claimRenewed = Promise.withResolvers();
+    const allowSend = Promise.withResolvers();
+    let deliveries = 0;
+    const dispatch = processTransactionalEmailById(reminder.id, {
+      config: {
+        mode: "live", timeoutMs: 8000, batchSize: 1, lockSeconds: 60, maxAttempts: 3,
+        retryBaseSeconds: 30, maxRetrySeconds: 3600, timeZone: "America/Santiago",
+      },
+      provider: { async send() {
+        deliveries++;
+        return { provider: "RESEND", providerMessageId: "synthetic-" + reminder.id };
+      } },
+      logger: { info() {} },
+      async renewAppointmentClaim(...args) {
+        const expiry = await renewAppointmentEmailClaim(...args);
+        claimRenewed.resolve(expiry);
+        await allowSend.promise;
+        return expiry;
+      },
+    });
+    try {
+      const expiry = await Promise.race([claimRenewed.promise, dispatch.then(() => null)]);
+      assert.ok(expiry, "el worker debe quedar detenido entre la última validación y el envío");
+      const inProgress = await request(endpoint, { cookie: owner.cookie, method: "PATCH", body: reschedule });
+      assert.equal(inProgress.status, 409);
+      assert.equal((await inProgress.json()).error.code, "CUSTOMER_APPOINTMENT_EMAIL_PROCESSING");
+      assert.equal((await db.appointments.findUniqueOrThrow({ where: { id: appointment.id } })).start_at.toISOString(), from.startAt);
+      assert.equal(await db.appointment_events.count({ where: { appointment_id: appointment.id } }), 0);
+      assert.equal(deliveries, 0);
+    } finally {
+      allowSend.resolve();
+      await dispatch;
+    }
+    assert.equal(deliveries, 1);
+    assert.equal((await db.transactional_email_outbox.findUniqueOrThrow({ where: { id: reminder.id } })).status, "SENT");
+
     await data(await request(endpoint, { cookie: owner.cookie, method: "PATCH", body: reschedule }));
+    const confirmation = await db.transactional_email_outbox.findFirstOrThrow({
+      where: { appointment_id: appointment.id, template_code: "APPOINTMENT_CONFIRMED", status: "PENDING" },
+    });
+    assert.equal(await findRecipientSuppression(confirmation.id, owner.email), null);
     assert.equal((await request(endpoint, { cookie: owner.cookie, method: "PATCH", body: reschedule })).status, 409);
     await data(await request(endpoint, { cookie: owner.cookie, method: "PATCH", body: { action: "CANCEL", expectedStartAt: to.startAt } }));
     const saved = await db.appointments.findUniqueOrThrow({ where: { id: appointment.id } });
     assert.equal(saved.status, "CANCELLED");
     assert.equal(saved.start_at.toISOString(), to.startAt);
     assert.equal(await db.appointment_events.count({ where: { appointment_id: appointment.id } }), 2);
-    assert.equal(await db.transactional_email_outbox.count({ where: { appointment_id: appointment.id, status: "SUPPRESSED" } }), 2);
+    assert.equal(await db.transactional_email_outbox.count({ where: { appointment_id: appointment.id, status: "SUPPRESSED" } }), 3);
   });
 });

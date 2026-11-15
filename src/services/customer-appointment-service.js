@@ -46,6 +46,9 @@ export async function manageCustomerAppointment(account, id, input, dependencies
     reminderHours: getAppointmentReminderHours(dependencies.environment),
     slot,
   });
+  if (result.reason === "EMAIL_PROCESSING") {
+    throw error("CUSTOMER_APPOINTMENT_EMAIL_PROCESSING", "Estamos enviando un correo de esta cita. Espera unos segundos y vuelve a intentarlo.");
+  }
   if (result.reason === "SLOT_TAKEN") throw error("CUSTOMER_APPOINTMENT_SLOT_TAKEN", "Esa hora ya no está disponible. Elige otra.");
   if (result.reason === "CLOSED") throw error("CUSTOMER_APPOINTMENT_CHANGE_CLOSED", "Ya terminó el plazo para cambiar esta hora en línea. Contacta a la óptica.");
   if (result.reason) throw error("CUSTOMER_APPOINTMENT_CHANGED", "La hora cambió. Actualiza Mis horas antes de intentarlo nuevamente.");

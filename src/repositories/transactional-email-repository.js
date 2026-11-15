@@ -153,6 +153,16 @@ export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTest
   }, { isolationLevel: "Serializable" });
 }
 
+export async function renewAppointmentEmailClaim(emailId, workerId, lockSeconds) {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + lockSeconds * 1000);
+  const renewed = await prisma.transactional_email_outbox.updateMany({
+    where: { id: emailId, locked_by: workerId, lock_expires_at: { gt: now }, status: "PROCESSING" },
+    data: { lock_expires_at: expiresAt },
+  });
+  return renewed.count === 1 ? expiresAt : null;
+}
+
 export async function completeTransactionalEmail(emailId, workerId, { effectiveRecipientEmail = null, provider = null, providerMessageId = null, status }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
@@ -293,7 +303,10 @@ export async function findRecipientSuppression(emailId, recipientEmail) {
     where: {
       delivery_mode: "live", id: { not: emailId }, recipient_email: recipientEmail,
       status: { in: ["BOUNCED", "COMPLAINED", "SUPPRESSED"] },
-      OR: [{ skip_reason: null }, { skip_reason: { not: "OTP_CHALLENGE_INVALID" } }],
+      OR: [
+        { skip_reason: null },
+        { skip_reason: { notIn: ["OTP_CHALLENGE_INVALID"], not: { startsWith: "APPOINTMENT_" } } },
+      ],
     },
   }))?.status ?? null;
 }

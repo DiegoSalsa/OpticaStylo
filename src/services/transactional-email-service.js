@@ -20,6 +20,7 @@ import {
   finishTransactionalEmailWorkerRun,
   getTransactionalEmailEligibility,
   getTransactionalEmailMetrics,
+  renewAppointmentEmailClaim,
   retryTransactionalEmail,
   startTransactionalEmailWorkerRun,
   suppressTransactionalEmail,
@@ -143,7 +144,8 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
     try {
       // Revalidar códigos y reservas justo antes de entregarlos al proveedor.
-      if (OTP_EMAIL_TEMPLATE_CODES.includes(email.templateCode) || ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"].includes(email.templateCode)) {
+      const appointmentEmail = ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"].includes(email.templateCode);
+      if (OTP_EMAIL_TEMPLATE_CODES.includes(email.templateCode) || appointmentEmail) {
         const current = await (dependencies.getEmailEligibility ?? getTransactionalEmailEligibility)(email);
         if (!current.eligible) {
           await (dependencies.suppressEmail ?? suppressTransactionalEmail)(email.id, workerId, current.reason);
@@ -163,6 +165,11 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
       const recipient = config.mode === "test"
         ? config.testRecipient
         : email.recipientEmail;
+      if (appointmentEmail) {
+        // Dar al proveedor el timeout completo mientras la cita conserva el horario enviado.
+        const expiry = await (dependencies.renewAppointmentClaim ?? renewAppointmentEmailClaim)(email.id, workerId, config.lockSeconds);
+        if (!expiry || expiry.getTime() <= Date.now() + config.timeoutMs) continue;
+      }
       const delivery = await provider.send({ email, recipient, rendered });
       const status = config.mode === "test" ? "TEST_SENT" : "SENT";
       await (dependencies.completeEmail ?? completeTransactionalEmail)(
