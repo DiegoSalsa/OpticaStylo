@@ -29,12 +29,12 @@ async function accountFor(name, passwordHash = "hash-ficticio-de-prueba") {
   return prisma.customer_accounts.create({ data: { customer_id: customer.id, email, password_hash: passwordHash } });
 }
 
-function request(email, jobs, dependencies = {}) {
+function request(email, jobs, dependencies = {}, ip) {
   const input = new Request("http://localhost/api/store/accounts/password-reset/request", {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }),
+    method: "POST", headers: { "Content-Type": "application/json", ...(ip ? { "x-real-ip": ip } : {}) }, body: JSON.stringify({ email }),
   });
   return requestPasswordReset(input, (callback) => jobs.push(callback), {
-    prepare: (address, schedule) => preparePasswordReset(address, schedule, { ...live, ...dependencies }),
+    prepare: (address, schedule, quotas) => preparePasswordReset(address, schedule, { ...live, ...quotas, ...dependencies }),
   });
 }
 
@@ -55,10 +55,10 @@ test("HTTP 202 espera la escritura e iguala las respuestas para correos existent
   const release = Promise.withResolvers();
   let settled = false;
   const pending = request(account.email, jobs, {
-    async queueReset(input) {
+    async queueReset(input, client) {
       entered.resolve();
       await release.promise;
-      return queuePasswordReset(input);
+      return queuePasswordReset(input, client);
     },
     async sendEmail() { throw new Error("Error que contiene un dato que no debe registrarse"); },
     logger: { error(message) { assert.equal(message, "Falló el despacho inmediato del correo de recuperación."); } },
@@ -91,6 +91,7 @@ test("HTTP 202 espera la escritura e iguala las respuestas para correos existent
   assert.equal(jobs.length, 1);
   await jobs[0]();
   assert.equal((await outbox(present.challengeId)).status, "PENDING");
+  assert.equal((await request(account.email, jobs)).status, 429);
 });
 
 test("un fallo de escritura en PostgreSQL revierte el desafío y la ruta responde 500 sin programar envío", async (t) => {
@@ -100,7 +101,7 @@ test("un fallo de escritura en PostgreSQL revierte el desafío y la ruta respond
   const original = await prisma.customer_password_resets.findUniqueOrThrow({ where: { id: initial.challengeId } });
   const jobs = [];
   const response = await request(account.email, jobs, {
-    queueReset: (input) => queuePasswordReset({ ...input, challengeId: initial.challengeId }),
+    queueReset: (input, client) => queuePasswordReset({ ...input, challengeId: initial.challengeId }, client),
   });
   assert.equal(response.status, 500);
   assert.equal((await response.json()).error.code, "INTERNAL_ERROR");
@@ -109,22 +110,81 @@ test("un fallo de escritura en PostgreSQL revierte el desafío y la ruta respond
   assert.equal(afterRollback.code_hash, original.code_hash);
   assert.equal(await prisma.transactional_email_outbox.count({ where: { account_id: account.id } }), 1);
   assert.ok(!JSON.stringify(console.error.mock.calls).includes(initial.code));
+  const retry = await request(account.email, jobs);
+  assert.equal(retry.status, 202);
+  assert.equal(jobs.length, 1);
+  assert.equal((await outbox((await retry.json()).data.challengeId)).status, "PENDING");
 });
 
-test("un fallo de conexión antes de persistir conserva la respuesta de error pública", async (t) => {
+test("una interrupción de PostgreSQL da el mismo 503 para ambas direcciones y no consume cuota de envío", async (t) => {
   const errorLog = t.mock.method(console, "error", () => {});
   const account = await accountFor("connection");
   const jobs = [];
-  const response = await request(account.email, jobs, {
-    async queueReset() {
-      throw Object.assign(new Error("Error privado de conexión"), { code: "P1001" });
+  const database = {
+    async $transaction() {
+      throw Object.assign(new Error(`Error privado de conexión para ${account.email}, clave 123456`), { code: "P1001" });
     },
-  });
-  assert.equal(response.status, 500);
-  assert.equal((await response.json()).error.code, "INTERNAL_ERROR");
+  };
+  const existing = await request(account.email, jobs, { database });
+  const unknown = await request("reset-connection-unknown@example.invalid", jobs, { database });
+  assert.equal(existing.status, 503);
+  assert.equal(unknown.status, existing.status);
+  assert.deepEqual([...unknown.headers], [...existing.headers]);
+  assert.deepEqual(await unknown.json(), await existing.json());
   assert.equal(await prisma.customer_password_resets.count({ where: { account_id: account.id } }), 0);
   assert.equal(jobs.length, 0);
-  assert.deepEqual(errorLog.mock.calls[0].arguments, ["Error interno no controlado.", { code: "P1001", sensitive: true }]);
+  assert.deepEqual(errorLog.mock.calls.map(({ arguments: args }) => args), Array(2).fill(["Almacenamiento de recuperación no disponible."]));
+  assert.equal((await request(account.email, jobs)).status, 202);
+});
+
+test("sin la tabla de la migración ambos correos reciben el mismo 503 antes de consultar la cuenta", async (t) => {
+  const logs = t.mock.method(console, "error", () => {});
+  const account = await accountFor("missing-schema");
+  const jobs = [];
+  let queueCalls = 0;
+  const dependencies = { queueReset() { queueCalls += 1; } };
+  await prisma.$executeRaw`ALTER TABLE customer_password_resets RENAME TO synthetic_missing_reset_table`;
+  try {
+    const existing = await request(account.email, jobs, dependencies);
+    const unknown = await request("reset-missing-schema-unknown@example.invalid", jobs, dependencies);
+    assert.equal(existing.status, 503);
+    assert.equal(unknown.status, existing.status);
+    assert.deepEqual([...unknown.headers], [...existing.headers]);
+    assert.deepEqual(await unknown.json(), await existing.json());
+    assert.equal(queueCalls, 0);
+    assert.equal(jobs.length, 0);
+    assert.ok(!JSON.stringify(logs.mock.calls.map(({ arguments: args }) => args)).includes(account.email));
+  } finally {
+    await prisma.$executeRaw`ALTER TABLE synthetic_missing_reset_table RENAME TO customer_password_resets`;
+  }
+  assert.equal((await request(account.email, jobs)).status, 202);
+});
+
+test("mantiene el límite de red entre correos y acota también los intentos que fallan internamente", async (t) => {
+  const previous = process.env.TRUST_PROXY;
+  process.env.TRUST_PROXY = "true";
+  t.after(() => {
+    if (previous === undefined) delete process.env.TRUST_PROXY;
+    else process.env.TRUST_PROXY = previous;
+  });
+  const jobs = [];
+  const acceptedNetwork = "203.0.113.37";
+  for (let index = 0; index < 12; index += 1) {
+    assert.equal((await request(`ip-cap-${index}@example.invalid`, jobs, {}, acceptedNetwork)).status, 202);
+  }
+  const blocked = await request("ip-cap-next@example.invalid", jobs, {}, acceptedNetwork);
+  assert.equal(blocked.status, 429);
+  assert.ok(Number(blocked.headers.get("Retry-After")) > 0);
+  assert.equal((await request("ip-cap-next@example.invalid", jobs, {}, "203.0.113.38")).status, 202);
+
+  const failedNetwork = "203.0.113.39";
+  t.mock.method(console, "error", () => {});
+  const failed = { async queueReset() { throw new Error("Fallo controlado antes de guardar"); } };
+  for (let index = 0; index < 24; index += 1) {
+    assert.equal((await request("ip-fail@example.invalid", jobs, failed, failedNetwork)).status, 500);
+  }
+  assert.equal((await request("ip-fail@example.invalid", jobs, failed, failedNetwork)).status, 429);
+  assert.equal(jobs.length, 0);
 });
 
 test("solicitudes concurrentes respetan la espera y el reenvío invalida el código y el correo anteriores", async () => {

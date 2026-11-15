@@ -18,6 +18,7 @@ export const PUBLIC_REQUEST_LIMIT_OPERATIONS = Object.freeze({
   STORE_CART_CREATION: "store_cart_creation",
   STORE_LOGIN: "store_login",
   STORE_PASSWORD_RESET_REQUEST: "store_password_reset_request",
+  STORE_PASSWORD_RESET_ATTEMPT: "store_password_reset_attempt",
   STORE_PASSWORD_RESET_RESEND: "store_password_reset_resend",
   STORE_PASSWORD_RESET_CONFIRM: "store_password_reset_confirm",
   STORE_PATIENT_LINK: "store_patient_link",
@@ -31,6 +32,8 @@ const LIMITS = Object.freeze({
   store_commerce_link:{identifier:{maximumAttempts:5,windowSeconds:900},network:{maximumAttempts:12,windowSeconds:900}},
   store_commerce_verify:{identifier:{maximumAttempts:10,windowSeconds:900},network:{maximumAttempts:25,windowSeconds:900}},
   store_password_reset_request: { identifier: { maximumAttempts: 3, windowSeconds: 900 }, network: { maximumAttempts: 12, windowSeconds: 900 } },
+  // Acotar también el trabajo que termina en rollback. Esta cuota es solo por red.
+  store_password_reset_attempt: { network: { maximumAttempts: 24, windowSeconds: 900 } },
   store_password_reset_resend: {
     identifier: { maximumAttempts: 1, windowSeconds: PASSWORD_RESET_RESEND_SECONDS },
     network: { maximumAttempts: 12, windowSeconds: PASSWORD_RESET_RESEND_SECONDS },
@@ -124,7 +127,7 @@ export async function enforcePublicRequestRateLimit(
 
   const metadata = (dependencies.getMetadata ?? getRequestMetadata)(request);
   const networkAddress = normalizeIdentifier(metadata.ipAddress);
-  if (networkAddress) {
+  if (networkAddress && limits.network) {
     await enforceQuota({
       ...limits.network,
       bucket: `${operation}:network`,
@@ -133,7 +136,7 @@ export async function enforcePublicRequestRateLimit(
   }
 
   const normalizedIdentifier = normalizeIdentifier(identifier);
-  if (normalizedIdentifier) {
+  if (normalizedIdentifier && limits.identifier) {
     await enforceQuota({
       ...limits.identifier,
       bucket: `${operation}:identifier`,

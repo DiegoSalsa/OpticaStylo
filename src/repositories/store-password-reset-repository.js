@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { AppError } from "../utils/app-error.js";
 import { verifyCommerceCode } from "../utils/commerce-otp.js";
 
 export const PASSWORD_RESET_MAX_ATTEMPTS = 5;
@@ -11,45 +12,65 @@ async function lockAccount(client, id) {
   });
 }
 
-export async function queuePasswordReset({ challengeId, protectCode, email, expiresAt }, database = prisma) {
-  return database.$transaction(async (client) => {
-    const match = await client.customer_accounts.findFirst({
-      where: { email, is_active: true },
-      select: { id: true },
-    });
-    if (!match) return null;
-    const account = await lockAccount(client, match.id);
-    if (!account?.is_active || account.email !== email) return null;
-    const previous = await client.customer_password_resets.findUnique({
-      where: { account_id: account.id },
-      select: { id: true, code_hash: true },
-    });
-    const { codeHash, encryptedCode } = protectCode(previous);
-    const proof = {
-      id: challengeId,
-      email: account.email,
-      code_hash: codeHash,
-      expires_at: expiresAt,
-      attempt_count: 0,
-      consumed_at: null,
-    };
-    await client.customer_password_resets.upsert({
-      where: { account_id: account.id },
-      create: { account_id: account.id, ...proof },
-      update: proof,
-    });
-    const outbox = await client.transactional_email_outbox.create({
-      data: {
-        account_id: account.id,
-        deduplication_key: `CUSTOMER_PASSWORD_RESET:${challengeId}`,
-        payload: { challengeId, encryptedCode },
-        recipient_email: account.email,
-        template_code: "CUSTOMER_PASSWORD_RESET",
-      },
-      select: { id: true },
-    });
-    return outbox.id;
+export async function assertPasswordResetStorageReady(client) {
+  // Comprobar la forma sin leer filas. La misma transacción conserva los bloqueos de esquema.
+  const [storage] = await client.$queryRaw`
+    WITH shape AS (
+      SELECT proof.id, proof.account_id, proof.email, proof.code_hash, proof.attempt_count,
+             proof.expires_at, proof.consumed_at, mail.id AS mail_id, mail.account_id AS mail_account,
+             mail.payload, mail.template_code, mail.recipient_email, mail.deduplication_key
+      FROM customer_password_resets AS proof CROSS JOIN transactional_email_outbox AS mail
+      WHERE FALSE
+    )
+    SELECT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_constraint
+      WHERE conrelid = 'transactional_email_outbox'::regclass
+        AND conname = 'transactional_email_template'
+        AND pg_catalog.pg_get_constraintdef(oid) LIKE '%CUSTOMER_PASSWORD_RESET%'
+    ) AND NOT EXISTS (SELECT 1 FROM shape)
+      AND has_table_privilege('customer_password_resets', 'INSERT')
+      AND has_table_privilege('customer_password_resets', 'UPDATE')
+      AND has_table_privilege('transactional_email_outbox', 'INSERT') AS ready`;
+  if (!storage?.ready) throw new AppError({ code: "PASSWORD_RESET_STORAGE_NOT_READY" });
+}
+
+export async function queuePasswordReset({ challengeId, protectCode, email, expiresAt }, client) {
+  const match = await client.customer_accounts.findFirst({
+    where: { email, is_active: true },
+    select: { id: true },
   });
+  if (!match) return null;
+  const account = await lockAccount(client, match.id);
+  if (!account?.is_active || account.email !== email) return null;
+  const previous = await client.customer_password_resets.findUnique({
+    where: { account_id: account.id },
+    select: { id: true, code_hash: true },
+  });
+  const { codeHash, encryptedCode } = protectCode(previous);
+  const proof = {
+    id: challengeId,
+    email: account.email,
+    code_hash: codeHash,
+    expires_at: expiresAt,
+    attempt_count: 0,
+    consumed_at: null,
+  };
+  await client.customer_password_resets.upsert({
+    where: { account_id: account.id },
+    create: { account_id: account.id, ...proof },
+    update: proof,
+  });
+  const outbox = await client.transactional_email_outbox.create({
+    data: {
+      account_id: account.id,
+      deduplication_key: `CUSTOMER_PASSWORD_RESET:${challengeId}`,
+      payload: { challengeId, encryptedCode },
+      recipient_email: account.email,
+      template_code: "CUSTOMER_PASSWORD_RESET",
+    },
+    select: { id: true },
+  });
+  return outbox.id;
 }
 
 export async function consumePasswordReset({ challengeId, code, makePasswordHash }, database = prisma) {

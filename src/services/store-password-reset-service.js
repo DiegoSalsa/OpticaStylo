@@ -2,7 +2,8 @@ import { randomInt, randomUUID } from "node:crypto";
 import { setTimeout as wait } from "node:timers/promises";
 import { hashPassword } from "../auth/password.js";
 import { getTransactionalEmailConfig } from "../config/transactional-email.js";
-import { consumePasswordReset, queuePasswordReset } from "../repositories/store-password-reset-repository.js";
+import { prisma } from "../db/prisma.js";
+import { assertPasswordResetStorageReady, consumePasswordReset, queuePasswordReset } from "../repositories/store-password-reset-repository.js";
 import { AppError } from "../utils/app-error.js";
 import { commerceCode, commerceCodeHash, verifyCommerceCode } from "../utils/commerce-otp.js";
 import { encryptPasswordResetCode, PasswordResetEncryptionConfigError } from "../utils/store-password-reset-code.js";
@@ -21,6 +22,11 @@ function unavailable() {
 function responseDelay(delay = wait) {
   const deadline = performance.now() + randomInt(220, 321);
   return () => delay(Math.max(0, deadline - performance.now()));
+}
+
+function storageUnavailable(error) {
+  if (["P1000", "P1001", "P1002", "P1003", "P1010", "P1017", "P2021", "P2022", "P2024", "PASSWORD_RESET_STORAGE_NOT_READY"].includes(error?.code)) return true;
+  return error?.code === "P2010" && ["42P01", "42703", "42501", "08006", "57P01"].includes(error.meta?.code);
 }
 
 export async function preparePasswordReset(email, schedule, dependencies = {}) {
@@ -44,9 +50,19 @@ export async function preparePasswordReset(email, schedule, dependencies = {}) {
       return protect(String(replacement).padStart(6, "0"));
     };
     const expiresAt = new Date(Date.now() + 10 * 60_000);
-    emailId = await (dependencies.queueReset ?? queuePasswordReset)({ challengeId, protectCode, email, expiresAt });
+    await dependencies.limitAttempts?.();
+    emailId = await (dependencies.database ?? prisma).$transaction(async (client) => {
+      await assertPasswordResetStorageReady(client);
+      await dependencies.reserveQuota?.(client);
+      return (dependencies.queueReset ?? queuePasswordReset)({ challengeId, protectCode, email, expiresAt }, client);
+    });
   } catch (error) {
     if (error instanceof PasswordResetEncryptionConfigError) throw unavailable();
+    if (storageUnavailable(error)) {
+      // Clasificación constante. Los errores del driver pueden contener los parámetros de la consulta.
+      (dependencies.logger ?? console).error("Almacenamiento de recuperación no disponible.");
+      throw unavailable();
+    }
     throw error;
   } finally {
     await delayResponse();

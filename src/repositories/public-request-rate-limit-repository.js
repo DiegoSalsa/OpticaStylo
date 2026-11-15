@@ -1,10 +1,10 @@
 import { prisma } from "../db/prisma.js";
 
-export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }) {
+export async function reservePublicRequestQuota({ bucket, subjectHash, windowSeconds }, client = prisma) {
   // One statement locks only the conflicting quota row. Concurrent identities
   // no longer contend on a serializable read/upsert predicate. Window resets
   // and increments cannot lose updates across serverless instances.
-  const [row] = await prisma.$queryRaw`
+  const [row] = await client.$queryRaw`
     INSERT INTO public_request_rate_limits AS quota
       (bucket,subject_hash,request_count,window_started_at,expires_at)
     VALUES (${bucket},${subjectHash},1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP+${windowSeconds}::int*interval '1 second')
