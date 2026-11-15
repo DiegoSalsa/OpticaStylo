@@ -69,14 +69,17 @@ function eligibilityClient(challenge) {
         && challenge.consumed_at === where.consumed_at
         && challenge.expires_at > where.expires_at.gt
         && challenge.attempt_count < where.attempt_count.lt
+        && challenge.recipient_email === where.recipient_email
+        && challenge.account_email === where.customer_accounts.email
+        && challenge.account_active === where.customer_accounts.is_active
         ? { id: challenge.id } : null,
     },
   };
 }
 
-const otpEmail = { accountId: "account-a", payload: { challengeId: "challenge-a", code: "123456" }, templateCode: "CUSTOMER_PATIENT_OTP" };
+const otpEmail = { accountId: "account-a", recipientEmail: "ana@example.com", payload: { challengeId: "challenge-a", code: "123456" }, templateCode: "CUSTOMER_PATIENT_OTP" };
 const now = new Date("2026-09-24T12:00:00.000Z");
-const challenge = { account_id: "account-a", attempt_count: 0, consumed_at: null, expires_at: new Date("2026-09-24T12:10:00.000Z"), id: "challenge-a" };
+const challenge = { account_id: "account-a", recipient_email: "ana@example.com", account_email: "ana@example.com", account_active: true, attempt_count: 0, consumed_at: null, expires_at: new Date("2026-09-24T12:10:00.000Z"), id: "challenge-a" };
 
 test("OTP vigente y retry FAILED conservan elegibilidad", async () => {
   const dependencies = { client: eligibilityClient(challenge), now: () => now };
@@ -91,6 +94,10 @@ test("OTP reemplazado, expirado, agotado, inexistente o de otra cuenta no es ele
     { ...challenge, attempt_count: 5 },
     null,
     { ...challenge, account_id: "account-b" },
+    { ...challenge, recipient_email: null },
+    { ...challenge, recipient_email: "otro@example.com" },
+    { ...challenge, account_email: "nuevo@example.com" },
+    { ...challenge, account_active: false },
   ]) {
     const result = await getTransactionalEmailEligibility(otpEmail, { client: eligibilityClient(obsolete), now: () => now });
     assert.deepEqual(result, { eligible: false, reason: "OTP_CHALLENGE_INVALID" });

@@ -117,6 +117,7 @@ test("el repository crea un OTP con hash, receptor clínico y expiración", asyn
   assert.equal(client.state.outbox[0].recipient_email, "ana@example.com");
   assert.equal(client.state.outbox[0].payload.challengeId, "30000000-0000-4000-8000-000000000001");
   assert.notEqual(client.state.challenges[0].code_hash, "123456");
+  assert.equal(client.state.challenges[0].recipient_email, "ana@example.com");
   assert.equal(client.state.challenges[0].expires_at.toISOString(), "2026-09-24T12:10:00.000Z");
 });
 
@@ -142,6 +143,32 @@ test("un cambio de correo entre el envío y la confirmación impide acreditar el
   const result = await verifyCustomerPatientOtpChallenge(accountA, "654321", { client, environment, now: () => new Date("2026-09-24T12:05:00Z") });
   assert.equal(result.reason, "PATIENT_LINKED");
   assert.equal(client.state.accounts.get(accountA).customer.patient_id, null);
+  assert.equal(client.state.accounts.get(accountA).email_verified_at, undefined);
+});
+
+test("cambiar ambos correos no permite acreditar un destinatario diferente al que recibió el OTP", async () => {
+  const client = fakeClinicalClient();
+  const environment = { CUSTOMER_PATIENT_OTP_SECRET: "s".repeat(32) };
+  await createCustomerPatientOtpChallenge(accountA, { birthDate: "1990-05-20" }, {
+    client, environment, generateCode: () => "654321", now: () => new Date("2026-09-24T12:00:00Z"),
+  });
+  client.state.accounts.get(accountA).email = "nuevo@example.invalid";
+  client.state.patients.get(patientA).email = "nuevo@example.invalid";
+  const result = await verifyCustomerPatientOtpChallenge(accountA, "654321", { client, environment, now: () => new Date("2026-09-24T12:05:00Z") });
+  assert.equal(result.reason, "PATIENT_LINKED");
+  assert.equal(client.state.accounts.get(accountA).email_verified_at, undefined);
+  assert.equal(client.state.accounts.get(accountA).customer.patient_id, null);
+});
+
+test("un código antiguo sin destinatario exige emitir una nueva verificación", async () => {
+  const client = fakeClinicalClient();
+  const environment = { CUSTOMER_PATIENT_OTP_SECRET: "s".repeat(32) };
+  await createCustomerPatientOtpChallenge(accountA, { birthDate: "1990-05-20" }, {
+    client, environment, generateCode: () => "654321", now: () => new Date("2026-09-24T12:00:00Z"),
+  });
+  client.state.challenges[0].recipient_email = null;
+  const result = await verifyCustomerPatientOtpChallenge(accountA, "654321", { client, environment, now: () => new Date("2026-09-24T12:05:00Z") });
+  assert.equal(result.reason, "PATIENT_LINKED");
   assert.equal(client.state.accounts.get(accountA).email_verified_at, undefined);
 });
 
@@ -171,12 +198,12 @@ test("el vínculo existente al mismo paciente es idempotente y otro paciente gen
   client.state.accounts.get(accountA).customer.patient_id = patientA;
   client.state.patients.get(patientA).customerId = customerA;
   const challengeId = "30000000-0000-4000-8000-000000000005";
-  client.state.challenges.push({ account_id: accountA, code_hash: hashCustomerPatientOtp(challengeId, "654321", environment), created_at: new Date("2026-09-24T12:00:00.000Z"), expires_at: new Date("2026-09-24T12:10:00.000Z"), id: challengeId, patient_id: patientA, consumed_at: null, attempt_count: 0 });
+  client.state.challenges.push({ account_id: accountA, recipient_email: "ana@example.com", code_hash: hashCustomerPatientOtp(challengeId, "654321", environment), created_at: new Date("2026-09-24T12:00:00.000Z"), expires_at: new Date("2026-09-24T12:10:00.000Z"), id: challengeId, patient_id: patientA, consumed_at: null, attempt_count: 0 });
   const same = await verifyCustomerPatientOtpChallenge(accountA, "654321", { client, environment, now: () => new Date("2026-09-24T12:05:00.000Z") });
   assert.equal(same.reason, null);
 
   const otherChallenge = "30000000-0000-4000-8000-000000000006";
-  client.state.challenges.push({ account_id: accountA, code_hash: hashCustomerPatientOtp(otherChallenge, "123456", environment), created_at: new Date("2026-09-24T12:00:00.000Z"), expires_at: new Date("2026-09-24T12:10:00.000Z"), id: otherChallenge, patient_id: patientB, consumed_at: null, attempt_count: 0 });
+  client.state.challenges.push({ account_id: accountA, recipient_email: "ana@example.com", code_hash: hashCustomerPatientOtp(otherChallenge, "123456", environment), created_at: new Date("2026-09-24T12:00:00.000Z"), expires_at: new Date("2026-09-24T12:10:00.000Z"), id: otherChallenge, patient_id: patientB, consumed_at: null, attempt_count: 0 });
   const conflict = await verifyCustomerPatientOtpChallenge(accountA, "123456", { client, environment, now: () => new Date("2026-09-24T12:05:00.000Z") });
   assert.equal(conflict.reason, "PATIENT_LINKED");
 });

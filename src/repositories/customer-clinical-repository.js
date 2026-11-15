@@ -162,6 +162,7 @@ export async function createCustomerPatientOtpChallenge(accountId, identity, dep
     const codeHash = (dependencies.hashCode ?? hashCustomerPatientOtp)(challengeId, code, dependencies.environment);
     await client.customer_patient_link_challenges.create({ data: {
       account_id: account.id, code_hash: codeHash, expires_at: expiresAt, id: challengeId, patient_id: patient.id,
+      recipient_email: expectedEmail,
     } });
     // Encolar el correo en la infraestructura transaccional existente y no usar el receptor del navegador.
     const outbox = await client.transactional_email_outbox.create({ data: {
@@ -209,7 +210,9 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
       select: { birth_date: true, email: true, first_names: true, id: true, last_names: true, rut: true, customers: { select: { id: true } } },
       where: { id: challenge.patient_id },
     });
-    if (!patient || patient.rut !== account.customers.rut
+    if (!patient || !challenge.recipient_email
+      || challenge.recipient_email !== account.email.trim().toLowerCase()
+      || patient.rut !== account.customers.rut
       || patient.email.trim().toLowerCase() !== account.email.trim().toLowerCase()
       || (patient.customers && patient.customers.id !== account.customer_id)) {
       await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
