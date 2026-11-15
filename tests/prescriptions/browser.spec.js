@@ -101,7 +101,7 @@ test("Una cuenta registrada conserva su receta en Mis pedidos y permite consulta
   const email = `cuenta-receta-${unique}@example.invalid`;
   await page.goto("/cuenta");
   await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
-  for (const [name, value] of Object.entries({ ...buyer, rut: fixtureRut(unique), email, password: "Receta-cuenta-segura-2026!" })) {
+  for (const [name, value] of Object.entries({ ...buyer, birthDate: "1990-01-01", rut: fixtureRut(unique), email, password: "Receta-cuenta-segura-2026!" })) {
     await page.locator(`form [name="${name}"]`).fill(value);
   }
   await page.getByRole("button", { name: "Crear cuenta segura", exact: true }).click();
