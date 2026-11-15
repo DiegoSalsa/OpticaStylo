@@ -566,3 +566,59 @@
   gap: 0.65rem;
   margin-top: 1rem;
 }
+
+.account-order-back {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.account-order-detail h1 {
+  margin-bottom: 0.4rem;
+}
+
+.account-order-detail .status-chip {
+  display: inline-flex;
+  margin: 0 0 1rem;
+}
+
+.account-order-totals {
+  background: var(--color-mint);
+  border-radius: 12px;
+  display: grid;
+  gap: 0.55rem;
+  max-width: 600px;
+  padding: 1rem;
+}
+
+.account-order-totals > div {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.account-order-totals dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .account-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .account-sidebar nav a {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 560px) {
+  .account-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-sidebar nav a {
+    gap: 0.45rem;
+  }
+}

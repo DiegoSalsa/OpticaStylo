@@ -53,8 +53,8 @@ export default function AccountOrderDetails({ id }) {
     }
   }
 
-  return <section className="account-card">
-    <Link href="/cuenta?seccion=pedidos">Volver a Mis pedidos</Link>
+  return <section className="account-card account-order-detail">
+    <Link className="account-order-back" href="/cuenta?seccion=pedidos">← Volver a Mis pedidos</Link>
     {loading && <p role="status">Consultando pedido…</p>}
     {loadError && <p className="inline-error" role="alert">{loadError} <button type="button" onClick={refresh}>Reintentar</button></p>}
     {order && <div>
