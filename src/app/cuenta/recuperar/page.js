@@ -5,6 +5,7 @@ import "../account.css";
 
 export const metadata = { title: "Recuperar contraseña | Óptica Stylo" };
 
-export default function PasswordRecoveryPage() {
-  return <><PublicHeader /><PasswordRecovery /><PublicFooter /></>;
+export default async function PasswordRecoveryPage({ searchParams }) {
+  const fromBooking = (await searchParams)?.desde === "reserva";
+  return <><PublicHeader /><PasswordRecovery fromBooking={fromBooking} /><PublicFooter /></>;
 }

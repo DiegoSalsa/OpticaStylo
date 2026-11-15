@@ -5,7 +5,7 @@ import { useState } from "react";
 import { readStoreResponse } from "@/utils/store-client";
 import styles from "./booking.module.css";
 
-export default function BookingLogin({ onLogin }) {
+export default function BookingLogin({ onLogin, onRecovery }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -49,7 +49,7 @@ export default function BookingLogin({ onLogin }) {
           <div className={styles.accountActions}>
             <button className="button button--primary" disabled={saving} type="submit">{saving ? "Ingresando…" : "Ingresar"}</button>
             <button className="button button--secondary" disabled={saving} onClick={() => { setOpen(false); setError(""); }} type="button">Cancelar</button>
-            <Link href="/cuenta/recuperar">¿Olvidaste tu contraseña?</Link>
+            <Link href="/cuenta/recuperar?desde=reserva" onNavigate={onRecovery}>¿Olvidaste tu contraseña?</Link>
           </div>
         </form>
       ) : (

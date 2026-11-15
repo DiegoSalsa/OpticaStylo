@@ -2,11 +2,12 @@
 
 import RutInput from "@/components/ui/rut-input";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
 import { normalizeChileanRut } from "@/utils/chilean-rut";
 import { readStoreResponse } from "@/utils/store-client";
 import { PUBLIC_BOOKING_CONFIRMATION_NOTE } from "./booking-copy";
+import { saveBookingDraft, takeBookingDraft } from "./booking-draft";
 import BookingLogin from "./booking-login";
 import styles from "./booking.module.css";
 
@@ -44,6 +45,7 @@ export default function BookingExperience() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [slots, setSlots] = useState([]);
+  const [selectionNotice, setSelectionNotice] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [rut, setRut] = useState("");
   const [account, setAccount] = useState(undefined);
@@ -94,35 +96,57 @@ export default function BookingExperience() {
     prefilled.current = { ...prefilled.current, ...details };
   }
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/store/booking/professionals", { signal: controller.signal })
-      .then(readApi)
-      .then((data) => { setProfessionals(data); setStatus("ready"); })
-      .catch((error) => { if (error.name !== "AbortError") { setMessage(error.message); setStatus("error"); } });
-    return () => controller.abort();
-  }, []);
-
-  // Cancelar la disponibilidad al salir impide actualizar una reserva desmontada.
-  useEffect(() => () => availabilityRequest.current?.abort(), []);
-
-  async function loadSlots(nextProfessionalId, nextDate) {
+  const loadSlots = useCallback(async (nextProfessionalId, nextDate, previousStartAt = null) => {
     // Invalidar siempre la selección anterior, incluso si se limpia profesional o fecha.
     availabilityRequest.current?.abort();
-    setMessage(""); setSelectedSlot(null); setSlots([]);
+    setMessage(""); setSelectedSlot(null); setSlots([]); setSelectionNotice("");
     if (!nextProfessionalId || !nextDate) { setStatus("ready"); return; }
     const controller = new AbortController();
     availabilityRequest.current = controller;
     setStatus("loading-slots");
     try {
       const data = await readApi(await fetch(`/api/store/booking/professionals/${nextProfessionalId}/availability?date=${nextDate}`, {
+        cache: "no-store",
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
       }));
-      if (!controller.signal.aborted) { setSlots(data.slots); setStatus("ready"); }
+      if (!controller.signal.aborted) {
+        setSlots(data.slots);
+        if (previousStartAt) {
+          const availableSlot = data.slots.find((slot) => Date.parse(slot.startAt) === Date.parse(previousStartAt));
+          setSelectedSlot(availableSlot ?? null);
+          if (!availableSlot) setSelectionNotice("La hora que habías seleccionado ya no está disponible. Elige otra hora.");
+        }
+        setStatus("ready");
+      }
     } catch {
       if (!controller.signal.aborted) { setMessage("No fue posible consultar los horarios. Vuelve a seleccionar la fecha para reintentar."); setStatus("error-slots"); }
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/store/booking/professionals", { signal: controller.signal })
+      .then(readApi)
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        setProfessionals(data);
+        const draft = takeBookingDraft();
+        if (!draft) { setStatus("ready"); return; }
+        if (!data.some((item) => item.id === draft.professionalId) || draft.date < chileDate(1)) {
+          setSelectionNotice("La hora que habías seleccionado ya no está disponible. Elige otra hora.");
+          setStatus("ready");
+          return;
+        }
+        setProfessionalId(draft.professionalId);
+        setSelectedDate(draft.date);
+        return loadSlots(draft.professionalId, draft.date, draft.startAt);
+      })
+      .catch((error) => { if (!controller.signal.aborted) { setMessage(error.message); setStatus("error"); } });
+    return () => {
+      controller.abort();
+      availabilityRequest.current?.abort();
+    };
+  }, [loadSlots]);
 
   function chooseProfessional(value) { setProfessionalId(value); loadSlots(value, selectedDate); }
   function chooseDate(value) { setSelectedDate(value); loadSlots(professionalId, value); }
@@ -166,6 +190,7 @@ export default function BookingExperience() {
         {status !== "loading-professionals" && <div className={styles.field}><label htmlFor="professional">Profesional</label><select id="professional" onChange={(event) => chooseProfessional(event.target.value)} required value={professionalId}><option value="">Selecciona un profesional</option>{professionals.map((item) => <option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></div>}
         <div className={styles.field}><label htmlFor="booking-date">Fecha</label><input id="booking-date" max={chileDate(60)} min={chileDate(1)} onChange={(event) => chooseDate(event.target.value)} required type="date" value={selectedDate} /></div>
         <div className={styles.slotArea}><div className={styles.slotLabel}><span>Horas disponibles</span>{selectedDate && <small>{formatLongDate(selectedDate)}</small>}</div>{status === "loading-slots" && <div className={styles.inlineState}>Consultando agenda…</div>}{status === "error-slots" && <div className={styles.inlineError}><Icon name="shield" /><p>{message}</p></div>}{status === "ready" && professionalId && selectedDate && slots.length === 0 && <div className={styles.inlineState}>No hay horas disponibles para esta fecha.</div>}{slots.length > 0 && <div className={styles.slots}>{slots.map((slot) => <button className={selectedSlot?.startAt === slot.startAt ? styles.slotActive : ""} key={slot.startAt} onClick={() => setSelectedSlot(slot)} type="button">{formatTime(slot.startAt)}</button>)}</div>}</div>
+        {selectionNotice && !selectedSlot && <p className={styles.inlineState} role="status">{selectionNotice}</p>}
         <div className={styles.summary}><Icon name="calendar" /><div><small>Tu selección</small><strong>{selectedProfessional ? `${selectedProfessional.firstName} ${selectedProfessional.lastName}` : "Selecciona un profesional"}</strong><span>{selectedSlot ? `${formatLongDate(selectedDate)}, ${formatTime(selectedSlot.startAt)}` : "Selecciona fecha y hora"}</span></div></div>
       </section>
 
@@ -175,7 +200,11 @@ export default function BookingExperience() {
           <label htmlFor="rut">RUT</label>
           <RutInput id="rut" name="rut" form="booking-details" onChange={changeRut} placeholder="12.345.678-5" required value={rut} />
         </div>
-        {normalizedRut && account === null && <BookingLogin onLogin={setAccount} />}
+        {normalizedRut && account === null && (
+          <BookingLogin onLogin={setAccount} onRecovery={() => saveBookingDraft({
+            professionalId, date: selectedDate, startAt: selectedSlot?.startAt,
+          })} />
+        )}
         {matchesAccount && (
           <div className={styles.accountHelp}>
             <button className="button button--secondary" onClick={useAccountDetails} type="button">Usar datos de mi cuenta</button>

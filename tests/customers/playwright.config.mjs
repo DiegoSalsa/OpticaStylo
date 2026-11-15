@@ -5,7 +5,7 @@ const output = process.env.PRESCRIPTION_TEST_OUTPUT;
 export default defineConfig({
   ...base,
   testDir: ".",
-  testMatch: "browser.spec.js",
+  testMatch: ["browser.spec.js", "password-reset-browser.spec.js"],
   timeout: 120000,
   outputDir: path.join(output, "customer-artifacts"),
   reporter: [["list"], ["json", {
