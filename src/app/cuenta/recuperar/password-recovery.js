@@ -20,13 +20,15 @@ async function submitReset(endpoint, values) {
 
 export default function PasswordRecovery({ fromBooking }) {
   const [email, setEmail] = useState("");
-  const [challengeId, setChallengeId] = useState("");
+  const [challenge, setChallenge] = useState(null);
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [retryUntil, setRetryUntil] = useState(0);
+  const [retryByEmail, setRetryByEmail] = useState(() => new Map());
   const [clock, setClock] = useState(0);
   const pending = useRef(false);
+  const activeEmail = challenge?.email ?? email.trim().toLowerCase();
+  const retryUntil = retryByEmail.get(activeEmail) ?? 0;
   const retrySeconds = Math.max(0, Math.ceil((retryUntil - clock) / 1000));
 
   useEffect(() => {
@@ -39,14 +41,18 @@ export default function PasswordRecovery({ fromBooking }) {
     return () => clearInterval(timer);
   }, [retryUntil]);
 
-  function waitBeforeResend(seconds) {
+  function waitBeforeResend(address, seconds) {
     if (!Number.isFinite(seconds) || seconds <= 0) return;
     const now = Date.now();
     setClock(now);
-    setRetryUntil(now + seconds * 1000);
+    setRetryByEmail((previous) => {
+      const updated = new Map([...previous].filter(([, deadline]) => deadline > now));
+      updated.set(address, Math.max(updated.get(address) ?? 0, now + seconds * 1000));
+      return updated;
+    });
   }
 
-  async function perform(operation, { requesting = false } = {}) {
+  async function perform(operation, address) {
     if (pending.current) return;
     pending.current = true;
     setSaving(true);
@@ -54,7 +60,7 @@ export default function PasswordRecovery({ fromBooking }) {
     try {
       await operation();
     } catch (requestError) {
-      if (requesting) waitBeforeResend(requestError.retryAfterSeconds);
+      if (address) waitBeforeResend(address, requestError.retryAfterSeconds);
       setError(requestError.message);
     } finally {
       pending.current = false;
@@ -62,28 +68,29 @@ export default function PasswordRecovery({ fromBooking }) {
     }
   }
 
-  function requestCode(address) {
-    if (Date.now() < retryUntil) return;
+  function requestCode(value) {
+    const address = value.trim().toLowerCase();
+    if (Date.now() < (retryByEmail.get(address) ?? 0)) return;
     return perform(async () => {
       setEmail(address);
       const result = await submitReset("request", { email: address });
-      waitBeforeResend(result.retryAfterSeconds);
-      setChallengeId(result.challengeId);
-    }, { requesting: true });
+      waitBeforeResend(address, result.retryAfterSeconds);
+      setChallenge({ id: result.challengeId, email: address });
+    }, address);
   }
 
   async function submit(event) {
     event.preventDefault();
     if (pending.current) return;
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    if (!challengeId) return requestCode(values.email);
-    if (challengeId && values.password !== values.confirmPassword) {
+    if (!challenge) return requestCode(values.email);
+    if (values.password !== values.confirmPassword) {
       setError("Las contraseñas deben coincidir.");
       return;
     }
 
     return perform(async () => {
-      await submitReset("confirm", { challengeId, code: values.code, password: values.password });
+      await submitReset("confirm", { challengeId: challenge.id, code: values.code, password: values.password });
       setDone(true);
     });
   }
@@ -101,8 +108,8 @@ export default function PasswordRecovery({ fromBooking }) {
             {fromBooking ? "Volver a la reserva" : "Ir a iniciar sesión"}
           </Link>
         ) : (
-          <form key={challengeId || "request"} method="post" onSubmit={submit}>
-            {challengeId ? (
+          <form key={challenge?.id || "request"} method="post" onSubmit={submit}>
+            {challenge ? (
               <>
                 <p className="field-full" role="status">Si el correo corresponde a una cuenta activa, recibirás un código de seis dígitos. Revisa también spam. El código vence en 10 minutos.</p>
                 <label className="field field-full">
@@ -121,25 +128,29 @@ export default function PasswordRecovery({ fromBooking }) {
             ) : (
               <label className="field field-full">
                 <span>Correo electrónico</span>
-                <input autoComplete="email" defaultValue={email} name="email" required type="email" />
+                <input autoComplete="email" name="email" required type="email" value={email} onChange={(event) => {
+                  setEmail(event.target.value);
+                  setClock(Date.now());
+                  setError("");
+                }} />
               </label>
             )}
             {error && <p className="inline-error field-full" role="alert">{error}</p>}
-            <button className="button button--primary field-full" disabled={saving || (!challengeId && retrySeconds > 0)} type="submit">
-              {saving ? "Procesando…" : challengeId ? "Cambiar contraseña" : "Enviar código"}
+            <button className="button button--primary field-full" disabled={saving || (!challenge && retrySeconds > 0)} type="submit">
+              {saving ? "Procesando…" : challenge ? "Cambiar contraseña" : "Enviar código"}
             </button>
-            {challengeId && (
+            {challenge && (
               <>
                 <p className="field-full">Solicitar otro código invalida el anterior. Usa el código de la solicitud más reciente, aunque los correos lleguen en otro orden.</p>
-                <button className="button button--secondary field-full" disabled={saving || retrySeconds > 0} type="button" onClick={() => requestCode(email)}>
+                <button className="button button--secondary field-full" disabled={saving || retrySeconds > 0} type="button" onClick={() => requestCode(challenge.email)}>
                   Solicitar otro código
                 </button>
-                <button className="button button--secondary field-full" disabled={saving} type="button" onClick={() => { setChallengeId(""); setError(""); }}>
+                <button className="button button--secondary field-full" disabled={saving} type="button" onClick={() => { setChallenge(null); setError(""); }}>
                   Cambiar correo
                 </button>
               </>
             )}
-            {retrySeconds > 0 && <p className="field-full">Podrás solicitar un código en {retrySeconds} s.</p>}
+            {retrySeconds > 0 && <p className="field-full">Podrás solicitar otro código para este correo en {retrySeconds} s.</p>}
             <Link className="field-full" href={fromBooking ? "/reservar" : "/cuenta"}>
               {fromBooking ? "Volver a la reserva" : "Volver a iniciar sesión"}
             </Link>

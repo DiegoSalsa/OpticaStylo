@@ -238,3 +238,46 @@ test("reenviar respeta el tiempo indicado por el servidor y no duplica solicitud
   await expect(resend).toBeDisabled();
   expect(requests).toBe(3);
 });
+
+test("cambiar de correo conserva la espera solo para la dirección normalizada y usa el desafío nuevo", async ({ page }) => {
+  await page.clock.install({ time: new Date("2030-10-09T16:00:00Z") });
+  const requests = [];
+  await page.route("**/api/store/accounts/password-reset/request", (route) => {
+    const { email } = route.request().postDataJSON();
+    requests.push(email);
+    return ok(route, { challengeId: `solicitud-${requests.length}`, retryAfterSeconds: 60 }, 202);
+  });
+  let confirmation;
+  await page.route("**/api/store/accounts/password-reset/confirm", (route) => {
+    confirmation = route.request().postDataJSON();
+    return ok(route, { updated: true });
+  });
+  await page.goto("/cuenta/recuperar");
+  const input = page.getByLabel("Correo electrónico", { exact: true });
+  const send = page.getByRole("button", { name: "Enviar código", exact: true });
+  const change = page.getByRole("button", { name: "Cambiar correo" });
+  const resend = page.getByRole("button", { name: "Solicitar otro código" });
+  await input.fill("ORIGINAL@example.invalid");
+  await send.click();
+  await expect(resend).toBeDisabled();
+  await change.click();
+  await input.fill("Original@example.invalid");
+  await expect(send).toBeDisabled();
+  await input.fill("segundo@example.invalid");
+  await expect(send).toBeEnabled();
+  // Dos intentos de envío en el mismo turno deben originar una sola solicitud.
+  await send.evaluate((button) => { button.form.requestSubmit(); button.form.requestSubmit(); });
+  await expect(resend).toBeDisabled();
+  await change.click();
+  await input.fill("original@example.invalid");
+  await expect(send).toBeDisabled();
+  expect(requests).toEqual(["original@example.invalid", "segundo@example.invalid"]);
+  await page.clock.fastForward(61_000);
+  await send.click();
+  await page.getByLabel("Código de recuperación").fill("123456");
+  await page.getByLabel(/^Nueva contraseña/).fill("Clave-ficticia-nueva-2026");
+  await page.getByLabel(/^Repite la nueva contraseña/).fill("Clave-ficticia-nueva-2026");
+  await page.getByRole("button", { name: "Cambiar contraseña" }).click();
+  await expect(page.getByRole("heading", { name: "Contraseña actualizada" })).toBeVisible();
+  expect(confirmation.challengeId).toBe("solicitud-3");
+});
