@@ -10,6 +10,7 @@ import {
   validateCustomerPatientLinkRequest,
   validateCustomerPatientOtpInput,
 } from "../validations/customer-clinical-validation.js";
+import { validateExternalPrescriptionId } from "../validations/store-validation.js";
 
 const GENERIC_LINK_MESSAGE = "No fue posible verificar un registro de paciente con los datos proporcionados.";
 
@@ -75,7 +76,10 @@ function assertOtpEmailConfigured(environment, emailConfig) {
 
 // Consultar únicamente las reservas y recetas permitidas para la cuenta autenticada.
 export async function getCustomerClinicalOverview(account, dependencies = {}) {
-  return (dependencies.findOverview ?? findCustomerClinicalOverview)(accountId(account), dependencies.now?.() ?? new Date(), dependencies.repositoryDependencies ?? {});
+  const dependantId = dependencies.dependantId ? validateExternalPrescriptionId(dependencies.dependantId) : null;
+  return (dependencies.findOverview ?? findCustomerClinicalOverview)(accountId(account), dependencies.now?.() ?? new Date(), {
+    ...dependencies.repositoryDependencies, ...(dependantId && { dependantId }),
+  });
 }
 
 // Verificar identidad y generar un desafío sin aceptar correo receptor ni patientId desde el navegador.

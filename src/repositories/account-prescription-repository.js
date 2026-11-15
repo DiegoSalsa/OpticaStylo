@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "../db/prisma.js";
 import { retryTransaction } from "../db/retry-transaction.js";
+import { findAccountDependant } from "./account-family-repository.js";
 
 export function savedPrescriptionScope(accountId) {
   return { cart_id: null, created_by: null, customers: { customer_accounts: { id: accountId, is_active: true } } };
@@ -22,21 +23,22 @@ function publicPrescription(row) {
   };
 }
 
-export async function listAccountPrescriptions(accountId) {
+export async function listAccountPrescriptions(accountId, dependantId = null) {
   const rows = await prisma.external_prescriptions.findMany({
-    where: savedPrescriptionScope(accountId), select: summary, take: 50,
+    where: { ...savedPrescriptionScope(accountId), dependant_id: dependantId }, select: summary, take: 50,
     orderBy: [{ created_at: "desc" }, { id: "desc" }],
   });
   return rows.map(publicPrescription);
 }
 
-export async function saveAccountPrescription(accountId, image) {
+export async function saveAccountPrescription(accountId, image, dependantId = null) {
   return retryTransaction(prisma, async (client) => {
     const account = await client.customer_accounts.findUnique({ where: { id: accountId, is_active: true } });
     if (!account) return null;
+    if (dependantId && !await findAccountDependant(accountId, dependantId, client)) return null;
     const record = await client.external_prescriptions.create({
       data: {
-        customer_id: account.customer_id, source: "IMAGE", status: "DRAFT",
+        customer_id: account.customer_id, dependant_id: dependantId, source: "IMAGE", status: "DRAFT",
         original_filename: image.filename, media_type: image.mediaType,
         file_size_bytes: image.data.length, file_sha256: image.sha256, file_data: image.data,
       }, select: summary,

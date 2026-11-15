@@ -1,6 +1,6 @@
 import { prisma } from "../db/prisma.js";
 import { savedPrescriptionScope } from "./account-prescription-repository.js";
-import { findActiveAccountPrescription } from "./customer-clinical-repository.js";
+import { findActiveAccountPrescription, verifiedPatientForAccount } from "./customer-clinical-repository.js";
 import {findCustomerByNormalizedRut} from "./customer-identity.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { cartHasReadyPrescription } from "../utils/prescription-requirement.js";
@@ -263,13 +263,12 @@ export async function configureStoreCart(tokenHash, accountId, configuration) {
     }
     if (configuration.clinicalPrescriptionId && !accountId) return { cart: null, reason: "ACCOUNT_REQUIRED_FOR_PRESCRIPTION" };
     if (configuration.clinicalPrescriptionId) {
-      const account = await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } });
-      const prescription = account?.customers.patient_id && !account.clinical_link_recheck_required ? await client.optical_prescriptions.findFirst({
+      const prescription = await client.optical_prescriptions.findFirst({
         where: {
           id: configuration.clinicalPrescriptionId, status: "ACTIVE",
-          clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" },
+          clinical_encounters: { patients: verifiedPatientForAccount(accountId), status: "FINALIZED" },
         },
-      }) : null;
+      });
       if (!prescription) return { cart: null, reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE" };
     }
     const { buyer, fulfillment } = configuration;
@@ -496,9 +495,8 @@ export async function checkoutStoreCart(tokenHash, accountId, checkedOutAt) {
     }
     let clinicalPrescription = null;
     if (cart.clinical_prescription_id) {
-      const account = accountId ? await client.customer_accounts.findUnique({ include: { customers: true }, where: { id: accountId } }) : null;
-      clinicalPrescription = account?.customers.patient_id && !account.clinical_link_recheck_required ? await client.optical_prescriptions.findFirst({
-        where: { id: cart.clinical_prescription_id, status: "ACTIVE", clinical_encounters: { patient_id: account.customers.patient_id, status: "FINALIZED" } },
+      clinicalPrescription = accountId ? await client.optical_prescriptions.findFirst({
+        where: { id: cart.clinical_prescription_id, status: "ACTIVE", clinical_encounters: { patients: verifiedPatientForAccount(accountId), status: "FINALIZED" } },
         include: { clinical_encounters: true },
       }) : null;
       if (!clinicalPrescription) return { reason: "CLINICAL_PRESCRIPTION_NOT_AVAILABLE", saleId: null };

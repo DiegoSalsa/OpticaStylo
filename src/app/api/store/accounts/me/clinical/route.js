@@ -6,6 +6,6 @@ import { executeApiHandler } from "@/utils/error-handler";
 // GET /api/store/accounts/me/clinical - obtener el resumen clínico permitido del paciente vinculado.
 export async function GET(request) {
   return executeApiHandler(async () => createSuccessResponse(
-    await getCustomerClinicalOverview(await authenticateCustomerRequest(request)),
+    await getCustomerClinicalOverview(await authenticateCustomerRequest(request), { dependantId: new URL(request.url).searchParams.get("dependantId") }),
   ));
 }

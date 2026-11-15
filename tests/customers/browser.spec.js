@@ -335,6 +335,7 @@ test("Compra invitada → registro con verificación → recuperación privada d
   await page.getByLabel("Contraseña (mínimo 15 caracteres)", {
     exact: true
   }).fill(evaluation.password);
+  await page.getByLabel("Fecha de nacimiento del titular adulto", { exact: true }).fill("1990-01-01");
   const requesting = page.waitForResponse(r => r.url().endsWith("/api/store/accounts/register/request-code"));
   await page.getByRole("button", {
     name: "Verificar registro de compras anteriores",

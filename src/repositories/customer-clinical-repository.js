@@ -1,6 +1,8 @@
 import { customerAppointmentChangeDeadline } from "../config/customer-appointments.js";
 import { prisma } from "../db/prisma.js";
 import { randomUUID } from "node:crypto";
+import { adultBirthDateCutoff } from "../utils/customer-account-age.js";
+import { findAccountDependant, synchronizeAccountClinicalLinks } from "./account-family-repository.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import {
   CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS,
@@ -23,7 +25,13 @@ const prescriptionSelect = {
 };
 
 export function verifiedPatientForAccount(accountId) {
-  return { customers: { customer_accounts: { id: accountId, is_active: true, clinical_link_recheck_required: false } } };
+  const adultCutoff = adultBirthDateCutoff();
+  return { OR: [
+    { customers: { customer_accounts: { id: accountId, is_active: true, clinical_link_recheck_required: false } } },
+    { birth_date: { gt: adultCutoff }, patient_guardians: { account_id: accountId, guardian_account: {
+      is_active: true, email_verified_at: { not: null }, birth_date: { lte: adultCutoff },
+    } } },
+  ] };
 }
 
 export async function findActiveAccountPrescription(accountId, id, database = prisma) {
@@ -146,7 +154,7 @@ export async function createCustomerPatientOtpChallenge(accountId, identity, dep
     const now = dependencies.now?.() ?? new Date();
     await client.customer_patient_link_challenges.updateMany({
       data: { consumed_at: now },
-      where: { account_id: account.id, consumed_at: null },
+      where: { account_id: account.id, dependant_id: null, consumed_at: null },
     });
     const challengeId = (dependencies.createChallengeId ?? randomUUID)();
     const code = (dependencies.generateCode ?? generateCustomerPatientOtp)();
@@ -182,7 +190,7 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
     const now = dependencies.now?.() ?? new Date();
     const challenge = await client.customer_patient_link_challenges.findFirst({
       orderBy: [{ created_at: "desc" }, { id: "desc" }],
-      where: { account_id: accountId, consumed_at: null },
+      where: { account_id: accountId, dependant_id: null, consumed_at: null },
     });
     if (!challenge || challenge.expires_at <= now || challenge.attempt_count >= CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS) {
       return { reason: "OTP_INVALID" };
@@ -212,7 +220,7 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
     const updated = await client.customers.updateMany({ data: { patient_id: patient.id }, where: { id: account.customer_id, patient_id: null } });
     await client.customer_patient_link_challenges.updateMany({ data: { consumed_at: now }, where: { id: challenge.id, consumed_at: null } });
     if (!updated.count && account.customers.patient_id !== patient.id) return { reason: "ALREADY_LINKED" };
-    await client.customer_accounts.update({where:{id:accountId},data:{clinical_link_recheck_required:false}});
+    await client.customer_accounts.update({where:{id:accountId},data:{clinical_link_recheck_required:false,email_verified_at:now}});
     return { patient: publicPatient(patient), reason: null };
     }, { isolationLevel: "Serializable" });
   } catch (error) {
@@ -225,9 +233,11 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
 // Obtener reservas y recetas mediante proyecciones independientes del expediente clínico.
 export async function findCustomerClinicalOverview(accountId, now = new Date(), dependencies = {}) {
   const database = dependencies.client ?? prisma;
+  if (!dependencies.client) await synchronizeAccountClinicalLinks(accountId);
   const account = await findCustomerClinicalContext(accountId, database);
-  const patientId = account?.clinical_link_recheck_required?null:account?.customers?.patient_id;
-  const patient = patientId ? await database.patients.findUnique({ select: { first_names: true, last_names: true, rut: true }, where: { id: patientId } }) : null;
+  const dependant = dependencies.dependantId ? await findAccountDependant(accountId, dependencies.dependantId, database) : null;
+  const patientId = dependencies.dependantId ? dependant?.patient_id : account?.clinical_link_recheck_required ? null : account?.customers?.patient_id;
+  const patient = patientId ? await database.patients.findFirst({ select: { first_names: true, last_names: true, rut: true }, where: { id: patientId, ...verifiedPatientForAccount(accountId) } }) : null;
   if (!patientId || !patient) return { linked: false, patient: null, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] } };
 
   const [appointments, prescriptions] = await Promise.all([
@@ -250,7 +260,12 @@ export async function findCustomerClinicalOverview(accountId, now = new Date(), 
     changeUntil: appointment.status === "CONFIRMED" ? customerAppointmentChangeDeadline(appointment.start_at) : null,
   }));
   const publicPrescriptions = prescriptions.map(mapCustomerClinicalPrescription);
+  const encounters = dependencies.dependantId ? await database.clinical_encounters.findMany({
+    where: { patient_id: patientId, status: "FINALIZED" }, take: 50, orderBy: [{ finalized_at: "desc" }, { id: "desc" }],
+    select: { id: true, encounter_type: true, encounter_date: true, finalized_at: true, reason_for_visit: true },
+  }) : [];
   return {
+    encounters: encounters.map((item) => ({ id: item.id, type: item.encounter_type, date: item.encounter_date ?? item.finalized_at, reason: item.reason_for_visit })),
     appointmentHistory: publicAppointments.filter((item) => item.startAt < now || item.status === "CANCELLED"),
     linked: true,
     patient: publicPatient(patient),

@@ -3,6 +3,7 @@ import { normalizeChileanRut } from "../utils/chilean-rut.js";
 import { AppError } from "../utils/app-error.js";
 import { hasSafeImageDimensions } from "./image-dimensions.js";
 import { MAX_PRESCRIPTION_IMAGE_BYTES } from "../utils/prescription-camera.js";
+import { validateAccountBirthDate } from "../utils/customer-account-age.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN =
@@ -93,6 +94,7 @@ export function validateStoreAccountRegistration(input) {
   object(input);
   return {
     address: text(input.address, "La dirección", 500),
+    birthDate: validateAccountBirthDate(input.birthDate),
     email: email(input.email),
     firstNames: text(input.firstNames, "Los nombres", 150),
     lastNames: text(input.lastNames, "Los apellidos", 150),

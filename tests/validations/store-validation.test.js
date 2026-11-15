@@ -12,6 +12,7 @@ import {
 } from "../../src/validations/store-validation.js";
 
 const account = {
+  birthDate: "1990-01-01",
   address: "Av. Prueba 123",
   email: "CLIENTE@EXAMPLE.COM",
   firstNames: "  María  José ",

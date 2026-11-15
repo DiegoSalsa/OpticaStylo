@@ -7,6 +7,7 @@ import {
 } from "../../src/services/store-account-service.js";
 
 const input = {
+  birthDate: "1990-01-01",
   address: "Av. Prueba 123",
   email: "cliente@example.com",
   firstNames: "Cliente",

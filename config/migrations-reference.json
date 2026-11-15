@@ -1234,6 +1234,34 @@
         "index:customer_password_resets:customer_password_resets_pkey": "4239b43f8620cb8f9501396fde98e6de1a40faf667c41b442b1ac5114432620f",
         "table:customer_password_resets": "6e693bef630bcc55a86189038b53ec92813b2aa4615905eaf536f8f963290809"
       }
+    },
+    {
+      "name": "20261115000000_account_dependants",
+      "checksums": [
+        "8ade43c46951ebb9a2a99a53d1582bc253c4e21497d152ad1c8fb3d39da9de31",
+        "e4b6175754c6ee299ca397a65eb7040f46a8c747da4b0b42a3ff36de604a3e98"
+      ],
+      "changes": {
+        "constraint:customer_accounts:customer_accounts_adult_birth_date": "347fa4e7da313ee697aebcec8474eeaca5251d05d333211cc12e597731039514",
+        "constraint:customer_dependants:customer_dependants_account_id_fkey": "7eea9e45717114a377d0f8532ce2340059428e884388bb687a843afb5625a76f",
+        "constraint:customer_dependants:customer_dependants_identity": "74c98f769ad29c78195063f275dcd4b53eb812fce78476caa1146bfa7f3dc0c1",
+        "constraint:customer_dependants:customer_dependants_patient_id_fkey": "135b8b5d155868937b1ccc5afe7571c53da76a4cab19a619bd7d491af39db66f",
+        "constraint:customer_dependants:customer_dependants_pkey": "7f44b50def1f6d980a6bbbcae590b40b77a95797d0021ae86a7b3324f65e9cd1",
+        "constraint:customer_patient_link_challenges:customer_patient_link_challenges_dependant_id_fkey": "164f3fc23010c47e1ac37083f0f94f7afb8e383bba253706642bfba72dfa5643",
+        "constraint:external_prescriptions:external_prescriptions_dependant_id_fkey": "7fe7b1945a4c270848ff4355ab2e75b3966c6bc5c59b54ceafbab5f917d335cb",
+        "constraint:patient_guardians:patient_guardians_account_id_fkey": "96405b81ab5cf8df7dfc36864189853d320c5a0f661df102e4ffcfd8839fd451",
+        "index:customer_dependants:customer_dependants_identity": "bf39fdffd08edc247855482a729606c5a0ea7310f7b1e8d69c1285b93bdc2a66",
+        "index:customer_dependants:customer_dependants_patient": "682f18b1c6a6994d58548a0f5eaab470b8fb3b5420db7d065df1e17d2911d579",
+        "index:customer_dependants:customer_dependants_pkey": "37a7f3c3a4e659fd4d7ca2786f38c8c19552d73d8eeedc359f85b35684a3648f",
+        "index:customer_patient_link_challenges:customer_patient_link_challenges_dependant": "3936d51d497b62073c783fbc17fd8a120c72812ed52e94774d73bcd47c813252",
+        "index:external_prescriptions:external_prescriptions_dependant": "c8a890c090d279de29c08828f41693f17dceaed2e6099293fba80cc28febea2a",
+        "index:patient_guardians:patient_guardians_account": "477645ce652c4a861a41d7a123b9d0c2fe4d1abaeaaade8262b5dab3451b2417",
+        "table:customer_accounts": "80fe534820cc406ba25fd4130b61daf6bbffcdb613166bf7e8e59c6649983b62",
+        "table:customer_dependants": "2f0d89a0d9c3b73ac9ee63678400c3a560673037346e80892693d9fab863407c",
+        "table:customer_patient_link_challenges": "136141f2168475b3ec80b9a9741f29baafc34853bd4937d14cdc39b88e9b34b7",
+        "table:external_prescriptions": "d3222e51fddcdddd4f9ab844688435c9b883c3cf713bbdbf956db0864855be68",
+        "table:patient_guardians": "5efcef9fc0c4315b87068657f1f8e54d13cf70f1683572e97830569363415e63"
+      }
     }
   ],
   "legacyShape": {

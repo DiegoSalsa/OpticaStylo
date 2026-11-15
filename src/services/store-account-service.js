@@ -7,9 +7,11 @@ import {
   recordCustomerFailedLogin,
   revokeCustomerSession,
   updateCustomerAccountContact,
+  confirmCustomerAccountBirthDate,
 } from "../repositories/store-account-repository.js";
 import { AppError } from "../utils/app-error.js";
 import {recordRegistrationAttempt} from "../repositories/customer-commerce-link-repository.js";
+import { isAdultBirthDate, validateAccountBirthDate } from "../utils/customer-account-age.js";
 import {
   validateStoreAccountRegistration,
   validateStoreLogin,
@@ -32,6 +34,8 @@ function publicAccount(account) {
     lastNames: account.lastNames,
     phone: account.phone,
     rut: account.rut,
+    birthDate: account.birthDate ?? null,
+    requiresAgeConfirmation: !account.birthDate,
   };
 }
 
@@ -107,6 +111,7 @@ export async function loginStoreAccount(input, metadata = {}, dependencies = {})
     invalidCredentials();
   }
   if (account.lockedUntil && account.lockedUntil > new Date()) invalidCredentials();
+  if (account.birthDate && !isAdultBirthDate(account.birthDate)) throw new AppError({ code: "ADULT_ACCOUNT_REQUIRED", message: "Las cuentas de menores se administran desde la cuenta del adulto responsable.", status: 403 });
   return issueSession(account, metadata, dependencies);
 }
 
@@ -119,6 +124,13 @@ export async function logoutStoreAccount(account, dependencies = {}) {
 
 export function getStoreAccountProfile(account) {
   return publicAccount(account);
+}
+
+export async function confirmStoreAccountAge(account, input) {
+  const birthDate = validateAccountBirthDate(input?.birthDate);
+  const updated = await confirmCustomerAccountBirthDate(account.id, birthDate);
+  if (!updated) throw new AppError({ code: "CUSTOMER_AUTHENTICATION_REQUIRED", message: "Vuelve a iniciar sesión.", status: 401 });
+  return publicAccount(updated);
 }
 
 export async function updateStoreAccountContact(account, input) {

@@ -567,6 +567,27 @@
   margin-top: 1rem;
 }
 
+.saved-prescriptions h1 {
+  font-size: 1.65rem;
+}
+
+.prescription-review {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+
+.prescription-review fieldset {
+  border: 1px solid var(--color-border, #d9e5e3);
+  border-radius: 12px;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.saved-prescriptions input[type="file"] {
+  max-width: 100%;
+}
+
 .account-order-back {
   color: var(--color-primary-dark);
   font-weight: 700;

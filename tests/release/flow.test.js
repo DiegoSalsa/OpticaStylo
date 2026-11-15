@@ -34,7 +34,7 @@ test("Receta privada heredada → cuenta → despacho gratis → pago → OT →
   const hash=createHash("sha256").update(image).digest("hex");
   const recipe=await prisma.external_prescriptions.create({data:{cart_id:c.cart.id,source:"IMAGE",status:"DRAFT",file_data:image,file_sha256:hash,file_size_bytes:image.length,media_type:"image/png",original_filename:"fixture-sin-persona.png"}});
   await value(await http("/api/store/cart/prescription/confirm",{cookie:c.cookie,method:"PATCH",body:{...prescription,imageHash:hash}}));
-  const customer={...buyer,rut:fixtureRut(9961),email:"release-integral@example.invalid",password:"Solo-release-sintetico-2026!"};
+  const customer={...buyer,birthDate:"1990-01-01",rut:fixtureRut(9961),email:"release-integral@example.invalid",password:"Solo-release-sintetico-2026!"};
   const registered=await http("/api/store/accounts/register",{cookie:c.cookie,method:"POST",body:customer});await value(registered,201);
   const accountCookie=registered.headers.getSetCookie()[0].split(";")[0];c.cookie+=`; ${accountCookie}`;
   const q=(await value(await quote(c))).quotes[0];

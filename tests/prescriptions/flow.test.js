@@ -58,7 +58,7 @@ test("HTTP manual → checkout idempotente → recuperación e historial comerci
 test("Un carrito invitado comprado tras registrarse queda en los pedidos de su cuenta", async () => {
   const guest = await cart(); await addItems(guest.cookie);
   await data(await request("/api/store/cart/prescription/manual", { cookie: guest.cookie, method: "PUT", body: prescription }));
-  const customer = { ...buyer, rut: fixtureRut(9302), email: "receta-cuenta@example.invalid", password: "Prueba-cuenta-recetas-2026!" };
+  const customer = { ...buyer, birthDate: "1990-01-01", rut: fixtureRut(9302), email: "receta-cuenta@example.invalid", password: "Prueba-cuenta-recetas-2026!" };
   const registration = await request("/api/store/accounts/register", { cookie: guest.cookie, method: "POST", body: customer });
   const account = await data(registration, 201);
   const cookie = `${guest.cookie}; ${registration.headers.getSetCookie()[0].split(";")[0]}`;

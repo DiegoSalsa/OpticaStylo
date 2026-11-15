@@ -14,7 +14,7 @@ function EyeValues({ label, eye }) {
   return <small>{label} · Esfera {value(eye.sphere)} · Cilindro {value(eye.cylinder)} · Eje {value(eye.axis)} · Adición {value(eye.addition)}</small>;
 }
 
-export default function AccountPrescriptions({ accountId, prescriptions, standalone }) {
+export default function AccountPrescriptions({ accountId, prescriptions, standalone, title = "Recetas de la óptica" }) {
   const router = useRouter();
   const pending = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -37,7 +37,7 @@ export default function AccountPrescriptions({ accountId, prescriptions, standal
     }
   }
   return <section id="recetas">
-    {standalone ? <h2>Mis recetas</h2> : <h3>Mis recetas</h3>}
+    {standalone ? <h2>{title}</h2> : <h3>{title}</h3>}
     {prescriptions.active.length === 0
       ? <><p className="clinical-empty">No tienes recetas vigentes disponibles.</p>
         <Link href="/cuenta?seccion=reservar">Reservar evaluación</Link></>

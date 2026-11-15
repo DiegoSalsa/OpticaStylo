@@ -95,7 +95,7 @@ export async function updatePatientWithGuardian(patientId, patientData, actorUse
     if (patientData.guardian) {
       await client.patient_guardians.upsert({
         create: { ...guardianData(patientData.guardian), patient_id: patientId },
-        update: guardianData(patientData.guardian), where: { patient_id: patientId },
+        update: { ...guardianData(patientData.guardian), account_id: null }, where: { patient_id: patientId },
       });
     }
     return findPatientByIdWithClient(client, patientId);

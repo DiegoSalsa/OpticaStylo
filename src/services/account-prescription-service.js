@@ -19,16 +19,16 @@ function accountId(account) {
   return account.id;
 }
 
-export async function getAccountPrescriptions(account) {
-  return listAccountPrescriptions(accountId(account));
+export async function getAccountPrescriptions(account, dependantId = null) {
+  return listAccountPrescriptions(accountId(account), dependantId ? validateExternalPrescriptionId(dependantId) : null);
 }
 
-export async function uploadAccountPrescription(account, file) {
+export async function uploadAccountPrescription(account, file, dependantId = null) {
   const owner = accountId(account);
   const image = validatePrescriptionImage(file);
   const data = validatePrescriptionImageBytes(Buffer.from(await image.file.arrayBuffer()), image.mediaType);
   if (data.length !== image.size) throw new AppError({ code: "INVALID_PRESCRIPTION_IMAGE", message: "El archivo recibido está incompleto.", status: 400 });
-  const record = await saveAccountPrescription(owner, { ...image, data, sha256: createHash("sha256").update(data).digest("hex") });
+  const record = await saveAccountPrescription(owner, { ...image, data, sha256: createHash("sha256").update(data).digest("hex") }, dependantId ? validateExternalPrescriptionId(dependantId) : null);
   if (!record) throw notAvailable();
   return record;
 }

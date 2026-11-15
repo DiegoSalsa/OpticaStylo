@@ -121,7 +121,7 @@ test("integración PostgreSQL real: compra invitada y autenticada", { skip: !pro
       await assert.rejects(checkoutCart(token, null), (e) => e.code === "CART_NOT_ACTIVE");
     });
     await t.test("cliente autenticado compra y consulta pedidos propios sin exponer otros", async () => {
-      const { account } = await registerStoreAccount({ ...buyer, rut: "11111111-1", email: "cuenta@example.invalid", password: "ClavePruebaSegura2026!" });
+      const { account } = await registerStoreAccount({ ...buyer, birthDate: "1990-01-01", rut: "11111111-1", email: "cuenta@example.invalid", password: "ClavePruebaSegura2026!" });
       const { token } = await createStoreCart(account);
       await putStoreCartItems(token, account, { items: lensItems() });
       await putManualPrescription(token, account, optical);

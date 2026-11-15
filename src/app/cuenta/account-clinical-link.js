@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { readStoreResponse } from "@/utils/store-client";
 
-export default function AccountClinicalLink({ onLinked, onExpired }) {
+export default function AccountClinicalLink({ onLinked, onExpired, dependantId = null }) {
   const [birthDate, setBirthDate] = useState("");
   const [sentTo, setSentTo] = useState("");
   const [challengeVersion, setChallengeVersion] = useState(0);
@@ -35,8 +35,9 @@ export default function AccountClinicalLink({ onLinked, onExpired }) {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch("/api/store/accounts/me/" + (code ? "patient-link" : "patient-link/request-code"), {
-        body: JSON.stringify(code ? { code } : { birthDate }),
+      const path = dependantId ? "dependants/" + dependantId + (code ? "/verify" : "/request-code") : code ? "patient-link" : "patient-link/request-code";
+      const response = await fetch("/api/store/accounts/me/" + path, {
+        body: JSON.stringify(code ? { code } : dependantId ? {} : { birthDate }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
@@ -78,12 +79,12 @@ export default function AccountClinicalLink({ onLinked, onExpired }) {
         <button className="button button--secondary" disabled={busy} type="button" onClick={() => { setSentTo(""); setError(""); }}>Cambiar fecha</button>
       </form>
     </> : <>
-      <p>Verifica tu fecha de nacimiento para recibir un código en el correo registrado en tu ficha.</p>
+      <p>{dependantId ? "Verifica el correo del adulto responsable registrado en la ficha para consultar las atenciones anteriores." : "Verifica tu fecha de nacimiento para recibir un código en el correo registrado en tu ficha."}</p>
       <form className="clinical-link-form" onSubmit={(event) => { event.preventDefault(); void verify(null); }}>
-        <label className="field"><span>Fecha de nacimiento</span><input
+        {!dependantId && <label className="field"><span>Fecha de nacimiento</span><input
           max={new Date().toLocaleDateString("sv-SE", { timeZone: "America/Santiago" })}
           onChange={(event) => setBirthDate(event.target.value)} readOnly={busy} required type="date" value={birthDate}
-        /></label>
+        /></label>}
         <button className="button button--primary" disabled={busy || remaining > 0} type="submit">
           {busy ? "Verificando…" : remaining > 0 ? "Volver a enviar en " + remaining + " s" : "Enviar código"}
         </button>

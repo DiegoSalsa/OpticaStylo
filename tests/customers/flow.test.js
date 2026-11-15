@@ -392,6 +392,7 @@ test("Compra no equivale a publicidad: autorización, revocación y cambio de co
 });
 test("Cuenta nueva y RUT coincidente no obtienen pedidos previos sin código", async () => {
   const body = {
+    birthDate: "1990-01-01",
     ...d.customer,
     password: evaluation.password
   };
@@ -582,7 +583,7 @@ test("Cancelaciones, saldos parciales y reembolsos informados no inflan indicado
   assert.equal(p.summary.totalSpentCents, 1000);
   assert.equal(p.summary.refundReviewCount, 1);
 });
-test("Recuperar identidad comercial vinculada a paciente exige otra verificación clínica", async () => {
+test("RUT, fecha y correo verificado permiten recuperar automáticamente la ficha propia", async () => {
   // Esta identidad pertenece a fase 5; no reutilizar los RUT de recetas o fichas clínicas.
   const patient = await db.patients.create({data:{rut:fixtureRut(9720),first_names:"Paciente recuperación comercial",last_names:"Sintético",birth_date:new Date("1990-01-01"),email:"recuperacion-clinica@example.invalid",phone:"+56912345678",address:"Dirección sintética de recuperación"}});
   const customer = await db.customers.create({
@@ -615,6 +616,7 @@ test("Recuperar identidad comercial vinculada a paciente exige otra verificació
       phone: patient.phone,
       address: patient.address,
       password: evaluation.password,
+      birthDate: "1990-01-01",
       challengeId: challenge.challengeId,
       verificationCode: await otp(challenge.challengeId)
     }
@@ -624,14 +626,14 @@ test("Recuperar identidad comercial vinculada a paciente exige otra verificació
   const overview = await data(await http("/api/store/accounts/me/clinical", {
     cookie
   }));
-  assert.equal(overview.linked, false);
-  assert.equal(overview.patient, null);
+  assert.equal(overview.linked, true);
+  assert.equal(overview.patient.firstNames, patient.first_names);
   assert.deepEqual(overview.prescriptions.active, []);
   assert.equal((await db.customer_accounts.findUniqueOrThrow({
     where: {
       customer_id: customer.id
     }
-  })).clinical_link_recheck_required, true);
+  })).clinical_link_recheck_required, false);
 });
 test("Búsqueda comercial limita enumeración y la auditoría no se borra", async () => {
   const first = await db.customer_commercial_events.findFirst({
@@ -658,6 +660,7 @@ test("Cuenta ajena no recupera pedidos aunque conozca su número", async () => {
     body: {
       ...d.customer,
       rut: fixtureRut(9707),
+      birthDate: "1990-01-01",
       email: "otra-cuenta@example.invalid",
       password: evaluation.password
     }

@@ -9,6 +9,9 @@ import { processTransactionalEmailById } from "../../src/services/transactional-
 import { database, data, ids } from "../prescriptions/helpers.js";
 import { evaluation } from "../evaluation-data.js";
 import { fixtureRut } from "../rut-fixture.js";
+import { readAccountPrescription } from "../../src/services/account-prescription-service.js";
+import { createDependantLinkChallenge, verifyDependantLinkChallenge } from "../../src/repositories/account-family-repository.js";
+import { image, prescription as opticalPrescription } from "../prescriptions/helpers.js";
 
 const base = process.env.EVALUATION_HTTP_URL;
 const password = "Portal-sintetico-pruebas-2026!";
@@ -29,7 +32,7 @@ async function register(index) {
   const email = "portal-" + randomUUID() + "@example.invalid";
   const response = await request("/api/store/accounts/register", {
     method: "POST",
-    body: { firstNames: "Cliente", lastNames: "Sintético", rut, email, password, phone: "+56912345678", address: "Dirección de prueba" },
+    body: { firstNames: "Cliente", lastNames: "Sintético", birthDate: "1999-09-09", rut, email, password, phone: "+56912345678", address: "Dirección de prueba" },
   });
   const { account } = await data(response, 201);
   return { account, rut, email, cookie: response.headers.getSetCookie()[0].split(";")[0] };
@@ -219,5 +222,111 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     assert.equal(saved.start_at.toISOString(), to.startAt);
     assert.equal(await db.appointment_events.count({ where: { appointment_id: appointment.id } }), 2);
     assert.equal(await db.transactional_email_outbox.count({ where: { appointment_id: appointment.id, status: "SUPPRESSED" } }), 3);
+  });
+
+  await t.test("guarda una receta externa sin agendar, reutiliza la lectura de OpenAI y conserva su copia al usarla en el carrito", async () => {
+    const endpoint = "/api/store/accounts/me/prescriptions";
+    const imageForm = new FormData();
+    imageForm.set("image", new File([image], "receta-sintetica.png", { type: "image/png" }));
+    const uploadedResponse = await fetch(base + endpoint, { method: "POST", headers: { cookie: owner.cookie }, body: imageForm });
+    const uploaded = await data(uploadedResponse, 201);
+    assert.equal(uploaded.status, "DRAFT");
+    assert.equal((await data(await request(endpoint, { cookie: owner.cookie }))).length, 1);
+    assert.deepEqual(await data(await request(endpoint, { cookie: other.cookie })), []);
+    assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: other.cookie })).status, 404);
+    assert.equal((await request(endpoint + "/" + uploaded.id)).status, 401);
+    assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: owner.cookie })).status, 200);
+
+    let reads = 0;
+    const dependencies = { readImage: async (source) => {
+      reads++;
+      assert.equal(source.mediaType, "image/png");
+      return { provider: "OPENAI_GPT_5_6_LUNA", data: { ...opticalPrescription, confidence: "HIGH", warnings: [] } };
+    } };
+    const read = await readAccountPrescription(owner.account, uploaded.id, dependencies);
+    assert.equal(read.extractionStatus, "COMPLETED");
+    await readAccountPrescription(owner.account, uploaded.id, dependencies);
+    assert.equal(reads, 1);
+    await assert.rejects(() => readAccountPrescription(other.account, uploaded.id, dependencies), { status: 404 });
+    assert.equal(reads, 1);
+    const reviewed = await data(await request(endpoint + "/" + uploaded.id, {
+      cookie: owner.cookie, method: "PATCH", body: { ...opticalPrescription, imageHash: uploaded.imageHash },
+    }));
+    assert.equal(reviewed.status, "READY");
+
+    const cartResponse = await request("/api/store/cart", { cookie: owner.cookie, method: "POST" });
+    const currentCart = await data(cartResponse, 201);
+    const cookie = owner.cookie + "; " + cartResponse.headers.getSetCookie()[0].split(";")[0];
+    const applied = await data(await request("/api/store/cart/prescription/saved", {
+      cookie, method: "PUT", body: { prescriptionId: uploaded.id, replaceExisting: true },
+    }));
+    assert.equal(applied.externalPrescription.status, "READY");
+    assert.deepEqual(applied.items, currentCart.items);
+    assert.notEqual(applied.externalPrescription.id, uploaded.id);
+    await data(await request("/api/store/cart/prescription/image", { cookie, method: "DELETE" }));
+    assert.equal((await data(await request(endpoint, { cookie: owner.cookie })))[0].status, "READY");
+    assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: owner.cookie })).status, 200);
+  });
+
+  await t.test("solo el adulto registrado y verificado accede a recetas y atenciones del menor", async () => {
+    const childRut = fixtureRut(9763);
+    const child = await db.patients.create({ data: {
+      rut: childRut, first_names: "Menor", last_names: "Sintético", birth_date: new Date("2015-05-10"),
+      email: owner.email, phone: "+56912345678", address: "Dirección sintética",
+      patient_guardians: { create: {
+        rut: owner.rut, first_names: "Cliente", last_names: "Sintético", relationship: "Padre",
+        email: owner.email, phone: "+56912345678",
+      } },
+    } });
+    const childEncounter = await db.clinical_encounters.create({ data: {
+      patient_id: child.id, professional_id: professionalId, reason_for_visit: "Evaluación sintética del menor",
+      status: "FINALIZED", finalized_at: new Date(), created_by: professionalId, updated_by: professionalId,
+    } });
+    const childPrescription = await db.optical_prescriptions.create({ data: {
+      encounter_id: childEncounter.id, issued_by: professionalId, version: 1,
+      right_sphere: -1, right_cylinder: 0, left_sphere: -1, left_cylinder: 0,
+    } });
+    const childInput = { rut: childRut, firstNames: "Menor", lastNames: "Sintético", birthDate: "2015-05-10", relationship: "Padre" };
+    const dependant = await data(await request("/api/store/accounts/me/dependants", { cookie: owner.cookie, method: "POST", body: childInput }), 201);
+    const foreignDependant = await data(await request("/api/store/accounts/me/dependants", { cookie: other.cookie, method: "POST", body: childInput }), 201);
+    const childPath = clinical + "?dependantId=" + dependant.id;
+    assert.equal((await data(await request(childPath, { cookie: owner.cookie }))).linked, false);
+    const environment = { CUSTOMER_PATIENT_OTP_SECRET: "secreto-sintetico-solo-para-la-prueba-9763" };
+    const challenge = await createDependantLinkChallenge(owner.account.id, dependant.id, environment);
+    const outbox = await db.transactional_email_outbox.findUniqueOrThrow({ where: { id: challenge.outboxId } });
+    assert.equal(await createDependantLinkChallenge(other.account.id, foreignDependant.id, environment), null);
+    assert.equal(await verifyDependantLinkChallenge(other.account.id, dependant.id, outbox.payload.code, environment), false);
+    assert.equal(await verifyDependantLinkChallenge(owner.account.id, dependant.id, outbox.payload.code, environment), true);
+    assert.equal(await verifyDependantLinkChallenge(owner.account.id, dependant.id, outbox.payload.code, environment), false);
+    const childOverview = await data(await request(childPath, { cookie: owner.cookie }));
+    assert.equal(childOverview.linked, true);
+    assert.equal(childOverview.prescriptions.active[0].id, childPrescription.id);
+    assert.equal(childOverview.encounters[0].reason, "Evaluación sintética del menor");
+    assert.equal((await data(await request(childPath, { cookie: other.cookie }))).linked, false);
+    const pdf = clinical + "/prescriptions/" + childPrescription.id + "/pdf";
+    assert.equal((await request(pdf, { cookie: owner.cookie })).status, 200);
+    assert.equal((await request(pdf, { cookie: other.cookie })).status, 404);
+    await db.patient_guardians.update({ where: { patient_id: child.id }, data: { account_id: null, email: "otro-responsable@example.invalid" } });
+    assert.equal((await data(await request(childPath, { cookie: owner.cookie }))).linked, false);
+    assert.equal((await request(pdf, { cookie: owner.cookie })).status, 404);
+  });
+
+  await t.test("rechaza cuentas nuevas de menores y cierra el acceso si la ficha identifica un menor", async () => {
+    const minorRegistration = await request("/api/store/accounts/register", { method: "POST", body: {
+      rut: fixtureRut(9764), email: "menor-" + randomUUID() + "@example.invalid", birthDate: "2015-01-01",
+      firstNames: "Menor", lastNames: "Sintético", password, phone: "+56912345678", address: "Dirección sintética",
+    } });
+    assert.equal(minorRegistration.status, 400);
+    assert.equal((await minorRegistration.json()).error.code, "ADULT_ACCOUNT_REQUIRED");
+    const legacy = await register(9765);
+    const minorPatient = await db.patients.create({ data: {
+      rut: legacy.rut, first_names: "Menor", last_names: "Sintético", birth_date: new Date("2015-01-01"),
+      email: legacy.email, phone: "+56912345678", address: "Dirección sintética",
+    } });
+    await db.customers.update({ where: { id: legacy.account.customerId }, data: { patient_id: minorPatient.id } });
+    assert.equal((await request("/api/store/accounts/me", { cookie: legacy.cookie })).status, 401);
+    const login = await request("/api/store/accounts/login", { method: "POST", body: { email: legacy.email, password } });
+    assert.equal(login.status, 403);
+    assert.equal((await login.json()).error.code, "ADULT_ACCOUNT_REQUIRED");
   });
 });

@@ -281,6 +281,10 @@ export async function getTransactionalEmailEligibility(email, dependencies = {})
         consumed_at: null,
         expires_at: { gt: now },
         id: challengeId,
+        OR: [
+          { dependant_id: null },
+          { recipient_email: email.recipientEmail, customer_accounts: { is_active: true, email: email.recipientEmail } },
+        ],
       },
     });
     return challenge ? { eligible: true, reason: null } : { eligible: false, reason: "OTP_CHALLENGE_INVALID" };

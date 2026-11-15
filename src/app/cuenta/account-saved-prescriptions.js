@@ -8,7 +8,7 @@ import { opticalData, prescriptionFields } from "@/utils/store-cart-draft";
 const endpoint = "/api/store/accounts/me/prescriptions";
 const parameters = [["Sphere", "Esfera", "0.25"], ["Cylinder", "Cilindro", "0.25"], ["Axis", "Eje", "1"], ["Addition", "Adición", "0.25"]];
 
-export default function AccountSavedPrescriptions() {
+export default function AccountSavedPrescriptions({ dependantId = null, title = "Mis recetas" }) {
   const router = useRouter();
   const [records, setRecords] = useState(null);
   const [error, setError] = useState("");
@@ -21,11 +21,11 @@ export default function AccountSavedPrescriptions() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(endpoint, { cache: "no-store", signal: controller.signal }).then(readStoreResponse)
+    fetch(endpoint + (dependantId ? "?dependantId=" + encodeURIComponent(dependantId) : ""), { cache: "no-store", signal: controller.signal }).then(readStoreResponse)
       .then((data) => { if (!controller.signal.aborted) setRecords(data); })
       .catch((failure) => { if (!controller.signal.aborted) setError(failure.message); });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, dependantId]);
 
   function updateRecord(record) {
     setRecords((current) => [record, ...(current ?? []).filter(({ id }) => id !== record.id)]);
@@ -101,9 +101,10 @@ export default function AccountSavedPrescriptions() {
 
   const values = prescriptionFields(editing?.extractedData);
   return <section className="account-card saved-prescriptions">
-    <h1>Mis recetas</h1>
+    <h1>{title}</h1>
     <p>Guarda una receta externa. OpenAI leerá sus valores para que puedas revisarlos antes de usarlos en una compra.</p>
     <form onSubmit={upload} className="clinical-link-form">
+      {dependantId && <input type="hidden" name="dependantId" value={dependantId} />}
       <label className="field"><span>Archivo de la receta</span><input accept="image/jpeg,image/png,image/webp" disabled={busy} name="image" required type="file" /></label>
       <button className="button button--primary" disabled={busy} type="submit">{busy ? "Procesando receta…" : "Subir y leer receta"}</button>
       <small>JPEG, PNG o WEBP de hasta 4 MiB.</small>

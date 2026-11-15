@@ -123,6 +123,7 @@ export default function AccountAuth({ onAuthenticated }) {
             <label className="field"><span>RUT</span><RutInput name="rut" onChange={resetVerification} placeholder="12.345.678-5" readOnly={busy} required /></label>
             <label className="field"><span>Nombres</span><input autoComplete="given-name" name="firstNames" required /></label>
             <label className="field"><span>Apellidos</span><input autoComplete="family-name" name="lastNames" required /></label>
+            <label className="field"><span>Fecha de nacimiento del titular adulto</span><input autoComplete="bday" name="birthDate" required type="date" /></label>
             <label className="field"><span>Teléfono</span><input autoComplete="tel" name="phone" placeholder="+56 9 1234 5678" required type="tel" /></label>
             <label className="field field-full"><span>Dirección</span><input autoComplete="street-address" name="address" required /></label>
           </>}

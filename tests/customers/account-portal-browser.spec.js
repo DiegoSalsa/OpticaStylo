@@ -24,6 +24,69 @@ const fail = (route, message) => route.fulfill({ status: 503, json: { success: f
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/store/accounts/me", (route) => ok(route, profile));
   await page.route("**/api/store/accounts/me/contact", (route) => ok(route, { channels: [] }));
+  await page.route(/\/api\/store\/accounts\/me\/prescriptions(?:\?|$)/, (route) => ok(route, []));
+});
+
+test("Mi carrito abre un carrito vacío después de una compra terminada", async ({ page }) => {
+  await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
+  await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
+  let created = 0;
+  await page.route("**/api/store/cart", (route) => {
+    if (route.request().method() === "POST") {
+      created++;
+      return ok(route, { ...cart, id: "nuevo-carrito", items: [] });
+    }
+    return ok(route, { ...cart, status: "CHECKED_OUT", saleId: orderId });
+  });
+  await page.goto("/cuenta?seccion=carrito");
+  await expect(page.getByRole("heading", { name: "Tu carrito está vacío", exact: true })).toBeVisible();
+  expect(created).toBe(1);
+  await expect(page.getByText("Tu pedido ya fue creado", { exact: true })).toHaveCount(0);
+});
+
+test("Mis recetas lee con OpenAI y permite corregir valores antes de guardarlos sin ficha clínica", async ({ page }) => {
+  await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
+  await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
+  const saved = { id: recipeId, filename: "receta-prueba.png", createdAt: "2026-11-15T12:00:00Z", imageHash: "a".repeat(64), status: "DRAFT" };
+  await page.route("**/api/store/accounts/me/prescriptions", (route) => ok(route, route.request().method() === "POST" ? saved : []));
+  await page.route("**/api/store/accounts/me/prescriptions/" + recipeId + "/read", (route) => ok(route, {
+    ...saved, extractionStatus: "COMPLETED", extractedData: { leftEye: eye, rightEye: eye, pupillaryDistance: 62, warnings: [], confidence: "HIGH" },
+  }));
+  let confirmed;
+  await page.route("**/api/store/accounts/me/prescriptions/" + recipeId, async (route) => {
+    confirmed = route.request().postDataJSON();
+    await ok(route, { ...saved, status: "READY", confirmedData: confirmed });
+  });
+  await page.goto("/cuenta?seccion=recetas");
+  await page.getByLabel("Archivo de la receta").setInputFiles({ name: "receta-prueba.png", mimeType: "image/png", buffer: Buffer.from("receta-sintetica") });
+  await page.getByRole("button", { name: "Subir y leer receta", exact: true }).click();
+  const right = page.getByRole("group", { name: "Ojo derecho", exact: true });
+  await expect(right.getByLabel("Esfera", { exact: true })).toHaveValue("-1.25");
+  await right.getByLabel("Esfera", { exact: true }).fill("-2.25");
+  await page.getByRole("button", { name: "Confirmar y guardar receta", exact: true }).click();
+  await expect(page.getByText("Revisada y guardada", { exact: false })).toBeVisible();
+  expect(confirmed.rightEye.sphere).toBe(-2.25);
+  expect(confirmed.imageHash).toBe(saved.imageHash);
+  await expect(page.getByRole("button", { name: "Usar en mi carrito", exact: true })).toBeVisible();
+});
+
+test("Menores a mi cargo mantiene separados los datos y las recetas del adulto", async ({ page }) => {
+  const dependantId = "20000000-0000-4000-8000-000000000099";
+  await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
+  await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
+  await page.route("**/api/store/accounts/me/dependants", (route) => ok(route, [{
+    id: dependantId, firstNames: "Hijo", lastNames: "Sintético", birthDate: "2015-05-10", rut: "20000087-6", relationship: "Padre", isMinor: true, linked: true,
+  }]));
+  await page.route("**/api/store/accounts/me/clinical?dependantId=" + dependantId, (route) => ok(route, {
+    linked: true, patient: { firstNames: "Hijo", lastNames: "Sintético" }, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] },
+    encounters: [{ id: "atencion", date: "2026-11-10", type: "OPTOMETRY", reason: "Control visual del menor" }],
+  }));
+  await page.goto("/cuenta?seccion=menores");
+  await page.getByRole("link", { name: "Ver datos, recetas y atenciones", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Hijo Sintético", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recetas de Hijo", exact: true })).toBeVisible();
+  await expect(page.getByText("Control visual del menor", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test("reserva y carrito conservan el panel y una receta de la cuenta llega al carrito", async ({ page }) => {

@@ -7,7 +7,7 @@ import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 import { enforcePublicRequestRateLimit, PUBLIC_REQUEST_LIMIT_OPERATIONS } from "@/security/public-request-rate-limit";
 
 export async function GET(request) {
-  return executeApiHandler(async () => createPrivateStoreResponse(await getAccountPrescriptions(await authenticateCustomerRequest(request))));
+  return executeApiHandler(async () => createPrivateStoreResponse(await getAccountPrescriptions(await authenticateCustomerRequest(request), new URL(request.url).searchParams.get("dependantId"))));
 }
 
 export async function POST(request) {
@@ -15,6 +15,6 @@ export async function POST(request) {
     const account = await authenticateCustomerRequest(request);
     await enforcePublicRequestRateLimit(request, PUBLIC_REQUEST_LIMIT_OPERATIONS.PRESCRIPTION_UPLOAD, account.id);
     const form = await readMultipartFormData(request, MAX_PRESCRIPTION_UPLOAD_BYTES);
-    return createPrivateStoreResponse(await uploadAccountPrescription(account, form.get("image")), { status: 201 });
+    return createPrivateStoreResponse(await uploadAccountPrescription(account, form.get("image"), form.get("dependantId")), { status: 201 });
   });
 }
