@@ -28,7 +28,6 @@ export default function RutInput({ defaultValue, value, onChange, onBlur, ...pro
         onChange?.(event);
       }}
       onBlur={(event) => {
-        // Mantener el texto de búsqueda original al mostrar su formato de RUT.
         if (controlled) setEditing(false);
         else event.currentTarget.value = formatRut(event.currentTarget.value);
         onBlur?.(event);

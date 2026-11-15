@@ -115,6 +115,27 @@ test.beforeEach(async () => {
     await db.$disconnect();
   }
 });
+test("las búsquedas generales conservan nombres, teléfonos, correos y números sin formato de RUT", async ({ page }) => {
+  await login(page);
+  await page.goto("/app/clientes");
+  const search = page.getByRole("textbox", { name: "Buscar clientes" });
+  for (const query of ["Cliente Sintético", "1234567", "+56912345678", "cliente@example.invalid", "123456785"]) {
+    await search.fill(query);
+    await search.blur();
+    await expect(search).toHaveValue(query);
+  }
+  const result = page.waitForRequest((request) => {
+    const url = new URL(request.url());
+    return url.pathname === "/api/customers" && url.searchParams.get("search") === "123456785";
+  });
+  await page.getByRole("button", { name: "Buscar", exact: true }).click();
+  await result;
+  await page.goto("/app/pedidos");
+  const orders = page.getByRole("textbox", { name: "Buscar pedido" });
+  await orders.fill("123456785");
+  await orders.blur();
+  await expect(orders).toHaveValue("123456785");
+});
 test("Cliente en administración → dos compras POS → perfil recurrente persistido", async ({
   page
 }, info) => {

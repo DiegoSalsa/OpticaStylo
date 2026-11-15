@@ -287,7 +287,7 @@ export default function PosCatalogPanel({ model }) {
               <>
                 <div className="search-field">
                   <Icon name="search" size={18} />
-                  <RutInput
+                  <input
                     aria-label="Buscar cliente"
                     onChange={(event) => setCustomerSearch(event.target.value)}
                     placeholder="Buscar por nombre, RUT, correo o teléfono"
@@ -421,7 +421,7 @@ export default function PosCatalogPanel({ model }) {
             <>
               <div className="search-field">
                 <Icon name="search" size={18} />
-                <RutInput
+                <input
                   aria-label="Buscar paciente"
                   onChange={(event) => setPatientSearch(event.target.value)}
                   placeholder="Buscar paciente por nombre o RUT"

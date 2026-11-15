@@ -178,7 +178,7 @@ export default function PatientsPage() {
         <section className="app-card directory-card">
           <form className="directory-search" onSubmit={search}>
             <Icon name="search" />
-            <RutInput
+            <input
               aria-label="Buscar pacientes"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Nombre, RUT, correo o teléfono"

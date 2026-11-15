@@ -1,6 +1,5 @@
 "use client";
 
-import RutInput from "@/components/ui/rut-input";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { readResponse, useInternalActor } from "@/components/internal/internal-shell";
@@ -106,7 +105,7 @@ export default function OrdersBoard() {
     <header className="app-heading"><div><p className="eyebrow">Operación</p><h1>Gestión de pedidos</h1><p>Seguimiento de ventas confirmadas desde el pago hasta la entrega.</p></div><span className="status-chip" role="status">{currentSummary?.data ? `${currentSummary.data.total} pedidos encontrados` : currentSummary?.error ? "Conteo no disponible" : "Cargando conteo…"}</span></header>
     <p><Link href="/app/pedidos/configuracion-despachos">Configuración logística</Link></p><div className="orders-views" role="group" aria-label="Vista de pedidos">{[["active","Pedidos activos"],["delivered","Pedidos entregados"],["history","Historial completo"]].map(([view,label]) => <button className="app-button" aria-pressed={filters.view === view} key={view} onClick={() => setFilters((current) => ({ ...current, status: "", view }))} type="button">{label}</button>)}</div>
     <section className="app-card orders-toolbar">
-      <form className="orders-search" onSubmit={(event) => { event.preventDefault(); setFilters((current) => ({ ...current, search: query.trim() })); }}><Icon name="search" /><RutInput aria-label="Buscar pedido" maxLength={100} onChange={(event) => setQuery(event.target.value)} placeholder="N.º de venta, cliente o RUT" value={query} /><button className="app-button" type="submit">Buscar</button></form>
+      <form className="orders-search" onSubmit={(event) => { event.preventDefault(); setFilters((current) => ({ ...current, search: query.trim() })); }}><Icon name="search" /><input aria-label="Buscar pedido" maxLength={100} onChange={(event) => setQuery(event.target.value)} placeholder="N.º de venta, cliente o RUT" value={query} /><button className="app-button" type="submit">Buscar</button></form>
       <label className="field"><span>Origen</span><select onChange={(event) => setFilters((current) => ({ ...current, origin: event.target.value }))} value={filters.origin}><option value="">Todos</option><option value="ONLINE">WEB</option><option value="IN_STORE">POS</option></select></label>
       <label className="field"><span>Sucursal del pedido</span><select value={filters.branchId ?? ""} onChange={(event) => setFilters((current) => ({ ...current, branchId: event.target.value }))}><option value="">Todas</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
       <label className="field"><span>Estado operativo</span><select onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))} value={filters.status}><option value="">Todos</option>{viewColumns.map((column) => <option key={column.code} value={column.code}>{column.label}</option>)}</select></label>
