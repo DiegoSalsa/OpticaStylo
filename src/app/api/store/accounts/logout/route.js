@@ -10,7 +10,8 @@ import { executeApiHandler } from "@/utils/error-handler";
 // POST /api/store/accounts/logout/route.js - crear el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function POST(request) {
   return executeApiHandler(async () => {
-    await logoutStoreAccount(await authenticateCustomerRequest(request));
+    const account = await authenticateCustomerRequest(request, { optional: true });
+    if (account) await logoutStoreAccount(account);
     const response = createSuccessResponse({ loggedOut: true });
     response.headers.set("Set-Cookie", expireStoreSessionCookie());
     return response;
