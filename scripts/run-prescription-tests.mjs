@@ -132,7 +132,11 @@ try {
   if(releaseMode) await run(process.execPath,["scripts/verify-release-migrations.mjs",...(process.argv.includes("--write-reference")?["--write-reference"]:[])],{cwd:appRoot,record:"migration-certificate.txt"});
   if(!process.argv.includes("--migrations-only")) {
   const passwordResetMigration = "20261114000000_customer_password_reset";
-  if (clinicalMode) await rename(path.join(appRoot, "prisma/migrations", passwordResetMigration), path.join(runRoot, "password-reset-migration"));
+  const accountDependantsMigration = "20261115000000_account_dependants";
+  if (clinicalMode) {
+    await rename(path.join(appRoot, "prisma/migrations", passwordResetMigration), path.join(runRoot, "password-reset-migration"));
+    await rename(path.join(appRoot, "prisma/migrations", accountDependantsMigration), path.join(runRoot, "account-dependants-migration"));
+  }
   if(releaseMode) await rename(path.join(appRoot,"prisma/migrations/20261106010000_legacy_migration_ledger"),path.join(runRoot,"ledger-migration"));
   if(shippingMode) await rename(path.join(appRoot,"prisma/migrations/20261106000000_shipping_chilexpress"),path.join(runRoot,"shipping-migration"));
   if(clinicalMode){
@@ -162,6 +166,7 @@ try {
   }
   if (clinicalMode) {
     await rename(path.join(runRoot, "password-reset-migration"), path.join(appRoot, "prisma/migrations", passwordResetMigration));
+    await rename(path.join(runRoot, "account-dependants-migration"), path.join(appRoot, "prisma/migrations", accountDependantsMigration));
     await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], { cwd: appRoot });
   }
   if (inventoryMode) await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "diff", "--from-url", databaseUrl, "--to-schema-datamodel", "prisma/schema.prisma", "--script"], { cwd: appRoot, record: "migration-diff.txt" });
