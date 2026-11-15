@@ -101,7 +101,7 @@ export async function consumePasswordReset({ challengeId, code, makePasswordHash
     });
     await client.customer_accounts.update({
       where: { id: account.id },
-      data: { password_hash: passwordHash, password_changed_at: now, failed_login_attempts: 0, locked_until: null },
+      data: { password_hash: passwordHash, password_changed_at: now, email_verified_at: now, failed_login_attempts: 0, locked_until: null },
     });
     await client.customer_account_sessions.updateMany({
       where: { account_id: account.id, revoked_at: null },
