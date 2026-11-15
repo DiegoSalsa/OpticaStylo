@@ -18,6 +18,7 @@ const LABEL = { CANCELLED: "Cancelado", PAID: "Pagado", PENDING: "Pendiente", QU
 
 export default function CheckoutResult({ providerResult }) {
   const router = useRouter();
+  const [accountOrderId, setAccountOrderId] = useState(null);
   const [order, setOrder] = useState(null); const [status, setStatus] = useState("loading"); const [error, setError] = useState(""); const config = TEXT[providerResult];
   useEffect(() => {
     let active = true;
@@ -34,11 +35,20 @@ export default function CheckoutResult({ providerResult }) {
         if (!saleId) throw new Error("No encontramos un pedido asociado a este dispositivo.");
         const current = await readStoreResponse(await fetch("/api/store/orders/" + encodeURIComponent(saleId), { cache: "no-store" }));
         if (!active) return;
-        if (fromAccount && attempts === 0) {
-          const profile = await fetch("/api/store/accounts/me", { cache: "no-store" }).catch(() => null);
-          if (!active) return;
-          rememberAccountPayment(null);
-          if (profile?.ok) { router.replace(accountOrderHref(saleId)); return; }
+        if (attempts === 0) {
+          const ownership = fetch("/api/store/orders/" + encodeURIComponent(saleId) + "?scope=account", {
+            cache: "no-store",
+          }).then((response) => response.ok, () => false);
+          if (fromAccount) {
+            const owned = await ownership;
+            if (!active) return;
+            rememberAccountPayment(null);
+            if (owned) { router.replace(accountOrderHref(saleId)); return; }
+          } else {
+            void ownership.then((owned) => {
+              if (active && owned) setAccountOrderId(saleId);
+            });
+          }
         }
         setOrder(current);
         setStatus("ready");
@@ -53,5 +63,5 @@ export default function CheckoutResult({ providerResult }) {
   }, [providerResult, router]);
 
   async function retry() { setStatus("retrying"); setError(""); try { const payment = await readStoreResponse(await fetch(`/api/store/orders/${order.id}/checkout`, { method: "POST" })); if (!payment.checkoutUrl) throw new Error("Mercado Pago no devolvió una URL de pago."); window.location.assign(payment.checkoutUrl); } catch (requestError) { setError(requestError.message); setStatus("ready"); } }
-  const paid = order?.status === "PAID"; return <main className="checkout-result"><section className={`result-card ${paid ? "paid" : providerResult}`}><span className="result-icon"><Icon name={paid ? "check" : config.icon} size={36} /></span><p className="eyebrow">Mercado Pago</p><h1>{paid ? "Pago confirmado" : config.title}</h1><p>{paid ? "La confirmación segura ya fue conciliada con tu pedido." : config.text}</p>{status === "loading" && <div className="result-loading"><span className="spinner" /> Consultando el pedido…</div>}{order && <dl><div><dt>Pedido</dt><dd>N.º {order.saleNumber}</dd></div><div><dt>Estado registrado</dt><dd><span className="status-chip">{LABEL[order.status] ?? order.status}</span></dd></div><div><dt>{order.fulfillment?.method === "DELIVERY" ? "Origen del despacho" : "Sucursal de retiro"}</dt><dd>{order.branch?.name ?? "Sin sucursal asignada"}{order.branch?.address ? ` · ${order.branch.address}` : ""}</dd></div><div><dt>Total</dt><dd>{formatClp(order.totalCents)}</dd></div><div><dt>Pagado</dt><dd>{formatClp(order.paidCents)}</dd></div><div><dt>Saldo</dt><dd>{formatClp(order.balanceCents)}</dd></div></dl>}{order?.fulfillment?.method === "DELIVERY" && <ShipmentPanel saleId={order.id} />}{(order?.externalPrescription || order?.prescription) && <PrescriptionDetails endpoint={`/api/store/orders/${order.id}/prescription`} label="Ver receta del pedido" />}{order?.status === "PENDING" && <p className="result-note">El pedido se marcará como pagado cuando recibamos la confirmación de Mercado Pago.</p>}{error && <p className="inline-error">{error}</p>}<div className="result-actions">{order?.status === "PENDING" && <button className="button button--primary" disabled={status === "retrying"} onClick={retry} type="button">{status === "retrying" ? "Abriendo…" : "Intentar pagar nuevamente"}</button>}<Link className="button button--secondary" href="/carrito">Ver mi pedido</Link><Link href="/tienda">Volver a la tienda</Link></div></section></main>;
+  const paid = order?.status === "PAID"; return <main className="checkout-result"><section className={`result-card ${paid ? "paid" : providerResult}`}><span className="result-icon"><Icon name={paid ? "check" : config.icon} size={36} /></span><p className="eyebrow">Mercado Pago</p><h1>{paid ? "Pago confirmado" : config.title}</h1><p>{paid ? "La confirmación segura ya fue conciliada con tu pedido." : config.text}</p>{status === "loading" && <div className="result-loading"><span className="spinner" /> Consultando el pedido…</div>}{order && <dl><div><dt>Pedido</dt><dd>N.º {order.saleNumber}</dd></div><div><dt>Estado registrado</dt><dd><span className="status-chip">{LABEL[order.status] ?? order.status}</span></dd></div><div><dt>{order.fulfillment?.method === "DELIVERY" ? "Origen del despacho" : "Sucursal de retiro"}</dt><dd>{order.branch?.name ?? "Sin sucursal asignada"}{order.branch?.address ? ` · ${order.branch.address}` : ""}</dd></div><div><dt>Total</dt><dd>{formatClp(order.totalCents)}</dd></div><div><dt>Pagado</dt><dd>{formatClp(order.paidCents)}</dd></div><div><dt>Saldo</dt><dd>{formatClp(order.balanceCents)}</dd></div></dl>}{order?.fulfillment?.method === "DELIVERY" && <ShipmentPanel saleId={order.id} />}{(order?.externalPrescription || order?.prescription) && <PrescriptionDetails endpoint={`/api/store/orders/${order.id}/prescription`} label="Ver receta del pedido" />}{order?.status === "PENDING" && <p className="result-note">El pedido se marcará como pagado cuando recibamos la confirmación de Mercado Pago.</p>}{error && <p className="inline-error">{error}</p>}<div className="result-actions">{order?.status === "PENDING" && <button className="button button--primary" disabled={status === "retrying"} onClick={retry} type="button">{status === "retrying" ? "Abriendo…" : "Intentar pagar nuevamente"}</button>}<Link className="button button--secondary" href="/carrito">Ver mi pedido</Link>{accountOrderId && <Link className="button button--secondary" href={accountOrderHref(accountOrderId)}>Abrir pedido en Mi cuenta</Link>}<Link href="/tienda">Volver a la tienda</Link></div></section></main>;
 }

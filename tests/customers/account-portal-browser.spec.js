@@ -34,7 +34,7 @@ test("reserva y carrito conservan el panel y una receta de la cuenta llega al ca
   }));
   await page.route("**/api/store/cart", (route) => ok(route, cart));
   await page.route("**/api/store/booking/professionals", (route) => ok(route, []));
-  await page.route("**/api/store/orders/" + orderId, (route) => ok(route, order));
+  await page.route("**/api/store/orders/" + orderId + "?scope=account", (route) => ok(route, order));
   await page.route("**/api/store/cart/prescription/clinical", async (route) => {
     expect(route.request().method()).toBe("PUT");
     expect(route.request().postDataJSON()).toEqual({ prescriptionId: recipeId, replaceExisting: false });
@@ -99,4 +99,24 @@ test("un fallo al actualizar pedidos oculta el estado vacío anterior", async ({
   await page.getByRole("button", { name: "Confirmar recuperación" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "No pudimos actualizar tus pedidos." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Aún no tienes pedidos" })).toHaveCount(0);
+});
+
+test("el retorno sin marcador ofrece abrir el pedido únicamente a su cuenta", async ({ page }) => {
+  let owned = true;
+  await page.route("**/api/store/orders/" + orderId + "?scope=account", (route) => owned
+    ? ok(route, order)
+    : route.fulfill({ status: 404, json: { success: false } }));
+  await page.route("**/api/store/orders/" + orderId, (route) => ok(route, { ...order, status: "PAID" }));
+  await page.route("**/api/store/orders?*", (route) => ok(route, { items: [order], page: 1, totalPages: 1 }));
+  await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
+  const returnPath = "/checkout/mercado-pago/success?orderId=" + orderId;
+  await page.goto(returnPath);
+  await page.getByRole("link", { name: "Abrir pedido en Mi cuenta" }).click();
+  await expect(page.getByRole("heading", { name: "Pedido N.º 412" })).toBeVisible();
+
+  owned = false;
+  await page.goto(returnPath);
+  await expect(page.getByRole("heading", { name: "Pago confirmado" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ver mi pedido", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Abrir pedido en Mi cuenta" })).toHaveCount(0);
 });

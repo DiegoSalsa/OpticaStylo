@@ -20,7 +20,7 @@ export default function AccountOrderDetails({ id }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/store/orders/" + encodeURIComponent(id), { cache: "no-store", signal: controller.signal })
+    fetch("/api/store/orders/" + encodeURIComponent(id) + "?scope=account", { cache: "no-store", signal: controller.signal })
       .then(readStoreResponse)
       .then((data) => { if (!controller.signal.aborted) setOrder(data); })
       .catch((error) => { if (!controller.signal.aborted) setLoadError(error.message); })
