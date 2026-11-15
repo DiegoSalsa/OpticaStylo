@@ -23,6 +23,8 @@ test("E2E-01 · login administrativo → crear cliente → comprobar persistenci
   const unique = randomInt(100_000, 900_000);
   const email = `cliente-e2e-${unique}@example.invalid`;
   const rut = fixtureRut(unique);
+  const [rutBody, checkDigit] = rut.split("-");
+  const displayedRut = `${new Intl.NumberFormat("es-CL").format(Number(rutBody))}-${checkDigit}`;
   try {
     // Aislar la cuota persistida entre casos; el limitador real sigue habilitado.
     await database.public_request_rate_limits.deleteMany({ where: { bucket: { startsWith: "internal_login:" } } });
@@ -51,7 +53,7 @@ test("E2E-01 · login administrativo → crear cliente → comprobar persistenci
       await entry.click();
       await expect(page.getByRole("heading", { name: "ClienteEvaluable Prueba Sintética", exact: true })).toBeVisible();
       await expect(page.getByLabel("Correo", { exact: true })).toHaveValue(email);
-      await expect(page.getByLabel("RUT", { exact: true })).toHaveValue(rut);
+      await expect(page.getByLabel("RUT", { exact: true })).toHaveValue(displayedRut);
       expect(await database.customers.count({ where: { email, rut } })).toBe(1);
     });
   } finally {
