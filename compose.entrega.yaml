@@ -1,0 +1,7 @@
+services:
+  web:
+    image: ${STYLO_WEB_IMAGE:?Define STYLO_WEB_IMAGE o usa desplegar-academico.sh}
+  init:
+    image: ${STYLO_WEB_IMAGE:?Define STYLO_WEB_IMAGE o usa desplegar-academico.sh}
+  db:
+    image: ${STYLO_DB_IMAGE:?Define STYLO_DB_IMAGE o usa desplegar-academico.sh}
