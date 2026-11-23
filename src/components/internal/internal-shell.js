@@ -11,6 +11,7 @@ const NAVIGATION = [
   { href: "/app", icon: "home", label: "Dashboard", permissions: [] },
   { href: "/app/agenda", icon: "calendar", label: "Agenda", permissions: ["schedules.read"] },
   { href: "/app/ficha-clinica", icon: "file", label: "Gestión clínica", permissions: ["medical_records.read_assigned"] },
+  { href: "/app/pacientes", icon: "users", label: "Pacientes", permissions: ["patients.read_basic"] },
   { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", permissions: ["sales.read"] },
   { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
   { href: "/app/clientes", icon: "account", label: "Clientes", permissions: ["customers.read"] },

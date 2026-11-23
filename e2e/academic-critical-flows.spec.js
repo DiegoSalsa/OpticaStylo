@@ -76,6 +76,49 @@ test("Navegación Clientes sin sesión devuelve al ingreso y protege la API", as
   expect(response.status()).toBe(401);
 });
 
+const navigationViewports = [
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+  { width: 1440, height: 1000 },
+];
+
+test.describe("Accesos Pacientes", () => {
+  for (const viewport of navigationViewports) {
+    test.describe(`${viewport.width} px`, () => {
+      test.use({ viewport, hasTouch: viewport.width < 1000 });
+
+      for (const [profile, canManage] of [
+        ["administrador", true],
+        ["ventas", true],
+        ["profesional", false],
+      ]) {
+        test(`${profile} navega a Pacientes con los permisos de su rol`, async ({ page }) => {
+          await login(page, profile);
+          const navigation = page.getByRole("navigation", { name: "Navegación interna" });
+          const patients = navigation.getByRole("link", { name: "Pacientes", exact: true });
+          await expect(patients).toHaveAttribute("href", "/app/pacientes");
+          await patients.click();
+          await expect(page).toHaveURL(/\/app\/pacientes$/);
+          await expect(patients).toHaveAttribute("aria-current", "page");
+          await expect(page.getByRole("heading", { name: "Pacientes", exact: true })).toBeVisible();
+          await expect(page.getByRole("button", { name: "Nuevo paciente", exact: true })).toHaveCount(canManage ? 1 : 0);
+
+          const detail = await page.request.get("/api/patients/" + ids.patient);
+          expect(detail.status()).toBe(200);
+          expect((await detail.json()).data.id).toBe(ids.patient);
+
+          const write = await page.request.post("/api/patients", {
+            headers: { Origin: new URL(page.url()).origin },
+            data: {},
+          });
+          expect(write.status()).toBe(canManage ? 400 : 403);
+          if (!canManage) expect((await write.json()).error.code).toBe("INSUFFICIENT_PERMISSIONS");
+        });
+      }
+    });
+  }
+});
+
 test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/profesional",async({page})=>{
   await login(page,"administrador");
   await page.goto("/app/agenda");
