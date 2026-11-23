@@ -21,6 +21,61 @@ async function login(page,profile) {
   await expect(page).toHaveURL(/\/app$/);
 }
 
+for (const [device, viewport] of [
+  ["escritorio", { width: 1440, height: 1000 }],
+  ["móvil", { width: 390, height: 844 }],
+]) {
+  test.describe(`Navegación Clientes en ${device}`, () => {
+    test.use({ viewport, isMobile: device === "móvil", hasTouch: device === "móvil" });
+
+    for (const profile of ["administrador", "ventas"]) {
+      test(`${profile} entra desde el menú, consulta la ficha y vuelve al panel`, async ({ page }) => {
+        await login(page, profile);
+        const navigation = page.getByRole("navigation", { name: "Navegación interna" });
+        const customers = navigation.getByRole("link", { name: "Clientes", exact: true });
+        await expect(customers).toHaveAttribute("href", "/app/clientes");
+        await customers.click();
+        await expect(page).toHaveURL(/\/app\/clientes$/);
+        await expect(customers).toHaveAttribute("aria-current", "page");
+        await expect(page.getByRole("heading", { name: "Clientes", exact: true })).toBeVisible();
+        await page.getByRole("button", { name: /ClienteFicticio/ }).click();
+        await expect(page.getByRole("heading", { name: "ClienteFicticio Demostración", exact: true })).toBeVisible();
+
+        const dashboard = navigation.getByRole("link", { name: "Dashboard", exact: true });
+        await dashboard.click();
+        await expect(page).toHaveURL(/\/app$/);
+        await expect(dashboard).toHaveAttribute("aria-current", "page");
+        await page.goBack();
+        await expect(page).toHaveURL(/\/app\/clientes$/);
+        await expect(customers).toHaveAttribute("aria-current", "page");
+      });
+    }
+
+    test("el profesional no ve Clientes ni puede acceder por URL o API", async ({ page }) => {
+      await login(page, "profesional");
+      const navigation = page.getByRole("navigation", { name: "Navegación interna" });
+      await expect(navigation.getByRole("link", { name: "Clientes", exact: true })).toHaveCount(0);
+
+      await page.goto("/app/clientes");
+      await expect(page.getByRole("heading", { name: "Acceso no disponible" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Clientes", exact: true })).toHaveCount(0);
+
+      for (const endpoint of ["/api/customers", "/api/customers/" + ids.customer]) {
+        const response = await page.request.get(endpoint);
+        expect(response.status()).toBe(403);
+        expect((await response.json()).error.code).toBe("INSUFFICIENT_PERMISSIONS");
+      }
+    });
+  });
+}
+
+test("Navegación Clientes sin sesión devuelve al ingreso y protege la API", async ({ page }) => {
+  await page.goto("/app/clientes");
+  await expect(page).toHaveURL(/\/ingresar\?next=%2Fapp%2Fclientes$/);
+  const response = await page.request.get("/api/customers");
+  expect(response.status()).toBe(401);
+});
+
 test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/profesional",async({page})=>{
   await login(page,"administrador");
   await page.goto("/app/agenda");

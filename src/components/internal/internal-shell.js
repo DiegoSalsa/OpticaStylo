@@ -13,6 +13,7 @@ const NAVIGATION = [
   { href: "/app/ficha-clinica", icon: "file", label: "Gestión clínica", permissions: ["medical_records.read_assigned"] },
   { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", permissions: ["sales.read"] },
   { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
+  { href: "/app/clientes", icon: "account", label: "Clientes", permissions: ["customers.read"] },
   { href: "/app/productos", icon: "eye", label: "Catálogo de productos", permissions: ["products.read"] },
   { href: "/app/inventario", icon: "package", label: "Inventario por sucursal", permissions: ["inventory.read"] },
   { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", permissions: ["users.read"] },
