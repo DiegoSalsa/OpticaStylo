@@ -44,7 +44,7 @@ project=$2
 step 'Motor, Compose y recursos'
 command -v docker >/dev/null || fail 'Falta Docker Engine y su CLI.'
 command -v curl >/dev/null || fail 'Falta curl para verificar la salud desde el host.'
-docker version --format 'Docker Engine {{.Server.Version}}'
+docker version --format 'Docker Engine {{.Server.Version}}' || fail 'Revisa el motor y los permisos con docker info.'
 docker compose version
 up_help=$(docker compose up --help)
 [[ "$up_help" == *--wait-timeout* && "$up_help" == *--pull* ]] || fail 'Actualiza el plugin Docker Compose.'
@@ -52,13 +52,13 @@ engine=$(docker info --format '{{.OSType}}/{{.Architecture}}')
 case "$engine" in
   linux/x86_64|linux/amd64) platform=linux/amd64 ;;
   linux/aarch64|linux/arm64) platform=linux/arm64 ;;
-  linux/*) platform=$engine ;;
-  *) fail "El daemon debe ejecutar contenedores Linux. Detectado: $engine." ;;
+  *) fail "Arquitectura incompatible: $engine. Usa Docker Engine Linux AMD64 o ARM64." ;;
 esac
 docker info --format 'CPU del motor: {{.NCPU}} | Memoria del motor en bytes: {{.MemTotal}}'
 docker_root=$(docker info --format '{{.DockerRootDir}}')
 printf 'Plataforma del motor: %s\n' "$platform"
-if [[ -d "$docker_root" ]]; then df -h -- "$docker_root"; else df -h -- .; fi
+if [[ -d "$docker_root" ]]; then df -h -- "$docker_root"; else printf 'Almacén de Docker: %s (consulta el disco desde el host del motor).\n' "$docker_root"; fi
+df -h -- .
 
 step 'Variables y puerto'
 [[ -f "$env_file" && -r "$env_file" ]] || fail 'Ejecuta preparar y completa el archivo privado.'
@@ -123,6 +123,10 @@ for resource in network:database network:browser volume:postgres-data volume:dem
 done
 
 step 'Verificar puerto de la aplicación'
+if [[ "$bind_ip" != 0.0.0.0 && "$bind_ip" != :: ]] && command -v ip >/dev/null; then
+  addresses=$(ip -o addr show | awk '$3=="inet" || $3=="inet6" {split($4, parts, "/"); print parts[1]}')
+  grep -Fxq -- "$bind_ip" <<< "$addresses" || fail "La IP $bind_ip ya no está asignada. Ejecuta ip -br addr y recupera la interfaz original."
+fi
 if $web_running; then
   published=$(docker port "$project-web-1" 3000/tcp)
   expected_host=$bind_ip
@@ -183,7 +187,7 @@ fi
 export STYLO_WEB_IMAGE STYLO_DB_IMAGE
 
 compose() {
-  docker compose -p "$project" -f compose.academico.yaml -f compose.entrega.yaml \
+  docker compose --profile inicializacion -p "$project" -f compose.academico.yaml -f compose.entrega.yaml \
     --env-file "$env_file" "$@"
 }
 image_info() { docker image inspect --format '{{.Id}} {{.Os}}/{{.Architecture}}' "$1"; }
@@ -212,18 +216,76 @@ verify_loaded_image() {
     fail "La etiqueta, el digest o la arquitectura de $1 difieren del archivo transportado."
 }
 
+check_endpoint() {
+  local name=$1 url=$2 expected=$3 attempt code rc reason
+  for attempt in 1 2 3; do
+    if code=$(curl -sS --connect-timeout 15 --max-time 25 -o /dev/null -w '%{http_code}' "$url"); then
+      [[ "$code" =~ $expected ]] && return 0
+      reason="respuesta HTTP $code"
+    else
+      rc=$?
+      case "$rc" in
+        5|6) reason='falló la resolución DNS';;
+        7) reason='no se pudo abrir la conexión';;
+        28) reason='se agotó el tiempo de DNS o conexión';;
+        35|60) reason='falló la verificación TLS';;
+        *) reason="curl devolvió $rc";;
+      esac
+    fi
+    printf '%s, intento %s/3: %s.
+' "$name" "$attempt" "$reason" >&2
+    if ((attempt < 3)); then sleep "$((attempt * 2))"; fi
+  done
+  fail "Sin acceso a $name tras 3 intentos. Verifica DNS, proxy o TLS. En Linux AMD64 puedes usar el paquete offline."
+}
+
+check_resources() {
+  local memory disk
+  memory=$(docker info --format '{{.MemTotal}}')
+  if [[ "$mode" == con-internet && "$need_web" == true ]] && ((memory < 2147483648)); then
+    fail 'Memoria del motor inferior a 2 GiB para compilar. Usa el paquete AMD64 o solicita más memoria.'
+  fi
+  if [[ -d "$docker_root" ]]; then
+    disk=$(df -Pk -- "$docker_root" | awk 'END {print $4}')
+    if [[ "$disk" =~ ^[0-9]+$ ]] && ((disk < 2097152)); then
+      fail 'Almacén Docker con menos de 2 GiB libres. Consulta df -h y solicita espacio.'
+    fi
+  fi
+}
+
 step 'Validar Compose'
-compose --profile inicializacion config --quiet
+compose config --quiet
 
 if [[ "$mode" == con-internet ]]; then
-  step 'Preparar PostgreSQL y construir la aplicación'
-  if ! image_info "$STYLO_DB_IMAGE" >/dev/null 2>&1; then docker image pull "$STYLO_DB_IMAGE"; fi
+  need_db=false
+  need_web=false
+  if ! image_info "$STYLO_DB_IMAGE" >/dev/null 2>&1; then need_db=true; fi
   if image_info "$STYLO_WEB_IMAGE" >/dev/null 2>&1; then
     $resume || fail "La etiqueta $STYLO_WEB_IMAGE ya existe. Elige otro proyecto."
   else
-    compose build web
+    need_web=true
+  fi
+  step 'Comprobar recursos'
+  check_resources
+  if $need_db || $need_web; then
+    step 'Comprobar conectividad'
+    check_endpoint 'Docker Hub' https://registry-1.docker.io/v2/ '^(200|401)$'
+    check_endpoint 'autenticación de Docker Hub' https://auth.docker.io/ '^(200|301|302|404)$'
+  fi
+  if $need_db; then
+    step 'Descargar PostgreSQL'
+    docker image pull "$STYLO_DB_IMAGE" || fail 'Falló docker pull. Corrige la conectividad o usa el paquete offline.'
+  fi
+  if $need_web; then
+    step 'Comprobar conectividad'
+    check_endpoint 'npm' https://registry.npmjs.org/ '^200$'
+    step 'Compilar Next.js'
+    compose build web || fail 'Falló la compilación. Revisa el primer error del build, la memoria y el disco, o usa el paquete offline.'
   fi
 else
+  step 'Comprobar recursos'
+  need_web=false
+  check_resources
   step 'Verificar y cargar las imágenes transportadas'
   [[ -f "$3" ]] || fail 'Falta el archivo de imágenes.'
   command -v sha256sum >/dev/null || fail 'Falta sha256sum para verificar el archivo de imágenes.'
@@ -248,7 +310,25 @@ done
 step 'Iniciar PostgreSQL'
 compose up -d --no-recreate --no-build --pull never --wait --wait-timeout 120 db
 step 'Aplicar migraciones e inicializar datos sintéticos'
-compose run --rm --no-deps --interactive=false -T --pull never init
+job="$project-inicializar"
+job_format='{{index .Config.Labels "com.docker.compose.project.working_dir"}}|{{index .Config.Labels "com.docker.compose.project"}}|{{index .Config.Labels "com.docker.compose.service"}}|{{.Config.Image}}|{{.State.Status}}|{{.State.ExitCode}}'
+if job_info=$(docker container inspect --format "$job_format" "$job" 2>/dev/null); then
+  $resume && [[ "$job_info" == "$PWD|$project|init|$STYLO_WEB_IMAGE|"* ]] ||
+    fail "Ya existe un inicializador incompatible: $job."
+  case "$job_info" in
+    *'|running|'*|*'|exited|0') ;;
+    *'|created|'*|*'|exited|'*) docker start "$job" >/dev/null ;;
+    *) fail "El inicializador está en un estado inesperado. Ejecuta docker inspect -f '{{.State.Status}}' $job." ;;
+  esac
+else
+  compose run -d --no-deps --interactive=false -T --pull never --name "$job" init >/dev/null
+fi
+printf 'Inicializador: %s. Si se corta SSH, el trabajo continúa en Docker.
+' "$job"
+init_status=$(docker wait "$job")
+docker logs "$job"
+[[ "$init_status" == 0 ]] ||
+  fail "Inicialización fallida (código $init_status). Revisa docker logs $job. Si Prisma registra una migración fallida, conserva el volumen y usa la alternativa aislada."
 step 'Verificar el historial Prisma'
 compose run --rm --no-deps --interactive=false -T --pull never init node_modules/prisma/build/index.js migrate status
 step 'Iniciar Next.js'

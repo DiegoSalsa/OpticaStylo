@@ -45,12 +45,15 @@ usa imágenes verificadas y Compose con `--pull never` y `--no-build`.
 
 ## Reanudar y diagnosticar
 
+Consulta la [guía de emergencia](guia-emergencia-taller.md) para ver los diagnósticos y el respaldo aislado.
+
 Repite el mismo comando de instalación con el mismo usuario y edición. El
 instalador conserva el directorio privado, el nombre del proyecto y sus
-credenciales. El inicializador vuelve a comprobar las migraciones y solo carga
-los datos de demostración en la primera inicialización. Los volúmenes con
-nombre se reutilizan y Compose conserva los contenedores existentes que
-pertenezcan al proyecto.
+credenciales. Docker mantiene el inicializador en segundo plano si se corta SSH.
+El reintento recupera su resultado, comprueba el historial de Prisma y conserva
+los contenedores y volúmenes del proyecto. Si la instalación principal dejó de
+ser utilizable, el paquete permite ejecutar `bash instalar.sh --alternativa` con
+un puerto libre y volúmenes nuevos. Sus datos parten de la demostración sintética.
 
 El directorio `~/.local/share/opticastylo-taller/instalacion` registra la edición,
 el motor y el proyecto. Una edición distinta o un motor distinto requieren

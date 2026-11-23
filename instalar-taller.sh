@@ -8,7 +8,12 @@ trap 'code=$?; printf "ERROR [%s] Código %s. Repite el mismo instalador para re
 
 source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 base="$HOME/.local/share/opticastylo-taller"
-installed="$base/instalacion"
+slot=instalacion
+if [[ "${1:-}" == --alternativa ]]; then
+  slot=alternativa-offline
+  shift
+fi
+installed="$base/$slot"
 app="$installed/opticastylo-academico"
 env_file="$app/.env.academico"
 archive_name=opticastylo-imagenes-linux-amd64-20261130.tar.gz
@@ -19,12 +24,12 @@ for tool in docker flock sha256sum; do
 done
 host=${DOCKER_HOST:-}
 if [[ -n "${DOCKER_CONTEXT:-}" || -z "$host" ]]; then
-  host=$(docker context inspect --format '{{(index .Endpoints "docker").Host}}')
+  host=$(docker context inspect --format '{{(index .Endpoints "docker").Host}}') || fail 'Contexto Docker inválido. Ejecuta docker context ls.'
 fi
 [[ "$host" == unix:///* && -S "${host#unix://}" ]] || fail 'Selecciona el socket Unix del Docker Engine local.'
-docker_id=$(docker info --format '{{.ID}}')
+docker_id=$(docker info --format '{{.ID}}') || fail 'Docker no responde o faltan permisos. Ejecuta docker info con el mismo usuario.'
 [[ -n "$docker_id" && "$docker_id" != '<no value>' ]] || fail 'No se pudo identificar el Docker Engine local.'
-docker compose version >/dev/null
+docker compose version >/dev/null || fail 'Falta el plugin Docker Compose. Ejecuta docker compose version.'
 
 read_installation() {
   local -a state
@@ -58,6 +63,14 @@ base_mode=$(stat -c %a -- "$base")
 exec 9>> "$base/.lock"
 flock -n 9 || fail 'Hay otro instalador ejecutándose para este usuario.'
 
+if [[ "${1:-}" == estado ]]; then
+  [[ $# -eq 1 ]] || fail 'Usa estado sin argumentos adicionales.'
+  read_installation
+  printf 'Proyecto: %s (%s)\n' "$project" "$mode"
+  docker ps -a --filter "label=com.docker.compose.project=$project" --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+  exit 0
+fi
+
 if [[ "${1:-}" == credenciales ]]; then
   stage='Consultar la credencial solicitada'
   [[ $# -le 2 ]] || fail 'Usa credenciales [admin|profesional].'
@@ -75,12 +88,12 @@ if [[ "${1:-}" == credenciales ]]; then
     STYLO_DB_IMAGE='postgres:18-bookworm@sha256:ece55f7868da684e400f82f1030a050718adbdd65c23aa500c486f6e2950dc0f'
   fi
   export STYLO_WEB_IMAGE STYLO_DB_IMAGE
-  docker compose -p "$project" -f compose.academico.yaml -f compose.entrega.yaml --env-file .env.academico \
+  docker compose --profile inicializacion -p "$project" -f compose.academico.yaml -f compose.entrega.yaml --env-file .env.academico \
     run --rm --no-deps --interactive=false -T --pull never --entrypoint cat init "/var/lib/stylo-private/$role-password"
   printf '\n'
   exit 0
 fi
-[[ $# -eq 0 ]] || fail 'Ejecuta el instalador sin argumentos o usa credenciales [admin|profesional].'
+[[ $# -eq 0 ]] || fail 'Usa [--alternativa] sin argumentos, estado o credenciales [admin|profesional].'
 
 stage='Verificar la edición'
 archive="$source_dir/$archive_name"
@@ -98,34 +111,40 @@ else
   release="git:$(git -C "$source_dir" rev-parse --verify HEAD)"
 fi
 
+if [[ "$slot" == alternativa-offline ]] && ! $packed; then
+  fail 'Para --alternativa ejecuta instalar.sh de un paquete offline verificado.'
+fi
+
 stage='Preparar la instalación académica'
+for tool in curl ip ss tar; do
+  command -v "$tool" >/dev/null || fail "Falta $tool en el servidor."
+done
+arch=$(docker info --format '{{.OSType}}/{{.Architecture}}')
+case "$arch" in
+  linux/x86_64|linux/amd64|linux/aarch64|linux/arm64) ;;
+  *) fail "Arquitectura incompatible: $arch. Usa un motor Linux AMD64 o ARM64." ;;
+esac
 resume=()
 if [[ -e "$installed" || -L "$installed" ]]; then
   read_installation
-  [[ "$stored_release" == "$release" ]] || fail 'Ya hay una instalación de otra edición. Se conservan sus datos.'
+  if [[ "$stored_release" != "$release" ]]; then
+    if $packed && [[ "$slot" == instalacion ]]; then
+      fail 'Otra edición ocupa la instalación principal. Ejecuta bash instalar.sh --alternativa desde la extracción para crear otro proyecto con volúmenes propios.'
+    fi
+    fail 'Otra edición ocupa esta ruta. Conserva los volúmenes y usa la edición original.'
+  fi
   resume=(--reanudar)
   printf 'Reanudando el proyecto %s con la configuración guardada.\n' "$project"
 else
   mode=con-internet
-  arch=$(docker info --format '{{.OSType}}/{{.Architecture}}')
-  [[ "$arch" == linux/* ]] || fail "Se necesita un motor Linux. Detectado $arch."
-  case "$arch" in
-    linux/x86_64|linux/amd64) if $packed; then mode=sin-internet; fi ;;
-    *) if $packed; then
-         printf 'El motor %s requiere construir desde fuentes. ¿Autorizar la compilación con internet? [s/N] ' "$arch"
+  if $packed; then
+    case "$arch" in
+      linux/x86_64|linux/amd64) mode=sin-internet ;;
+      *) [[ "$slot" != alternativa-offline ]] || fail "La alternativa offline requiere Linux AMD64. Motor actual: $arch."
+         printf 'Las imágenes requieren AMD64. ¿Autorizar la compilación con internet en %s? [s/N] ' "$arch"
          read -r answer
-         [[ "$answer" == s || "$answer" == S ]] || fail 'Compilación cancelada.'
-       fi ;;
-  esac
-
-  for tool in curl ip ss tar; do
-    command -v "$tool" >/dev/null || fail "Falta $tool en el servidor."
-  done
-  if [[ "$mode" == con-internet ]]; then
-    stage='Comprobar conectividad para compilar'
-    registry=$(curl -sS --connect-timeout 5 --max-time 12 -o /dev/null -w '%{http_code}' https://registry-1.docker.io/v2/)
-    [[ "$registry" == 401 || "$registry" == 200 ]] || fail 'Docker Hub no está disponible.'
-    curl -fsS --connect-timeout 5 --max-time 12 -o /dev/null https://registry.npmjs.org/
+         [[ "$answer" == s || "$answer" == S ]] || fail 'Compilación cancelada.' ;;
+    esac
   fi
 
   stage='Elegir IP, puerto y origen'
@@ -195,5 +214,13 @@ fi
 printf '\nCuenta administrativa: admin-demo@example.invalid\n'
 printf 'Cuenta clínica: profesional-demo@example.invalid\n'
 printf 'En una terminal privada, consulta la contraseña elegida con:\n'
-printf '  bash %q credenciales admin\n' "$installed/instalar.sh"
-printf '  bash %q credenciales profesional\n' "$installed/instalar.sh"
+credential_flag=''
+if [[ "$slot" == alternativa-offline ]]; then credential_flag='--alternativa '; fi
+printf '  bash %q ' "$installed/instalar.sh"
+printf '%s' "${credential_args[@]/%/ }"
+printf 'credenciales admin
+'
+printf 'Estado del proyecto: bash %q ' "$installed/instalar.sh"
+printf '%s' "${credential_args[@]/%/ }"
+printf 'estado
+'
