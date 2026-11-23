@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { canManageShippingSettings } from "@/auth/permissions";
 import { useEffect, useRef, useState } from "react";
 import { readResponse, useInternalActor } from "@/components/internal/internal-shell";
 import Pagination from "@/components/internal/pagination";
@@ -103,7 +104,8 @@ export default function OrdersBoard() {
   const currentSummary = summary?.key === summaryKey ? summary : null;
   return <>
     <header className="app-heading"><div><p className="eyebrow">Operación</p><h1>Gestión de pedidos</h1><p>Seguimiento de ventas confirmadas desde el pago hasta la entrega.</p></div><span className="status-chip" role="status">{currentSummary?.data ? `${currentSummary.data.total} pedidos encontrados` : currentSummary?.error ? "Conteo no disponible" : "Cargando conteo…"}</span></header>
-    <p><Link href="/app/pedidos/configuracion-despachos">Configuración logística</Link></p><div className="orders-views" role="group" aria-label="Vista de pedidos">{[["active","Pedidos activos"],["delivered","Pedidos entregados"],["history","Historial completo"]].map(([view,label]) => <button className="app-button" aria-pressed={filters.view === view} key={view} onClick={() => setFilters((current) => ({ ...current, status: "", view }))} type="button">{label}</button>)}</div>
+    {canManageShippingSettings(actor) && <p><Link href="/app/pedidos/configuracion-despachos">Configuración logística</Link></p>}
+    <div className="orders-views" role="group" aria-label="Vista de pedidos">{[["active","Pedidos activos"],["delivered","Pedidos entregados"],["history","Historial completo"]].map(([view,label]) => <button className="app-button" aria-pressed={filters.view === view} key={view} onClick={() => setFilters((current) => ({ ...current, status: "", view }))} type="button">{label}</button>)}</div>
     <section className="app-card orders-toolbar">
       <form className="orders-search" onSubmit={(event) => { event.preventDefault(); setFilters((current) => ({ ...current, search: query.trim() })); }}><Icon name="search" /><input aria-label="Buscar pedido" maxLength={100} onChange={(event) => setQuery(event.target.value)} placeholder="N.º de venta, cliente o RUT" value={query} /><button className="app-button" type="submit">Buscar</button></form>
       <label className="field"><span>Origen</span><select onChange={(event) => setFilters((current) => ({ ...current, origin: event.target.value }))} value={filters.origin}><option value="">Todos</option><option value="ONLINE">WEB</option><option value="IN_STORE">POS</option></select></label>

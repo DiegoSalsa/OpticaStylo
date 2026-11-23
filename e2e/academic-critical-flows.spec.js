@@ -153,6 +153,116 @@ test.describe("Accesos Agenda del panel", () => {
   }
 });
 
+test.describe("Accesos Configuración logística", () => {
+  for (const viewport of navigationViewports) {
+    test.describe(`${viewport.width} px`, () => {
+      test.use({ viewport, hasTouch: viewport.width < 1000 });
+
+      test("administrador abre Configuración logística y recupera un error de carga", async ({ page }) => {
+        await login(page, "administrador");
+        await page.goto("/app/pedidos");
+        let release;
+        const pending = new Promise((resolve) => { release = resolve; });
+        await page.route("**/api/shipping/settings", async (route) => {
+          await pending;
+          await route.fulfill({
+            status: 503,
+            json: { success: false, error: { message: "Servicio temporalmente indisponible." } },
+          });
+        }, { times: 1 });
+
+        const logistics = page.getByRole("link", { name: "Configuración logística", exact: true });
+        try {
+          await expect(logistics).toHaveAttribute("href", "/app/pedidos/configuracion-despachos");
+          await logistics.click();
+          await expect(page.getByRole("status").filter({ hasText: "Cargando configuración de despachos" })).toBeVisible();
+          await expect(page.getByRole("button", { name: "Guardar origen", exact: true })).toHaveCount(0);
+        } finally {
+          release();
+        }
+        await expect(page.getByRole("alert").filter({ hasText: "Servicio temporalmente indisponible." })).toBeVisible();
+        await page.getByRole("button", { name: "Reintentar", exact: true }).click();
+        await expect(page.getByRole("heading", { name: "Origen por sucursal", exact: true })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Guardar origen", exact: true })).toBeEnabled();
+        await page.getByRole("link", { name: "Volver a pedidos", exact: true }).click();
+        await expect(page).toHaveURL(/\/app\/pedidos$/);
+      });
+
+      for (const profile of ["ventas", "profesional"]) {
+        test(`${profile} no accede a Configuración logística desde el tablero, URL o API`, async ({ page }) => {
+          await login(page, profile);
+          await page.goto("/app/pedidos");
+          const ordersHeading = profile === "ventas" ? "Gestión de pedidos" : "Acceso no disponible";
+          await expect(page.getByRole("heading", { name: ordersHeading, exact: true })).toBeVisible();
+          await expect(page.getByRole("link", { name: "Configuración logística", exact: true })).toHaveCount(0);
+
+          let settingsRequests = 0;
+          page.on("request", (request) => {
+            if (new URL(request.url()).pathname === "/api/shipping/settings") settingsRequests++;
+          });
+          await page.goto("/app/pedidos/configuracion-despachos");
+          await expect(page.getByRole("alert").filter({ hasText: "No tienes permisos para configurar despachos." })).toBeVisible();
+          await expect(page.getByRole("button", { name: "Guardar origen", exact: true })).toHaveCount(0);
+          expect(settingsRequests).toBe(0);
+
+          const read = await page.request.get("/api/shipping/settings");
+          const write = await page.request.post("/api/shipping/settings", {
+            headers: { Origin: new URL(page.url()).origin },
+            data: {},
+          });
+          for (const response of [read, write]) {
+            expect(response.status()).toBe(403);
+            expect((await response.json()).error.code).toBe("INSUFFICIENT_PERMISSIONS");
+          }
+        });
+      }
+    });
+  }
+
+  test("el administrador guarda un embalaje sintético y una denegación oculta el formulario", async ({ page }) => {
+    await login(page, "administrador");
+    await page.goto("/app/pedidos/configuracion-despachos");
+    const packaging = page.locator("section").filter({
+      has: page.getByRole("heading", { name: "Embalajes aprobados", exact: true }),
+    });
+    for (const [label, value] of [
+      ["Código de embalaje", "ACCESO-DEMO"],
+      ["Peso del embalaje vacío (kg)", "0.5"],
+      ["Alto (cm)", "10"],
+      ["Ancho (cm)", "10"],
+      ["Largo (cm)", "20"],
+      ["Capacidad máxima de unidades", "2"],
+    ]) {
+      await packaging.getByLabel(label, { exact: true }).fill(value);
+    }
+    await packaging.getByRole("checkbox").check();
+    const save = packaging.getByRole("button", { name: "Guardar embalaje", exact: true });
+    await save.click();
+    await expect(page.getByRole("status").filter({ hasText: "Configuración guardada." })).toBeVisible();
+    await expect(packaging.getByText(/ACCESO-DEMO/)).toBeVisible();
+
+    await page.route("**/api/shipping/settings", (route) => route.fulfill({
+      status: 403,
+      json: { success: false, error: { code: "INSUFFICIENT_PERMISSIONS" } },
+    }), { times: 1 });
+    await save.click();
+    await expect(page.getByRole("alert").filter({ hasText: "No tienes permisos para configurar despachos." })).toBeVisible();
+    await expect(save).toHaveCount(0);
+  });
+
+  test("una denegación de la API se muestra como acceso restringido", async ({ page }) => {
+    await login(page, "administrador");
+    await page.route("**/api/shipping/settings", (route) => route.fulfill({
+      status: 403,
+      json: { success: false, error: { code: "INSUFFICIENT_PERMISSIONS" } },
+    }));
+    await page.goto("/app/pedidos/configuracion-despachos");
+    await expect(page.getByRole("alert").filter({ hasText: "No tienes permisos para configurar despachos." })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reintentar", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Guardar origen", exact: true })).toHaveCount(0);
+  });
+});
+
 test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/profesional",async({page})=>{
   await login(page,"administrador");
   await page.goto("/app/agenda");

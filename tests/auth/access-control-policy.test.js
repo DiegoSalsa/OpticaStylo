@@ -5,7 +5,7 @@ import {
   getPermissionsForRoles,
   ROLE_PERMISSIONS,
 } from "../../src/auth/access-control-policy.js";
-import { PERMISSION_CODES, PERMISSIONS } from "../../src/auth/permissions.js";
+import { canManageShippingSettings, PERMISSION_CODES, PERMISSIONS } from "../../src/auth/permissions.js";
 import { ROLE_CODES, ROLES } from "../../src/auth/roles.js";
 
 test("define una política para cada rol conocido", () => {
@@ -55,4 +55,15 @@ test("el profesional solo administra su contexto clínico", () => {
   assert.ok(permissions.includes(PERMISSIONS.APPOINTMENTS_READ_OWN));
   assert.ok(!permissions.includes(PERMISSIONS.APPOINTMENTS_READ_ALL));
   assert.ok(!permissions.includes(PERMISSIONS.SCHEDULES_MANAGE_ALL));
+});
+
+test("configurar despachos requiere gestionar inventario global y productos", () => {
+  assert.equal(canManageShippingSettings(null), false);
+  assert.equal(canManageShippingSettings({ permissions: [PERMISSIONS.INVENTORY_MANAGE_ALL] }), false);
+  assert.equal(canManageShippingSettings({ permissions: [PERMISSIONS.PRODUCTS_MANAGE] }), false);
+
+  for (const role of ROLE_CODES) {
+    const actor = { permissions: getPermissionsForRoles([role]) };
+    assert.equal(canManageShippingSettings(actor), role === ROLES.ADMIN);
+  }
 });

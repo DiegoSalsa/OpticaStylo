@@ -45,3 +45,12 @@ export const PERMISSIONS = Object.freeze({
 });
 
 export const PERMISSION_CODES = Object.freeze(Object.values(PERMISSIONS));
+
+export const SHIPPING_SETTINGS_PERMISSIONS = Object.freeze([
+  PERMISSIONS.INVENTORY_MANAGE_ALL,
+  PERMISSIONS.PRODUCTS_MANAGE,
+]);
+
+export function canManageShippingSettings(actor) {
+  return SHIPPING_SETTINGS_PERMISSIONS.every((permission) => actor?.permissions?.includes(permission));
+}
