@@ -119,6 +119,40 @@ test.describe("Accesos Pacientes", () => {
   }
 });
 
+test.describe("Accesos Agenda del panel", () => {
+  for (const viewport of navigationViewports) {
+    test.describe(`${viewport.width} px`, () => {
+      test.use({ viewport, hasTouch: viewport.width < 1000 });
+
+      for (const [profile, canRead] of [
+        ["administrador", true],
+        ["ventas", false],
+        ["profesional", true],
+      ]) {
+        test(`${profile} ve el enlace de Agenda solo con permiso de lectura`, async ({ page }) => {
+          await login(page, profile);
+          await expect(page.getByRole("heading", { name: "Atenciones de hoy" })).toBeVisible();
+          const agenda = page.getByRole("link", { name: "Ver agenda", exact: true });
+          if (canRead) {
+            await expect(agenda).toHaveAttribute("href", "/app/agenda");
+            await agenda.click();
+            await expect(page).toHaveURL(/\/app\/agenda$/);
+            await expect(page.getByRole("heading", { name: "Agenda", exact: true })).toBeVisible();
+          } else {
+            await expect(agenda).toHaveCount(0);
+            await page.goto("/app/agenda");
+            await expect(page.getByRole("heading", { name: "Acceso no disponible" })).toBeVisible();
+          }
+
+          const response = await page.request.get("/api/professionals");
+          expect(response.status()).toBe(canRead ? 200 : 403);
+          if (!canRead) expect((await response.json()).error.code).toBe("INSUFFICIENT_PERMISSIONS");
+        });
+      }
+    });
+  }
+});
+
 test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/profesional",async({page})=>{
   await login(page,"administrador");
   await page.goto("/app/agenda");
