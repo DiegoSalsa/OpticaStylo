@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { prisma } from "../src/db/prisma.js";
-import { seedAcademicData, requireAcademicIsolation } from "../tests/fixtures/academic-data.js";
+import { ids, seedAcademicData, requireAcademicIsolation } from "../tests/fixtures/academic-data.js";
 import { seedInventoryPagination } from "../tests/fixtures/inventory-pagination-data.js";
 import { isolateBrowserNetwork } from "./isolated-network.js";
 
@@ -97,6 +97,73 @@ test("Paginación de Inventario recorre 122 traspasos y 120 movimientos sin repe
     expect((await page.request.get(endpoint(path, { branchId, page: 0 }))).status()).toBe(400);
   }
   expect((await page.request.get(endpoint("/transfers", { branchId, status: "INVALIDO" }))).status()).toBe(400);
+});
+
+test("Paginación de Inventario conserva microsegundos y excluye el límite y las altas posteriores", async ({ page }) => {
+  await login(page);
+  const branchId = sample.other.id;
+  const productId = randomUUID();
+  const stamp = (fraction) => "2025-02-12T12:00:00." + fraction + "Z";
+  const rows = ["122999", "123001", "123455", "123455", "123456"].map((fraction) => ({
+    id: randomUUID(), time: stamp(fraction),
+  }));
+
+  async function writeMovement(client, { id, time }, version) {
+    await client.$executeRaw`
+      INSERT INTO inventory_movements (
+        id, branch_id, product_id, stock_version, kind, before_on_hand, after_on_hand,
+        before_reserved, after_reserved, reason, created_at
+      ) VALUES (
+        ${id}::uuid, ${branchId}::uuid, ${productId}::uuid, ${version},
+        ${version === 1 ? "COUNT" : "ENTRY"}, ${version === 1 ? null : version - 1}::integer, ${version},
+        0, 0, 'Precisión sintética', ${time}::timestamptz
+      )`;
+  }
+
+  await prisma.$transaction(async (client) => {
+    await client.products.create({ data: {
+      id: productId, sku: ("MICROS-" + productId).toUpperCase(), name: "Marco precisión sintético",
+      category: "FRAME", unit_price_cents: 1000, inventory_mode: "TRACKED", is_test_data: true,
+      created_by: ids.admin, updated_by: ids.admin,
+    } });
+    await client.inventory_stocks.create({ data: {
+      branch_id: branchId, product_id: productId, on_hand: rows.length, version: rows.length,
+    } });
+    for (const [index, row] of rows.entries()) await writeMovement(client, row, index + 1);
+  });
+
+  const asOf = stamp("123456");
+  const [{ rounded, precise }] = await prisma.$queryRaw`
+    SELECT COUNT(*) FILTER (WHERE created_at < date_trunc('milliseconds', ${asOf}::timestamptz))::int AS rounded,
+      COUNT(*) FILTER (WHERE created_at < ${asOf}::timestamptz)::int AS precise
+    FROM inventory_movements WHERE branch_id = ${branchId}::uuid AND product_id = ${productId}::uuid`;
+  expect({ rounded, precise }).toEqual({ rounded: 1, precise: 4 });
+
+  const query = { branchId, productId, pageSize: 2 };
+  const legacy = await data(await page.request.get(endpoint("/movements", { ...query, asOf: stamp("123") })));
+  expect(legacy.items.map((item) => item.id)).toEqual([rows[0].id]);
+
+  const first = await data(await page.request.get(endpoint("/movements", { ...query, asOf })));
+  const tied = [rows[2].id, rows[3].id].sort().reverse();
+  expect(first).toMatchObject({ asOf, page: 1, total: 4, totalPages: 2 });
+  expect(first.items.map((item) => item.id)).toEqual(tied);
+
+  const later = { id: randomUUID(), time: stamp("123457") };
+  await prisma.$transaction(async (client) => {
+    await client.inventory_stocks.update({
+      where: { branch_id_product_id: { branch_id: branchId, product_id: productId } },
+      data: { on_hand: rows.length + 1, version: rows.length + 1 },
+    });
+    await writeMovement(client, later, rows.length + 1);
+  });
+  const second = await data(await page.request.get(endpoint("/movements", { ...query, page: 2, asOf: first.asOf })));
+  expect(second).toMatchObject({ asOf, page: 2, total: 4 });
+  expect(second.items.map((item) => item.id)).toEqual([rows[1].id, rows[0].id]);
+
+  const fresh = await data(await page.request.get(endpoint("/movements", query)));
+  expect(fresh.asOf).toMatch(/\.\d{6}Z$/);
+  expect(fresh.items.map((item) => item.id)).toEqual([later.id, rows[4].id]);
+  expect((await page.request.get(endpoint("/movements", { ...query, asOf: "2025-02-31T12:00:00.123456Z" }))).status()).toBe(400);
 });
 
 test("Paginación de Inventario separa las sucursales y la búsqueda por producto autorizada", async ({ page }) => {

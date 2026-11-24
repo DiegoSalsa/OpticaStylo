@@ -46,23 +46,34 @@ async function readInventoryPage(model, { page: requestedPage, pageSize }, { whe
 const recentInventoryOrder = [{ created_at: "desc" }, { id: "desc" }];
 const consistentRead = { isolationLevel: "RepeatableRead" };
 
+function inventoryHistoryCutoff(value) {
+  if (value === null) return null;
+  const parts = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{3}|\d{6})Z$/.exec(value);
+  if (parts) {
+    const [, time, fraction] = parts;
+    const milliseconds = time + "." + fraction.slice(0, 3) + "Z";
+    const date = new Date(milliseconds);
+    if (Number.isFinite(date.getTime()) && date.toISOString() === milliseconds) {
+      return time + "." + fraction.padEnd(6, "0") + "Z";
+    }
+  }
+  inventoryError("INVALID_INVENTORY_DATA", "La fecha de corte del historial no es válida.", 400);
+}
+
 export async function getInventoryMovements(query, actor) {
   requirePermissions(actor, ["inventory.read"]);
   const branchId = inventoryId(query.get("branchId"));
   await inventoryBranchAccess(actor, branchId);
   const pagination = inventoryPage(query);
   const productId = query.get("productId") ? inventoryId(query.get("productId")) : null;
-  const cutoff = query.get("asOf");
-  const provided = cutoff ? new Date(cutoff) : null;
-  if (cutoff !== null && (!provided || !Number.isFinite(provided.getTime()) || provided.toISOString() !== cutoff)) {
-    inventoryError("INVALID_INVENTORY_DATA", "La fecha de corte del historial no es válida.", 400);
-  }
+  const cutoff = inventoryHistoryCutoff(query.get("asOf"));
 
   return prisma.$transaction(async (client) => {
-    // Usar el reloj de PostgreSQL y un límite exclusivo con precisión de milisegundos.
-    // Así las altas posteriores no desplazan los registros mientras se recorre el historial.
-    const [{ now }] = await client.$queryRaw`SELECT date_trunc('milliseconds', CURRENT_TIMESTAMP) AS now`;
-    const asOf = provided && provided < now ? provided : now;
+    // Conservar los microsegundos de PostgreSQL en el parámetro que recibe Prisma.
+    const [{ now }] = await client.$queryRaw`
+      SELECT to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS now
+    `;
+    const asOf = cutoff && cutoff < now ? cutoff : now;
     const result = await readInventoryPage(client.inventory_movements, pagination, {
       where: { branch_id: branchId, created_at: { lt: asOf }, ...(productId ? { product_id: productId } : {}) },
       include: {
