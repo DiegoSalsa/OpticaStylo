@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ScrollableTable from "@/components/internal/scrollable-table";
 import Pagination from "@/components/internal/pagination";
 import usePaginatedResource from "@/components/internal/use-paginated-resource";
 import { MONEY_FORMATTER as money } from "./pos-form-model";
@@ -33,21 +34,23 @@ export default function CashRegisterHistory({ branchId, canManage, onSelect, rev
         {history.status === "ready" && history.items.length === 0 && <p>Sin sesiones para esta consulta.</p>}
         {history.items.length > 0 && (
           <div className="cash-ledger">
-            <table aria-label="Sesiones de caja">
-              <thead><tr><th>Apertura / sucursal</th><th>Caja / responsable</th><th>Estado</th><th>Esperado / contado</th><th>Diferencia</th><th>Detalle</th></tr></thead>
-              <tbody>{history.items.map((row) => (
-                <tr key={row.id}>
-                  <td>{new Date(row.openedAt).toLocaleString("es-CL")}<small>{row.branch}</small></td>
-                  <td>{row.terminal}<small>{row.responsible}</small></td>
-                  <td>{row.status === "CLOSED" ? "Cerrada" : "Abierta"}</td>
-                  <td>{format(row.expectedAmountCents)} / {format(row.countedCents)}</td>
-                  <td>{format(row.differenceCents)}</td>
-                  <td>{row.status === "CLOSED" && row.branchId && (
-                    <button className="text-button" type="button" onClick={() => onSelect(row.id)}>Ver cierre</button>
-                  )}</td>
-                </tr>
-              ))}</tbody>
-            </table>
+            <ScrollableTable label="Columnas de sesiones de caja">
+              <table aria-label="Sesiones de caja">
+                <thead><tr><th>Apertura / sucursal</th><th>Caja / responsable</th><th>Estado</th><th>Esperado / contado</th><th>Diferencia</th><th>Detalle</th></tr></thead>
+                <tbody>{history.items.map((row) => (
+                  <tr key={row.id}>
+                    <td>{new Date(row.openedAt).toLocaleString("es-CL")}<small>{row.branch}</small></td>
+                    <td>{row.terminal}<small>{row.responsible}</small></td>
+                    <td>{row.status === "CLOSED" ? "Cerrada" : "Abierta"}</td>
+                    <td>{format(row.expectedAmountCents)} / {format(row.countedCents)}</td>
+                    <td>{format(row.differenceCents)}</td>
+                    <td>{row.status === "CLOSED" && row.branchId && (
+                      <button className="text-button" type="button" onClick={() => onSelect(row.id)}>Ver cierre</button>
+                    )}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </ScrollableTable>
           </div>
         )}
         <Pagination {...history} label="sesiones de caja" />

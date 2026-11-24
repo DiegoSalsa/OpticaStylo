@@ -55,6 +55,24 @@ const transfers = (page) => page.getByRole("region", { name: "Transferencias" })
 const history = (page) => page.getByRole("region", { name: "Historial de movimientos" });
 const pages = (scope, name) => scope.getByRole("navigation", { name: "Paginación de " + name, exact: true });
 
+test("Inventario permite desplazar las columnas con teclado y abrir la acción desde un ancho de 320 px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await login(page);
+  await page.goto("/app/inventario");
+  await chooseBranch(page, sample.main.id);
+  const scroll = page.getByRole("region", { name: "Columnas de existencias" });
+  await expect(scroll).toHaveAccessibleDescription(/flechas izquierda y derecha/);
+  await scroll.focus();
+  await expect(scroll).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+  await scroll.getByRole("button", { name: /Registrar movimiento/ }).first().click();
+  await expect(page.getByRole("heading", { name: /^Movimiento:/ })).toBeVisible();
+  const pagination = page.locator(".inventory-table > .editor-actions");
+  await expect(pagination.getByRole("button", { name: "Siguiente" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+});
+
 test("Paginación de Inventario recorre 122 traspasos y 120 movimientos sin repetir ni omitir IDs", async ({ page }) => {
   await login(page);
   const branchId = sample.main.id;

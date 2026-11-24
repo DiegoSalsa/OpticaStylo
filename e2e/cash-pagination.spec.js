@@ -53,6 +53,22 @@ async function openPanel(page, { main, busyTerminal }) {
   return cash;
 }
 
+test("Caja permite desplazar sus libros con teclado a 320 px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await login(page);
+  const cash = await openPanel(page, sample);
+  await cash.getByText("Movimientos y pagos de esta sesión", { exact: true }).click();
+  const ledger = cash.getByRole("region", { name: "Columnas de movimientos de efectivo" });
+  await expect(ledger).toHaveAccessibleDescription(/flechas izquierda y derecha/);
+  await ledger.focus();
+  await expect(ledger).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => ledger.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+  const pagination = paging(cash, "movimientos de caja");
+  await pagination.getByRole("button", { name: "Siguiente" }).click();
+  await expect(pagination.getByRole("button", { name: "Página 2", exact: true })).toHaveAttribute("aria-current", "page");
+});
+
 test("Paginación de Caja recorre 140 movimientos y 120 pagos con altas concurrentes al final", async ({ page }) => {
   await login(page);
   const local = await seedCashPagination();

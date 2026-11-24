@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ScrollableTable from "@/components/internal/scrollable-table";
 import Pagination from "@/components/internal/pagination";
 import usePaginatedResource from "@/components/internal/use-paginated-resource";
 
@@ -59,21 +60,23 @@ function HistoryRows({ branchId, productId, kinds }) {
       {list.status === "ready" && list.items.length === 0 && <p>Sin movimientos para este filtro.</p>}
       {list.items.length > 0 && (
         <div className="inventory-table">
-          <table aria-label="Movimientos de inventario">
-            <thead><tr><th>Fecha</th><th>Producto</th><th>Movimiento</th><th>Antes → después</th><th>Reserva</th><th>Motivo y responsable</th></tr></thead>
-            <tbody>
-              {list.items.map((move) => (
-                <tr key={move.id}>
-                  <td>{new Date(move.createdAt).toLocaleString("es-CL")}</td>
-                  <td>{move.productName}<small>{move.productSku}</small></td>
-                  <td>{kinds[move.kind]}</td>
-                  <td>{move.before ?? "sin conteo"} → {move.after}</td>
-                  <td>{move.reservedBefore} → {move.reservedAfter}</td>
-                  <td>{move.reason}<small>{move.actor}</small>{move.saleId && <small>Pedido {move.saleId}</small>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ScrollableTable label="Columnas de movimientos de inventario">
+            <table aria-label="Movimientos de inventario">
+              <thead><tr><th>Fecha</th><th>Producto</th><th>Movimiento</th><th>Antes → después</th><th>Reserva</th><th>Motivo y responsable</th></tr></thead>
+              <tbody>
+                {list.items.map((move) => (
+                  <tr key={move.id}>
+                    <td>{new Date(move.createdAt).toLocaleString("es-CL")}</td>
+                    <td>{move.productName}<small>{move.productSku}</small></td>
+                    <td>{kinds[move.kind]}</td>
+                    <td>{move.before ?? "sin conteo"} → {move.after}</td>
+                    <td>{move.reservedBefore} → {move.reservedAfter}</td>
+                    <td>{move.reason}<small>{move.actor}</small>{move.saleId && <small>Pedido {move.saleId}</small>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollableTable>
         </div>
       )}
       <Pagination {...list} label="movimientos" setPage={setPage} />

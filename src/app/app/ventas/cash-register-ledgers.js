@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ScrollableTable from "@/components/internal/scrollable-table";
 import Pagination from "@/components/internal/pagination";
 import usePaginatedResource from "@/components/internal/use-paginated-resource";
 import { MONEY_FORMATTER as money, PAYMENT_METHODS } from "./pos-form-model";
@@ -28,22 +29,24 @@ export default function CashRegisterLedgers({ session, canAdjust, busy, onRevers
         {movements.status === "ready" && movements.items.length === 0 && <p>Sin movimientos registrados.</p>}
         {movements.items.length > 0 && (
           <div className="cash-ledger">
-            <table>
-              <caption>Movimientos de efectivo</caption>
-              <thead><tr><th>Fecha</th><th>Tipo / operación</th><th>Importe</th><th>Motivo / responsable</th><th>Corrección</th></tr></thead>
-              <tbody>{movements.items.map((movement) => (
-                <tr key={movement.id}>
-                  <td>{new Date(movement.createdAt).toLocaleString("es-CL")}</td>
-                  <td>{CASH_MOVEMENT_LABELS[movement.movementType]}<small>{movement.operationId}</small></td>
-                  <td>{money.format(movement.amountCents)}</td>
-                  <td>{movement.reason}<small>{movement.actor}</small></td>
-                  <td>
-                    {movement.reversed ? "Reversado" : session.status === "OPEN" && canAdjust && reversibleTypes.includes(movement.movementType)
-                      ? <Reversal movement={movement} disabled={busy} onReverse={onReverse} /> : "—"}
-                  </td>
-                </tr>
-              ))}</tbody>
-            </table>
+            <ScrollableTable label="Columnas de movimientos de efectivo">
+              <table>
+                <caption>Movimientos de efectivo</caption>
+                <thead><tr><th>Fecha</th><th>Tipo / operación</th><th>Importe</th><th>Motivo / responsable</th><th>Corrección</th></tr></thead>
+                <tbody>{movements.items.map((movement) => (
+                  <tr key={movement.id}>
+                    <td>{new Date(movement.createdAt).toLocaleString("es-CL")}</td>
+                    <td>{CASH_MOVEMENT_LABELS[movement.movementType]}<small>{movement.operationId}</small></td>
+                    <td>{money.format(movement.amountCents)}</td>
+                    <td>{movement.reason}<small>{movement.actor}</small></td>
+                    <td>
+                      {movement.reversed ? "Reversado" : session.status === "OPEN" && canAdjust && reversibleTypes.includes(movement.movementType)
+                        ? <Reversal movement={movement} disabled={busy} onReverse={onReverse} /> : "—"}
+                    </td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </ScrollableTable>
           </div>
         )}
         <Pagination {...movements} label="movimientos de caja" />
@@ -52,18 +55,20 @@ export default function CashRegisterLedgers({ session, canAdjust, busy, onRevers
         {payments.status === "ready" && payments.items.length === 0 && <p>Sin pagos registrados.</p>}
         {payments.items.length > 0 && (
           <div className="cash-ledger">
-            <table>
-              <caption>Cobros acreditados en la sesión</caption>
-              <thead><tr><th>Venta</th><th>Medio</th><th>Importe</th><th>Referencia</th></tr></thead>
-              <tbody>{payments.items.map((payment) => (
-                <tr key={payment.id}>
-                  <td>N.º {payment.saleNumber}</td>
-                  <td>{PAYMENT_METHODS.find(([method]) => method === payment.paymentMethod)?.[1] ?? payment.paymentMethod}</td>
-                  <td>{money.format(payment.amountCents)}</td>
-                  <td>{payment.reference ?? "—"}</td>
-                </tr>
-              ))}</tbody>
-            </table>
+            <ScrollableTable label="Columnas de cobros de la sesión">
+              <table>
+                <caption>Cobros acreditados en la sesión</caption>
+                <thead><tr><th>Venta</th><th>Medio</th><th>Importe</th><th>Referencia</th></tr></thead>
+                <tbody>{payments.items.map((payment) => (
+                  <tr key={payment.id}>
+                    <td>N.º {payment.saleNumber}</td>
+                    <td>{PAYMENT_METHODS.find(([method]) => method === payment.paymentMethod)?.[1] ?? payment.paymentMethod}</td>
+                    <td>{money.format(payment.amountCents)}</td>
+                    <td>{payment.reference ?? "—"}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </ScrollableTable>
           </div>
         )}
         <Pagination {...payments} label="pagos de caja" />
