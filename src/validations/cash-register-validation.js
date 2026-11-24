@@ -71,3 +71,15 @@ export function validateCashRegisterClosingInput(input) {
     closingNotes: notes(input.closingNotes, "La observación de cierre"),
   };
 }
+
+export function validateCashPage(query, defaultSize = 20) {
+  const page = Number(query.get("page") ?? 1);
+  const pageSize = Number(query.get("pageSize") ?? defaultSize);
+  if (!Number.isSafeInteger(page) || page < 1 || page > 100000) {
+    throw new AppError({ code: "INVALID_CASH_PAGE", message: "La página no es válida.", status: 400 });
+  }
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    throw new AppError({ code: "INVALID_CASH_PAGE", message: "El tamaño de página debe estar entre 1 y 100.", status: 400 });
+  }
+  return { page, pageSize };
+}

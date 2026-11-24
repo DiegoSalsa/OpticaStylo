@@ -1,8 +1,17 @@
 import { prisma } from "../db/prisma.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { inventoryBranchAccess, assertBranch } from "../repositories/inventory-repository.js";
-import { cashError, cashSessionAccess, findCashSession, closeCashRegister as closeRepository, createCashRegisterMovement, findOpenCashRegisterSession, openCashRegister as openRepository } from "../repositories/cash-register-repository.js";
-import { validateCashRegisterClosingInput, validateCashRegisterId as id, validateCashRegisterMovementInput, validateCashRegisterOpeningInput } from "../validations/cash-register-validation.js";
+import {
+  cashError, cashReadSnapshot, cashSessionAccess, closeCashRegister as closeRepository,
+  createCashRegisterMovement, findCashSession, findOpenCashRegisterSession, getCashMovementPage,
+  getCashPaymentPage, openCashRegister as openRepository,
+} from "../repositories/cash-register-repository.js";
+import {
+  validateCashPage, validateCashRegisterClosingInput, validateCashRegisterId as id,
+  validateCashRegisterMovementInput, validateCashRegisterOpeningInput,
+} from "../validations/cash-register-validation.js";
+
+const withLedgers = (query) => query?.get("view") !== "summary";
 
 export async function getCashTerminals(branchId, actor) {
   requirePermissions(actor,["cash.read"]); const branch=id(branchId); await inventoryBranchAccess(actor,branch);
@@ -30,14 +39,43 @@ export async function getOpenCashRegister(query,actor) {
   const terminalId=query.get("terminalId"); if(!terminalId) return null;
   const terminal=await prisma.cash_register_terminals.findUnique({where:{id:id(terminalId)}});
   if(!terminal) cashError("CASH_TERMINAL_NOT_FOUND","No se encontró el punto de cobro.",404);
-  await inventoryBranchAccess(actor,terminal.branch_id); return findOpenCashRegisterSession(terminal.id,actor);
+  await inventoryBranchAccess(actor, terminal.branch_id);
+  return findOpenCashRegisterSession(terminal.id, actor, withLedgers(query));
 }
-export async function getCashSession(sessionId,actor) {
-  requirePermissions(actor,["cash.read"]); const key=id(sessionId); await cashSessionAccess(prisma,key,actor); return findCashSession(key);
+
+async function readCashSession(sessionId, actor, read) {
+  requirePermissions(actor, ["cash.read"]);
+  const key = id(sessionId);
+  return prisma.$transaction(async (client) => {
+    await cashSessionAccess(client, key, actor);
+    return read(client, key);
+  }, cashReadSnapshot);
 }
-export async function openCashRegister(input,actor) { requirePermissions(actor,["cash.operate"]); return openRepository(validateCashRegisterOpeningInput(input),actor); }
-export async function registerCashMovement(sessionId,input,actor,requestKey) {
-  requirePermissions(actor,["cash.operate"]); if(!requestKey) cashError("IDEMPOTENCY_KEY_REQUIRED","El movimiento requiere identificador de operación.",400);
-  return createCashRegisterMovement(id(sessionId),validateCashRegisterMovementInput(input),actor,requestKey);
+
+export function getCashSession(sessionId, actor, query) {
+  return readCashSession(sessionId, actor, (client, key) => findCashSession(key, client, withLedgers(query)));
 }
-export async function closeCashRegister(sessionId,input,actor) { requirePermissions(actor,["cash.operate"]); return closeRepository(id(sessionId),validateCashRegisterClosingInput(input),actor); }
+
+export function getCashMovements(sessionId, actor, query) {
+  return readCashSession(sessionId, actor, (client, key) => getCashMovementPage(client, key, validateCashPage(query)));
+}
+
+export function getCashPayments(sessionId, actor, query) {
+  return readCashSession(sessionId, actor, (client, key) => getCashPaymentPage(client, key, validateCashPage(query)));
+}
+
+export async function openCashRegister(input, actor, query) {
+  requirePermissions(actor, ["cash.operate"]);
+  return openRepository(validateCashRegisterOpeningInput(input), actor, withLedgers(query));
+}
+
+export async function registerCashMovement(sessionId, input, actor, requestKey, query) {
+  requirePermissions(actor, ["cash.operate"]);
+  if (!requestKey) cashError("IDEMPOTENCY_KEY_REQUIRED", "El movimiento requiere identificador de operación.", 400);
+  return createCashRegisterMovement(id(sessionId), validateCashRegisterMovementInput(input), actor, requestKey, withLedgers(query));
+}
+
+export async function closeCashRegister(sessionId, input, actor, query) {
+  requirePermissions(actor, ["cash.operate"]);
+  return closeRepository(id(sessionId), validateCashRegisterClosingInput(input), actor, withLedgers(query));
+}

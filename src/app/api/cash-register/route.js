@@ -21,7 +21,7 @@ export async function POST(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
     return createSuccessResponse(
-      await openCashRegister(await readJsonBody(request), actor),
+      await openCashRegister(await readJsonBody(request), actor, new URL(request.url).searchParams),
       { status: 201 },
     );
   });

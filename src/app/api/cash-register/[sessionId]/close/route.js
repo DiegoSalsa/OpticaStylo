@@ -13,6 +13,7 @@ export async function POST(request, { params }) {
       sessionId,
       await readJsonBody(request),
       actor,
+      new URL(request.url).searchParams,
     ));
   });
 }
