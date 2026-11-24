@@ -93,7 +93,12 @@ export function InventoryHistory({ branchId, kinds, revision }) {
     products.setFilters({ search: query.trim() });
   }
 
-  const selectedOption = products.items.some((item) => item.id === product?.id) ? product.id : "";
+  const selectedOutsideResults = product && !products.items.some((item) => item.id === product.id);
+
+  function selectProduct(id) {
+    if (id === product?.id) return;
+    setProduct(products.items.find((item) => item.id === id) ?? null);
+  }
 
   return (
     <section aria-labelledby="inventory-history" className="app-card">
@@ -108,11 +113,17 @@ export function InventoryHistory({ branchId, kinds, revision }) {
       <label className="field">
         <span>Producto del historial</span>
         <select
-          disabled={products.status !== "ready" || products.items.length === 0}
-          onChange={(event) => setProduct(products.items.find((item) => item.id === event.target.value) ?? null)}
-          value={selectedOption}
+          disabled={products.status !== "ready" || (!product && products.items.length === 0)}
+          onChange={(event) => selectProduct(event.target.value)}
+          value={product?.id ?? ""}
         >
           <option value="">Selecciona un resultado</option>
+          {selectedOutsideResults && (
+            <option value={product.id}>
+              {product.sku} · {product.name}
+              {products.status === "ready" ? " (seleccionado, fuera de estos resultados)" : ""}
+            </option>
+          )}
           {products.items.map((item) => <option key={item.id} value={item.id}>{item.sku} · {item.name}</option>)}
         </select>
       </label>

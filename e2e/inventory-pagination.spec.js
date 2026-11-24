@@ -268,6 +268,49 @@ test("Paginación de Inventario reintenta un error y permite recibir y cancelar 
   }
 });
 
+test("Paginación de Inventario conserva la selección fuera de la página de resultados", async ({ page }) => {
+  await login(page);
+  await page.goto("/app/inventario");
+  await chooseBranch(page, sample.main.id);
+
+  const records = history(page);
+  const search = records.getByRole("textbox", { name: "Buscar producto en el historial" });
+  const submit = records.getByRole("button", { name: "Buscar por nombre o SKU" });
+  const product = records.getByRole("combobox", { name: "Producto del historial" });
+  const results = pages(records, "productos del historial");
+
+  await search.fill("Paginación marco");
+  await submit.click();
+  await expect(records.getByText("Mostrando 1–20 de 34")).toBeVisible();
+  await product.selectOption({ index: 1 });
+  const selectedId = await product.inputValue();
+  const selected = product.locator('option[value="' + selectedId + '"]');
+  const name = await selected.textContent();
+  await expect(records.getByRole("table").getByText(name.split(" · ")[0], { exact: true })).toBeVisible();
+  await expect(records.getByRole("table").getByRole("row")).toHaveCount(2);
+
+  await results.getByRole("button", { name: "Siguiente", exact: true }).click();
+  await expect(records.getByText("Mostrando 21–34 de 34")).toBeVisible();
+  await expect(product).toHaveValue(selectedId);
+  await expect(selected).toHaveText(name + " (seleccionado, fuera de estos resultados)");
+  await expect(records.getByRole("table").getByText(name.split(" · ")[0], { exact: true })).toBeVisible();
+  await expect(records.getByRole("table").getByRole("row")).toHaveCount(2);
+  await expect(search).toHaveValue("Paginación marco");
+
+  await results.getByRole("button", { name: "Anterior", exact: true }).click();
+  await expect(records.getByText("Mostrando 1–20 de 34")).toBeVisible();
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toHaveText(name);
+
+  await search.fill("SKU inexistente para la prueba");
+  await submit.click();
+  await expect(records.getByText("Sin productos con movimientos para esta búsqueda.")).toBeVisible();
+  await expect(product).toHaveValue(selectedId);
+  await expect(selected).toHaveText(name + " (seleccionado, fuera de estos resultados)");
+  await expect(records.getByRole("table").getByText(name.split(" · ")[0], { exact: true })).toBeVisible();
+  await expect(records.getByRole("table").getByRole("row")).toHaveCount(2);
+});
+
 test("Paginación de Inventario actualiza el historial después de registrar un movimiento", async ({ page }) => {
   await login(page);
   await page.goto("/app/inventario");
