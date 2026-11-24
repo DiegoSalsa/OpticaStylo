@@ -65,7 +65,8 @@ test("02 · Entradas, ajustes, salidas e idempotencia conservan saldos e histori
   assert.equal((await move(id,a,"ADJUST",8,old.version)).status,409);
   assert.equal((await move(id,a,"EXIT",99)).status,409);
   assert.equal((await move(id,a,"ENTRY",-1)).status,400);
-  const movements = await value(await http(`/api/inventory/movements?branchId=${a}&productId=${id}`));
+  const { items: movements, total } = await value(await http(`/api/inventory/movements?branchId=${a}&productId=${id}`));
+  assert.equal(total, 3);
   assert.equal(movements.length,3); assert.equal(movements[0].before,5); assert.equal(movements[0].after,4); assert.equal(movements[0].difference,-1); assert.equal(movements[0].actor,"Evaluación ADMIN");
   await assert.rejects(db.inventory_movements.update({ where: { id: movements[0].id }, data: { reason: "Cambiar historia" } }));
   await assert.rejects(db.inventory_stocks.update({ where: { branch_id_product_id: { branch_id: a, product_id: id } }, data: { on_hand: 20 } }));

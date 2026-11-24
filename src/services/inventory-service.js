@@ -4,6 +4,7 @@ import { retryTransaction } from "../db/retry-transaction.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { inventoryId, inventoryQuantity, inventoryText, validateInventoryMovement, validateInventoryTransfer } from "../validations/inventory-validation.js";
 import { normalizeInventorySku, parseInventoryCsv } from "../utils/inventory-import.js";
+import { INTERNAL_PAGE_SIZE } from "../utils/pagination.js";
 import { assertBranch, expireInventoryReservations, inventoryBranchAccess, inventoryError, inventoryOverview, listInventoryBranches, mapBranch, mapStock, mutateInventory, reserveSaleInventory, transferInventory } from "../repositories/inventory-repository.js";
 
 export async function getInventoryBranches(actor, destinations = false) { requirePermissions(actor, ["inventory.read"]); return listInventoryBranches(destinations ? null : actor); }
@@ -20,15 +21,69 @@ export async function getInventory(query, actor) {
   await expireInventoryReservations();
   return inventoryOverview(branchId, search, page);
 }
+function inventoryPage(query) {
+  const page = Number(query.get("page") ?? 1);
+  const pageSize = Number(query.get("pageSize") ?? INTERNAL_PAGE_SIZE);
+  if (!Number.isSafeInteger(page) || page < 1 || page > 1_000_000) {
+    inventoryError("INVALID_INVENTORY_DATA", "La página no es válida.", 400);
+  }
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    inventoryError("INVALID_INVENTORY_DATA", "El tamaño de página debe estar entre 1 y 100.", 400);
+  }
+  return { page, pageSize };
+}
+
+async function readInventoryPage(model, { page: requestedPage, pageSize }, { where, ...options }) {
+  const total = await model.count({ where });
+  const totalPages = Math.ceil(total / pageSize);
+  const page = Math.min(requestedPage, Math.max(totalPages, 1));
+  const items = total === 0 ? [] : await model.findMany({
+    ...options, where, skip: (page - 1) * pageSize, take: pageSize,
+  });
+  return { items, page, pageSize, total, totalPages };
+}
+
+const recentInventoryOrder = [{ created_at: "desc" }, { id: "desc" }];
+const consistentRead = { isolationLevel: "RepeatableRead" };
+
 export async function getInventoryMovements(query, actor) {
   requirePermissions(actor, ["inventory.read"]);
-  const branchId = inventoryId(query.get("branchId")); await inventoryBranchAccess(actor, branchId);
-  const page = Number(query.get("page") ?? 1);
-  if (!Number.isSafeInteger(page) || page < 1 || page > 1_000_000) inventoryError("INVALID_INVENTORY_DATA", "La página no es válida.", 400);
-  const rows = await prisma.inventory_movements.findMany({ where: { branch_id: branchId, ...(query.get("productId") ? { product_id: inventoryId(query.get("productId")) } : {}) }, include: { inventory_stocks: { include: { products: { select: { name: true, sku: true } } } }, users: { select: { first_name: true, last_name: true } } }, orderBy: [{ created_at: "desc" }, { id: "desc" }], take: 100, skip: (page - 1) * 100 });
-  return rows.map((row) => ({ id: row.id, productId: row.product_id, productName: row.inventory_stocks.products.name, productSku: row.inventory_stocks.products.sku, kind: row.kind, before: row.before_on_hand, after: row.after_on_hand,
-    difference: row.before_on_hand == null ? null : row.after_on_hand - row.before_on_hand, reservedBefore: row.before_reserved, reservedAfter: row.after_reserved,
-    reason: row.reason, actor: row.users ? `${row.users.first_name} ${row.users.last_name}` : "Sistema", createdAt: row.created_at, saleId: row.sale_id, transferId: row.transfer_id }));
+  const branchId = inventoryId(query.get("branchId"));
+  await inventoryBranchAccess(actor, branchId);
+  const pagination = inventoryPage(query);
+  const productId = query.get("productId") ? inventoryId(query.get("productId")) : null;
+  const cutoff = query.get("asOf");
+  const provided = cutoff ? new Date(cutoff) : null;
+  if (cutoff !== null && (!provided || !Number.isFinite(provided.getTime()) || provided.toISOString() !== cutoff)) {
+    inventoryError("INVALID_INVENTORY_DATA", "La fecha de corte del historial no es válida.", 400);
+  }
+
+  return prisma.$transaction(async (client) => {
+    // Usar el reloj de PostgreSQL y un límite exclusivo con precisión de milisegundos.
+    // Así las altas posteriores no desplazan los registros mientras se recorre el historial.
+    const [{ now }] = await client.$queryRaw`SELECT date_trunc('milliseconds', CURRENT_TIMESTAMP) AS now`;
+    const asOf = provided && provided < now ? provided : now;
+    const result = await readInventoryPage(client.inventory_movements, pagination, {
+      where: { branch_id: branchId, created_at: { lt: asOf }, ...(productId ? { product_id: productId } : {}) },
+      include: {
+        inventory_stocks: { include: { products: { select: { name: true, sku: true } } } },
+        users: { select: { first_name: true, last_name: true } },
+      },
+      orderBy: recentInventoryOrder,
+    });
+    return {
+      ...result,
+      asOf,
+      items: result.items.map((row) => ({
+        id: row.id, productId: row.product_id, productName: row.inventory_stocks.products.name,
+        productSku: row.inventory_stocks.products.sku, kind: row.kind, before: row.before_on_hand, after: row.after_on_hand,
+        difference: row.before_on_hand == null ? null : row.after_on_hand - row.before_on_hand,
+        reservedBefore: row.before_reserved, reservedAfter: row.after_reserved, reason: row.reason,
+        actor: row.users ? `${row.users.first_name} ${row.users.last_name}` : "Sistema",
+        createdAt: row.created_at, saleId: row.sale_id, transferId: row.transfer_id,
+      })),
+    };
+  }, consistentRead);
 }
 export async function postInventoryMovement(input, actor, requestKey) {
   requirePermissions(actor, ["inventory.write"]);
@@ -43,9 +98,42 @@ export async function postInventoryTransfer(input, actor, requestKey) {
 }
 export async function getInventoryTransfers(query, actor) {
   requirePermissions(actor, ["inventory.read"]);
-  const branchId = inventoryId(query.get("branchId")); await inventoryBranchAccess(actor, branchId);
-  return prisma.inventory_transfers.findMany({ where: { OR: [{ source_id: branchId }, { destination_id: branchId }] }, include: { source: true, destination: true, products: { select: { name: true, sku: true } } }, orderBy: { created_at: "desc" }, take: 100 });
+  const branchId = inventoryId(query.get("branchId"));
+  await inventoryBranchAccess(actor, branchId);
+  const pagination = inventoryPage(query);
+  const status = query.get("status");
+  if (status && !["DISPATCHED", "RECEIVED", "CANCELLED"].includes(status)) {
+    inventoryError("INVALID_INVENTORY_DATA", "El estado de la transferencia no es válido.", 400);
+  }
+  return prisma.$transaction((client) => readInventoryPage(client.inventory_transfers, pagination, {
+    where: { OR: [{ source_id: branchId }, { destination_id: branchId }], ...(status ? { status } : {}) },
+    include: {
+      source: { select: { id: true, name: true } },
+      destination: { select: { id: true, name: true } },
+      products: { select: { name: true, sku: true } },
+    },
+    orderBy: recentInventoryOrder,
+  }), consistentRead);
 }
+
+export async function getInventoryMovementProducts(query, actor) {
+  requirePermissions(actor, ["inventory.read"]);
+  const branchId = inventoryId(query.get("branchId"));
+  await inventoryBranchAccess(actor, branchId);
+  const pagination = inventoryPage(query);
+  const search = (query.get("search") ?? "").trim();
+  if (search.length > 100) inventoryError("INVALID_INVENTORY_DATA", "La búsqueda supera 100 caracteres.", 400);
+  const match = { contains: search, mode: "insensitive" };
+  return prisma.$transaction((client) => readInventoryPage(client.products, pagination, {
+    where: {
+      inventory_stocks: { some: { branch_id: branchId, inventory_movements: { some: {} } } },
+      ...(search ? { OR: [{ name: match }, { sku: match }] } : {}),
+    },
+    select: { id: true, name: true, sku: true },
+    orderBy: [{ sku: "asc" }, { id: "asc" }],
+  }), consistentRead);
+}
+
 export async function configureInventoryBranch(input, actor) {
   requirePermissions(actor, ["inventory.manage_all"]);
   if (input.action === "ASSIGN") {
