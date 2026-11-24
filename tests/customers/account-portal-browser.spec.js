@@ -20,12 +20,15 @@ const cart = {
   items: [{ productId: "20000000-0000-4000-8000-000000000091", name: "Cristal sintético", category: "PRESCRIPTION_LENS", requiresPrescription: true, quantity: 1, unitPriceCents: 20000, lineTotalCents: 20000 }],
 };
 const ok = (route, data) => route.fulfill({ json: { success: true, data } });
+const savedPrescriptionsPath = /\/api\/store\/accounts\/me\/prescriptions(?:\?|$)/;
+const savedPage = (items = []) => ({ items, page: 1, pageSize: 20, total: items.length, totalPages: items.length ? 1 : 0 });
 const fail = (route, message) => route.fulfill({ status: 503, json: { success: false, error: { message } } });
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/store/accounts/me", (route) => ok(route, profile));
   await page.route("**/api/store/accounts/me/contact", (route) => ok(route, { channels: [] }));
-  await page.route(/\/api\/store\/accounts\/me\/prescriptions(?:\?|$)/, (route) => ok(route, []));
+  await page.route(savedPrescriptionsPath, (route) => ok(route, savedPage()));
+  await page.route((url) => url.pathname === "/api/store/accounts/me/clinical/records", (route) => ok(route, savedPage()));
 });
 
 test("Mi carrito abre un carrito vacío después de una compra terminada", async ({ page }, info) => {
@@ -50,14 +53,22 @@ test("Mis recetas lee con OpenAI y permite corregir valores antes de guardarlos 
   await page.route("**/api/store/orders?*", (route) => ok(route, { items: [], page: 1, totalPages: 0 }));
   await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, { linked: false }));
   const saved = { id: recipeId, filename: "receta-prueba.png", createdAt: "2026-11-15T12:00:00Z", imageHash: "a".repeat(64), status: "DRAFT" };
-  await page.route("**/api/store/accounts/me/prescriptions", (route) => ok(route, route.request().method() === "POST" ? saved : []));
+  let stored;
+  await page.route(savedPrescriptionsPath, (route) => {
+    if (route.request().method() === "POST") {
+      stored = saved;
+      return ok(route, saved);
+    }
+    return ok(route, savedPage(stored ? [stored] : []));
+  });
   await page.route("**/api/store/accounts/me/prescriptions/" + recipeId + "/read", (route) => ok(route, {
     ...saved, extractionStatus: "COMPLETED", extractedData: { leftEye: eye, rightEye: eye, pupillaryDistance: 62, warnings: [], confidence: "HIGH" },
   }));
   let confirmed;
   await page.route("**/api/store/accounts/me/prescriptions/" + recipeId, async (route) => {
     confirmed = route.request().postDataJSON();
-    await ok(route, { ...saved, status: "READY", confirmedData: confirmed });
+    stored = { ...saved, status: "READY", confirmedData: confirmed };
+    await ok(route, stored);
   });
   await page.goto("/cuenta?seccion=recetas");
   await page.getByLabel("Archivo de la receta").setInputFiles({ name: "receta-prueba.png", mimeType: "image/png", buffer: Buffer.from("receta-sintetica") });
@@ -81,7 +92,7 @@ test("Menores a mi cargo mantiene separados los datos y las recetas del adulto",
     id: dependantId, firstNames: "Hijo", lastNames: "Sintético", birthDate: "2015-05-10", rut: "20000087-6", relationship: "Padre", isMinor: true, linked: true,
   }]));
   await page.route("**/api/store/accounts/me/clinical?dependantId=" + dependantId, (route) => ok(route, {
-    linked: true, patient: { firstNames: "Hijo", lastNames: "Sintético" }, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] },
+    linked: true, patient: { firstNames: "Hijo", lastNames: "Sintético" }, upcomingAppointments: [], prescriptions: { active: [] },
   }));
   await page.route((url) => url.pathname === "/api/store/accounts/me/clinical/records"
     && url.searchParams.get("type") === "encounters" && url.searchParams.get("dependantId") === dependantId, (route) => ok(route, {
@@ -100,8 +111,8 @@ test("Menores a mi cargo mantiene separados los datos y las recetas del adulto",
 test("reserva y carrito conservan el panel y una receta de la cuenta llega al carrito", async ({ page }) => {
   await page.route("**/api/store/orders?*", (route) => ok(route, { items: [order], page: 1, totalPages: 1 }));
   await page.route("**/api/store/accounts/me/clinical", (route) => ok(route, {
-    linked: true, patient, upcomingAppointments: [], appointmentHistory: [],
-    prescriptions: { active: [{ id: recipeId, issuedAt: "2026-11-10T12:00:00.000Z", rightEye: eye, leftEye: eye, pupillaryDistance: 62 }], history: [] },
+    linked: true, patient, upcomingAppointments: [],
+    prescriptions: { active: [{ id: recipeId, issuedAt: "2026-11-10T12:00:00.000Z", rightEye: eye, leftEye: eye, pupillaryDistance: 62 }] },
   }));
   await page.route("**/api/store/cart", (route) => ok(route, cart));
   await page.route("**/api/store/booking/professionals", (route) => ok(route, []));

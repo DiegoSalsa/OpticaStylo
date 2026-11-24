@@ -235,8 +235,11 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     const uploadedResponse = await fetch(base + endpoint, { method: "POST", headers: { cookie: owner.cookie }, body: imageForm });
     const uploaded = await data(uploadedResponse, 201);
     assert.equal(uploaded.status, "DRAFT");
-    assert.equal((await data(await request(endpoint, { cookie: owner.cookie }))).length, 1);
-    assert.deepEqual(await data(await request(endpoint, { cookie: other.cookie })), []);
+    const savedPage = await data(await request(endpoint, { cookie: owner.cookie }));
+    assert.equal(savedPage.total, 1);
+    assert.equal(savedPage.items[0].id, uploaded.id);
+    assert.equal(Object.hasOwn(savedPage.items[0], "extractedData"), false);
+    assert.deepEqual((await data(await request(endpoint, { cookie: other.cookie }))).items, []);
     assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: other.cookie })).status, 404);
     assert.equal((await request(endpoint + "/" + uploaded.id)).status, 401);
     assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: owner.cookie })).status, 200);
@@ -281,7 +284,7 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     assert.deepEqual(applied.items, currentCart.items);
     assert.notEqual(applied.externalPrescription.id, uploaded.id);
     await data(await request("/api/store/cart/prescription/image", { cookie, method: "DELETE" }));
-    assert.equal((await data(await request(endpoint, { cookie: owner.cookie })))[0].status, "READY");
+    assert.equal((await data(await request(endpoint, { cookie: owner.cookie }))).items[0].status, "READY");
     assert.equal((await request(endpoint + "/" + uploaded.id, { cookie: owner.cookie })).status, 200);
   });
 

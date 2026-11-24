@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { AppError } from "../utils/app-error.js";
+import { validateAccountPage } from "../validations/account-pagination.js";
 import { readPrescriptionImage } from "../integrations/prescriptions/prescription-reader.js";
 import {
   claimAccountPrescriptionReading, confirmAccountPrescription, findAccountPrescriptionImage,
@@ -19,8 +20,10 @@ function accountId(account) {
   return account.id;
 }
 
-export async function getAccountPrescriptions(account, dependantId = null) {
-  return listAccountPrescriptions(accountId(account), dependantId ? validateExternalPrescriptionId(dependantId) : null);
+export async function getAccountPrescriptions(account, query) {
+  const owner = accountId(account);
+  const dependantId = query.get("dependantId");
+  return listAccountPrescriptions(owner, dependantId ? validateExternalPrescriptionId(dependantId) : null, validateAccountPage(query));
 }
 
 export async function uploadAccountPrescription(account, file, dependantId = null) {

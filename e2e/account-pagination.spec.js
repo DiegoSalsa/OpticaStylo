@@ -5,6 +5,7 @@ import { seedAccountHistory } from "../tests/fixtures/account-history-data.js";
 import { isolateBrowserNetwork } from "./isolated-network.js";
 
 const clinical = "/api/store/accounts/me/clinical";
+const savedPrescriptions = "/api/store/accounts/me/prescriptions";
 let sample;
 
 test.beforeAll(async () => {
@@ -30,6 +31,16 @@ async function login(page, identity = sample.owner) {
   await data(await page.request.post("/api/store/accounts/login", {
     data: { email: identity.email, password: sample.password },
   }));
+}
+
+async function preparePrescriptionCart(page) {
+  const existing = await page.request.get("/api/store/cart");
+  const cart = existing.status() === 404 ? await data(await page.request.post("/api/store/cart"), 201) : await data(existing);
+  if (cart.items.some(({ productId }) => productId === sample.product.id)) return;
+  await data(await page.request.post("/api/store/cart/items", { data: { items: [
+    { productId: sample.frame.id, quantity: 1 },
+    { productId: sample.product.id, mountFrameProductId: sample.frame.id, quantity: 1 },
+  ] } }));
 }
 
 function records(type, options = {}) {
@@ -158,8 +169,14 @@ for (const width of [390, 768, 1440]) {
     await versions.getByRole("button", { name: "Siguiente" }).click();
     await expect(versions.getByText("Página 2 de 7", { exact: false })).toBeVisible();
     await expect(page.getByText("Receta vigente", { exact: false }).first()).toBeVisible();
+    const saved = pagination(page, "recetas externas");
+    await saved.getByRole("button", { name: "Siguiente" }).click();
+    await expect(saved.getByText("Página 2 de 7", { exact: false })).toBeVisible();
 
     await page.goto("/cuenta?seccion=menores&menor=" + sample.owner.dependant.id);
+    const childSaved = pagination(page, "recetas externas");
+    await childSaved.getByRole("button", { name: "Siguiente" }).click();
+    await expect(childSaved.getByText("Página 2 de 7", { exact: false })).toBeVisible();
     const encounters = pagination(page, "atenciones del menor");
     await encounters.getByRole("button", { name: "Siguiente" }).click();
     await expect(encounters.getByText("Página 2 de 7", { exact: false })).toBeVisible();
@@ -170,11 +187,7 @@ for (const width of [390, 768, 1440]) {
 
 test("Paginación de Mi cuenta permite seleccionar una receta vigente fuera de la primera página", async ({ page }) => {
   await login(page);
-  await data(await page.request.post("/api/store/cart"), 201);
-  await data(await page.request.post("/api/store/cart/items", { data: { items: [
-    { productId: sample.frame.id, quantity: 1 },
-    { productId: sample.product.id, mountFrameProductId: sample.frame.id, quantity: 1 },
-  ] } }));
+  await preparePrescriptionCart(page);
   await page.goto("/cuenta?seccion=recetas");
   await pagination(page, "recetas vigentes").getByRole("button", { name: "Siguiente" }).click();
   const oldest = page.locator("#recetas details").filter({
@@ -190,4 +203,85 @@ test("Paginación de Mi cuenta permite seleccionar una receta vigente fuera de l
   await page.getByRole("button", { name: "Usar esta receta" }).click();
   await expect(page.getByText("Estás usando una receta de tu cuenta.")).toBeVisible();
   expect((await data(await page.request.get("/api/store/cart"))).clinicalPrescriptionId).toBe(sample.oldestActive.id);
+});
+
+test("Recetas externas pagina los archivos del adulto y del menor sin exponer datos de revisión", async ({ page }) => {
+  expect((await page.request.get(savedPrescriptions)).status()).toBe(401);
+  await login(page);
+  for (const [scope, expected] of [["", sample.savedIds], [sample.owner.dependant.id, sample.childSavedIds]]) {
+    const ids = [];
+    const url = (query) => savedPrescriptions + "?" + new URLSearchParams({ ...query, ...(scope && { dependantId: scope }) });
+    for (let index = 1; index <= 3; index += 1) {
+      const response = await page.request.get(url({ page: index, pageSize: 50 }));
+      expect(response.headers()["cache-control"]).toBe("private, no-store");
+      const result = await data(response);
+      expect(result).toMatchObject({ page: index, pageSize: 50, total: 123, totalPages: 3 });
+      expect(result.items).toHaveLength(index === 3 ? 23 : 50);
+      ids.push(...result.items.map(({ id }) => id));
+      expect(Object.keys(result.items[0]).sort()).toEqual(["createdAt", "extractionStatus", "filename", "id", "status"]);
+    }
+    expect(ids).toEqual(expected);
+    const last = await data(await page.request.get(url({ page: 999, pageSize: 41 })));
+    expect(last).toMatchObject({ page: 3, total: 123, totalPages: 3 });
+    expect(last.items).toHaveLength(41);
+  }
+
+  const otherScope = savedPrescriptions + "?dependantId=" + sample.other.dependant.id;
+  expect(await data(await page.request.get(otherScope))).toMatchObject({ items: [], total: 0 });
+  expect((await page.request.get(savedPrescriptions + "?pageSize=51")).status()).toBe(400);
+  expect((await page.request.get(savedPrescriptions + "/" + sample.otherSaved.id)).status()).toBe(404);
+  await page.context().clearCookies();
+  await login(page, sample.other);
+  expect(await data(await page.request.get(savedPrescriptions))).toMatchObject({ items: [], total: 0 });
+  expect((await data(await page.request.get(otherScope))).items[0].id).toBe(sample.otherSaved.id);
+  expect(await data(await page.request.get(savedPrescriptions + "?dependantId=" + sample.owner.dependant.id))).toMatchObject({ items: [], total: 0 });
+  expect((await page.request.post(savedPrescriptions + "/" + sample.childSavedIds.at(-1) + "/read")).status()).toBe(404);
+});
+
+test("Recetas externas conserva una revisión de la segunda página y permite usarla en el carrito", async ({ page }) => {
+  await login(page);
+  await preparePrescriptionCart(page);
+  await data(await page.request.put("/api/store/cart/prescription/clinical", {
+    data: { prescriptionId: sample.oldestActive.id, replaceExisting: true },
+  }));
+  let unavailable = true;
+  await page.route((url) => url.hostname === "127.0.0.1" && url.pathname === savedPrescriptions, (route) => {
+    if (!unavailable) return route.continue();
+    unavailable = false;
+    return route.fulfill({ status: 503, json: { success: false, error: { message: "Recetas externas temporalmente no disponibles" } } });
+  });
+  await page.goto("/cuenta?seccion=recetas");
+  await expect(page.getByRole("alert").filter({ hasText: "Recetas externas temporalmente no disponibles" })).toBeVisible();
+  await page.getByRole("button", { name: "Reintentar recetas externas" }).click();
+  const controls = pagination(page, "recetas externas");
+  await controls.getByRole("button", { name: "Siguiente" }).click();
+  await expect(controls.getByText("Página 2 de 7", { exact: false })).toBeVisible();
+  const archivedId = sample.savedIds[20];
+  const row = page.locator(".prescription-row").filter({ has: page.locator('a[href$="/' + archivedId + '"]') });
+  const filename = await row.locator("strong").textContent();
+  await row.getByRole("button", { name: "Leer y revisar receta" }).click();
+  const review = page.locator(".prescription-review");
+  const sphere = review.getByRole("group", { name: "Ojo derecho" }).getByLabel("Esfera", { exact: true });
+  await expect(sphere).toHaveValue("-1.25");
+  await sphere.fill("-2.25");
+  await controls.getByRole("button", { name: "Anterior" }).click();
+  await expect(controls.getByText("Página 1 de 7", { exact: false })).toBeVisible();
+  await expect(row).toHaveCount(0);
+  await expect(review).toContainText(filename);
+  await expect(sphere).toHaveValue("-2.25");
+  expect((await page.request.get(await review.getByRole("link", { name: "Descargar original" }).getAttribute("href"))).status()).toBe(200);
+  await review.getByRole("button", { name: "Confirmar y guardar receta" }).click();
+  await expect(review).toHaveCount(0);
+  const confirmed = await data(await page.request.post(savedPrescriptions + "/" + archivedId + "/read"));
+  expect(confirmed).toMatchObject({ status: "READY", confirmedData: { rightEye: { sphere: -2.25 } } });
+  await controls.getByRole("button", { name: "Siguiente" }).click();
+  const use = row.getByRole("button", { name: "Usar en mi carrito" });
+  await use.click();
+  await expect(page.getByRole("alert").filter({ hasText: "Confirma que quieres reemplazar la receta adjunta al carrito" })).toBeVisible();
+  await page.getByRole("checkbox", { name: "Reemplazar la receta actual del carrito" }).check();
+  await use.click();
+  await expect(page).toHaveURL(/seccion=carrito/);
+  const cart = await data(await page.request.get("/api/store/cart"));
+  expect(cart.clinicalPrescriptionId).toBeNull();
+  expect(cart.externalPrescription).toMatchObject({ status: "READY", confirmedData: { rightEye: { sphere: -2.25 } } });
 });

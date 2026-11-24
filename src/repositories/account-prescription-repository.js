@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "../db/prisma.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { findAccountDependant } from "./account-family-repository.js";
+import { accountPage, readAccountPage } from "../utils/account-pagination.js";
 
 export function savedPrescriptionScope(accountId) {
   return { cart_id: null, created_by: null, customers: { customer_accounts: { id: accountId, is_active: true } } };
@@ -23,12 +24,21 @@ function publicPrescription(row) {
   };
 }
 
-export async function listAccountPrescriptions(accountId, dependantId = null) {
-  const rows = await prisma.external_prescriptions.findMany({
-    where: { ...savedPrescriptionScope(accountId), dependant_id: dependantId }, select: summary, take: 50,
-    orderBy: [{ created_at: "desc" }, { id: "desc" }],
-  });
-  return rows.map(publicPrescription);
+export async function listAccountPrescriptions(accountId, dependantId, options) {
+  return prisma.$transaction(async (client) => {
+    if (dependantId && !await findAccountDependant(accountId, dependantId, client)) {
+      return accountPage([], { pageSize: options.pageSize });
+    }
+    const result = await readAccountPage(client.external_prescriptions, options, {
+      where: { ...savedPrescriptionScope(accountId), dependant_id: dependantId },
+      select: { id: true, original_filename: true, created_at: true, status: true, extraction_status: true },
+      orderBy: [{ created_at: "desc" }, { id: "desc" }],
+    });
+    return { ...result, items: result.items.map((row) => ({
+      id: row.id, filename: row.original_filename, createdAt: row.created_at, status: row.status,
+      extractionStatus: row.extraction_status,
+    })) };
+  }, { isolationLevel: "RepeatableRead" });
 }
 
 export async function saveAccountPrescription(accountId, image, dependantId = null) {

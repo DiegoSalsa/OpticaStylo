@@ -99,7 +99,7 @@ export default function AccountFamily({ account, onExpired }) {
       <section className="account-card account-data"><h2>{selected.firstNames} {selected.lastNames}</h2>
         <dl><div><dt>RUT</dt><dd>{formatChileanRut(selected.rut)}</dd></div><div><dt>Fecha de nacimiento</dt><dd>{new Date(selected.birthDate + "T00:00:00Z").toLocaleDateString("es-CL", { timeZone: "UTC" })}</dd></div><div><dt>Tu relación</dt><dd>{selected.relationship}</dd></div></dl>
       </section>
-      <AccountSavedPrescriptions key={selected.id} dependantId={selected.id} title={"Recetas de " + selected.firstNames} />
+      <AccountSavedPrescriptions key={"recetas-" + selected.id} dependantId={selected.id} onExpired={onExpired} title={"Recetas de " + selected.firstNames} />
       <DependantHistory account={account} dependant={selected} key={selected.id} onExpired={onExpired} />
     </> : <>
       <section className="account-card">

@@ -7,7 +7,7 @@ import { MAX_PRESCRIPTION_UPLOAD_BYTES } from "@/validations/store-validation";
 import { enforcePublicRequestRateLimit, PUBLIC_REQUEST_LIMIT_OPERATIONS } from "@/security/public-request-rate-limit";
 
 export async function GET(request) {
-  return executeApiHandler(async () => createPrivateStoreResponse(await getAccountPrescriptions(await authenticateCustomerRequest(request), new URL(request.url).searchParams.get("dependantId"))));
+  return executeApiHandler(async () => createPrivateStoreResponse(await getAccountPrescriptions(await authenticateCustomerRequest(request), new URL(request.url).searchParams)));
 }
 
 export async function POST(request) {

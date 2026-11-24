@@ -1,4 +1,4 @@
-import { randomBytes, randomInt, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
 import { prisma } from "../../src/db/prisma.js";
 import { hashPassword } from "../../src/auth/password.js";
 import { fixtureRut } from "../rut-fixture.js";
@@ -8,6 +8,13 @@ const past = new Date("2025-04-15T16:00:00Z");
 const day = 86_400_000;
 const adultDob = new Date("1989-02-10");
 const childDob = new Date("2016-08-14");
+const image = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64");
+const imageHash = createHash("sha256").update(image).digest("hex");
+const opticalValues = {
+  rightEye: { sphere: -1.25, cylinder: 0, axis: null, addition: null },
+  leftEye: { sphere: -1, cylinder: 0, axis: null, addition: null },
+  pupillaryDistance: 62, fulfillmentNotes: "Valores sintéticos", warnings: [], confidence: "HIGH",
+};
 
 export async function seedAccountHistory() {
   requireAcademicIsolation();
@@ -104,6 +111,17 @@ export async function seedAccountHistory() {
     const childPrescription = prescription(minorHistory[0], 1, past);
     await client.optical_prescriptions.createMany({ data: [...old, ...live, childPrescription] });
 
+    const externalPrescription = ({ account }, filename, dependantId = null) => ({
+      id: randomUUID(), customer_id: account.customer_id, dependant_id: dependantId,
+      source: "IMAGE", status: "DRAFT", extraction_status: "COMPLETED", extracted_data: opticalValues,
+      original_filename: filename, media_type: "image/png", file_size_bytes: image.length,
+      file_sha256: imageHash, file_data: image, created_at: past,
+    });
+    const saved = Array.from({ length: 123 }, (_, index) => externalPrescription(owner, "receta-adulto-" + (index + 1) + ".png"));
+    const childSaved = Array.from({ length: 123 }, (_, index) => externalPrescription(owner, "receta-menor-" + (index + 1) + ".png", owner.dependant.id));
+    const otherSaved = externalPrescription(other, "receta-cuenta-b.png", other.dependant.id);
+    await client.external_prescriptions.createMany({ data: [...saved, ...childSaved, otherSaved] });
+
     const product = await client.products.create({ data: {
       sku: "CUENTA-" + tag.toUpperCase(), name: "Cristal sintético para recetas", category: "PRESCRIPTION_LENS",
       inventory_mode: "ON_DEMAND", requires_prescription: true, is_test_data: true, unit_price_cents: 1000,
@@ -117,7 +135,8 @@ export async function seedAccountHistory() {
     return {
       owner, other, unverifiedProfile, password, product, frame, cancelled, upcoming, oldestActive, childPrescription,
       appointmentIds: ordered(history, "start_at"), prescriptionIds: old.map((row) => row.id).reverse(),
-      encounterIds: ordered(minorHistory, "finalized_at"),
+      encounterIds: ordered(minorHistory, "finalized_at"), savedIds: ordered(saved, "created_at"),
+      childSavedIds: ordered(childSaved, "created_at"), otherSaved,
     };
   }, { timeout: 15000 });
 }
