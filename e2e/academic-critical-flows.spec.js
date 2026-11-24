@@ -153,6 +153,142 @@ test.describe("Accesos Agenda del panel", () => {
   }
 });
 
+test.describe("Agenda recuperable", () => {
+  for (const profile of ["administrador", "profesional"]) {
+    test(profile + " conserva Agenda cuando se cancela la lectura de profesionales", async ({ page }) => {
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await login(page, profile);
+      const nav = page.getByRole("navigation", { name: "Navegación interna" });
+      const agenda = page.getByRole("heading", { name: "Agenda", exact: true });
+      await expect(nav).toBeVisible();
+
+      for (let visit = 0; visit < 3; visit += 1) {
+        // Demorar el cuerpo del primer HTTP 200 hasta que el cambio de sesión cancele la consulta.
+        await page.evaluate(() => {
+          const originalFetch = window.fetch;
+          window.fetch = async (resource, options) => {
+            const response = await originalFetch(resource, options);
+            if (resource !== "/api/professionals") return response;
+            window.fetch = originalFetch;
+            const { signal } = options;
+            return new Response(new ReadableStream({
+              start(controller) {
+                if (signal.aborted) controller.error(signal.reason);
+                else signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+              },
+              pull() {
+                console.debug("agenda: cuerpo pendiente");
+              },
+            }), { status: response.status, headers: response.headers });
+          };
+        });
+        const reading = page.waitForEvent("console", (message) => message.text() === "agenda: cuerpo pendiente");
+        await page.route("**/api/auth/me", async (route) => {
+          await reading;
+          await route.continue();
+        }, { times: 1 });
+        await nav.getByRole("link", { name: "Agenda", exact: true }).click();
+        await reading;
+        await expect(page.locator(".agenda-toolbar select").first().locator("option")).toHaveCount(2);
+        await expect(agenda).toBeVisible();
+        const refreshedSession = page.waitForResponse("**/api/auth/me");
+        await nav.getByRole("link", { name: "Pacientes", exact: true }).click();
+        await refreshedSession;
+        await expect(page.getByRole("heading", { name: "Pacientes", exact: true })).toBeVisible();
+      }
+      expect(errors).toEqual([]);
+    });
+  }
+
+  test("distingue un listado inválido de uno vacío y permite reintentar tras un 503", async ({ page }) => {
+    await login(page, "administrador");
+    const nav = page.getByRole("navigation", { name: "Navegación interna" });
+    const agenda = page.getByRole("heading", { name: "Agenda", exact: true });
+    const professionalsUrl = "**/api/professionals";
+    const alert = page.getByRole("main").getByRole("alert");
+    const malformed = (route) => route.fulfill({ json: { success: true, data: {} } });
+    await page.route(professionalsUrl, malformed);
+    await page.goto("/app/agenda");
+    await expect(agenda).toBeVisible();
+    await expect(nav).toBeVisible();
+    await expect(alert).toContainText("profesionales");
+    await expect(page.getByText("No hay profesionales disponibles.")).toHaveCount(0);
+    await page.unroute(professionalsUrl, malformed);
+    await page.route(professionalsUrl, (route) => route.fulfill({
+      status: 503,
+      json: { success: false, error: { message: "Profesionales temporalmente no disponibles." } },
+    }), { times: 1 });
+    await page.getByRole("button", { name: "Actualizar", exact: true }).click();
+    await expect(alert).toContainText("temporalmente no disponibles");
+    await page.route(professionalsUrl, (route) => route.fulfill({
+      json: { success: true, data: [] },
+    }), { times: 1 });
+    await page.getByRole("button", { name: "Actualizar", exact: true }).click();
+    await expect(page.getByText("No hay profesionales disponibles.")).toBeVisible();
+    await expect(alert).toHaveCount(0);
+    await page.getByRole("button", { name: "Actualizar", exact: true }).click();
+    await expect(page.locator(".agenda-toolbar select").first().locator("option")).toHaveCount(2);
+  });
+
+  test("descarta una carga anterior al cambiar de profesional y guarda el horario seleccionado", async ({ page }) => {
+    await login(page, "administrador");
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/app/agenda");
+    const professional = page.locator(".agenda-toolbar select").first();
+    const save = page.getByRole("button", { name: "Guardar horario" });
+    await expect(save).toBeEnabled();
+    const current = await professional.inputValue();
+    const other = current === ids.professional ? ids.otherProfessional : ids.professional;
+    const scheduleUrl = `**/api/professionals/${current}/schedule`;
+    const alert = page.getByRole("main").getByRole("alert");
+    const update = page.getByRole("button", { name: "Actualizar", exact: true });
+    await page.route(scheduleUrl, (route) => route.fulfill({
+      json: { success: true, data: [null] },
+    }), { times: 1 });
+    await update.click();
+    await expect(alert).toContainText("horario semanal");
+    await expect(save).toBeDisabled();
+    await update.click();
+    await expect(save).toBeEnabled();
+    let markPending;
+    let release;
+    const pending = new Promise((resolve) => { markPending = resolve; });
+    const resume = new Promise((resolve) => { release = resolve; });
+    await page.route(scheduleUrl, async (route) => {
+      markPending();
+      await resume;
+      await route.fulfill({ status: 503, json: { success: false } });
+    }, { times: 1 });
+    await update.click();
+    await pending;
+    try {
+      await expect(page.getByText("Cargando agenda…").first()).toBeVisible();
+      await expect(save).toBeDisabled();
+      await professional.selectOption(other);
+      await expect(save).toBeEnabled();
+    } finally {
+      release();
+    }
+    await expect(alert).toHaveCount(0);
+    const morning = page.getByLabel("Lunes inicio", { exact: true });
+    const oldHour = await morning.inputValue();
+    const newHour = oldHour === "09:20" ? "09:00" : "09:20";
+    await morning.fill(newHour);
+    const saved = page.waitForResponse((response) => response.url().endsWith("/api/professionals/" + other + "/schedule") && response.request().method() === "PUT");
+    await save.click();
+    expect((await saved).status()).toBe(200);
+    await expect(page.getByText("Horario semanal guardado.")).toBeVisible();
+    await page.reload();
+    await expect(professional.locator("option")).toHaveCount(2);
+    await professional.selectOption(other);
+    await expect(save).toBeEnabled();
+    await expect(morning).toHaveValue(newHour);
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe("Accesos Configuración logística", () => {
   for (const viewport of navigationViewports) {
     test.describe(`${viewport.width} px`, () => {

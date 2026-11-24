@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { readResponse } from "@/components/internal/internal-shell";
+import { agendaContracts, readAgendaResponse } from "./agenda-api";
 
 function chileDate(offsetDays = 1) {
   const value = new Date();
@@ -28,7 +28,7 @@ export default function InternalBooking({ onCreated, professionals }) {
     event.preventDefault();
     setStatus("searching"); setMessage("");
     try {
-      const data = await readResponse(await fetch(`/api/patients?search=${encodeURIComponent(query.trim())}&pageSize=20`, { cache: "no-store" }));
+      const data = await readAgendaResponse(await fetch(`/api/patients?search=${encodeURIComponent(query.trim())}&pageSize=20`, { cache: "no-store" }), agendaContracts.patients);
       setPatients(data.items); setPatientId(data.items[0]?.id ?? "");
       if (!data.items.length) setMessage("No se encontraron pacientes. Créalo primero en Pacientes.");
     } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
@@ -39,7 +39,7 @@ export default function InternalBooking({ onCreated, professionals }) {
     if (!nextProfessionalId || !nextDate) return;
     setStatus("loading"); setMessage("");
     try {
-      const data = await readResponse(await fetch(`/api/professionals/${nextProfessionalId}/availability?date=${nextDate}`, { cache: "no-store" }));
+      const data = await readAgendaResponse(await fetch(`/api/professionals/${nextProfessionalId}/availability?date=${nextDate}`, { cache: "no-store" }), agendaContracts.availability);
       setSlots(data.slots);
       if (!data.slots.length) setMessage("No hay horas disponibles para esa fecha.");
     } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
@@ -51,7 +51,7 @@ export default function InternalBooking({ onCreated, professionals }) {
     const form = new FormData(event.currentTarget);
     setStatus("saving"); setMessage("");
     try {
-      await readResponse(await fetch("/api/appointments", { body: JSON.stringify({ internalNotes: form.get("internalNotes") || null, patientId, professionalId, startAt }), headers: { "Content-Type": "application/json" }, method: "POST" }));
+      await readAgendaResponse(await fetch("/api/appointments", { body: JSON.stringify({ internalNotes: form.get("internalNotes") || null, patientId, professionalId, startAt }), headers: { "Content-Type": "application/json" }, method: "POST" }), agendaContracts.appointment);
       setMessage("Reserva interna creada correctamente."); setStartAt("");
       await loadSlots(); await onCreated();
     } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }

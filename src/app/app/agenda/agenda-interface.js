@@ -39,6 +39,8 @@ export default function AgendaInterface({ model }) {
     updateDay,
     week,
   } = model;
+  const saving = status === "saving";
+  const hasAgenda = status === "ready" || saving;
 
   return (
     <>
@@ -69,6 +71,7 @@ export default function AgendaInterface({ model }) {
           className={
             notice.kind === "error" ? "inline-error" : "inline-success"
           }
+          role={notice.kind === "error" ? "alert" : "status"}
         >
           {notice.text}
         </p>
@@ -77,7 +80,7 @@ export default function AgendaInterface({ model }) {
         <label className="field">
           <span>Profesional</span>
           <select
-            disabled={!canManageAll}
+            disabled={!canManageAll || saving || professionals.length === 0}
             onChange={(event) => setProfessionalId(event.target.value)}
             value={professionalId}
           >
@@ -91,6 +94,7 @@ export default function AgendaInterface({ model }) {
         <label className="field">
           <span>{calendarView === "day" ? "Fecha" : "Desde"}</span>
           <input
+            disabled={saving}
             onChange={(event) => updateCalendarStart(event.target.value)}
             type="date"
             value={from}
@@ -100,6 +104,7 @@ export default function AgendaInterface({ model }) {
           <span>Vista</span>
           <select
             aria-label="Vista de calendario"
+            disabled={saving}
             onChange={(event) => changeCalendarView(event.target.value)}
             value={calendarView}
           >
@@ -110,6 +115,7 @@ export default function AgendaInterface({ model }) {
         <label className="field">
           <span>Hasta</span>
           <input
+            disabled={saving}
             min={from}
             onChange={(event) => setTo(event.target.value)}
             type="date"
@@ -119,6 +125,7 @@ export default function AgendaInterface({ model }) {
         <label className="field">
           <span>Estado</span>
           <select
+            disabled={saving}
             onChange={(event) => setFilterStatus(event.target.value)}
             value={filterStatus}
           >
@@ -130,20 +137,22 @@ export default function AgendaInterface({ model }) {
             ))}
           </select>
         </label>
-        <button className="app-button" onClick={refresh} type="button">
+        <button className="app-button" disabled={saving} onClick={refresh} type="button">
           Actualizar
         </button>
       </section>
-      {actor?.permissions.includes("appointments.create") && (
+      {status === "empty" && <p role="status">No hay profesionales disponibles.</p>}
+      {professionals.length > 0 && actor?.permissions.includes("appointments.create") && (
         <InternalBooking onCreated={refresh} professionals={professionals} />
       )}
       <div className="agenda-layout" id="agenda-operativa">
         <div className="agenda-calendar-area">
-          {status === "loading" ? (
-            <section className="app-card agenda-list">
+          {status === "loading" && (
+            <section className="app-card agenda-list" role="status">
               <p className="directory-state">Cargando agenda…</p>
             </section>
-          ) : (
+          )}
+          {hasAgenda && (
             <AgendaCalendar
               actor={actor}
               days={calendarDays}
@@ -153,9 +162,7 @@ export default function AgendaInterface({ model }) {
           )}
           <section className="app-card agenda-list agenda-list--details">
             <h2 id="agenda-details-title">Detalle de reservas</h2>
-            {status === "loading" ? (
-              <p className="directory-state">Cargando agenda…</p>
-            ) : !appointments.length ? (
+            {hasAgenda && (appointments.length === 0 ? (
               <p className="directory-state">No hay reservas en este rango.</p>
             ) : (
               <div
@@ -225,6 +232,7 @@ export default function AgendaInterface({ model }) {
                             ) && (
                               <button
                                 className="app-button app-button--danger"
+                                disabled={saving}
                                 onClick={() =>
                                   changeAppointment(appointment, "CANCELLED")
                                 }
@@ -240,7 +248,7 @@ export default function AgendaInterface({ model }) {
                   );
                 })}
               </div>
-            )}
+            ))}
           </section>
         </div>
         <aside className="schedule-panel" id="configuracion-profesionales">
@@ -254,7 +262,7 @@ export default function AgendaInterface({ model }) {
                     <input
                       aria-label={`${DAYS[day.dayOfWeek]} trabaja`}
                       checked={day.isWorking}
-                      disabled={!canManageSelected}
+                      disabled={!canManageSelected || status !== "ready"}
                       onChange={(event) =>
                         updateDay(index, "isWorking", event.target.checked)
                       }
@@ -273,7 +281,7 @@ export default function AgendaInterface({ model }) {
                         <span>{label}</span>
                         <input
                           aria-label={`${DAYS[day.dayOfWeek]} ${label.toLowerCase()}`}
-                          disabled={!canManageSelected || !day.isWorking}
+                          disabled={!canManageSelected || status !== "ready" || !day.isWorking}
                           onChange={(event) =>
                             updateDay(index, field, event.target.value)
                           }
@@ -290,7 +298,7 @@ export default function AgendaInterface({ model }) {
               <div className="schedule-actions">
                 <button
                   className="app-button app-button--primary"
-                  disabled={status === "saving"}
+                  disabled={status !== "ready"}
                   type="submit"
                 >
                   Guardar horario
@@ -305,7 +313,7 @@ export default function AgendaInterface({ model }) {
               <label className="field">
                 <span>Inicio</span>
                 <input
-                  disabled={!canManageSelected}
+                  disabled={!canManageSelected || status !== "ready"}
                   name="startAt"
                   required
                   type="datetime-local"
@@ -314,7 +322,7 @@ export default function AgendaInterface({ model }) {
               <label className="field">
                 <span>Término</span>
                 <input
-                  disabled={!canManageSelected}
+                  disabled={!canManageSelected || status !== "ready"}
                   name="endAt"
                   required
                   type="datetime-local"
@@ -323,7 +331,7 @@ export default function AgendaInterface({ model }) {
               <label className="field field-wide">
                 <span>Motivo opcional</span>
                 <input
-                  disabled={!canManageSelected}
+                  disabled={!canManageSelected || status !== "ready"}
                   maxLength="500"
                   name="reason"
                   placeholder="Ej: Vacaciones o trámite"
@@ -332,7 +340,7 @@ export default function AgendaInterface({ model }) {
             </div>
             {canManageSelected && (
               <div className="schedule-actions">
-                <button className="app-button app-button--soft" type="submit">
+                <button className="app-button app-button--soft" disabled={status !== "ready"} type="submit">
                   Agregar bloqueo
                 </button>
               </div>
@@ -347,7 +355,7 @@ export default function AgendaInterface({ model }) {
                     {block.reason ?? "Sin motivo registrado"}
                   </span>
                   {canManageSelected && (
-                    <button onClick={() => removeBlock(block)} type="button">
+                    <button disabled={saving} onClick={() => removeBlock(block)} type="button">
                       Eliminar
                     </button>
                   )}

@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  readResponse,
-  useInternalActor,
-} from "@/components/internal/internal-shell";
+import { useInternalActor } from "@/components/internal/internal-shell";
+import { agendaContracts, readAgendaResponse } from "./agenda-api";
 import { addCalendarDays, buildAgendaDays } from "./agenda-calendar-model";
 import AgendaInterface from "./agenda-interface";
 import "./agenda.css";
@@ -46,13 +44,19 @@ export default function AgendaPage() {
   const [to, setTo] = useState(() => addCalendarDays(dateOnly(today), 6));
   const [calendarView, setCalendarView] = useState("week");
   const [professionals, setProfessionals] = useState([]);
-  const [professionalId, setProfessionalId] = useState("");
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState("");
+  const [professionalsStatus, setProfessionalsStatus] = useState("loading");
+  const [professionalsReload, setProfessionalsReload] = useState(0);
+  const [agendaReload, setAgendaReload] = useState(0);
   const [filterStatus, setFilterStatus] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [week, setWeek] = useState(defaultWeek);
   const [blocks, setBlocks] = useState([]);
   const [status, setStatus] = useState("loading");
   const [notice, setNotice] = useState(null);
+  const professionalId = professionals.some((item) => item.id === selectedProfessionalId)
+    ? selectedProfessionalId
+    : professionals.find((item) => item.id === actor?.userId)?.id ?? professionals[0]?.id ?? "";
   const canManageAll = actor?.permissions.includes("schedules.manage_all");
   const canManageSelected =
     actor &&
@@ -80,30 +84,30 @@ export default function AgendaPage() {
   useEffect(() => {
     if (!actor?.permissions.includes("schedules.read")) return;
     const controller = new AbortController();
-    fetch("/api/professionals", { signal: controller.signal })
-      .then(readResponse)
+    const { signal } = controller;
+    fetch("/api/professionals", { cache: "no-store", signal })
+      .then((response) => readAgendaResponse(response, agendaContracts.professionals))
       .then((items) => {
+        if (signal.aborted) return;
         setProfessionals(items);
-        const own = items.find((item) => item.id === actor.userId);
-        setProfessionalId(own?.id ?? items[0]?.id ?? "");
+        setProfessionalsStatus("ready");
       })
       .catch((error) => {
-        if (error.name !== "AbortError")
-          setNotice({ kind: "error", text: error.message });
+        if (signal.aborted) return;
+        setProfessionalsStatus("error");
+        setNotice({ kind: "error", text: error.message });
       });
     return () => controller.abort();
-  }, [actor]);
+  }, [actor, professionalsReload]);
 
   const loadAppointments = useCallback(
     async (signal) => {
       const params = new URLSearchParams({ from: range.from, to: range.to });
       if (professionalId) params.set("professionalId", professionalId);
       if (filterStatus) params.set("status", filterStatus);
-      return readResponse(
-        await fetch(`/api/appointments?${params}`, {
-          cache: "no-store",
-          signal,
-        }),
+      return readAgendaResponse(
+        await fetch(`/api/appointments?${params}`, { cache: "no-store", signal }),
+        agendaContracts.appointments,
       );
     },
     [filterStatus, professionalId, range],
@@ -111,20 +115,13 @@ export default function AgendaPage() {
 
   const loadSchedule = useCallback(
     async (signal) => {
-      if (!professionalId) return { blocks: [], week: defaultWeek() };
+      const url = `/api/professionals/${professionalId}/schedule`;
+      const params = new URLSearchParams(range);
       const [schedule, scheduleBlocks] = await Promise.all([
-        readResponse(
-          await fetch(`/api/professionals/${professionalId}/schedule`, {
-            cache: "no-store",
-            signal,
-          }),
-        ),
-        readResponse(
-          await fetch(
-            `/api/professionals/${professionalId}/schedule/blocks?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,
-            { cache: "no-store", signal },
-          ),
-        ),
+        fetch(url, { cache: "no-store", signal })
+          .then((response) => readAgendaResponse(response, agendaContracts.schedule)),
+        fetch(`${url}/blocks?${params}`, { cache: "no-store", signal })
+          .then((response) => readAgendaResponse(response, agendaContracts.blocks)),
       ]);
       const byDay = new Map(schedule.map((day) => [day.dayOfWeek, day]));
       return {
@@ -139,42 +136,38 @@ export default function AgendaPage() {
   );
 
   useEffect(() => {
-    if (!actor || !professionalId) return;
+    if (!actor?.permissions.includes("schedules.read") || professionalsStatus !== "ready" || !professionalId) return;
     const controller = new AbortController();
-    Promise.all([
-      loadAppointments(controller.signal),
-      loadSchedule(controller.signal),
-    ])
+    const { signal } = controller;
+    Promise.all([loadAppointments(signal), loadSchedule(signal)])
       .then(([appointmentItems, schedule]) => {
+        if (signal.aborted) return;
         setAppointments(appointmentItems);
         setWeek(schedule.week);
         setBlocks(schedule.blocks);
         setStatus("ready");
       })
       .catch((error) => {
-        if (error.name !== "AbortError") {
-          setNotice({ kind: "error", text: error.message });
-          setStatus("error");
-        }
+        if (signal.aborted) return;
+        controller.abort();
+        setNotice({ kind: "error", text: error.message });
+        setStatus("error");
       });
     return () => controller.abort();
-  }, [actor, loadAppointments, loadSchedule, professionalId]);
+  }, [actor, agendaReload, loadAppointments, loadSchedule, professionalId, professionalsStatus]);
 
-  async function refresh() {
+  function startLoading() {
     setStatus("loading");
     setNotice(null);
-    try {
-      const [items, schedule] = await Promise.all([
-        loadAppointments(),
-        loadSchedule(),
-      ]);
-      setAppointments(items);
-      setWeek(schedule.week);
-      setBlocks(schedule.blocks);
-      setStatus("ready");
-    } catch (error) {
-      setNotice({ kind: "error", text: error.message });
-      setStatus("error");
+  }
+
+  function refresh() {
+    startLoading();
+    if (professionalsStatus !== "ready" || !professionalId) {
+      setProfessionalsStatus("loading");
+      setProfessionalsReload((revision) => revision + 1);
+    } else {
+      setAgendaReload((revision) => revision + 1);
     }
   }
   async function changeAppointment(appointment, nextStatus) {
@@ -185,12 +178,13 @@ export default function AgendaPage() {
     }
     setStatus("saving");
     try {
-      const saved = await readResponse(
+      const saved = await readAgendaResponse(
         await fetch(`/api/appointments/${appointment.id}/status`, {
           body: JSON.stringify({ cancellationReason, status: nextStatus }),
           headers: { "Content-Type": "application/json" },
           method: "PATCH",
         }),
+        agendaContracts.appointment,
       );
       setAppointments((items) =>
         items.map((item) => (item.id === saved.id ? saved : item)),
@@ -205,13 +199,34 @@ export default function AgendaPage() {
       setStatus("ready");
     }
   }
+  function selectProfessional(value) {
+    startLoading();
+    setSelectedProfessionalId(value);
+  }
+
   function updateCalendarStart(nextFrom) {
+    if (!nextFrom || nextFrom === from) return;
+    startLoading();
     setFrom(nextFrom);
     setTo(addCalendarDays(nextFrom, calendarView === "day" ? 0 : 6));
   }
+  function updateCalendarEnd(nextTo) {
+    if (!nextTo || nextTo === to) return;
+    startLoading();
+    setTo(nextTo);
+  }
+
+  function changeFilterStatus(value) {
+    startLoading();
+    setFilterStatus(value);
+  }
+
   function changeCalendarView(nextView) {
+    if (nextView === calendarView) return;
+    const nextTo = addCalendarDays(from, nextView === "day" ? 0 : 6);
+    if (nextTo !== to) startLoading();
     setCalendarView(nextView);
-    setTo(addCalendarDays(from, nextView === "day" ? 0 : 6));
+    setTo(nextTo);
   }
   function updateDay(index, field, value) {
     setWeek((days) =>
@@ -224,12 +239,13 @@ export default function AgendaPage() {
     event.preventDefault();
     setStatus("saving");
     try {
-      const saved = await readResponse(
+      const saved = await readAgendaResponse(
         await fetch(`/api/professionals/${professionalId}/schedule`, {
           body: JSON.stringify({ days: week }),
           headers: { "Content-Type": "application/json" },
           method: "PUT",
         }),
+        agendaContracts.schedule,
       );
       setWeek(saved);
       setNotice({ kind: "success", text: "Horario semanal guardado." });
@@ -241,10 +257,11 @@ export default function AgendaPage() {
   }
   async function createBlock(event) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setStatus("saving");
     try {
-      const saved = await readResponse(
+      const saved = await readAgendaResponse(
         await fetch(`/api/professionals/${professionalId}/schedule/blocks`, {
           body: JSON.stringify({
             endAt: new Date(form.get("endAt")).toISOString(),
@@ -254,13 +271,14 @@ export default function AgendaPage() {
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
+        agendaContracts.block,
       );
       setBlocks((items) =>
         [...items, saved].sort(
           (a, b) => new Date(a.startAt) - new Date(b.startAt),
         ),
       );
-      event.currentTarget.reset();
+      formElement.reset();
       setNotice({ kind: "success", text: "Bloqueo agregado a la agenda." });
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
@@ -271,16 +289,19 @@ export default function AgendaPage() {
   // Eliminar o cancelar remove block de forma controlada y consistente
   async function removeBlock(block) {
     if (!window.confirm("¿Eliminar este bloqueo de agenda?")) return;
+    setStatus("saving");
     try {
       const response = await fetch(
         `/api/professionals/${professionalId}/schedule/blocks/${block.id}`,
         { method: "DELETE" },
       );
-      if (!response.ok) await readResponse(response);
+      if (!response.ok) await readAgendaResponse(response, agendaContracts.block);
       setBlocks((items) => items.filter((item) => item.id !== block.id));
       setNotice({ kind: "success", text: "Bloqueo retirado." });
     } catch (error) {
       setNotice({ kind: "error", text: error.message });
+    } finally {
+      setStatus("ready");
     }
   }
 
@@ -291,6 +312,11 @@ export default function AgendaPage() {
         <p>Ventas no administra agenda ni pacientes.</p>
       </section>
     );
+  const viewStatus = professionalsStatus !== "ready"
+    ? professionalsStatus
+    : professionalId ? status : "empty";
+  const hasAgenda = viewStatus === "ready" || viewStatus === "saving";
+
   return (
     <AgendaInterface
       model={{
@@ -298,7 +324,7 @@ export default function AgendaPage() {
         STATUS,
         actor,
         appointments,
-        blocks,
+        blocks: hasAgenda ? blocks : [],
         calendarDays,
         calendarView,
         canManageAll,
@@ -314,15 +340,15 @@ export default function AgendaPage() {
         refresh,
         removeBlock,
         saveWeek,
-        setFilterStatus,
-        setProfessionalId,
+        setFilterStatus: changeFilterStatus,
+        setProfessionalId: selectProfessional,
         setProfessionals,
-        setTo,
-        status,
+        setTo: updateCalendarEnd,
+        status: viewStatus,
         to,
         updateCalendarStart,
         updateDay,
-        week,
+        week: hasAgenda ? week : defaultWeek(),
       }}
     />
   );
