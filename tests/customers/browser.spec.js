@@ -68,7 +68,7 @@ async function open(page, branchId) {
   await page.getByLabel("Fondo inicial de efectivo", {
     exact: true
   }).fill("0");
-  const response = page.waitForResponse(r => r.url().endsWith("/api/cash-register") && r.request().method() === "POST");
+  const response = page.waitForResponse(r => new URL(r.url()).pathname === "/api/cash-register" && r.request().method() === "POST");
   await page.getByRole("button", {
     name: "Abrir caja",
     exact: true

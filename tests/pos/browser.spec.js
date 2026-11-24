@@ -12,7 +12,7 @@ async function open(page){
   await page.goto("/app/ventas");await page.getByRole("combobox",{name:"Sucursal de la venta",exact:true}).selectOption(branchId);
   await page.getByRole("combobox",{name:"Punto de cobro",exact:true}).selectOption(terminal.id);
   await page.getByLabel("Fondo inicial de efectivo",{exact:true}).fill("10000");
-  const response=page.waitForResponse((r)=>r.url().endsWith("/api/cash-register")&&r.request().method()==="POST");
+  const response=page.waitForResponse((r)=>new URL(r.url()).pathname === "/api/cash-register"&&r.request().method()==="POST");
   await page.getByRole("button",{name:"Abrir caja",exact:true}).click();const created=await response;expect(created.status()).toBe(201);const session=(await created.json()).data;
   await expect(page.getByRole("status").filter({hasText:"Caja abierta y asociada"})).toBeVisible();return {terminal,name,session};
 }
