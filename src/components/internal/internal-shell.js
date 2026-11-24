@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { hasGlobalBranchAccess } from "@/auth/permissions";
 import BrandLogo from "@/components/brand/brand-logo";
@@ -11,15 +11,15 @@ import Icon from "@/components/ui/icon";
 const NAVIGATION = [
   { href: "/app", icon: "home", label: "Dashboard", permissions: [] },
   { href: "/app/agenda", icon: "calendar", label: "Agenda", permissions: ["schedules.read"] },
-  { href: "/app/ficha-clinica", icon: "file", label: "Gestión clínica", permissions: ["medical_records.read_assigned"] },
+  { href: "/app/ficha-clinica", icon: "file", label: "Gestión clínica", compactLabel: "Ficha clínica", permissions: ["medical_records.read_assigned"] },
   { href: "/app/pacientes", icon: "users", label: "Pacientes", permissions: ["patients.read_basic"] },
-  { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", permissions: ["sales.read"] },
-  { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", permissions: ["sales.read"] },
+  { href: "/app/ventas", icon: "receipt", label: "Ventas y cotizaciones", compactLabel: "Ventas", permissions: ["sales.read"] },
+  { href: "/app/pedidos", icon: "package", label: "Gestión de pedidos", compactLabel: "Pedidos", permissions: ["sales.read"] },
   { href: "/app/clientes", icon: "account", label: "Clientes", permissions: ["customers.read"] },
-  { href: "/app/productos", icon: "eye", label: "Catálogo de productos", permissions: ["products.read"] },
-  { href: "/app/inventario", icon: "package", label: "Inventario por sucursal", permissions: ["inventory.read"] },
-  { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", permissions: ["users.read"] },
-  { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", permissions: ["sales.reports_read"] },
+  { href: "/app/productos", icon: "eye", label: "Catálogo de productos", compactLabel: "Productos", permissions: ["products.read"] },
+  { href: "/app/inventario", icon: "package", label: "Inventario por sucursal", compactLabel: "Inventario", permissions: ["inventory.read"] },
+  { href: "/app/usuarios", icon: "users", label: "Gestión de usuarios", compactLabel: "Usuarios", permissions: ["users.read"] },
+  { href: "/app/reportes", icon: "chart", label: "Reportes y analítica", compactLabel: "Reportes", permissions: ["sales.reports_read"] },
 ];
 
 const ActorContext = createContext(null);
@@ -38,6 +38,7 @@ export default function InternalShell({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [branchSaving, setBranchSaving] = useState(false);
   const [branchError, setBranchError] = useState("");
+  const navigationRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -64,6 +65,17 @@ export default function InternalShell({ children }) {
       setBranchSaving(false);
     }
   }
+  useEffect(() => {
+    const nav = navigationRef.current;
+    const current = nav?.querySelector('[aria-current="page"]');
+    if (!current) return;
+    const bounds = nav.getBoundingClientRect();
+    const link = current.getBoundingClientRect();
+    if (link.right > bounds.right) nav.scrollLeft += link.right - bounds.right;
+    else if (link.left < bounds.left) nav.scrollLeft += link.left - bounds.left;
+    if (link.bottom > bounds.bottom) nav.scrollTop += link.bottom - bounds.bottom;
+    else if (link.top < bounds.top) nav.scrollTop += link.top - bounds.top;
+  }, [navigation, pathname]);
 
   async function logout() {
     try {
@@ -91,10 +103,15 @@ export default function InternalShell({ children }) {
         </div>
         {actor?.permissions.includes("sales.create") && <Link aria-label="Nueva venta" className="internal-quick-sale" href="/app/ventas"><Icon name="plus" size={17} /> <span>Nueva venta</span></Link>}
         <p className="internal-nav-label">Operación</p>
-        <nav aria-label="Navegación interna" id="navegacion-interna">
+        <p className="internal-nav-hint" id="internal-nav-hint">Módulos · desliza para ver más</p>
+        <nav aria-describedby="internal-nav-hint" aria-label="Navegación interna" id="navegacion-interna" ref={navigationRef}>
           {navigation.map((item) => {
             const active = item.href === "/app" ? pathname === item.href : pathname.startsWith(item.href);
-            return <Link aria-current={active ? "page" : undefined} aria-label={item.label} className={active ? "active" : ""} href={item.href} key={item.href}><Icon name={item.icon} size={19} /><span className="internal-nav-link__label">{item.label}</span></Link>;
+            return <Link aria-current={active ? "page" : undefined} aria-label={item.label} className={active ? "active" : ""} href={item.href} key={item.href} title={item.label}>
+              <Icon name={item.icon} size={19} />
+              <span className="internal-nav-link__label">{item.label}</span>
+              <span className="internal-nav-link__compact-label">{item.compactLabel ?? item.label}</span>
+            </Link>;
           })}
         </nav>
         <div className="internal-user">
@@ -103,7 +120,7 @@ export default function InternalShell({ children }) {
           <button aria-label="Cerrar sesión" onClick={logout} type="button"><Icon name="logout" size={18} /></button>
         </div>
       </aside>
-      <div className="internal-content"><header className="internal-topbar"><Link aria-label="Ir al dashboard" className="internal-topbar__brand" href="/app"><BrandLogo compact /></Link><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>
+      <div className="internal-content"><header className="internal-topbar"><Link aria-label="Ir al dashboard" className="internal-topbar__brand" href="/app"><BrandLogo compact /></Link><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span><button className="internal-topbar__logout" onClick={logout} type="button">Cerrar sesión</button></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>
         {actor?.branches?.length > 0 && <label className="field"><span>Sucursal activa</span>
           <select value={actor.activeBranchId ?? ""} onChange={changeBranch} disabled={branchSaving}>
             <option value="">{hasGlobalBranchAccess(actor) ? "Vista general" : "Sucursales autorizadas"}</option>

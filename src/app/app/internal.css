@@ -293,14 +293,8 @@
   .internal-brand .brand-logo__source {
     width: 58px;
   }
-  .internal-sidebar nav a:not(.active) {
-    font-size: 0;
-  }
   .internal-sidebar nav a {
     justify-content: center;
-  }
-  .internal-sidebar nav a.active {
-    font-size: 0;
   }
   .internal-user div,
   .internal-user > span {
@@ -340,18 +334,9 @@
     overscroll-behavior-inline: contain;
     scroll-padding-inline: 0.25rem;
     scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-  .internal-sidebar nav::-webkit-scrollbar {
-    display: none;
   }
   .internal-sidebar nav a {
-    flex: 0 0 54px;
-    font-size: 0;
-    height: 52px;
-    padding: 0.65rem;
     scroll-snap-align: center;
-    width: 52px;
   }
   .internal-main {
     padding: 1.25rem 1rem 5.5rem;

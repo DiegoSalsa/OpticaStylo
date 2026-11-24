@@ -74,6 +74,25 @@ for (const [device, viewport] of [
   });
 }
 
+test("Navegación interna ofrece etiquetas y permite salir desde el teclado en móvil", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await login(page, "administrador");
+  const menu = page.getByRole("navigation", { name: "Navegación interna" });
+  const reports = menu.getByRole("link", { name: "Reportes y analítica" });
+  await expect(menu.getByText("Dashboard", { exact: true }).filter({ visible: true })).toBeVisible();
+  await expect(reports.getByText("Reportes", { exact: true })).toBeVisible();
+  await reports.focus();
+  await expect(reports).toBeFocused();
+  expect(await menu.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/app\/reportes$/);
+  const logout = page.getByRole("button", { name: "Cerrar sesión", exact: true });
+  await expect(logout).toBeVisible();
+  await logout.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/ingresar$/);
+});
+
 test("Navegación Clientes sin sesión devuelve al ingreso y protege la API", async ({ page }) => {
   await page.goto("/app/clientes");
   await expect(page).toHaveURL(/\/ingresar\?next=%2Fapp%2Fclientes$/);
