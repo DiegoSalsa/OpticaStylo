@@ -44,8 +44,12 @@ async function openPanel(page, { main, busyTerminal }) {
   await page.goto("/app/ventas");
   await page.getByRole("combobox", { name: "Sucursal de la venta", exact: true }).selectOption(main.id);
   const cash = cashPanel(page);
-  await cash.getByRole("combobox", { name: "Punto de cobro" }).selectOption(busyTerminal.id);
-  await expect(cash.getByText("Efectivo esperado", { exact: true })).toBeVisible();
+  const terminal = cash.getByRole("combobox", { name: "Punto de cobro" });
+  const expectedCash = cash.getByText("Efectivo esperado", { exact: true });
+  await expect(terminal).toHaveValue(busyTerminal.id);
+  await expect(expectedCash).toBeVisible();
+  await terminal.selectOption(busyTerminal.id);
+  await expect(expectedCash).toBeVisible();
   return cash;
 }
 

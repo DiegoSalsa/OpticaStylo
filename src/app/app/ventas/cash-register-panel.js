@@ -45,6 +45,15 @@ export default function CashRegisterPanel({branchId,onChange,revision=0}) {
     historyRequest.current?.abort();
     setHistorical(null);
   }
+
+  function selectTerminal(id) {
+    if (id === terminalId) return;
+    setTerminalId(id);
+    setSession(null);
+    onChange?.(null);
+    clearHistorical();
+    setError("");
+  }
   async function request(url,body,message) {
     if(pending.current)return;pending.current=true;setBusy(true);setError("");setNotice("");
     const identity=`${url}:${JSON.stringify(body)}`;if(!keys.current.has(identity))keys.current.set(identity,crypto.randomUUID());
@@ -64,7 +73,7 @@ export default function CashRegisterPanel({branchId,onChange,revision=0}) {
     <div className="cash-register-heading"><div><p className="eyebrow">Caja · {current?.status==="CLOSED"?"Cierre guardado":session?"Abierta":"Sin sesión abierta"}</p><h2 id="cash-register-title">Caja de la sucursal</h2><p>{session?`${session.terminal.name} · Responsable: ${session.openedBy.name} · ${new Date(session.openedAt).toLocaleString("es-CL")}`:"Selecciona el punto de cobro para abrir o consultar tu sesión."}</p></div><button className="text-button" disabled={busy} type="button" onClick={()=>{clearHistorical();setCounter((v)=>v+1);}}>Actualizar caja</button></div>
     {error&&<p className="inline-error" role="alert">{error}</p>}{notice&&<p className="inline-success" role="status">{notice}</p>}
     {!branchId?<p>Selecciona primero la sucursal de la venta.</p>:<>
-      <label className="field"><span>Punto de cobro</span><select value={terminalId} disabled={busy} onChange={(e)=>{setTerminalId(e.target.value);setSession(null);onChange?.(null);clearHistorical();setError("");}}><option value="">Selecciona una caja</option>{terminals.map((t)=><option key={t.id} value={t.id}>{t.name}{t.occupied?` · Abierta por ${t.responsible}`:" · Disponible"}</option>)}</select></label>
+      <label className="field"><span>Punto de cobro</span><select value={terminalId} disabled={busy} onChange={(event)=>selectTerminal(event.target.value)}><option value="">Selecciona una caja</option>{terminals.map((t)=><option key={t.id} value={t.id}>{t.name}{t.occupied?` · Abierta por ${t.responsible}`:" · Disponible"}</option>)}</select></label>
       {canManage&&<details className="cash-section"><summary>Agregar punto de cobro</summary><form className="cash-register-form" onSubmit={async(e)=>{e.preventDefault();const form=e.currentTarget;const row=await request("/api/cash-register/terminals",{branchId,name:new FormData(form).get("name")},"Punto de cobro creado.");if(row)form.reset();}}><label className="field"><span>Nombre del punto de cobro</span><input name="name" required maxLength={100}/></label><button className="app-button" disabled={busy}>Crear punto de cobro</button></form></details>}
       {!current&&terminalId&&canOperate&&(!selected?.occupied||selected?.own||canManage)&&<form className="cash-register-form" onSubmit={(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);request("/api/cash-register",{branchId,terminalId,openingAmountCents:Number(f.get("openingAmountCents")),openingNotes:f.get("openingNotes")||null},"Caja abierta y asociada a la sucursal.");}}><label className="field"><span>Fondo inicial de efectivo</span><input type="number" name="openingAmountCents" required min={0} max={1000000000}/></label><label className="field"><span>Observación de apertura</span><input name="openingNotes" maxLength={500}/></label><button className="app-button app-button--primary" disabled={busy}>Abrir caja</button></form>}
       {current&&<div className="cash-register-content">
