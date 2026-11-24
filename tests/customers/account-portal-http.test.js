@@ -318,7 +318,9 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     const childOverview = await data(await request(childPath, { cookie: owner.cookie }));
     assert.equal(childOverview.linked, true);
     assert.equal(childOverview.prescriptions.active[0].id, childPrescription.id);
-    assert.equal(childOverview.encounters[0].reason, "Evaluación sintética del menor");
+    assert.equal(childOverview.encounters, undefined);
+    const encounters = await data(await request(clinical + "/records?type=encounters&dependantId=" + dependant.id, { cookie: owner.cookie }));
+    assert.equal(encounters.items[0].reason, "Evaluación sintética del menor");
     assert.equal((await data(await request(childPath, { cookie: other.cookie }))).linked, false);
     const pdf = clinical + "/prescriptions/" + childPrescription.id + "/pdf";
     assert.equal((await request(pdf, { cookie: owner.cookie })).status, 200);

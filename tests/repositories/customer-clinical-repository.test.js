@@ -60,8 +60,18 @@ function fakeClinicalClient() {
       findFirst: async ({ where }) => state.challenges.filter((row) => row.account_id === where.account_id && row.consumed_at === null).sort((a, b) => b.created_at - a.created_at)[0] ?? null,
     },
     transactional_email_outbox: { create: async ({ data }) => { const row = { id: data.deduplication_key, ...data }; state.outbox.push(row); return row; } },
-    appointments: { findMany: async ({ where }) => state.appointments.filter((row) => row.patient_id === where.patient_id) },
-    optical_prescriptions: { findMany: async ({ where }) => state.prescriptions.filter((row) => row.patient_id === where.clinical_encounters.patient_id && row.encounterStatus === where.clinical_encounters.status) },
+    appointments: {
+      count: async ({ where }) => state.appointments.filter((row) => row.patient_id === where.patient_id
+        && row.start_at >= where.start_at.gte && row.status !== where.status.not).length,
+      findMany: async ({ where, skip, take }) => state.appointments.filter((row) => row.patient_id === where.patient_id
+        && row.start_at >= where.start_at.gte && row.status !== where.status.not).slice(skip, skip + take),
+    },
+    optical_prescriptions: {
+      count: async ({ where }) => state.prescriptions.filter((row) => row.patient_id === where.clinical_encounters.patient_id
+        && row.encounterStatus === where.clinical_encounters.status && row.status === where.status).length,
+      findMany: async ({ where, skip, take }) => state.prescriptions.filter((row) => row.patient_id === where.clinical_encounters.patient_id
+        && row.encounterStatus === where.clinical_encounters.status && row.status === where.status).slice(skip, skip + take),
+    },
   };
   return client;
 }
@@ -238,7 +248,10 @@ test("una cuenta solo obtiene reservas y recetas de su paciente vinculado", asyn
   assert.equal(linkedA.upcomingAppointments[0].professional.lastName, "A");
   assert.equal(linkedA.prescriptions.active.length, 1);
   assert.equal(linkedA.prescriptions.active[0].professional.lastName, "A");
-  assert.equal(linkedA.prescriptions.history.length, 0);
+  assert.equal(linkedA.prescriptions.activePage.total, 1);
+  assert.equal(linkedA.upcomingPage.total, 1);
+  assert.equal(linkedA.prescriptions.history, undefined);
+  assert.equal(linkedA.appointmentHistory, undefined);
   assert.equal(overviewB.patient.firstNames, "Bea");
   assert.equal(linkedA.upcomingAppointments.some((item) => item.professional.lastName === "B"), false);
   assert.equal(linkedA.prescriptions.active.some((item) => item.professional.lastName === "B"), false);

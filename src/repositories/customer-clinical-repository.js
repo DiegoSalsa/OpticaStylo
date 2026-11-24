@@ -2,6 +2,7 @@ import { customerAppointmentChangeDeadline } from "../config/customer-appointmen
 import { prisma } from "../db/prisma.js";
 import { randomUUID } from "node:crypto";
 import { adultBirthDateCutoff } from "../utils/customer-account-age.js";
+import { accountPage, accountPageInfo, readAccountPage } from "../utils/account-pagination.js";
 import { findAccountDependant, synchronizeAccountClinicalLinks } from "./account-family-repository.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import {
@@ -20,17 +21,23 @@ const prescriptionSelect = {
   id: true, issued_at: true, status: true, fulfillment_notes: true, pupillary_distance: true,
   left_addition: true, left_axis: true, left_cylinder: true, left_sphere: true,
   right_addition: true, right_axis: true, right_cylinder: true, right_sphere: true,
-  other_optical_prescriptions: { select: { status: true } },
+  other_optical_prescriptions: { select: { id: true }, take: 1 },
   professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } },
 };
 
+function verifiedMinorForAccount(accountId, adultCutoff) {
+  return {
+    birth_date: { gt: adultCutoff },
+    patient_guardians: { account_id: accountId, guardian_account: {
+      is_active: true, email_verified_at: { not: null }, birth_date: { lte: adultCutoff },
+    } },
+  };
+}
+
 export function verifiedPatientForAccount(accountId) {
-  const adultCutoff = adultBirthDateCutoff();
   return { OR: [
     { customers: { customer_accounts: { id: accountId, is_active: true, clinical_link_recheck_required: false } } },
-    { birth_date: { gt: adultCutoff }, patient_guardians: { account_id: accountId, guardian_account: {
-      is_active: true, email_verified_at: { not: null }, birth_date: { lte: adultCutoff },
-    } } },
+    verifiedMinorForAccount(accountId, adultBirthDateCutoff()),
   ] };
 }
 
@@ -235,49 +242,118 @@ export async function verifyCustomerPatientOtpChallenge(accountId, code, depende
   }
 }
 
-// Obtener reservas y recetas mediante proyecciones independientes del expediente clínico.
+const professionalNameSelect = {
+  [professionalUser]: { select: { first_name: true, last_name: true } },
+};
+const appointmentSelect = {
+  id: true, start_at: true, end_at: true, status: true, professional_id: true,
+  professional_profiles: { select: professionalNameSelect },
+};
+const prescriptionHistorySelect = {
+  id: true, issued_at: true, status: true,
+  other_optical_prescriptions: { select: { id: true }, take: 1 },
+  professional_profiles: { select: professionalNameSelect },
+};
+
+const descendingAppointments = [{ start_at: "desc" }, { id: "desc" }];
+const descendingPrescriptions = [{ issued_at: "desc" }, { version: "desc" }, { id: "desc" }];
+
+async function findScopedPatient(client, accountId, dependantId) {
+  const cutoff = adultBirthDateCutoff();
+  if (dependantId) {
+    const dependant = await findAccountDependant(accountId, dependantId, client);
+    if (!dependant?.patient_id || dependant.birth_date <= cutoff) return null;
+    return client.patients.findFirst({
+      where: { id: dependant.patient_id, ...verifiedMinorForAccount(accountId, cutoff) },
+      select: { id: true, first_names: true, last_names: true, rut: true },
+    });
+  }
+  const account = await findCustomerClinicalContext(accountId, client);
+  const patientId = account?.clinical_link_recheck_required ? null : account?.customers?.patient_id;
+  if (!patientId) return null;
+  return client.patients.findFirst({
+    where: { id: patientId, customers: { customer_accounts: { id: accountId, is_active: true, clinical_link_recheck_required: false } } },
+    select: { id: true, first_names: true, last_names: true, rut: true },
+  });
+}
+
+function actionableAppointment(row) {
+  return {
+    ...mapCustomerClinicalAppointment(row), id: row.id, professionalId: row.professional_id,
+    changeUntil: row.status === "CONFIRMED" ? customerAppointmentChangeDeadline(row.start_at) : null,
+  };
+}
+
+async function readClinicalPage(client, patientId, now, type, pagination, status) {
+  switch (type) {
+    case "upcoming":
+    case "appointment-history": {
+      const upcoming = type === "upcoming";
+      const result = await readAccountPage(client.appointments, pagination, {
+        where: upcoming
+          ? { patient_id: patientId, start_at: { gte: now }, status: { not: "CANCELLED" } }
+          : { patient_id: patientId, OR: [{ start_at: { lt: now } }, { status: "CANCELLED" }], ...(status && { status }) },
+        orderBy: upcoming ? [{ start_at: "asc" }, { id: "asc" }] : descendingAppointments,
+        select: appointmentSelect,
+      });
+      return { ...result, items: result.items.map(upcoming ? actionableAppointment : (row) => ({ ...mapCustomerClinicalAppointment(row), id: row.id })) };
+    }
+    case "active-prescriptions":
+    case "prescription-history": {
+      const active = type === "active-prescriptions";
+      const result = await readAccountPage(client.optical_prescriptions, pagination, {
+        where: { status: active ? "ACTIVE" : "VOIDED", clinical_encounters: { patient_id: patientId, status: "FINALIZED" } },
+        select: active ? prescriptionSelect : prescriptionHistorySelect,
+        orderBy: descendingPrescriptions,
+      });
+      return {
+        ...result,
+        items: result.items.map(active ? mapCustomerClinicalPrescription : (row) => {
+          const { id, issuedAt, professional, status: publicStatus } = mapCustomerClinicalPrescription(row);
+          return { id, issuedAt, professional, status: publicStatus };
+        }),
+      };
+    }
+    case "encounters": {
+      const result = await readAccountPage(client.clinical_encounters, pagination, {
+        where: { patient_id: patientId, status: "FINALIZED" },
+        orderBy: [{ finalized_at: "desc" }, { id: "desc" }],
+        select: { id: true, encounter_type: true, encounter_date: true, finalized_at: true, reason_for_visit: true },
+      });
+      return {
+        ...result,
+        items: result.items.map((row) => ({ id: row.id, type: row.encounter_type, date: row.encounter_date ?? row.finalized_at, reason: row.reason_for_visit })),
+      };
+    }
+    default:
+      throw new Error("Historial clínico desconocido");
+  }
+}
+
+const clinicalReadOptions = { isolationLevel: "RepeatableRead" };
+
+// Resolver el vínculo y leer su primera página en la misma instantánea.
 export async function findCustomerClinicalOverview(accountId, now = new Date(), dependencies = {}) {
   const database = dependencies.client ?? prisma;
   if (!dependencies.client) await synchronizeAccountClinicalLinks(accountId);
-  const account = await findCustomerClinicalContext(accountId, database);
-  const dependant = dependencies.dependantId ? await findAccountDependant(accountId, dependencies.dependantId, database) : null;
-  const patientId = dependencies.dependantId ? dependant?.patient_id : account?.clinical_link_recheck_required ? null : account?.customers?.patient_id;
-  const patient = patientId ? await database.patients.findFirst({ select: { first_names: true, last_names: true, rut: true }, where: { id: patientId, ...verifiedPatientForAccount(accountId) } }) : null;
-  if (!patientId || !patient) return { linked: false, patient: null, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] } };
+  return database.$transaction(async (client) => {
+    const patient = await findScopedPatient(client, accountId, dependencies.dependantId);
+    const [upcoming, active] = patient ? await Promise.all([
+      readClinicalPage(client, patient.id, now, "upcoming", {}),
+      readClinicalPage(client, patient.id, now, "active-prescriptions", {}),
+    ]) : [accountPage(), accountPage()];
+    return {
+      linked: Boolean(patient), patient: publicPatient(patient),
+      upcomingAppointments: upcoming.items, upcomingPage: accountPageInfo(upcoming),
+      prescriptions: { active: active.items, activePage: accountPageInfo(active) },
+    };
+  }, clinicalReadOptions);
+}
 
-  const [appointments, prescriptions] = await Promise.all([
-    database.appointments.findMany({
-      orderBy: [{ start_at: "asc" }, { id: "asc" }],
-      select: { end_at: true, id: true, professional_id: true, professional_profiles: { select: { [professionalUser]: { select: { first_name: true, last_name: true } } } }, start_at: true, status: true },
-      where: { patient_id: patientId },
-    }),
-    database.optical_prescriptions.findMany({
-      orderBy: [{ issued_at: "desc" }, { version: "desc" }],
-      select: prescriptionSelect,
-      where: { status: { in: ["ACTIVE", "VOIDED"] }, clinical_encounters: { patient_id: patientId, status: "FINALIZED" } },
-    }),
-  ]);
-
-  const publicAppointments = appointments.map((appointment) => ({
-    ...mapCustomerClinicalAppointment(appointment),
-    id: appointment.id,
-    professionalId: appointment.professional_id,
-    changeUntil: appointment.status === "CONFIRMED" ? customerAppointmentChangeDeadline(appointment.start_at) : null,
-  }));
-  const publicPrescriptions = prescriptions.map(mapCustomerClinicalPrescription);
-  const encounters = dependencies.dependantId ? await database.clinical_encounters.findMany({
-    where: { patient_id: patientId, status: "FINALIZED" }, take: 50, orderBy: [{ finalized_at: "desc" }, { id: "desc" }],
-    select: { id: true, encounter_type: true, encounter_date: true, finalized_at: true, reason_for_visit: true },
-  }) : [];
-  return {
-    encounters: encounters.map((item) => ({ id: item.id, type: item.encounter_type, date: item.encounter_date ?? item.finalized_at, reason: item.reason_for_visit })),
-    appointmentHistory: publicAppointments.filter((item) => item.startAt < now || item.status === "CANCELLED"),
-    linked: true,
-    patient: publicPatient(patient),
-    prescriptions: {
-      active: publicPrescriptions.filter((item) => item.status === "ACTIVE"),
-      history: publicPrescriptions.filter((item) => item.status !== "ACTIVE"),
-    },
-    upcomingAppointments: publicAppointments.filter((item) => item.startAt >= now && item.status !== "CANCELLED"),
-  };
+export async function findCustomerClinicalPage(accountId, { dependantId, now, pagination, status, type }) {
+  return prisma.$transaction(async (client) => {
+    const patient = await findScopedPatient(client, accountId, dependantId);
+    if (!patient || (type === "encounters" && !dependantId)) return accountPage([], { pageSize: pagination.pageSize });
+    return readClinicalPage(client, patient.id, now, type, pagination, status);
+  }, clinicalReadOptions);
 }

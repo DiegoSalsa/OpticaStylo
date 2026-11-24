@@ -82,7 +82,11 @@ test("Menores a mi cargo mantiene separados los datos y las recetas del adulto",
   }]));
   await page.route("**/api/store/accounts/me/clinical?dependantId=" + dependantId, (route) => ok(route, {
     linked: true, patient: { firstNames: "Hijo", lastNames: "Sintético" }, upcomingAppointments: [], appointmentHistory: [], prescriptions: { active: [], history: [] },
-    encounters: [{ id: "atencion", date: "2026-11-10", type: "OPTOMETRY", reason: "Control visual del menor" }],
+  }));
+  await page.route((url) => url.pathname === "/api/store/accounts/me/clinical/records"
+    && url.searchParams.get("type") === "encounters" && url.searchParams.get("dependantId") === dependantId, (route) => ok(route, {
+    items: [{ id: "atencion", date: "2026-11-10", type: "OPTOMETRY", reason: "Control visual del menor" }],
+    page: 1, pageSize: 20, total: 1, totalPages: 1,
   }));
   await page.goto("/cuenta?seccion=menores");
   await page.getByRole("link", { name: "Ver datos, recetas y atenciones", exact: true }).click();

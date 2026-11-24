@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { rememberClinicalPrescription } from "@/utils/store-cart-draft";
 import { ensureStoreCart } from "@/utils/store-client";
+import { AccountPagination, clinicalRecordsUrl, previewPage, useAccountPage } from "./account-pagination";
 
 const labels = { REPLACED: "Reemplazada", VOIDED: "Anulada" };
 const date = (value) => new Date(value).toLocaleDateString("es-CL", { timeZone: "America/Santiago" });
@@ -14,11 +15,15 @@ function EyeValues({ label, eye }) {
   return <small>{label} · Esfera {value(eye.sphere)} · Cilindro {value(eye.cylinder)} · Eje {value(eye.axis)} · Adición {value(eye.addition)}</small>;
 }
 
-export default function AccountPrescriptions({ accountId, prescriptions, standalone, title = "Recetas de la óptica" }) {
+export default function AccountPrescriptions({ accountId, prescriptions, standalone, title = "Recetas de la óptica", dependantId, onExpired }) {
   const router = useRouter();
   const pending = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const active = useAccountPage(clinicalRecordsUrl("active-prescriptions", dependantId), {
+    initialPage: previewPage(prescriptions.active, prescriptions.activePage), onExpired,
+  });
+  const history = useAccountPage(clinicalRecordsUrl("prescription-history", dependantId), { onExpired });
 
   async function chooseRecipeForCart(prescriptionId) {
     if (pending.current) return;
@@ -38,10 +43,9 @@ export default function AccountPrescriptions({ accountId, prescriptions, standal
   }
   return <section id="recetas">
     {standalone ? <h2>{title}</h2> : <h3>{title}</h3>}
-    {prescriptions.active.length === 0
-      ? <><p className="clinical-empty">No tienes recetas vigentes disponibles.</p>
-        <Link href="/cuenta?seccion=reservar">Reservar evaluación</Link></>
-      : prescriptions.active.map((prescription) => (
+    {active.status === "ready" && !active.total && <><p className="clinical-empty">No tienes recetas vigentes disponibles.</p>
+      <Link href="/cuenta?seccion=reservar">Reservar evaluación</Link></>}
+    {active.items.map((prescription) => (
         <details className="prescription-row" key={prescription.id ?? prescription.issuedAt}>
           <summary>Receta vigente · {date(prescription.issuedAt)}</summary>
           <div className="account-card-actions">
@@ -55,13 +59,14 @@ export default function AccountPrescriptions({ accountId, prescriptions, standal
           {prescription.fulfillmentNotes && <small>Preparación: {prescription.fulfillmentNotes}</small>}
         </details>
       ))}
+    <AccountPagination list={active} label="recetas vigentes" />
     {error && <p className="inline-error" role="alert">{error}</p>}
-    {prescriptions.history.length > 0 && <>
-      <h4>Versiones anteriores</h4>
-      {prescriptions.history.map((prescription) => <article className="prescription-row" key={prescription.id ?? (prescription.issuedAt + prescription.status)}>
-        <strong>{labels[prescription.status] ?? "Anulada"} · {date(prescription.issuedAt)}</strong>
-        {prescription.professional && <span>Por {prescription.professional.firstName} {prescription.professional.lastName}</span>}
-      </article>)}
-    </>}
+    <h4>Versiones anteriores</h4>
+    {history.status === "ready" && !history.total && <p className="clinical-empty">No hay versiones anteriores registradas.</p>}
+    {history.items.map((prescription) => <article className="prescription-row" key={prescription.id}>
+      <strong>{labels[prescription.status] ?? "Anulada"} · {date(prescription.issuedAt)}</strong>
+      {prescription.professional && <span>Por {prescription.professional.firstName} {prescription.professional.lastName}</span>}
+    </article>)}
+    <AccountPagination list={history} label="versiones anteriores" />
   </section>;
 }

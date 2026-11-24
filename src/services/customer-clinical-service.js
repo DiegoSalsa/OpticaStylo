@@ -1,6 +1,7 @@
 import {
   createCustomerPatientOtpChallenge,
   findCustomerClinicalOverview,
+  findCustomerClinicalPage,
   verifyCustomerPatientOtpChallenge,
 } from "../repositories/customer-clinical-repository.js";
 import { getTransactionalEmailConfig } from "../config/transactional-email.js";
@@ -11,6 +12,8 @@ import {
   validateCustomerPatientOtpInput,
 } from "../validations/customer-clinical-validation.js";
 import { validateExternalPrescriptionId } from "../validations/store-validation.js";
+import { validateAccountPage } from "../validations/account-pagination.js";
+import { APPOINTMENT_STATUSES } from "../validations/appointment-validation.js";
 
 const GENERIC_LINK_MESSAGE = "No fue posible verificar un registro de paciente con los datos proporcionados.";
 
@@ -80,6 +83,21 @@ export async function getCustomerClinicalOverview(account, dependencies = {}) {
   return (dependencies.findOverview ?? findCustomerClinicalOverview)(accountId(account), dependencies.now?.() ?? new Date(), {
     ...dependencies.repositoryDependencies, ...(dependantId && { dependantId }),
   });
+}
+
+const clinicalRecordTypes = ["upcoming", "appointment-history", "active-prescriptions", "prescription-history", "encounters"];
+
+export async function getCustomerClinicalPage(account, query) {
+  const owner = accountId(account);
+  const type = query.get("type");
+  const status = query.get("status");
+  const dependant = query.get("dependantId");
+  const dependantId = dependant === null ? null : validateExternalPrescriptionId(dependant);
+  if (!clinicalRecordTypes.includes(type) || (type === "encounters" && !dependantId)
+    || (status && (type !== "appointment-history" || !APPOINTMENT_STATUSES.includes(status)))) {
+    throw new AppError({ code: "INVALID_CLINICAL_HISTORY", message: "El tipo de historial o filtro no es válido.", status: 400 });
+  }
+  return findCustomerClinicalPage(owner, { dependantId, now: new Date(), pagination: validateAccountPage(query), status, type });
 }
 
 // Verificar identidad y generar un desafío sin aceptar correo receptor ni patientId desde el navegador.

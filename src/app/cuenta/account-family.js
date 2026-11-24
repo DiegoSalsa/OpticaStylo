@@ -10,6 +10,7 @@ import AccountAppointments from "./account-appointments";
 import AccountPrescriptions from "./account-prescriptions";
 import AccountSavedPrescriptions from "./account-saved-prescriptions";
 import AccountClinicalLink from "./account-clinical-link";
+import { AccountPagination, clinicalRecordsUrl, useAccountPage } from "./account-pagination";
 
 const endpoint = "/api/store/accounts/me/dependants";
 const familyHref = "/cuenta?seccion=menores";
@@ -19,14 +20,18 @@ function DependantHistory({ account, dependant, onExpired }) {
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [verify, setVerify] = useState(false);
+  const encounters = useAccountPage(clinicalRecordsUrl("encounters", dependant.id), {
+    enabled: Boolean(dependant.isMinor && clinical?.linked), onExpired,
+  });
   const reload = () => setAttempt((current) => current + 1);
   useEffect(() => {
+    if (!dependant.isMinor) return;
     const controller = new AbortController();
     fetch("/api/store/accounts/me/clinical?dependantId=" + dependant.id, { cache: "no-store", signal: controller.signal })
       .then(readStoreResponse).then((data) => { if (!controller.signal.aborted) setClinical(data); })
       .catch((failure) => { if (!controller.signal.aborted) setError(failure.message); });
     return () => controller.abort();
-  }, [dependant.id, attempt]);
+  }, [dependant.id, dependant.isMinor, attempt]);
   if (!dependant.isMinor) return <p>Al cumplir 18 años, esta persona debe gestionar sus atenciones desde su propia cuenta.</p>;
   return <section className="account-card">
     <h2>Atenciones y recetas de la óptica</h2>
@@ -38,14 +43,16 @@ function DependantHistory({ account, dependant, onExpired }) {
       {verify && <AccountClinicalLink dependantId={dependant.id} onLinked={reload} onExpired={onExpired} />}
     </>}
     {clinical?.linked && <>
-      <AccountAppointments clinical={clinical} standalone reload={reload} />
-      <AccountPrescriptions accountId={account.id} prescriptions={clinical.prescriptions} standalone />
+      <AccountAppointments clinical={clinical} standalone reload={reload} dependantId={dependant.id} onExpired={onExpired} />
+      <AccountPrescriptions accountId={account.id} prescriptions={clinical.prescriptions} standalone dependantId={dependant.id} onExpired={onExpired} />
       <h3>Historial de atenciones</h3>
-      {clinical.encounters?.length ? clinical.encounters.map((item) => <article className="prescription-row" key={item.id}>
+      {encounters.items.map((item) => <article className="prescription-row" key={item.id}>
         <strong>{item.type === "CONTACTOLOGY" ? "Contactología" : item.type === "OPTOMETRY" ? "Optometría" : "Atención clínica"}</strong>
         <span>{new Date(item.date).toLocaleDateString("es-CL", { timeZone: "UTC" })}</span>
         <p>{item.reason}</p>
-      </article>) : <p>Todavía no hay atenciones finalizadas registradas.</p>}
+      </article>)}
+      {encounters.status === "ready" && !encounters.total && <p>Todavía no hay atenciones finalizadas registradas.</p>}
+      <AccountPagination list={encounters} label="atenciones del menor" />
     </>}
   </section>;
 }

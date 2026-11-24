@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { readStoreResponse } from "@/utils/store-client";
+import { AccountPagination, clinicalRecordsUrl, previewPage, useAccountPage } from "./account-pagination";
 
 const zone = "America/Santiago";
 const dateTime = (value) => new Date(value).toLocaleString("es-CL", { dateStyle: "medium", timeStyle: "short", timeZone: zone });
@@ -111,10 +112,16 @@ function AppointmentCard({ appointment, onChanged }) {
   </details>;
 }
 
-export default function AccountAppointments({ clinical, standalone, reload }) {
+export default function AccountAppointments({ clinical, standalone, reload, dependantId, onExpired }) {
   const [notice, setNotice] = useState("");
+  const upcoming = useAccountPage(clinicalRecordsUrl("upcoming", dependantId), {
+    initialPage: previewPage(clinical.upcomingAppointments, clinical.upcomingPage), onExpired,
+  });
+  const history = useAccountPage(clinicalRecordsUrl("appointment-history", dependantId), { onExpired });
   const onChanged = async (message) => {
     setNotice(message);
+    upcoming.reload();
+    history.reload();
     await reload();
   };
   return <section id="horas">
@@ -122,12 +129,23 @@ export default function AccountAppointments({ clinical, standalone, reload }) {
     <Link className="button button--secondary" href="/cuenta?seccion=reservar">Agendar una hora</Link>
     {notice && <p role="status">{notice}</p>}
     <h4>Próximas horas</h4>
-    {clinical.upcomingAppointments.length ? clinical.upcomingAppointments.map((appointment) =>
+    {upcoming.items.map((appointment) =>
       <AppointmentCard appointment={appointment} key={appointment.id + appointment.startAt} onChanged={onChanged} />
-    ) : <p className="clinical-empty">No tienes próximas horas agendadas.</p>}
+    )}
+    {upcoming.status === "ready" && !upcoming.total && <p className="clinical-empty">No tienes próximas horas agendadas.</p>}
+    <AccountPagination list={upcoming} label="próximas horas" />
     <h4>Historial</h4>
-    {clinical.appointmentHistory.length ? [...clinical.appointmentHistory].reverse().map((appointment) =>
+    <label className="field">
+      <span>Estado de las citas anteriores</span>
+      <select value={history.filters.status ?? ""} onChange={(event) => history.setFilters({ status: event.target.value })}>
+        <option value="">Todos los estados</option>
+        {Object.entries(labels).map(([status, label]) => <option key={status} value={status}>{label}</option>)}
+      </select>
+    </label>
+    {history.items.map((appointment) =>
       <AppointmentCard appointment={appointment} key={appointment.id} onChanged={onChanged} />
-    ) : <p className="clinical-empty">Aún no tienes atenciones anteriores.</p>}
+    )}
+    {history.status === "ready" && !history.total && <p className="clinical-empty">No hay citas anteriores para esta consulta.</p>}
+    <AccountPagination list={history} label="citas anteriores" />
   </section>;
 }
