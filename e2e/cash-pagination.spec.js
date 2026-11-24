@@ -199,3 +199,67 @@ test("Paginación de Caja permite revertir un retiro antiguo con trazabilidad", 
   const summary = await data(await page.request.get(prefix(sample.busy) + "?view=summary"));
   expect(summary.expectedAmountCents).toBe(sample.expected.expectedAmountCents + sample.oldWithdrawal.amount_cents);
 });
+
+test("Paginación de Caja enumera el historial completo y restringe el consolidado", async ({ page }) => {
+  await login(page);
+  const url = "/api/cash-register?history=true&branchId=" + sample.main.id;
+  const ordered = [];
+  for (let index = 1; index <= 3; index += 1) {
+    const sessions = await data(await page.request.get(url + "&page=" + index));
+    expect(sessions).toMatchObject({ total: 62, totalPages: 3, pageSize: 30, page: index });
+    expect(sessions.items).toHaveLength(index === 3 ? 2 : 30);
+    ordered.push(...sessions.items.map((session) => session.id));
+  }
+  expect(ordered).toEqual([
+    ...sample.history.map((row) => row.id).sort().reverse(),
+    ...[sample.busy.id, sample.own.id].sort().reverse(),
+  ]);
+  expect(new Set(ordered).size).toBe(62);
+  const full = await data(await page.request.get(url + "&page=999&pageSize=31"));
+  expect(full).toMatchObject({ page: 2, total: 62, totalPages: 2 });
+  expect(full.items).toHaveLength(31);
+  expect((await page.request.get(url + "&pageSize=101")).status()).toBe(400);
+  const remote = await data(await page.request.get("/api/cash-register?history=true&branchId=" + sample.remote.id));
+  expect(remote.items.map((row) => row.id)).toEqual([sample.other.id]);
+  const consolidated = await data(await page.request.get("/api/cash-register?history=true&consolidated=true"));
+  expect(consolidated.total).toBeGreaterThan(62);
+
+  await page.context().clearCookies();
+  await login(page, "ventas");
+  const own = await data(await page.request.get(url));
+  expect(own.items.map((row) => row.id)).toEqual([sample.own.id]);
+  expect(own.total).toBe(1);
+  expect((await page.request.get("/api/cash-register?history=true&consolidated=true")).status()).toBe(403);
+  expect((await page.request.get("/api/cash-register?history=true&branchId=" + sample.remote.id)).status()).toBe(403);
+});
+
+test("Paginación de Caja reintenta el historial y abre un cierre de la última página", async ({ page }) => {
+  await login(page);
+  const local = await seedCashPagination();
+  await data(await page.request.post(prefix(local.busy) + "/close?view=summary", {
+    data: { closingCountedCents: local.expected.expectedAmountCents, closingNotes: "Saldo pendiente de la sesión archivada" },
+  }));
+  await page.goto("/app/ventas");
+  await page.getByRole("combobox", { name: "Sucursal de la venta", exact: true }).selectOption(local.main.id);
+  const cash = cashPanel(page);
+  const history = cash.getByRole("region", { name: "Historial de sesiones de caja" });
+  await page.route((url) => url.pathname === "/api/cash-register" && url.searchParams.get("history") === "true"
+    && url.searchParams.get("branchId") === local.main.id, (route) => route.fulfill({
+    status: 503, json: { success: false, error: { message: "Historial temporalmente indisponible" } },
+  }), { times: 1 });
+  await cash.getByText("Historial de aperturas y cierres", { exact: true }).click();
+  await expect(history.getByRole("alert")).toContainText("Historial temporalmente indisponible");
+  await history.getByRole("button", { name: "Reintentar" }).click();
+  const nav = paging(history, "sesiones de caja");
+  await nav.getByRole("button", { name: "Página 4", exact: true }).click();
+  await expect(history.getByText("Mostrando 61–62 de 62")).toBeVisible();
+  await expect(nav.getByRole("button", { name: "Siguiente", exact: true })).toBeDisabled();
+  await history.getByRole("button", { name: "Ver cierre", exact: true }).click();
+  await expect(cash.getByText("Cierre guardado", { exact: false })).toBeVisible();
+  await cash.getByText("Movimientos y pagos de esta sesión", { exact: true }).click();
+  const payments = cash.getByRole("region", { name: "Libro de pagos" });
+  await paging(payments, "pagos de caja").getByRole("button", { name: "Página 6", exact: true }).click();
+  await expect(payments.getByText("Mostrando 101–120 de 120")).toBeVisible();
+  await expect(cash.getByText("60 ventas con cobros", { exact: false })).toBeVisible();
+  await expect(cash.getByRole("button", { name: "Confirmar reverso" })).toHaveCount(0);
+});

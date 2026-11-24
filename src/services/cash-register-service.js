@@ -4,8 +4,9 @@ import { inventoryBranchAccess, assertBranch } from "../repositories/inventory-r
 import {
   cashError, cashReadSnapshot, cashSessionAccess, closeCashRegister as closeRepository,
   createCashRegisterMovement, findCashSession, findOpenCashRegisterSession, getCashMovementPage,
-  getCashPaymentPage, openCashRegister as openRepository,
+  getCashPaymentPage, openCashRegister as openRepository, readCashPage,
 } from "../repositories/cash-register-repository.js";
+import { cashInteger } from "../repositories/cash-register-summary.js";
 import {
   validateCashPage, validateCashRegisterClosingInput, validateCashRegisterId as id,
   validateCashRegisterMovementInput, validateCashRegisterOpeningInput,
@@ -25,17 +26,49 @@ export async function createCashTerminal(input,actor) {
   try{return await prisma.cash_register_terminals.create({data:{branch_id:branchId,name},select:{id:true,name:true}});}
   catch(error){if(error.code==="P2002")cashError("CASH_TERMINAL_EXISTS","Ya existe un punto de cobro con ese nombre en la sucursal.");throw error;}
 }
-export async function getOpenCashRegister(query,actor) {
-  requirePermissions(actor,["cash.read"]);
-  if(query.get("history")==="true") {
-    const consolidated=query.get("consolidated")==="true";
-    if(consolidated) requirePermissions(actor,["cash.manage_all"]);
-    const branchId=consolidated?null:id(query.get("branchId")); if(branchId) await inventoryBranchAccess(actor,branchId);
-    const page=Number(query.get("page")??1); if(!Number.isSafeInteger(page)||page<1||page>100000) cashError("INVALID_CASH_PAGE","La página no es válida.",400);
-    const where={...(branchId?{branch_id:branchId}:{}),...(!actor.permissions.includes("cash.manage_all")?{opened_by:actor.userId}:{})};
-    const rows=await prisma.cash_register_sessions.findMany({where,select:{id:true,status:true,opened_at:true,closed_at:true,opening_amount_cents:true,expected_amount_cents:true,closing_counted_cents:true,difference_cents:true,branches:{select:{name:true}},cash_register_terminals:{select:{name:true}},users_cash_register_sessions_opened_byTousers:{select:{first_name:true,last_name:true}}},orderBy:[{opened_at:"desc"},{id:"desc"}],skip:(page-1)*30,take:30});
-    return rows.map((r)=>({id:r.id,status:r.status,openedAt:r.opened_at,closedAt:r.closed_at,branch:r.branches?.name??"Histórica sin atribuir",terminal:r.cash_register_terminals?.name??"Sin caja asignada",responsible:`${r.users_cash_register_sessions_opened_byTousers.first_name} ${r.users_cash_register_sessions_opened_byTousers.last_name}`,openingAmountCents:Number(r.opening_amount_cents),expectedAmountCents:r.expected_amount_cents==null?null:Number(r.expected_amount_cents),countedCents:r.closing_counted_cents==null?null:Number(r.closing_counted_cents),differenceCents:r.difference_cents==null?null:Number(r.difference_cents)}));
-  }
+async function getCashHistory(query, actor) {
+  const consolidated = query.get("consolidated") === "true";
+  if (consolidated) requirePermissions(actor, ["cash.manage_all"]);
+  const branchId = consolidated ? null : id(query.get("branchId"));
+  const pagination = validateCashPage(query, 30);
+
+  return prisma.$transaction(async (client) => {
+    if (branchId) await inventoryBranchAccess(actor, branchId, client);
+    const result = await readCashPage(client.cash_register_sessions, pagination, {
+      where: {
+        ...(branchId ? { branch_id: branchId } : {}),
+        ...(!actor.permissions.includes("cash.manage_all") ? { opened_by: actor.userId } : {}),
+      },
+      select: {
+        id: true, status: true, branch_id: true, opened_at: true, closed_at: true,
+        opening_amount_cents: true, expected_amount_cents: true, closing_counted_cents: true, difference_cents: true,
+        branches: { select: { name: true } }, cash_register_terminals: { select: { name: true } },
+        users_cash_register_sessions_opened_byTousers: { select: { first_name: true, last_name: true } },
+      },
+      orderBy: [{ opened_at: "desc" }, { id: "desc" }],
+    });
+    return {
+      ...result,
+      items: result.items.map((row) => {
+        const user = row.users_cash_register_sessions_opened_byTousers;
+        return {
+          id: row.id, status: row.status, branchId: row.branch_id, openedAt: row.opened_at, closedAt: row.closed_at,
+          branch: row.branches?.name ?? "Histórica sin atribuir", terminal: row.cash_register_terminals?.name ?? "Sin caja asignada",
+          responsible: user.first_name + " " + user.last_name,
+          openingAmountCents: cashInteger(row.opening_amount_cents),
+          expectedAmountCents: row.expected_amount_cents == null ? null : cashInteger(row.expected_amount_cents),
+          countedCents: row.closing_counted_cents == null ? null : cashInteger(row.closing_counted_cents),
+          differenceCents: row.difference_cents == null ? null : cashInteger(row.difference_cents),
+        };
+      }),
+    };
+  }, cashReadSnapshot);
+}
+
+export async function getOpenCashRegister(query, actor) {
+  requirePermissions(actor, ["cash.read"]);
+  if (query.get("history") === "true") return getCashHistory(query, actor);
+
   const terminalId=query.get("terminalId"); if(!terminalId) return null;
   const terminal=await prisma.cash_register_terminals.findUnique({where:{id:id(terminalId)}});
   if(!terminal) cashError("CASH_TERMINAL_NOT_FOUND","No se encontró el punto de cobro.",404);

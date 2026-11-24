@@ -1,13 +1,14 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readResponse, useInternalActor } from "@/components/internal/internal-shell";
 import { MONEY_FORMATTER as money, PAYMENT_METHODS } from "./pos-form-model";
 import CashRegisterLedgers, { CASH_MOVEMENT_LABELS } from "./cash-register-ledgers";
+import CashRegisterHistory from "./cash-register-history";
 export default function CashRegisterPanel({branchId,onChange,revision=0}) {
   const actor=useInternalActor();
   const [terminals,setTerminals]=useState([]),[terminalId,setTerminalId]=useState("");
-  const [session,setSession]=useState(null),[historical,setHistorical]=useState(null),[history,setHistory]=useState([]);
-  const [historyPage,setHistoryPage]=useState(1),[consolidated,setConsolidated]=useState(false);
+  const [session,setSession]=useState(null),[historical,setHistorical]=useState(null);
+  const historyRequest=useRef(null);
   const [error,setError]=useState(""),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false),[counter,setCounter]=useState(0);
   const [ledgerRevision,setLedgerRevision]=useState(0);
   const [counted,setCounted]=useState(""); const pending=useRef(false),keys=useRef(new Map());
@@ -24,30 +25,46 @@ export default function CashRegisterPanel({branchId,onChange,revision=0}) {
     fetch(`/api/cash-register?terminalId=${terminalId}&view=summary`,{cache:"no-store",signal:controller.signal}).then(readResponse).then((row)=>{if(!controller.signal.aborted){setSession(row);onChange?.(row);}}).catch((e)=>{if(!controller.signal.aborted)setError(e.message);});
     return()=>controller.abort();
   },[terminalId,onChange,revision,counter]);
-  const loadHistory=useCallback(async(signal)=>{
-    if(!branchId)return;
-    const rows=await readResponse(await fetch(`/api/cash-register?history=true&${consolidated?"consolidated=true":`branchId=${branchId}`}&page=${historyPage}`,{cache:"no-store",signal})); if(!signal?.aborted)setHistory(rows);
-  },[branchId,historyPage,consolidated]);
-  useEffect(()=>{const controller=new AbortController(); const timer=setTimeout(()=>{if(branchId)loadHistory(controller.signal).catch((e)=>{if(!controller.signal.aborted)setError(e.message);});},0); return()=>{clearTimeout(timer);controller.abort();};},[loadHistory,branchId,counter,revision]);
+  useEffect(() => () => historyRequest.current?.abort(), []);
+
+  async function showHistorical(sessionId) {
+    historyRequest.current?.abort();
+    const controller = new AbortController();
+    historyRequest.current = controller;
+    setError("");
+    try {
+      const response = await fetch(`/api/cash-register/${sessionId}?view=summary`, { cache: "no-store", signal: controller.signal });
+      const row = await readResponse(response);
+      if (!controller.signal.aborted) setHistorical(row);
+    } catch (failure) {
+      if (!controller.signal.aborted) setError(failure.message);
+    }
+  }
+
+  function clearHistorical() {
+    historyRequest.current?.abort();
+    setHistorical(null);
+  }
   async function request(url,body,message) {
     if(pending.current)return;pending.current=true;setBusy(true);setError("");setNotice("");
     const identity=`${url}:${JSON.stringify(body)}`;if(!keys.current.has(identity))keys.current.set(identity,crypto.randomUUID());
     try {
+      historyRequest.current?.abort();
       const target=url.endsWith("/terminals")?url:`${url}?view=summary`;
       const row=await readResponse(await fetch(target,{method:"POST",headers:{"Content-Type":"application/json","X-Idempotency-Key":keys.current.get(identity)},body:JSON.stringify(body)}));
       keys.current.delete(identity);setNotice(message);
       if(url.endsWith("/terminals")){setCounter((v)=>v+1);return row;}
       if(row.status==="CLOSED"){setHistorical(row);setSession(null);onChange?.(null);}else{setHistorical(null);setSession(row);onChange?.(row);}
       setLedgerRevision((value)=>value+1);
-      await loadHistory();return row;
+      return row;
     } catch(e){setError(e.message);return null;} finally{pending.current=false;setBusy(false);}
   }
   const current=historical??session, selected=terminals.find((t)=>t.id===terminalId);
   return <section className="app-card cash-register-panel" aria-labelledby="cash-register-title">
-    <div className="cash-register-heading"><div><p className="eyebrow">Caja · {current?.status==="CLOSED"?"Cierre guardado":session?"Abierta":"Sin sesión abierta"}</p><h2 id="cash-register-title">Caja de la sucursal</h2><p>{session?`${session.terminal.name} · Responsable: ${session.openedBy.name} · ${new Date(session.openedAt).toLocaleString("es-CL")}`:"Selecciona el punto de cobro para abrir o consultar tu sesión."}</p></div><button className="text-button" disabled={busy} type="button" onClick={()=>{setHistorical(null);setCounter((v)=>v+1);}}>Actualizar caja</button></div>
+    <div className="cash-register-heading"><div><p className="eyebrow">Caja · {current?.status==="CLOSED"?"Cierre guardado":session?"Abierta":"Sin sesión abierta"}</p><h2 id="cash-register-title">Caja de la sucursal</h2><p>{session?`${session.terminal.name} · Responsable: ${session.openedBy.name} · ${new Date(session.openedAt).toLocaleString("es-CL")}`:"Selecciona el punto de cobro para abrir o consultar tu sesión."}</p></div><button className="text-button" disabled={busy} type="button" onClick={()=>{clearHistorical();setCounter((v)=>v+1);}}>Actualizar caja</button></div>
     {error&&<p className="inline-error" role="alert">{error}</p>}{notice&&<p className="inline-success" role="status">{notice}</p>}
     {!branchId?<p>Selecciona primero la sucursal de la venta.</p>:<>
-      <label className="field"><span>Punto de cobro</span><select value={terminalId} disabled={busy} onChange={(e)=>{setTerminalId(e.target.value);setSession(null);onChange?.(null);setHistorical(null);setError("");}}><option value="">Selecciona una caja</option>{terminals.map((t)=><option key={t.id} value={t.id}>{t.name}{t.occupied?` · Abierta por ${t.responsible}`:" · Disponible"}</option>)}</select></label>
+      <label className="field"><span>Punto de cobro</span><select value={terminalId} disabled={busy} onChange={(e)=>{setTerminalId(e.target.value);setSession(null);onChange?.(null);clearHistorical();setError("");}}><option value="">Selecciona una caja</option>{terminals.map((t)=><option key={t.id} value={t.id}>{t.name}{t.occupied?` · Abierta por ${t.responsible}`:" · Disponible"}</option>)}</select></label>
       {canManage&&<details className="cash-section"><summary>Agregar punto de cobro</summary><form className="cash-register-form" onSubmit={async(e)=>{e.preventDefault();const form=e.currentTarget;const row=await request("/api/cash-register/terminals",{branchId,name:new FormData(form).get("name")},"Punto de cobro creado.");if(row)form.reset();}}><label className="field"><span>Nombre del punto de cobro</span><input name="name" required maxLength={100}/></label><button className="app-button" disabled={busy}>Crear punto de cobro</button></form></details>}
       {!current&&terminalId&&canOperate&&(!selected?.occupied||selected?.own||canManage)&&<form className="cash-register-form" onSubmit={(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);request("/api/cash-register",{branchId,terminalId,openingAmountCents:Number(f.get("openingAmountCents")),openingNotes:f.get("openingNotes")||null},"Caja abierta y asociada a la sucursal.");}}><label className="field"><span>Fondo inicial de efectivo</span><input type="number" name="openingAmountCents" required min={0} max={1000000000}/></label><label className="field"><span>Observación de apertura</span><input name="openingNotes" maxLength={500}/></label><button className="app-button app-button--primary" disabled={busy}>Abrir caja</button></form>}
       {current&&<div className="cash-register-content">
@@ -56,7 +73,7 @@ export default function CashRegisterPanel({branchId,onChange,revision=0}) {
         <p>{current.saleCount} ventas con cobros · {current.paymentCount} pagos registrados. Los medios electrónicos no aumentan el efectivo esperado.</p>
         {Object.entries(current.byMethod).map(([method,amount])=><span className="status-chip" key={method}>{PAYMENT_METHODS.find(([m])=>m===method)?.[1]??method}: {money.format(amount)}</span>)}
         {current.pending.length>0&&<p className="inline-error">{current.pending.length} ventas conservan saldo pendiente: {current.pending.map((p)=>`N.º ${p.saleNumber} (${money.format(p.balanceCents)})`).join(", ")}. El cierre exige una observación; estos saldos no se contabilizan como cobros.</p>}
-        {current.status==="CLOSED"?<div className="cash-register-closed"><p>Caja cerrada · Contado: {money.format(current.closingCountedCents)} · Diferencia: {money.format(current.differenceCents)} · Cierre por {current.closedBy}.</p><p>{current.closingNotes}</p><button className="app-button" type="button" onClick={()=>{setHistorical(null);setCounter((v)=>v+1);}}>Volver a la caja actual</button></div>:canOperate&&<>
+        {current.status==="CLOSED"?<div className="cash-register-closed"><p>Caja cerrada · Contado: {money.format(current.closingCountedCents)} · Diferencia: {money.format(current.differenceCents)} · Cierre por {current.closedBy}.</p><p>{current.closingNotes}</p><button className="app-button" type="button" onClick={()=>{clearHistorical();setCounter((v)=>v+1);}}>Volver a la caja actual</button></div>:canOperate&&<>
           <details className="cash-section"><summary>Ingreso, egreso o retiro de efectivo</summary><form className="cash-register-form" onSubmit={async(e)=>{e.preventDefault();const form=e.currentTarget,f=new FormData(form);const result=await request(`/api/cash-register/${session.id}/movements`,{movementType:f.get("movementType"),amountCents:Number(f.get("amountCents")),reason:f.get("reason")},"Movimiento registrado.");if(result)form.reset();}}><label className="field"><span>Movimiento</span><select name="movementType">{Object.entries(CASH_MOVEMENT_LABELS).filter(([type])=>["MANUAL_IN","MANUAL_OUT","WITHDRAWAL"].includes(type)).map(([type,label])=><option key={type} value={type}>{label}</option>)}</select></label><label className="field"><span>Monto del movimiento</span><input type="number" name="amountCents" min={1} max={1000000000} required/></label><label className="field"><span>Motivo del movimiento</span><input name="reason" required maxLength={500}/></label><button className="app-button" disabled={busy}>Registrar movimiento</button></form></details>
           <details className="cash-section"><summary>Cerrar y arquear caja</summary><form className="cash-register-form cash-register-close" onSubmit={(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);request(`/api/cash-register/${session.id}/close`,{closingCountedCents:Number(counted),closingNotes:f.get("closingNotes")||null},"Cierre guardado. La sesión quedó bloqueada.");}}><label className="field"><span>Efectivo contado al cierre</span><input aria-label="Efectivo contado al cierre" type="number" required min={0} max={1000000000} value={counted} onChange={(e)=>setCounted(e.target.value)}/><small>Diferencia: {money.format(Number(counted||0)-current.expectedAmountCents)}</small></label><label className="field"><span>Observación de cierre</span><input name="closingNotes" maxLength={500} required={(counted!==""&&Number(counted)!==current.expectedAmountCents)||current.pending.length>0}/></label><button className="app-button app-button--primary" disabled={busy}>Confirmar cierre de caja</button></form></details>
         </>}
@@ -66,7 +83,8 @@ export default function CashRegisterPanel({branchId,onChange,revision=0}) {
           onReverse={(reversalOf,reason)=>request(`/api/cash-register/${current.id}/movements`,{movementType:"REVERSAL",reversalOf,reason},"Reverso registrado con trazabilidad.")}
         />
       </div>}
-      <details className="cash-section"><summary>Historial de aperturas y cierres</summary>{canManage&&<label><input type="checkbox" checked={consolidated} onChange={(e)=>{setConsolidated(e.target.checked);setHistoryPage(1);}}/>Consultar todas las sucursales</label>}<div className="cash-ledger"><table><thead><tr><th>Apertura / sucursal</th><th>Caja / responsable</th><th>Estado</th><th>Esperado / contado</th><th>Diferencia</th><th>Detalle</th></tr></thead><tbody>{history.map((row)=><tr key={row.id}><td>{new Date(row.openedAt).toLocaleString("es-CL")}<small>{row.branch}</small></td><td>{row.terminal}<small>{row.responsible}</small></td><td>{row.status==="CLOSED"?"Cerrada":"Abierta"}</td><td>{row.expectedAmountCents==null?"—":money.format(row.expectedAmountCents)} / {row.countedCents==null?"—":money.format(row.countedCents)}</td><td>{row.differenceCents==null?"—":money.format(row.differenceCents)}</td><td>{row.status==="CLOSED"&&row.branch!=="Histórica sin atribuir"&&<button className="text-button" type="button" onClick={async()=>{try{setHistorical(await readResponse(await fetch(`/api/cash-register/${row.id}?view=summary`,{cache:"no-store"})));}catch(e){setError(e.message);}}}>Ver cierre</button>}</td></tr>)}</tbody></table></div><div className="editor-actions"><button className="app-button" type="button" disabled={historyPage<=1} onClick={()=>setHistoryPage((v)=>v-1)}>Más recientes</button><span>Página {historyPage}</span><button className="app-button" type="button" disabled={history.length<30} onClick={()=>setHistoryPage((v)=>v+1)}>Más antiguas</button></div></details>
+      <CashRegisterHistory branchId={branchId} canManage={canManage} onSelect={showHistorical}
+        revision={`${revision}:${counter}:${ledgerRevision}`} />
     </>}
   </section>;
 }

@@ -68,8 +68,8 @@ export async function seedCashPagination() {
     paymentCount: 0, saleCount: 0, expectedAmountCents: 30000, pending: [],
   };
   const history = Array.from({ length: 60 }, () => ({
-    ...session(busyTerminal, ids.admin), status: "CLOSED", opened_at: day("01"),
-    closed_at: day("02"), closed_by: ids.admin, closing_counted_cents: 30000,
+    ...session(busyTerminal, ids.admin), status: "CLOSED", opened_at: day("02"),
+    closed_at: day("03"), closed_by: ids.admin, closing_counted_cents: 30000,
     expected_amount_cents: 30000, difference_cents: 0, closing_summary: emptyAccounting,
   }));
 
