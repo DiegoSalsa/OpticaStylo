@@ -201,10 +201,34 @@
 .orders-search:focus-within { outline: 2px solid #278c72; outline-offset: 2px; }
 .order-detail-button { background: #edf8f5; border: 1px solid #a8c4ba; border-radius: 8px; color: #073a32; cursor: pointer; font: inherit; margin-top: .6rem; min-height: 40px; width: 100%; }
 .order-advance:disabled { cursor: wait; opacity: .6; }
-.order-detail { background: #fff; border: 1px solid #a8c4ba; border-radius: 16px; color: #073a32; max-height: 85dvh; max-width: 760px; padding: 1.3rem; width: calc(100% - 2rem); }
+.order-detail {
+  --order-detail-padding: clamp(0.85rem, 4vw, 1.3rem);
+  background: #fff;
+  border: 1px solid #a8c4ba;
+  border-radius: 16px;
+  color: #073a32;
+  max-height: 85dvh;
+  max-width: 760px;
+  padding: var(--order-detail-padding);
+  scroll-padding-block: 4.75rem 1rem;
+  width: calc(100% - 2rem);
+}
 .order-detail::backdrop { background: rgb(7 58 50 / 55%); }
-.order-detail > header { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
-.order-detail h2 { font-size: 1.3rem; }
+.order-detail > header {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  margin: calc(-1 * var(--order-detail-padding)) calc(-1 * var(--order-detail-padding)) 0.85rem;
+  padding: 0.7rem var(--order-detail-padding);
+  position: sticky;
+  top: calc(-1 * var(--order-detail-padding));
+  z-index: 1;
+}
+.order-detail > header button { flex-shrink: 0; }
+.order-detail h2 { font-size: 1.3rem; margin: 0; overflow-wrap: anywhere; }
 .order-detail h3 { font-size: 1rem; }
 .order-detail-data { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .order-detail dt { color: #536763; font-size: .85rem; }

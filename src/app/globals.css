@@ -91,6 +91,12 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+.field :is(input, select, textarea):focus-visible,
+.search-box:focus-visible {
+  outline: 2px solid var(--color-primary-dark);
+  outline-offset: 2px;
+}
+
 ::selection {
   background: var(--color-primary);
   color: var(--color-primary-dark);
