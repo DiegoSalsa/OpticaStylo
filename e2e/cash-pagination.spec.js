@@ -247,12 +247,15 @@ test("Paginación de Caja reintenta el historial y abre un cierre de la última 
   await page.getByRole("combobox", { name: "Sucursal de la venta", exact: true }).selectOption(local.main.id);
   const cash = cashPanel(page);
   const history = cash.getByRole("region", { name: "Historial de sesiones de caja" });
-  await page.route((url) => url.pathname === "/api/cash-register" && url.searchParams.get("history") === "true"
-    && url.searchParams.get("branchId") === local.main.id, (route) => route.fulfill({
+  const historyRequest = (url) => url.pathname === "/api/cash-register" && url.searchParams.get("history") === "true"
+    && url.searchParams.get("branchId") === local.main.id;
+  const unavailable = (route) => route.fulfill({
     status: 503, json: { success: false, error: { message: "Historial temporalmente indisponible" } },
-  }), { times: 1 });
+  });
+  await page.route(historyRequest, unavailable);
   await cash.getByText("Historial de aperturas y cierres", { exact: true }).click();
   await expect(history.getByRole("alert")).toContainText("Historial temporalmente indisponible");
+  await page.unroute(historyRequest, unavailable);
   await history.getByRole("button", { name: "Reintentar" }).click();
   const nav = paging(history, "sesiones de caja");
   await nav.getByRole("button", { name: "Página 4", exact: true }).click();
