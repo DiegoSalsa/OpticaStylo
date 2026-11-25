@@ -1,0 +1,35 @@
+.shipping-settings-panels {
+  display: grid;
+  gap: 1rem;
+}
+
+.shipping-settings-panels > .app-card {
+  min-width: 0;
+  padding: clamp(0.85rem, 2vw, 1.5rem);
+}
+
+.shipping-settings-panels h2 {
+  margin-block: 0 0.75rem;
+}
+
+.shipping-settings-panels .management-fields > .field {
+  min-width: 0;
+}
+
+.shipping-settings-consent {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+  grid-column: 1 / -1;
+  min-height: 44px;
+}
+
+.shipping-settings-panels .app-button {
+  justify-self: start;
+}
+
+@media (max-width: 480px) {
+  .shipping-settings-panels .app-button {
+    justify-self: stretch;
+  }
+}
