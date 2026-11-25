@@ -265,7 +265,7 @@ export async function getProfessionalAvailability(
   const [weeklySchedule, override, blocks, busyAppointments] = await Promise.all([
     scheduleRepository(query.professionalId, ...branch),
     overrideRepository(query.professionalId, query.date, ...branch),
-    blockRepository(query.professionalId, dayRange.startAt, dayRange.endAt),
+    blockRepository(query.professionalId, dayRange.startAt, dayRange.endAt, ...branch),
     busyAppointmentRepository(
       query.professionalId,
       dayRange.startAt,

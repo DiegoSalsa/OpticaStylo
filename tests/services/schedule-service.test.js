@@ -176,3 +176,26 @@ test("retira de la disponibilidad las horas que ya están reservadas", async () 
     ["2026-08-10T14:00:00.000Z"],
   );
 });
+
+test("comparte la sede con los bloqueos y mantiene global la ocupación por citas", async () => {
+  const appointments = [];
+  const scopedBlocks = [];
+  const branch = "00000000-0000-4000-8000-000000000002";
+  const excluded = "00000000-0000-4000-8000-000000000003";
+
+  for (const trustedBranch of [branch, null]) {
+    await getProfessionalAvailability(professionalId, new URLSearchParams({ date: "2026-08-10" }), actor, {
+      trustedBranch,
+      currentDate: new Date("2026-08-01T12:00:00Z"),
+      excludedAppointmentId: excluded,
+      findProfessionalById: async () => professional,
+      findScheduleOverride: async () => null,
+      getWeeklySchedule: async () => week,
+      getScheduleBlocks: async (...args) => { scopedBlocks.push(args); return []; },
+      getBusyAppointments: async (...args) => { appointments.push(args); return []; },
+    });
+  }
+
+  assert.deepEqual(scopedBlocks.map((args) => args[3]), [branch, null]);
+  for (const args of appointments) assert.deepEqual(args.slice(3), [excluded]);
+});

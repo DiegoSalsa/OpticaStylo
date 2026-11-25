@@ -77,8 +77,8 @@ async function enqueueAppointmentEmails(client, { appointmentId, endAt, recipien
   });
 }
 
-// Detectar reservas activas o bloqueos profesionales que se superpongan al intervalo solicitado
-async function findCollision(client, professionalId, startAt, endAt, excludedAppointmentId = null) {
+// Una cita ocupa al profesional en todas las sedes. Un bloqueo pertenece a su agenda local.
+async function findCollision(client, { professionalId, branchId = null, startAt, endAt }, excludedAppointmentId = null) {
   const [appointment, block] = await Promise.all([
     client.appointments.findFirst({
       select: { id: true },
@@ -89,7 +89,7 @@ async function findCollision(client, professionalId, startAt, endAt, excludedApp
     }),
     client.professional_schedule_blocks.findFirst({
       select: { id: true },
-      where: { end_at: { gt: startAt }, professional_id: professionalId, start_at: { lt: endAt } },
+      where: { branch_id: branchId, end_at: { gt: startAt }, professional_id: professionalId, start_at: { lt: endAt } },
     }),
   ]);
   return appointment ? "APPOINTMENT" : block ? "SCHEDULE_BLOCK" : null;
@@ -138,7 +138,7 @@ export async function createAppointment(appointmentData, actorUserId, options = 
       }
     }
     // Comprobar concurrencia antes de insertar la nueva reserva
-    const conflict = await findCollision(client, appointmentData.professionalId, appointmentData.startAt, appointmentData.endAt);
+    const conflict = await findCollision(client, appointmentData);
     if (conflict) return { appointment: null, conflict };
     const created = await client.appointments.create({ data: {
       branch_id: appointmentData.branchId, created_by: actorUserId, end_at: appointmentData.endAt,
@@ -170,7 +170,7 @@ export async function createPublicBooking(bookingData, options = {}) {
   // Crear reservas públicas y sus pacientes dentro de una transacción serializable
   return retryTransaction(prisma, async (client) => {
     if (bookingData.branchId) await requireProfessionalBranch(bookingData.professionalId, bookingData.branchId, client);
-    const conflict = await findCollision(client, bookingData.professionalId, bookingData.startAt, bookingData.endAt);
+    const conflict = await findCollision(client, bookingData);
     if (conflict) return { appointment: null, conflict };
     let patient = await client.patients.findUnique({ where: { rut: bookingData.patient.rut } });
     if (patient && (dateOnly(patient.birth_date) !== bookingData.patient.birthDate || patient.email !== bookingData.patient.email)) {
@@ -224,15 +224,17 @@ async function requireAppointmentWriteScope(client, current, actor) {
 }
 
 export async function updateAppointment(appointmentId, changes, actorUserId, actor) {
-  // Actualizar la reserva y su historial con aislamiento serializable para evitar carreras
-  return prisma.$transaction(async (client) => {
+  // Revalidar el nuevo intervalo si PostgreSQL reintenta por una escritura concurrente.
+  return retryTransaction(prisma, async (client) => {
     const current = await client.appointments.findUnique({ where: { id: appointmentId } });
     if (!current) return { appointment: null, conflict: null, currentStatus: null };
     await requireAppointmentWriteScope(client, current, actor);
     if (current.status !== "CONFIRMED") return { appointment: null, conflict: null, currentStatus: current.status };
     if (changes.startAt) {
       if (current.branch_id) await requireProfessionalBranch(current.professional_id, current.branch_id, client);
-      const conflict = await findCollision(client, current.professional_id, changes.startAt, changes.endAt, appointmentId);
+      const conflict = await findCollision(client, {
+        branchId: current.branch_id, professionalId: current.professional_id, startAt: changes.startAt, endAt: changes.endAt,
+      }, appointmentId);
       if (conflict) return { appointment: null, conflict, currentStatus: current.status };
     }
     const newStartAt = changes.startAt ?? current.start_at;
@@ -303,7 +305,9 @@ export async function updateCustomerAppointment(accountId, id, { expectedStart, 
     }
     if (customerAppointmentChangeDeadline(current.start_at, noticeHours) <= now) return { reason: "CLOSED" };
     if (slot && current.branch_id) await requireProfessionalBranch(current.professional_id, current.branch_id, client);
-    if (slot && await findCollision(client, current.professional_id, slot.startAt, slot.endAt, id)) return { reason: "SLOT_TAKEN" };
+    if (slot && await findCollision(client, {
+      ...slot, branchId: current.branch_id, professionalId: current.professional_id,
+    }, id)) return { reason: "SLOT_TAKEN" };
     // Reclamar un correo y cambiar su hora compiten por las mismas filas de la cola.
     const emails = await client.$queryRaw`SELECT id, status, attempt_count, lock_expires_at
       FROM transactional_email_outbox

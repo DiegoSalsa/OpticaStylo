@@ -1,10 +1,15 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { shippingConfiguration } from "../src/config/shipping.js";
 import { quoteCart, quoteSnapshot, saveShippingQuotes } from "../src/repositories/shipping-repository.js";
 import { prisma } from "../src/db/prisma.js";
-import { seedAcademicData, requireAcademicIsolation } from "../tests/fixtures/academic-data.js";
+import {
+  createAppointment as createAppointmentRepository, createPublicBooking as createPublicBookingRepository,
+  updateAppointment as updateAppointmentRepository, updateCustomerAppointment,
+} from "../src/repositories/appointment-repository.js";
+import { actorFor, seedAcademicData, requireAcademicIsolation } from "../tests/fixtures/academic-data.js";
 import { fixtureRut } from "../tests/fixtures/management-data.js";
 import { seedBranchIsolation } from "../tests/fixtures/branch-isolation-data.js";
 import { isolateBrowserNetwork } from "./isolated-network.js";
@@ -543,4 +548,195 @@ test("Primera visita en Palet requiere una vinculación administrativa comprobad
   } finally {
     await Promise.all([romanoContext.close(), general.close()]);
   }
+});
+
+test.describe("Colisiones de Agenda por sede", () => {
+  const timezone = "America/Santiago";
+
+  function futureDay(offset) {
+    const date = formatInTimeZone(new Date(Date.now() + offset * 86400000), timezone, "yyyy-MM-dd");
+    return { date, at: (time) => fromZonedTime(date + "T" + time + ":00", timezone).toISOString() };
+  }
+
+  function operation(day, branch, time = "11:00") {
+    return { branchId: branch.id, patientId: sample.patientAB, professionalId: sample.doctorAB.id, startAt: day.at(time) };
+  }
+
+  function schedulePath() {
+    return "/api/professionals/" + sample.doctorAB.id + "/schedule";
+  }
+
+  async function createBlock(request, day, branch, expected = 201) {
+    const response = await request.post(schedulePath() + "/blocks", { data: {
+      branchId: branch.id, startAt: day.at("11:00"), endAt: day.at("11:30"), reason: "Bloqueo sintético de " + branch.name,
+    } });
+    if (expected === 201) return body(response, expected);
+    expect(response.status()).toBe(expected);
+    expect((await response.json()).error.code).toBe("SCHEDULE_BLOCK_OVERLAPS_APPOINTMENT");
+  }
+
+  async function hasTime(request, availabilityPath, day, branch, time) {
+    const url = availabilityPath + "?" + new URLSearchParams({ date: day.date, branchId: branch.id });
+    const { slots } = await body(await request.get(url));
+    return slots.some((slot) => slot.startAt === day.at(time));
+  }
+
+  async function syntheticPatient() {
+    const row = await prisma.patients.findUniqueOrThrow({ where: { id: sample.patientAB } });
+    return {
+      address: row.address, birthDate: row.birth_date.toISOString().slice(0, 10), email: row.email,
+      firstNames: row.first_names, lastNames: row.last_names, phone: row.phone, rut: row.rut,
+    };
+  }
+
+  async function loginOwner(context) {
+    await body(await context.request.post("/api/store/accounts/login", {
+      data: { email: sample.buyerEmail, password: sample.password },
+    }));
+    return context.request;
+  }
+
+  test("cada sede aplica su horario, excepción y bloqueos y toda cita ocupa al profesional", async ({ context }) => {
+    const staff = await login(context);
+    const { romano, palet, doctorAB } = sample;
+    const day = futureDay(12);
+    await prisma.professional_weekly_schedules.updateMany({
+      where: { professional_id: doctorAB.id, branch_id: palet.id },
+      data: { start_time: new Date("1970-01-01T10:00:00Z") },
+    });
+    await body(await staff.put(schedulePath() + "/overrides/" + day.date, { data: {
+      branchId: romano.id, isWorking: true, startTime: "10:30", endTime: "13:00", breakStart: null, breakEnd: null,
+    } }));
+    const block = await createBlock(staff, day, romano);
+    const path = "/api/professionals/" + doctorAB.id + "/availability";
+    expect(await hasTime(staff, path, day, romano, "10:00")).toBe(false);
+    expect(await hasTime(staff, path, day, palet, "10:00")).toBe(true);
+    expect(await hasTime(staff, path, day, romano, "11:00")).toBe(false);
+    expect(await hasTime(staff, path, day, palet, "11:00")).toBe(true);
+    expect(await hasTime(staff, path, day, romano, "13:00")).toBe(false);
+    expect(await hasTime(staff, path, day, palet, "13:00")).toBe(true);
+    const dates = { from: day.at("09:00"), to: day.at("17:00") };
+    const list = (branch) => staff.get(schedulePath() + "/blocks?" + new URLSearchParams({ ...dates, branchId: branch.id }));
+    expect((await body(await list(romano))).map((item) => item.id)).toEqual([block.id]);
+    expect(await body(await list(palet))).toEqual([]);
+
+    const booked = await body(await staff.post("/api/appointments", { data: operation(day, palet) }), 201);
+    expect(booked.branchId).toBe(palet.id);
+    expect((await staff.delete(schedulePath() + "/blocks/" + block.id + "?branchId=" + romano.id)).status()).toBe(204);
+    expect(await hasTime(staff, path, day, romano, "11:00")).toBe(false);
+    expect((await staff.post("/api/appointments", { data: operation(day, romano) })).status()).toBe(409);
+    await createBlock(staff, day, romano);
+    await createBlock(staff, day, palet, 409);
+  });
+
+  test("reserva pública, actualización interna y Mi cuenta usan los bloqueos de Palet", async ({ context, browser }) => {
+    const buyer = await extraContext(browser);
+    try {
+      const staff = await login(context);
+      const owner = await loginOwner(buyer);
+      const { romano, palet, doctorAB } = sample;
+      const publicDay = futureDay(14), editDay = futureDay(15), accountDay = futureDay(16);
+      for (const day of [publicDay, editDay, accountDay]) await createBlock(staff, day, romano);
+      const publicPath = "/api/store/booking/professionals/" + doctorAB.id + "/availability";
+      expect(await hasTime(owner, publicPath, publicDay, romano, "11:00")).toBe(false);
+      expect(await hasTime(owner, publicPath, publicDay, palet, "11:00")).toBe(true);
+      const appointment = await body(await owner.post("/api/store/booking", { data: {
+        ...operation(publicDay, palet), acceptsPrivacy: true, patient: await syntheticPatient(),
+      } }), 201);
+      const id = appointment.appointment.id;
+      const updated = await body(await staff.patch("/api/appointments/" + id, { data: { startAt: editDay.at("11:00") } }));
+      expect(updated).toMatchObject({ branchId: palet.id, startAt: editDay.at("11:00") });
+      const accountPath = "/api/store/accounts/me/clinical/appointments/" + id;
+      expect(await hasTime(owner, accountPath, accountDay, romano, "11:00")).toBe(true);
+      await body(await owner.patch(accountPath, { data: {
+        action: "RESCHEDULE", expectedStartAt: editDay.at("11:00"), startAt: accountDay.at("11:00"),
+      } }));
+      expect(await prisma.appointments.findUniqueOrThrow({ where: { id } })).toMatchObject({
+        branch_id: palet.id, start_at: new Date(accountDay.at("11:00")),
+      });
+      expect(await hasTime(staff, "/api/professionals/" + doctorAB.id + "/availability", accountDay, romano, "11:00")).toBe(false);
+    } finally {
+      await buyer.close();
+    }
+  });
+
+  test("los cuatro repositorios de reserva vuelven a comprobar la sede dentro de la transacción", async ({ context }) => {
+    const staff = await login(context);
+    const handler = await actorFor(sample.adminB.id);
+    const { romano, palet, doctorAB, patientAB } = sample;
+    const [internalDay, publicDay, editDay, accountDay, originDay] = [18, 19, 20, 21, 22].map(futureDay);
+    for (const day of [internalDay, publicDay, editDay, accountDay]) await createBlock(staff, day, romano);
+    const slot = (day) => ({ startAt: new Date(day.at("11:00")), endAt: new Date(day.at("11:30")) });
+    const data = { patientId: patientAB, professionalId: doctorAB.id, branchId: palet.id, internalNotes: null };
+    const internal = await createAppointmentRepository({ ...data, ...slot(internalDay) }, handler.userId, { actor: handler });
+    expect(internal.conflict).toBeNull();
+    expect(internal.appointment.branchId).toBe(palet.id);
+    expect((await createAppointmentRepository({ ...data, branchId: romano.id, ...slot(internalDay) }, null)).conflict).toBe("APPOINTMENT");
+
+    const publicResult = await createPublicBookingRepository({
+      ...data, ...slot(publicDay), patient: await syntheticPatient(),
+      manageTokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
+    });
+    expect(publicResult.conflict).toBeNull();
+    expect(publicResult.appointment.branchId).toBe(palet.id);
+    const original = await body(await staff.post("/api/appointments", { data: operation(originDay, palet) }), 201);
+    const edit = await updateAppointmentRepository(original.id, slot(editDay), handler.userId, handler);
+    expect(edit.conflict).toBeNull();
+    expect(edit.appointment.branchId).toBe(palet.id);
+    const account = await prisma.customer_accounts.findUniqueOrThrow({ where: { customer_id: sample.customerA } });
+    const customerResult = await updateCustomerAppointment(account.id, original.id, {
+      expectedStart: slot(editDay).startAt, slot: slot(accountDay), now: new Date(), noticeHours: 24, reminderHours: 24,
+    });
+    expect(customerResult.reason).toBeNull();
+    const row = await prisma.appointments.findUniqueOrThrow({ where: { id: original.id } });
+    expect(row).toMatchObject({ branch_id: palet.id, start_at: slot(accountDay).startAt });
+    expect((await createAppointmentRepository({ ...data, branchId: romano.id, ...slot(editDay) }, null)).conflict).toBe("SCHEDULE_BLOCK");
+  });
+
+  test("conservar ocupación histórica global y rechazar reservas simultáneas entre sucursales", async ({ context, browser }) => {
+    const buyer = await extraContext(browser);
+    try {
+      const staff = await login(context);
+      const owner = await loginOwner(buyer);
+      const { romano, palet, doctorAB, patientAB } = sample;
+      const [historicalDay, newDay, raceDay, localRaceDay] = [24, 25, 26, 27].map(futureDay);
+      const date = (day, value) => new Date(day.at(value));
+      const old = await prisma.appointments.create({ data: {
+        patient_id: patientAB, professional_id: doctorAB.id, start_at: date(historicalDay, "11:00"), end_at: date(historicalDay, "11:30"),
+      } });
+      const start = date(newDay, "11:00");
+      const end = date(newDay, "11:30");
+      const weekday = new Date(newDay.date + "T12:00:00Z").getUTCDay();
+      await prisma.professional_weekly_schedules.create({ data: {
+        professional_id: doctorAB.id, day_of_week: weekday, is_working: true,
+        start_time: new Date("1970-01-01T09:00:00Z"), end_time: new Date("1970-01-01T18:00:00Z"),
+      } });
+      await prisma.professional_schedule_blocks.create({ data: {
+        professional_id: doctorAB.id, created_by: doctorAB.id, start_at: date(newDay, "10:00"), end_at: date(newDay, "10:30"),
+      } });
+      const path = "/api/professionals/" + doctorAB.id + "/availability";
+      for (const branch of [romano, palet]) expect(await hasTime(staff, path, historicalDay, branch, "11:00")).toBe(false);
+      await createBlock(staff, historicalDay, romano, 409);
+      await createBlock(staff, newDay, romano);
+      const oldPath = "/api/store/accounts/me/clinical/appointments/" + old.id;
+      expect(await hasTime(owner, oldPath, newDay, palet, "10:00")).toBe(false);
+      expect(await hasTime(owner, oldPath, newDay, palet, "11:00")).toBe(true);
+      await body(await owner.patch(oldPath, { data: {
+        action: "RESCHEDULE", expectedStartAt: historicalDay.at("11:00"), startAt: newDay.at("11:00"),
+      } }));
+      expect(await prisma.appointments.findUniqueOrThrow({ where: { id: old.id } })).toMatchObject({ branch_id: null, start_at: start, end_at: end });
+
+      const races = await Promise.all([romano, palet].map((branch) => staff.post("/api/appointments", { data: operation(raceDay, branch) })));
+      expect(races.map((item) => item.status()).sort()).toEqual([201, 409]);
+      expect(await prisma.appointments.count({ where: { professional_id: doctorAB.id, start_at: date(raceDay, "11:00") } })).toBe(1);
+
+      const [booked, blocked] = await Promise.all([
+        staff.post("/api/appointments", { data: operation(localRaceDay, palet) }),
+        staff.post(schedulePath() + "/blocks", { data: { branchId: palet.id, startAt: localRaceDay.at("11:00"), endAt: localRaceDay.at("11:30") } }),
+      ]);
+      expect([booked.status(), blocked.status()].sort()).toEqual([201, 409]);
+    } finally {
+      await buyer.close();
+    }
+  });
 });

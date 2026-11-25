@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { retryTransaction } from "../db/retry-transaction.js";
 
 function formatTime(value) {
   if (!value) return null;
@@ -99,13 +100,14 @@ export async function removeScheduleOverride(professionalId, date, branchId) {
 }
 
 export async function createScheduleBlock(professionalId, block, actorUserId, branchId) {
-  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const conflict = await client.appointments.findFirst({
       select: { id: true },
       where: {
         end_at: { gt: block.startAt }, professional_id: professionalId,
         start_at: { lt: block.endAt }, status: { not: "CANCELLED" },
+        // Una cita histórica puede corresponder a cualquier sede.
+        OR: [{ branch_id: branchId ?? null }, { branch_id: null }],
       },
     });
     if (conflict) return { block: null, conflict: "APPOINTMENT" };
@@ -118,7 +120,7 @@ export async function createScheduleBlock(professionalId, block, actorUserId, br
   }, { isolationLevel: "Serializable" });
 }
 
-export async function getScheduleBlocks(professionalId, from, to, branchId) {
+export async function getScheduleBlocks(professionalId, from, to, branchId = null) {
   return (await prisma.professional_schedule_blocks.findMany({
     orderBy: [{ start_at: "asc" }, { id: "asc" }],
     where: { end_at: { gt: from }, professional_id: professionalId, start_at: { lt: to }, branch_id: branchId },
