@@ -243,17 +243,21 @@ for (const width of [390, 768, 1440]) {
 
 test("Paginación de Inventario reintenta un error y permite recibir y cancelar desde la página avanzada", async ({ page }) => {
   await login(page);
+  await page.addInitScript((branchId) => {
+    const fetchOriginal = window.fetch;
+    window.fetch = (resource, options) => {
+      const url = new URL(resource instanceof Request ? resource.url : resource, window.location.origin);
+      if (url.pathname === "/api/inventory/transfers" && url.searchParams.get("branchId") === branchId) {
+        window.fetch = fetchOriginal;
+        return Promise.resolve(Response.json({ success: false, error: { message: "Error temporal de traspasos" } }, { status: 503 }));
+      }
+      return fetchOriginal(resource, options);
+    };
+  }, sample.main.id);
   await page.goto("/app/inventario");
   const shipments = transfers(page);
-  const match = (url) => url.pathname === "/api/inventory/transfers" && url.searchParams.get("branchId") === sample.main.id;
-  const unavailable = (route) => route.fulfill({
-    status: 503,
-    json: { success: false, error: { message: "Error temporal de traspasos" } },
-  });
-  await page.route(match, unavailable);
   await chooseBranch(page, sample.main.id);
   await expect(shipments.getByRole("alert")).toContainText("Error temporal de traspasos");
-  await page.unroute(match, unavailable);
   await shipments.getByRole("button", { name: "Reintentar" }).click();
   await expect(shipments.getByRole("alert")).toHaveCount(0);
   await pages(shipments, "transferencias").getByRole("button", { name: "Página 7" }).click();
