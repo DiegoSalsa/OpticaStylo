@@ -26,14 +26,14 @@ function AppointmentCard({ appointment, onChanged }) {
     if (action !== "RESCHEDULE" || !date) return;
     const controller = new AbortController();
     const query = new URLSearchParams({ date });
-    fetch("/api/store/booking/professionals/" + appointment.professionalId + "/availability?" + query, {
+    fetch("/api/store/accounts/me/clinical/appointments/" + appointment.id + "?" + query, {
       cache: "no-store", signal: controller.signal,
     })
       .then(readStoreResponse)
       .then((data) => { if (!controller.signal.aborted) setSlots(data.slots); })
       .catch((failure) => { if (!controller.signal.aborted) setAvailabilityError(failure.message); });
     return () => controller.abort();
-  }, [action, appointment.professionalId, date, retry]);
+  }, [action, appointment.id, date, retry]);
 
   function clearAvailability() {
     setSlots(null);

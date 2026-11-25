@@ -26,7 +26,16 @@ import {
   validateWeeklyScheduleInput,
 } from "../validations/schedule-validation.js";
 import { validateProfessionalId } from "../validations/professional-validation.js";
+import { operationBranch } from "../auth/branch-identity.js";
+import { requireProfessionalBranch } from "../auth/clinical-branch.js";
 import { buildAvailabilitySlots } from "./availability-engine.js";
+
+async function scheduleBranch(actor, professionalId, input, injected) {
+  if (injected) return [];
+  const branchId = await operationBranch(actor, input);
+  await requireProfessionalBranch(professionalId, branchId);
+  return [branchId];
+}
 
 function throwProfessionalNotFound() {
   throw new AppError({
@@ -58,7 +67,7 @@ export async function getProfessionalSchedule(
   const normalizedId = validateProfessionalId(professionalId);
   await requireProfessional(normalizedId, findRepository);
 
-  return scheduleRepository(normalizedId);
+  return scheduleRepository(normalizedId, ...await scheduleBranch(actor, normalizedId, dependencies.branchId, dependencies.getWeeklySchedule));
 }
 
 export async function replaceProfessionalSchedule(
@@ -75,7 +84,7 @@ export async function replaceProfessionalSchedule(
   await requireProfessional(normalizedId, findRepository);
 
   const days = validateWeeklyScheduleInput(input);
-  return saveRepository(normalizedId, days);
+  return saveRepository(normalizedId, days, ...await scheduleBranch(actor, normalizedId, input?.branchId, dependencies.saveWeeklySchedule));
 }
 
 export async function getProfessionalOverrides(
@@ -102,7 +111,7 @@ export async function getProfessionalOverrides(
     });
   }
 
-  return listRepository(normalizedId, from, to);
+  return listRepository(normalizedId, from, to, ...await scheduleBranch(actor, normalizedId, searchParams.get("branchId"), listRepository !== getScheduleOverrides && listRepository !== getScheduleBlocks));
 }
 
 export async function setProfessionalOverride(
@@ -123,7 +132,7 @@ export async function setProfessionalOverride(
   const normalizedDate = validateDateOnly(date);
   const override = validateScheduleOverrideInput(input);
 
-  return upsertRepository(normalizedId, normalizedDate, override, actor.userId);
+  return upsertRepository(normalizedId, normalizedDate, override, actor.userId, ...await scheduleBranch(actor, normalizedId, input?.branchId, dependencies.upsertScheduleOverride));
 }
 
 // Eliminar o cancelar delete profesional override de forma controlada y consistente
@@ -139,7 +148,7 @@ export async function deleteProfessionalOverride(
 
   requireScheduleManagement(actor, normalizedId);
   const normalizedDate = validateDateOnly(date);
-  const removed = await removeRepository(normalizedId, normalizedDate);
+  const removed = await removeRepository(normalizedId, normalizedDate, ...await scheduleBranch(actor, normalizedId, dependencies.branchId, dependencies.removeScheduleOverride));
 
   if (!removed) {
     throw new AppError({
@@ -165,7 +174,7 @@ export async function createProfessionalScheduleBlock(
   await requireProfessional(normalizedId, findRepository);
 
   const block = validateCreateScheduleBlockInput(input, dependencies.currentDate);
-  const result = await createRepository(normalizedId, block, actor.userId);
+  const result = await createRepository(normalizedId, block, actor.userId, ...await scheduleBranch(actor, normalizedId, input?.branchId, dependencies.createScheduleBlock));
 
   if (result.conflict === "APPOINTMENT") {
     throw new AppError({
@@ -202,7 +211,7 @@ export async function getProfessionalScheduleBlocks(
     });
   }
 
-  return listRepository(normalizedId, from, to);
+  return listRepository(normalizedId, from, to, ...await scheduleBranch(actor, normalizedId, searchParams.get("branchId"), listRepository !== getScheduleOverrides && listRepository !== getScheduleBlocks));
 }
 
 // Eliminar o cancelar delete profesional agenda block de forma controlada y consistente
@@ -217,7 +226,7 @@ export async function deleteProfessionalScheduleBlock(
 
   requireScheduleManagement(actor, normalizedId);
   const normalizedBlockId = validateScheduleBlockId(blockId);
-  const removed = await removeRepository(normalizedId, normalizedBlockId);
+  const removed = await removeRepository(normalizedId, normalizedBlockId, ...await scheduleBranch(actor, normalizedId, dependencies.branchId, dependencies.removeScheduleBlock));
 
   if (!removed) {
     throw new AppError({
@@ -250,9 +259,12 @@ export async function getProfessionalAvailability(
   );
   const timeZone = dependencies.timeZone ?? getSchedulingTimeZone();
   const dayRange = getZonedDayRange(query.date, timeZone);
+  const branch = Object.hasOwn(dependencies, "trustedBranch")
+    ? [dependencies.trustedBranch]
+    : await scheduleBranch(actor, query.professionalId, searchParams.get("branchId"), dependencies.getWeeklySchedule);
   const [weeklySchedule, override, blocks, busyAppointments] = await Promise.all([
-    scheduleRepository(query.professionalId),
-    overrideRepository(query.professionalId, query.date),
+    scheduleRepository(query.professionalId, ...branch),
+    overrideRepository(query.professionalId, query.date, ...branch),
     blockRepository(query.professionalId, dayRange.startAt, dayRange.endAt),
     busyAppointmentRepository(
       query.professionalId,

@@ -1,3 +1,4 @@
+import { requireProfessionalBranch } from "../auth/clinical-branch.js";
 import { prisma } from "../db/prisma.js";
 import { Prisma } from "@prisma/client";
 import { createHash } from "node:crypto";
@@ -53,6 +54,7 @@ function mapEncounter(row, additions = {}) {
   if (!row) return null;
   const professional = row.professional_profiles_clinical_encounters_professional_idToprofessional_profiles[profileUser];
   return {
+    branchId: row.branch_id,
     type:row.encounter_type,encounterDate:row.encounter_date?.toISOString().slice(0,10)??null,
     recordNumber:row.record_number==null?null:String(row.record_number),formVersion:row.form_version,formData:row.form_data,
     version:row.record_version,patientSnapshot:row.patient_snapshot,professionalSnapshot:row.professional_snapshot,
@@ -86,31 +88,35 @@ async function findEncounterWithClient(client, encounterId) {
   }));
 }
 
-export async function hasClinicalAssignment(patientId, professionalId, statuses = ["CONFIRMED", "CHECKED_IN", "COMPLETED"],client=prisma) {
+export async function hasClinicalAssignment(patientId, professionalId, statuses = ["CONFIRMED", "CHECKED_IN", "COMPLETED"], client = prisma, branchId) {
+  if (branchId !== undefined) {
+    if (!branchId) return false;
+    await requireProfessionalBranch(professionalId, branchId, client);
+  }
   return (await client.appointments.count({
-    where: { patient_id: patientId, professional_id: professionalId, status: { in: statuses } },
-  })) > 0 || (await client.clinical_care_assignments.count({where:{patient_id:patientId,professional_id:professionalId,revoked_at:null}}))>0;
+    where: { patient_id: patientId, professional_id: professionalId, branch_id: branchId, status: { in: statuses } },
+  })) > 0 || (await client.clinical_care_assignments.count({where:{patient_id:patientId,professional_id:professionalId,branch_id:branchId,revoked_at:null}}))>0;
 }
 
-export async function findMedicalRecordByPatientId(patientId) {
-  return mapMedicalRecord(await prisma.medical_records.findUnique({ where: { patient_id: patientId },include:{medical_record_revisions:{orderBy:{revision:"desc"},take:1}} }));
+export async function findMedicalRecordByPatientId(patientId, branchId = null) {
+  return mapMedicalRecord(await prisma.medical_records.findFirst({ where: { patient_id: patientId, branch_id: branchId },include:{medical_record_revisions:{orderBy:{revision:"desc"},take:1}} }));
 }
 
-export async function listMedicalRecordRevisions(patientId) {
+export async function listMedicalRecordRevisions(patientId, branchId = null) {
   const rows = await prisma.medical_record_revisions.findMany({
     include: { professional_profiles: { include: { [profileUser]: true } } },
-    orderBy: { revision: "desc" }, where: { medical_records: { patient_id: patientId } },
+    orderBy: { revision: "desc" }, where: { medical_records: { patient_id: patientId, branch_id: branchId } },
   });
   return rows.map(mapMedicalRecordRevision);
 }
 
-export async function upsertMedicalRecord(patientId, changes, actorUserId,expectedRevision) {
+export async function upsertMedicalRecord(patientId, changes, actorUserId, expectedRevision, branchId = null) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma,async (client) => {
     await client.$queryRaw`SELECT id FROM patients WHERE id=${patientId}::uuid FOR UPDATE`;
     const patient = await client.patients.findUnique({ select: { id: true }, where: { id: patientId } });
-    if (!patient) return null;
-    const current = await client.medical_records.findUnique({ where: { patient_id: patientId },include:{medical_record_revisions:{orderBy:{revision:"desc"},take:1}} });
+    if (!patient || (branchId && !await hasClinicalAssignment(patientId, actorUserId, ["CHECKED_IN", "COMPLETED"], client, branchId))) return null;
+    const current = await client.medical_records.findFirst({ where: { patient_id: patientId, branch_id: branchId },include:{medical_record_revisions:{orderBy:{revision:"desc"},take:1}} });
     if(expectedRevision!==undefined&&expectedRevision!==(current?.medical_record_revisions[0]?.revision??0))clinicalInvalid("Los antecedentes cambiaron en otra sesión. Consulte la revisión vigente antes de guardar.","MEDICAL_RECORD_VERSION_CONFLICT",409);
     const data = Object.fromEntries(Object.entries(changes).map(([field, value]) => [MEDICAL_RECORD_COLUMNS[field], value]));
     if (current && Object.entries(data).every(([field, value]) => current[field] === value)) {
@@ -119,7 +125,7 @@ export async function upsertMedicalRecord(patientId, changes, actorUserId,expect
     const record = current
       ? await client.medical_records.update({ data: { ...data, updated_by: actorUserId }, where: { id: current.id } })
       : await client.medical_records.create({ data: {
-        allergies: changes.allergies ?? null, created_by: actorUserId,
+        allergies: changes.allergies ?? null, branch_id: branchId, created_by: actorUserId,
         current_medications: changes.currentMedications ?? null,
         family_ocular_history: changes.familyOcularHistory ?? null,
         general_medical_history: changes.generalMedicalHistory ?? null,
@@ -149,7 +155,11 @@ function checkBirthDate(date,patient) {
 }
 export async function createClinicalEncounter(data,actorId,requestKey) {
   const hash=createHash("sha256").update(JSON.stringify(data)).digest("hex");
-  const repeated=async(client,row)=>{if(row.professional_id!==actorId||row.request_hash!==hash)clinicalInvalid("El identificador de operación corresponde a otra ficha.","IDEMPOTENCY_CONFLICT",409);return {encounter:await findEncounterWithClient(client,row.id),reason:null};};
+  const repeated = async (client, row) => {
+    if (row.professional_id !== actorId || row.request_hash !== hash) clinicalInvalid("El identificador de operación corresponde a otra ficha.", "IDEMPOTENCY_CONFLICT", 409);
+    if (!await hasClinicalAssignment(row.patient_id, actorId, undefined, client, row.branch_id)) return { encounter: null, reason: "NOT_ASSIGNED" };
+    return { encounter: await findEncounterWithClient(client, row.id), reason: null };
+  };
   return retryTransaction(prisma,async(client)=>{
     if(requestKey){
       await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${"clinical:"+requestKey},0))::text`;
@@ -165,8 +175,9 @@ export async function createClinicalEncounter(data,actorId,requestKey) {
       if(appointment.status!=="CHECKED_IN")return {encounter:null,reason:"INVALID_APPOINTMENT_STATUS"};
       if(await client.clinical_encounters.findUnique({where:{appointment_id:appointment.id}}))return {encounter:null,reason:"ENCOUNTER_ALREADY_EXISTS"};
     }
-    const patientId=appointment?.patient_id??data.patientId;
-    if(!await hasClinicalAssignment(patientId,actorId,["CONFIRMED","CHECKED_IN","COMPLETED"],client))return {encounter:null,reason:"NOT_ASSIGNED"};
+    const patientId = appointment?.patient_id ?? data.patientId;
+    const branchId = appointment ? appointment.branch_id : data.branchId ?? null;
+    if ((data.branchId && data.branchId !== branchId) || !await hasClinicalAssignment(patientId, actorId, undefined, client, branchId))return {encounter:null,reason:"NOT_ASSIGNED"};
     const patient=await client.patients.findUnique({where:{id:patientId}});
     const profile=await client.professional_profiles.findUnique({where:{user_id:actorId},include:{[profileUser]:true}});
     if(!patient||!profile)return {encounter:null,reason:"NOT_FOUND"};
@@ -174,7 +185,7 @@ export async function createClinicalEncounter(data,actorId,requestKey) {
     const identity={id:patient.id,firstNames:patient.first_names,lastNames:patient.last_names,rut:patient.rut,birthDate:patient.birth_date.toISOString().slice(0,10),phone:patient.phone,email:patient.email};
     const professional={id:actorId,firstName:profile[profileUser].first_name,lastName:profile[profileUser].last_name};
     const created=await client.clinical_encounters.create({data:{
-      appointment_id:appointment?.id??null,patient_id:patientId,professional_id:actorId,created_by:actorId,updated_by:actorId,
+      branch_id: branchId, appointment_id:appointment?.id??null,patient_id:patientId,professional_id:actorId,created_by:actorId,updated_by:actorId,
       encounter_type:data.encounterType,encounter_date:new Date(data.encounterDate+"T00:00:00Z"),form_version:data.formVersion,
       form_data:data.formData??Prisma.DbNull,patient_snapshot:identity,professional_snapshot:professional,
       request_key:requestKey??null,request_hash:requestKey?hash:null,
@@ -208,7 +219,7 @@ export async function updateClinicalEncounter(id,input,actorId) {
     await client.$queryRaw`SELECT id FROM clinical_encounters WHERE id=${id}::uuid FOR UPDATE`;
     const row=await client.clinical_encounters.findUnique({where:{id}});
     if(!row)return {encounter:null,reason:"NOT_FOUND"};
-    if(row.professional_id!==actorId||!await hasClinicalAssignment(row.patient_id,actorId,undefined,client))return {encounter:null,reason:"NOT_ASSIGNED"};
+    if(row.professional_id!==actorId||!await hasClinicalAssignment(row.patient_id, actorId, undefined, client, row.branch_id))return {encounter:null,reason:"NOT_ASSIGNED"};
     if(row.status!=="DRAFT")return {encounter:null,reason:"FINALIZED"};
     if(row.record_version!==input.expectedVersion)versionConflict();
     const changes=input.changes;
@@ -227,7 +238,7 @@ export async function finalizeClinicalEncounter(id,actorId,finalizedAt,input) {
     await client.$queryRaw`SELECT id FROM clinical_encounters WHERE id=${id}::uuid FOR UPDATE`;
     const row=await client.clinical_encounters.findUnique({where:{id},include:{appointments:true}});
     if(!row)return {encounter:null,reason:"NOT_FOUND"};
-    if(row.professional_id!==actorId||!await hasClinicalAssignment(row.patient_id,actorId,undefined,client))return {encounter:null,reason:"NOT_ASSIGNED"};
+    if(row.professional_id!==actorId||!await hasClinicalAssignment(row.patient_id, actorId, undefined, client, row.branch_id))return {encounter:null,reason:"NOT_ASSIGNED"};
     if(row.status==="FINALIZED")return {encounter:await findEncounterWithClient(client,id),reason:null};
     if(row.record_version!==input.expectedVersion)versionConflict();
     if(row.appointments&&row.appointments.status!=="CHECKED_IN")return {encounter:null,reason:"INVALID_APPOINTMENT_STATUS"};
@@ -250,7 +261,7 @@ export async function addClinicalEncounterAddendum(id,data,actorId,requestKey) {
     await client.$queryRaw`SELECT id FROM clinical_encounters WHERE id=${id}::uuid FOR SHARE`;
     const row=await client.clinical_encounters.findUnique({where:{id}});
     if(!row)return {addendum:null,reason:"NOT_FOUND"};
-    if(row.professional_id!==actorId)return {addendum:null,reason:"NOT_ASSIGNED"};
+    if (row.professional_id !== actorId || !await hasClinicalAssignment(row.patient_id, actorId, undefined, client, row.branch_id)) return { addendum: null, reason: "NOT_ASSIGNED" };
     if(row.status!=="FINALIZED")return {addendum:null,reason:"NOT_FINALIZED"};
     await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${"clinical-addendum:"+requestKey},0))::text`;
     const existing=await client.clinical_encounter_addenda.findUnique({where:{request_key:requestKey},include:{professional_profiles:{include:{[profileUser]:true}}}});
@@ -263,8 +274,8 @@ export async function addClinicalEncounterAddendum(id,data,actorId,requestKey) {
     return {addendum:mapAddendum(created),reason:null};
   });
 }
-export async function listPatientClinicalHistory(patientId,professionalId,page=1){
-  const where={patient_id:patientId,OR:[{status:"FINALIZED"},...(professionalId?[{status:"DRAFT",professional_id:professionalId}]:[])]};
+export async function listPatientClinicalHistory(patientId,professionalId,page=1,branchId=null){
+  const where={patient_id:patientId,branch_id:branchId,OR:[{status:"FINALIZED"},...(professionalId?[{status:"DRAFT",professional_id:professionalId}]:[])]};
   const [rows,total]=await prisma.$transaction([prisma.clinical_encounters.findMany({where,include:encounterInclude,orderBy:[{encounter_date:{sort:"desc",nulls:"last"}},{created_at:"desc"},{id:"desc"}],take:20,skip:(page-1)*20}),prisma.clinical_encounters.count({where})]);
   return {encounters:rows.map((row)=>{const result=mapEncounter(row);return {id:result.id,type:result.type,recordNumber:result.recordNumber,encounterDate:result.encounterDate,createdAt:result.createdAt,status:result.status,professional:result.professional,version:result.version,appointmentId:result.appointmentId};}),page,total,totalPages:Math.ceil(total/20)};
 }

@@ -1,3 +1,5 @@
+import { requireGlobalBranchAccess } from "../auth/branch-access.js";
+import { identityBranchIds } from "../auth/branch-identity.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -26,6 +28,7 @@ export async function createProfessional(input, actor, dependencies = {}) {
     dependencies.createProfessionalProfile ?? createProfessionalProfile;
 
   requirePermissions(actor, [PERMISSIONS.SCHEDULES_MANAGE_ALL]);
+  if (!dependencies.createProfessionalProfile) requireGlobalBranchAccess(actor);
   const profileData = validateCreateProfessionalInput(input);
 
   try {
@@ -60,7 +63,7 @@ export async function getProfessional(professionalId, actor, dependencies = {}) 
 
   requirePermissions(actor, [PERMISSIONS.SCHEDULES_READ]);
   const normalizedId = validateProfessionalId(professionalId);
-  const professional = await findRepository(normalizedId);
+  const professional = await findRepository(normalizedId, ...(dependencies.findProfessionalById ? [] : [await identityBranchIds(actor)]));
 
   if (!professional) {
     throwProfessionalNotFound();
@@ -74,7 +77,7 @@ export async function getProfessionals(actor, dependencies = {}) {
     dependencies.listProfessionalProfiles ?? listProfessionalProfiles;
 
   requirePermissions(actor, [PERMISSIONS.SCHEDULES_READ]);
-  return listRepository();
+  return listRepository(...(dependencies.listProfessionalProfiles ? [] : [await identityBranchIds(actor)]));
 }
 
 export async function updateProfessional(
@@ -89,6 +92,7 @@ export async function updateProfessional(
 
   requirePermissions(actor, [PERMISSIONS.SCHEDULES_MANAGE_ALL]);
   const normalizedId = validateProfessionalId(professionalId);
+  if (!dependencies.updateProfessionalProfile) requireGlobalBranchAccess(actor);
   const currentProfessional = await findRepository(normalizedId);
 
   if (!currentProfessional) {

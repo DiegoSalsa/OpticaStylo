@@ -1,3 +1,8 @@
+import { requireProfessionalBranch } from "../auth/clinical-branch.js";
+import { hasGlobalBranchAccess } from "../auth/permissions.js";
+import { assertBranchAccess } from "../auth/branch-access.js";
+import { patientIdentityScope } from "../auth/branch-identity.js";
+import { AppError } from "../utils/app-error.js";
 import { prisma } from "../db/prisma.js";
 import { customerAppointmentChangeDeadline } from "../config/customer-appointments.js";
 import { verifiedPatientForAccount } from "./customer-clinical-repository.js";
@@ -14,6 +19,7 @@ function mapAppointment(row) {
   if (!row) return null;
   const professional = row.professional_profiles[professionalUser];
   return {
+    branchId: row.branch_id,
     cancellationReason: row.cancellation_reason, cancelledAt: row.cancelled_at,
     createdAt: row.created_at, endAt: row.end_at, id: row.id,
     internalNotes: row.internal_notes,
@@ -93,12 +99,12 @@ export async function findAppointmentById(appointmentId) {
   return findAppointmentByIdWithClient(prisma, appointmentId);
 }
 
-export async function listAppointments({ from, ownProfessionalId, patientId, professionalId, status, to }) {
+export async function listAppointments({ from, ownProfessionalId, patientId, professionalId, status, to, location }) {
   return (await prisma.appointments.findMany({
     include: appointmentInclude,
     orderBy: [{ start_at: "asc" }, { id: "asc" }],
     where: {
-      end_at: { gt: from }, start_at: { lt: to },
+      end_at: { gt: from }, start_at: { lt: to }, ...location,
       ...(patientId ? { patient_id: patientId } : {}),
       ...(professionalId ? { professional_id: professionalId } : {}),
       ...(ownProfessionalId ? { professional_id: ownProfessionalId } : {}),
@@ -124,11 +130,18 @@ export async function createAppointment(appointmentData, actorUserId, options = 
   // Ejecutar creación, historial y correos dentro de una transacción consistente
   // Una carrera serializable debe volver a comprobar el cupo y devolver el conflicto de dominio.
   return retryTransaction(prisma, async (client) => {
+    if (options.actor) {
+      await assertBranchAccess(options.actor, appointmentData.branchId, client);
+      await requireProfessionalBranch(appointmentData.professionalId, appointmentData.branchId, client);
+      if (!await client.patients.findFirst({ where: { id: appointmentData.patientId, ...patientIdentityScope([appointmentData.branchId]) }, select: { id: true } })) {
+        throw new AppError({ code: "PATIENT_NOT_FOUND", message: "No se encontró el paciente.", status: 404 });
+      }
+    }
     // Comprobar concurrencia antes de insertar la nueva reserva
     const conflict = await findCollision(client, appointmentData.professionalId, appointmentData.startAt, appointmentData.endAt);
     if (conflict) return { appointment: null, conflict };
     const created = await client.appointments.create({ data: {
-      created_by: actorUserId, end_at: appointmentData.endAt,
+      branch_id: appointmentData.branchId, created_by: actorUserId, end_at: appointmentData.endAt,
       internal_notes: appointmentData.internalNotes, patient_id: appointmentData.patientId,
       professional_id: appointmentData.professionalId, start_at: appointmentData.startAt,
       updated_by: actorUserId,
@@ -155,7 +168,10 @@ function dateOnly(value) {
 
 export async function createPublicBooking(bookingData, options = {}) {
   // Crear reservas públicas y sus pacientes dentro de una transacción serializable
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
+    if (bookingData.branchId) await requireProfessionalBranch(bookingData.professionalId, bookingData.branchId, client);
+    const conflict = await findCollision(client, bookingData.professionalId, bookingData.startAt, bookingData.endAt);
+    if (conflict) return { appointment: null, conflict };
     let patient = await client.patients.findUnique({ where: { rut: bookingData.patient.rut } });
     if (patient && (dateOnly(patient.birth_date) !== bookingData.patient.birthDate || patient.email !== bookingData.patient.email)) {
       return { appointment: null, conflict: "IDENTITY" };
@@ -177,10 +193,12 @@ export async function createPublicBooking(bookingData, options = {}) {
         } } } : {}),
       } });
     }
-    const conflict = await findCollision(client, bookingData.professionalId, bookingData.startAt, bookingData.endAt);
-    if (conflict) return { appointment: null, conflict };
+    if (bookingData.branchId) await client.patient_branches.upsert({
+      where: { patient_id_branch_id: { patient_id: patient.id, branch_id: bookingData.branchId } },
+      create: { patient_id: patient.id, branch_id: bookingData.branchId }, update: {},
+    });
     const created = await client.appointments.create({ data: {
-      created_by: null, end_at: bookingData.endAt, patient_id: patient.id,
+      branch_id: bookingData.branchId, created_by: null, end_at: bookingData.endAt, patient_id: patient.id,
       professional_id: bookingData.professionalId,
       public_manage_token_hash: bookingData.manageTokenHash, source: "PUBLIC",
       start_at: bookingData.startAt, updated_by: null,
@@ -200,13 +218,20 @@ export async function createPublicBooking(bookingData, options = {}) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function updateAppointment(appointmentId, changes, actorUserId) {
+async function requireAppointmentWriteScope(client, current, actor) {
+  if (!actor) return;
+  if (current.branch_id || !hasGlobalBranchAccess(actor)) await assertBranchAccess(actor, current.branch_id, client);
+}
+
+export async function updateAppointment(appointmentId, changes, actorUserId, actor) {
   // Actualizar la reserva y su historial con aislamiento serializable para evitar carreras
   return prisma.$transaction(async (client) => {
     const current = await client.appointments.findUnique({ where: { id: appointmentId } });
     if (!current) return { appointment: null, conflict: null, currentStatus: null };
+    await requireAppointmentWriteScope(client, current, actor);
     if (current.status !== "CONFIRMED") return { appointment: null, conflict: null, currentStatus: current.status };
     if (changes.startAt) {
+      if (current.branch_id) await requireProfessionalBranch(current.professional_id, current.branch_id, client);
       const conflict = await findCollision(client, current.professional_id, changes.startAt, changes.endAt, appointmentId);
       if (conflict) return { appointment: null, conflict, currentStatus: current.status };
     }
@@ -237,11 +262,12 @@ export async function updateAppointment(appointmentId, changes, actorUserId) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function changeAppointmentStatus(appointmentId, allowedCurrentStatuses, statusData, actorUserId) {
+export async function changeAppointmentStatus(appointmentId, allowedCurrentStatuses, statusData, actorUserId, actor) {
   // Cambiar el estado y registrar el evento dentro de una transacción atómica
   return prisma.$transaction(async (client) => {
     const current = await client.appointments.findUnique({ where: { id: appointmentId } });
     if (!current) return { appointment: null, currentStatus: null };
+    await requireAppointmentWriteScope(client, current, actor);
     if (!allowedCurrentStatuses.includes(current.status)) return { appointment: null, currentStatus: current.status };
     const isCancellation = statusData.status === "CANCELLED";
     await client.appointments.update({ data: {
@@ -265,7 +291,7 @@ export async function changeAppointmentStatus(appointmentId, allowedCurrentStatu
 export async function findCustomerAppointment(accountId, id, client = prisma) {
   return client.appointments.findFirst({
     where: { id, patients: verifiedPatientForAccount(accountId) },
-    select: { id: true, start_at: true, end_at: true, status: true, professional_id: true, patients: { select: { email: true } } },
+    select: { id: true, branch_id: true, start_at: true, end_at: true, status: true, professional_id: true, patients: { select: { email: true } } },
   });
 }
 
@@ -276,6 +302,7 @@ export async function updateCustomerAppointment(accountId, id, { expectedStart, 
       return { reason: "STALE" };
     }
     if (customerAppointmentChangeDeadline(current.start_at, noticeHours) <= now) return { reason: "CLOSED" };
+    if (slot && current.branch_id) await requireProfessionalBranch(current.professional_id, current.branch_id, client);
     if (slot && await findCollision(client, current.professional_id, slot.startAt, slot.endAt, id)) return { reason: "SLOT_TAKEN" };
     // Reclamar un correo y cambiar su hora compiten por las mismas filas de la cola.
     const emails = await client.$queryRaw`SELECT id, status, attempt_count, lock_expires_at

@@ -1,14 +1,18 @@
+import { operationBranch, patientIdentityScope } from "../auth/branch-identity.js";
+import { clinicalBranchIds, requireProfessionalBranch } from "../auth/clinical-branch.js";
+import { assertBranchAccess } from "../auth/branch-access.js";
 import { prisma } from "../db/prisma.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { requireClinicalProfessional } from "../auth/clinical-professional.js";
 import { validatePatientId } from "../validations/patient-validation.js";
 import { validateEncounterId } from "../validations/clinical-validation.js";
 import { clinicalInvalid, clinicalText } from "../validations/clinical-form-validation.js";
-export const careScope = professionalId => ({
+export const careScope = (professionalId, branches) => ({
   OR: [{
     appointments: {
       some: {
         professional_id: professionalId,
+        ...(branches && { branch_id: { in: branches } }),
         status: {
           in: ["CONFIRMED", "CHECKED_IN", "COMPLETED"]
         }
@@ -18,6 +22,7 @@ export const careScope = professionalId => ({
     clinical_care_assignments: {
       some: {
         professional_id: professionalId,
+        ...(branches && { branch_id: { in: branches } }),
         revoked_at: null
       }
     }
@@ -34,7 +39,8 @@ export async function clinicalPatients(query, actor) {
     search = (query.get("search") ?? "").trim(),
     page = Number(query.get("page") ?? 1);
   if (search.length > 100 || !Number.isSafeInteger(page) || page < 1) clinicalInvalid("La búsqueda o la página no es válida.");
-  const scope = careScope(actor.userId);
+  const branches = await clinicalBranchIds(actor);
+  const scope = careScope(actor.userId, branches);
   if (patientId) {
     const row = await prisma.patients.findFirst({
       where: {
@@ -44,13 +50,13 @@ export async function clinicalPatients(query, actor) {
       include: {
         appointments: {
           where: {
-            professional_id: actor.userId,
+            professional_id: actor.userId, branch_id: { in: branches },
             status: {
               in: ["CONFIRMED", "CHECKED_IN", "COMPLETED"]
             }
           },
           select: {
-            id: true,
+            id: true, branch_id: true,
             start_at: true,
             status: true,
             clinical_encounters: {
@@ -78,7 +84,7 @@ export async function clinicalPatients(query, actor) {
         email: row.email
       },
       appointments: row.appointments.map(a => ({
-        id: a.id,
+        id: a.id, branchId: a.branch_id,
         startAt: a.start_at,
         status: a.status,
         encounterId: a.clinical_encounters?.id ?? null
@@ -138,11 +144,12 @@ export async function clinicalPatients(query, actor) {
 }
 export async function getCareAssignments(query, actor) {
   requirePermissions(actor, ["medical_records.assign_care"]);
+  const branchId = await operationBranch(actor, query.get("branchId"));
   if (query.get("options") === "true") {
     const rows = await prisma.professional_profiles.findMany({
       where: {
         users_professional_profiles_user_idTousers: {
-          is_active: true,
+          is_active: true, user_branches: { some: { branch_id: branchId } },
           user_roles_user_roles_user_idTousers: {
             some: {
               roles: {
@@ -166,7 +173,7 @@ export async function getCareAssignments(query, actor) {
   const patientId = validatePatientId(query.get("patientId"));
   const rows = await prisma.clinical_care_assignments.findMany({
     where: {
-      patient_id: patientId
+      patient_id: patientId, branch_id: branchId,
     },
     include: {
       professional_profiles: {
@@ -202,7 +209,8 @@ export async function assignCare(input, actor) {
         id
       }
     });
-    if (!row) clinicalInvalid("No se encontró la asignación.", "CARE_ASSIGNMENT_NOT_FOUND", 404);
+    if (!row?.branch_id) clinicalInvalid("No se encontró la asignación.", "CARE_ASSIGNMENT_NOT_FOUND", 404);
+    await assertBranchAccess(actor, row.branch_id);
     if (row.revoked_at) return {
       revoked: true
     };
@@ -224,10 +232,10 @@ export async function assignCare(input, actor) {
   if (input.confirmPatient !== true) clinicalInvalid("Confirme que verificó la identidad del paciente y la atención solicitada.");
   const patientId = validatePatientId(input.patientId),
     professionalId = validateEncounterId(input.professionalId);
-  const [patient, profile] = await Promise.all([prisma.patients.findUnique({
-    where: {
-      id: patientId
-    },
+  const branchId = await operationBranch(actor, input.branchId);
+  await requireProfessionalBranch(professionalId, branchId);
+  const [patient, profile] = await Promise.all([prisma.patients.findFirst({
+    where: { id: patientId, ...patientIdentityScope([branchId]) },
     select: {
       id: true
     }
@@ -250,7 +258,7 @@ export async function assignCare(input, actor) {
   try {
     return await prisma.clinical_care_assignments.create({
       data: {
-        patient_id: patientId,
+        patient_id: patientId, branch_id: branchId,
         professional_id: professionalId,
         assigned_by: actor.userId,
         reason

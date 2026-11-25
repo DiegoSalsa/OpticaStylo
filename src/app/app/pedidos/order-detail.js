@@ -55,12 +55,8 @@ export default function OrderDetail({ saleId, onClose }) {
       {sale.fulfillment?.method === "DELIVERY" && <ShipmentPanel saleId={sale.id} internal />}
       <h3>Historial de cambios</h3>
       {sale.externalPrescription && <PrescriptionDetails endpoint={`/api/external-prescriptions/${sale.externalPrescription.id}`} label="Ver receta del pedido" />}
-      {sale.prescription && <ClinicalOrderPrescription prescriptionId={sale.prescription.id} />}
+      {sale.prescription && <PrescriptionDetails endpoint={`/api/sales/${sale.id}/prescription`} label="Ver prescripción clínica" />}
       {current.history.status === "rejected" ? <p className="inline-error" role="alert">No se pudo consultar el historial. <button className="app-button" onClick={() => setRevision((value) => value + 1)} type="button">Reintentar</button></p> : <ol className="order-history">{current.history.value.map((event) => <li key={event.id}><time>{new Date(event.createdAt).toLocaleString("es-CL")}</time><span>{event.previousStatus ? `${labels[event.previousStatus] ?? event.previousStatus} → ` : ""}{labels[event.newStatus] ?? event.eventType}</span></li>)}</ol>}
     </>}
   </dialog>;
-}
-
-function ClinicalOrderPrescription({ prescriptionId }) {
-  return <PrescriptionDetails endpoint={`/api/prescriptions/${prescriptionId}`} label="Ver prescripción clínica" />;
 }

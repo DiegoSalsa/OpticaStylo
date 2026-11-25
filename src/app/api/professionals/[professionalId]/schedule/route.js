@@ -12,7 +12,9 @@ export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
     const { professionalId } = await params;
-    const schedule = await getProfessionalSchedule(professionalId, actor);
+    const schedule = await getProfessionalSchedule(professionalId, actor, {
+      branchId: new URL(request.url).searchParams.get("branchId"),
+    });
 
     return createSuccessResponse(schedule);
   });

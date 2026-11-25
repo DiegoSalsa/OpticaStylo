@@ -1,3 +1,5 @@
+import { operationBranch } from "../auth/branch-identity.js";
+import { getAppointment } from "./appointment-service.js";
 import { requireClinicalProfessional } from "../auth/clinical-professional.js";
 import { addClinicalEncounterAddendum, createClinicalEncounter, finalizeClinicalEncounter, findClinicalEncounterByAppointmentId, findClinicalEncounterById, findMedicalRecordByPatientId, hasClinicalAssignment, listMedicalRecordRevisions, listPatientClinicalHistory, updateClinicalEncounter, upsertMedicalRecord, recordClinicalAccess } from "../repositories/clinical-repository.js";
 import { validateAddendumInput, validateClinicalPatientId, validateCreateEncounterInput, validateEncounterId, validateMedicalRecordInput, validateUpdateEncounterInput } from "../validations/clinical-validation.js";
@@ -24,26 +26,28 @@ const responseRecord = record => ({
     ...metadata
   }) => metadata)
 });
-async function requireAssignment(patientId, actor, statuses) {
-  if (!(await hasClinicalAssignment(patientId, actor.userId, statuses))) clinicalInvalid("No tiene asignación clínica para ese paciente.", "CLINICAL_ACCESS_NOT_ASSIGNED", 403);
+async function requireAssignment(patientId, actor, branchId, statuses) {
+  if (!branchId || !(await hasClinicalAssignment(patientId, actor.userId, statuses, undefined, branchId))) clinicalInvalid("No tiene asignación clínica para ese paciente.", "CLINICAL_ACCESS_NOT_ASSIGNED", 403);
 }
-export async function getMedicalRecord(patientId, actor) {
+export async function getMedicalRecord(patientId, actor, requestedBranch) {
   await requireClinicalProfessional(actor);
   const id = validateClinicalPatientId(patientId);
-  await requireAssignment(id, actor);
-  const record = await findMedicalRecordByPatientId(id);
+  const branchId = await operationBranch(actor, requestedBranch);
+  await requireAssignment(id, actor, branchId);
+  const record = await findMedicalRecordByPatientId(id, branchId);
   return {
     patientId: id,
     record,
-    revisions: record ? await listMedicalRecordRevisions(id) : []
+    revisions: record ? await listMedicalRecordRevisions(id, branchId) : []
   };
 }
 export async function updateMedicalRecord(patientId, input, actor) {
   await requireClinicalProfessional(actor, "medical_records.write_assigned");
   const id = validateClinicalPatientId(patientId);
-  await requireAssignment(id, actor, ["CHECKED_IN", "COMPLETED"]);
+  const branchId = await operationBranch(actor);
+  await requireAssignment(id, actor, branchId, ["CHECKED_IN", "COMPLETED"]);
   if (!Number.isSafeInteger(input?.expectedRevision) || input.expectedRevision < 0) clinicalInvalid("Indique la revisión de los antecedentes que está editando.");
-  return upsertMedicalRecord(id, validateMedicalRecordInput(input), actor.userId, input.expectedRevision);
+  return upsertMedicalRecord(id, validateMedicalRecordInput(input), actor.userId, input.expectedRevision, branchId);
 }
 export async function createEncounter(input, actor, {
   requestKey
@@ -51,7 +55,8 @@ export async function createEncounter(input, actor, {
   await requireClinicalProfessional(actor, "medical_records.write_assigned");
   const data = validateCreateEncounterInput(input);
   if (!requestKey && !data.appointmentId) clinicalInvalid("La atención sin reserva requiere un identificador de operación.", "IDEMPOTENCY_KEY_REQUIRED");
-  const result = await createClinicalEncounter(data, actor.userId, requestKey);
+  const branchId = data.appointmentId ? (await getAppointment(data.appointmentId, actor)).branchId : await operationBranch(actor);
+  const result = await createClinicalEncounter({ ...data, branchId }, actor.userId, requestKey);
   if (!result.encounter) reasonError(result.reason);
   return responseRecord(await findClinicalEncounterById(result.encounter.id));
 }
@@ -64,7 +69,7 @@ export async function getEncounter(encounterId, actor, {
   const id = validateEncounterId(encounterId),
     encounter = await findClinicalEncounterById(id);
   if (!encounter || encounter.status === "DRAFT" && encounter.professional.id !== actor.userId || patientId && validateClinicalPatientId(patientId) !== encounter.patient.id) reasonError("NOT_FOUND");
-  await requireAssignment(encounter.patient.id, actor);
+  await requireAssignment(encounter.patient.id, actor, encounter.branchId);
   let result = encounter;
   if (revision != null) {
     const version = Number(revision);
@@ -106,6 +111,7 @@ export async function getEncounter(encounterId, actor, {
 }
 export async function getEncounterForAppointment(appointmentId, actor) {
   await requireClinicalProfessional(actor);
+  await getAppointment(appointmentId, actor);
   const encounter = await findClinicalEncounterByAppointmentId(validateAppointmentId(appointmentId));
   if (!encounter) return null;
   return getEncounter(encounter.id, actor);
@@ -149,15 +155,16 @@ export async function addEncounterAddendum(encounterId, input, actor, {
   return result.addendum;
 }
 export async function getPatientClinicalHistory(patientId, actor, {
-  page = 1
+  page = 1, branchId: requestedBranch
 } = {}) {
   await requireClinicalProfessional(actor);
   const id = validateClinicalPatientId(patientId);
-  await requireAssignment(id, actor);
+  const branchId = await operationBranch(actor, requestedBranch);
+  await requireAssignment(id, actor, branchId);
   const value = Number(page);
   if (!Number.isSafeInteger(value) || value < 1 || value > 100000) clinicalInvalid("La página del historial no es válida.");
   return {
     patientId: id,
-    ...(await listPatientClinicalHistory(id, actor.userId, value))
+    ...(await listPatientClinicalHistory(id, actor.userId, value, branchId))
   };
 }

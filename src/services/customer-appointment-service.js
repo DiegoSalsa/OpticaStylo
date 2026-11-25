@@ -10,6 +10,16 @@ function error(code, message, status = 409) {
   return new AppError({ code, message, status });
 }
 
+export async function getCustomerAppointmentAvailability(account, id, query) {
+  if (!account?.id) throw error("CUSTOMER_AUTHENTICATION_REQUIRED", "Inicia sesión para gestionar tu hora.", 401);
+  const current = await findCustomerAppointment(account.id, validateAppointmentId(id));
+  if (!current) throw error("CUSTOMER_APPOINTMENT_NOT_FOUND", "No encontramos esta hora en tu cuenta.", 404);
+  if (current.status !== "CONFIRMED" || customerAppointmentChangeDeadline(current.start_at) <= new Date()) {
+    throw error("CUSTOMER_APPOINTMENT_CHANGE_CLOSED", "Ya terminó el plazo para cambiar esta hora en línea.");
+  }
+  return getPublicAvailability(current.professional_id, query, { appointmentBranch: current.branch_id });
+}
+
 export async function manageCustomerAppointment(account, id, input, dependencies = {}) {
   if (!account?.id) throw error("CUSTOMER_AUTHENTICATION_REQUIRED", "Inicia sesión para gestionar tu hora.", 401);
   const appointmentId = validateAppointmentId(id);
@@ -32,7 +42,7 @@ export async function manageCustomerAppointment(account, id, input, dependencies
     const { startAt } = validateUpdateAppointmentInput({ startAt: input.startAt }, now);
     const date = formatInTimeZone(startAt, "America/Santiago", "yyyy-MM-dd");
     const availability = await (dependencies.getAvailability ?? getPublicAvailability)(
-      current.professional_id, new URLSearchParams({ date }), { currentDate: now },
+      current.professional_id, new URLSearchParams({ date }), { currentDate: now, ...(!dependencies.getAvailability && { appointmentBranch: current.branch_id }) },
     );
     const selected = availability.slots.find((item) => Date.parse(item.startAt) === startAt.getTime());
     if (!selected) throw error("CUSTOMER_APPOINTMENT_SLOT_TAKEN", "Esa hora ya no está disponible. Elige otra.");

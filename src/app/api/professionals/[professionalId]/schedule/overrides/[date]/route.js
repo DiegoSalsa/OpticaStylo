@@ -30,7 +30,9 @@ export async function DELETE(request, { params }) {
     const actor = await authenticateRequest(request);
     const { date, professionalId } = await params;
 
-    await deleteProfessionalOverride(professionalId, date, actor);
+    await deleteProfessionalOverride(professionalId, date, actor, {
+      branchId: new URL(request.url).searchParams.get("branchId"),
+    });
     return new Response(null, { status: 204 });
   });
 }

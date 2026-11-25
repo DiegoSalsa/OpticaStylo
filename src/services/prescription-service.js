@@ -1,6 +1,10 @@
+import { assertBranchAccess } from "../auth/branch-access.js";
+import { operationBranch } from "../auth/branch-identity.js";
+import { findPatientById } from "../repositories/patient-repository.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {requireClinicalProfessional} from "../auth/clinical-professional.js";
+import { getSale } from "./sale-service.js";
 import {getEncounter} from "./clinical-service.js";
 import { hasClinicalAssignment } from "../repositories/clinical-repository.js";
 import {
@@ -180,8 +184,13 @@ export async function getPrescription(
     throwPrescriptionNotFound();
   }
 
+  if (!dependencies.findPrescriptionById) {
+    if (!prescription.branchId) throwPrescriptionNotFound();
+    await assertBranchAccess(actor, prescription.branchId);
+    if (!canReadAssigned && !await findPatientById(prescription.patient.id, { ...actor, activeBranchId: prescription.branchId })) throwPrescriptionNotFound();
+  }
   const assigned = canReadAssigned
-    ? await assignmentRepository(prescription.patient.id, actor.userId)
+    ? await assignmentRepository(prescription.patient.id, actor.userId, ...(dependencies.hasClinicalAssignment ? [] : [undefined, undefined, prescription.branchId]))
     : false;
 
   if (assigned) {
@@ -217,6 +226,16 @@ export async function getPrescription(
   throwPrescriptionNotFound();
 }
 
+export async function getOrderPrescription(saleId, actor) {
+  requirePermissions(actor, [PERMISSIONS.PRESCRIPTIONS_READ_FOR_SALE]);
+  const sale = await getSale(saleId, actor);
+  if (!sale.branchId || !sale.prescription?.id) throwPrescriptionNotFound();
+  const prescription = await findPrescriptionById(sale.prescription.id);
+  if (!prescription || prescription.status !== "ACTIVE" || prescription.encounterStatus !== "FINALIZED"
+    || (sale.origin !== "ONLINE" && prescription.branchId !== sale.branchId)) throwPrescriptionNotFound();
+  return toSalesView(prescription);
+}
+
 export async function getPrescriptionList(
   searchParams,
   actor,
@@ -243,8 +262,11 @@ export async function getPrescriptionList(
 
   if(canReadAssigned&&!dependencies.hasClinicalAssignment)await requireClinicalProfessional(actor,PERMISSIONS.PRESCRIPTIONS_READ_ASSIGNED);
 
+  const branchId = dependencies.listPrescriptionsByPatientId ? undefined : await operationBranch(actor, searchParams.get("branchId"));
+  if (!dependencies.listPrescriptionsByPatientId && !canReadAssigned
+    && !await findPatientById(query.patientId, { ...actor, activeBranchId: branchId })) throwPrescriptionNotFound();
   if (canReadAssigned) {
-    assigned = await assignmentRepository(query.patientId, actor.userId);
+    assigned = await assignmentRepository(query.patientId, actor.userId, ...(dependencies.hasClinicalAssignment ? [] : [undefined, undefined, branchId]));
 
     if (!assigned && !canReadForSale) {
       throw new AppError({
@@ -255,7 +277,7 @@ export async function getPrescriptionList(
     }
   }
 
-  const prescriptions = await listRepository(query.patientId);
+  const prescriptions = await listRepository(query.patientId, ...(dependencies.listPrescriptionsByPatientId ? [] : [branchId]));
 
   return prescriptions
     .filter((prescription) => {

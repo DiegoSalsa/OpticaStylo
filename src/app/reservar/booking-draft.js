@@ -1,9 +1,9 @@
 const STORAGE_KEY = "opticastylo:booking-recovery";
 const LIFETIME_MS = 30 * 60_000;
 
-export function saveBookingDraft({ professionalId, date, startAt }) {
+export function saveBookingDraft({ professionalId, branchId, date, startAt }) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ professionalId, date, startAt, expiresAt: Date.now() + LIFETIME_MS }));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ professionalId, ...(branchId && { branchId }), date, startAt, expiresAt: Date.now() + LIFETIME_MS }));
   } catch {
     // El navegador puede bloquear el almacenamiento. La reserva sigue disponible.
   }

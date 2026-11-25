@@ -46,15 +46,20 @@ export async function createProfessionalProfile(profileData, actorUserId) {
   });
 }
 
-export async function findProfessionalById(professionalId) {
-  return mapProfessional(await prisma.professional_profiles.findUnique({
-    include: includeUser, where: { user_id: professionalId },
+function professionalScope(branchIds) {
+  return branchIds ? { [userRelation]: { is_active: true, user_branches: { some: { branch_id: { in: branchIds } } } } } : {};
+}
+
+export async function findProfessionalById(professionalId, branchIds) {
+  return mapProfessional(await prisma.professional_profiles.findFirst({
+    include: includeUser, where: { user_id: professionalId, ...professionalScope(branchIds) },
   }));
 }
 
-export async function listProfessionalProfiles() {
+export async function listProfessionalProfiles(branchIds) {
   const rows = await prisma.professional_profiles.findMany({
     include: includeUser,
+    where: professionalScope(branchIds),
     orderBy: [
       { [userRelation]: { last_name: "asc" } },
       { [userRelation]: { first_name: "asc" } },

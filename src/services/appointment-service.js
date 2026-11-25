@@ -1,4 +1,7 @@
-import { PERMISSIONS } from "../auth/permissions.js";
+import { assertBranchAccess, branchFilter } from "../auth/branch-access.js";
+import { operationBranch } from "../auth/branch-identity.js";
+import { inventoryId } from "../validations/inventory-validation.js";
+import { hasGlobalBranchAccess, PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { getSchedulingTimeZone } from "../config/scheduling.js";
 import { getAppointmentReminderHours } from "../config/transactional-email.js";
@@ -74,6 +77,11 @@ function requireAppointmentRead(actor, appointment) {
   }
 }
 
+async function requireAppointmentBranch(appointment, actor) {
+  if (appointment.branchId) return assertBranchAccess(actor, appointment.branchId);
+  if (!hasGlobalBranchAccess(actor)) throwAppointmentNotFound();
+}
+
 function getOwnProfessionalFilter(actor) {
   if (hasPermission(actor, PERMISSIONS.APPOINTMENTS_READ_ALL)) {
     return null;
@@ -95,6 +103,7 @@ async function requireAppointment(appointmentId, findRepository) {
 
 async function requireBookableSlot({
   actor,
+  branchId,
   currentDate,
   excludedAppointmentId,
   getAvailability,
@@ -105,9 +114,9 @@ async function requireBookableSlot({
   const date = formatInTimeZone(startAt, timeZone, "yyyy-MM-dd");
   const availability = await getAvailability(
     professionalId,
-    new URLSearchParams({ date }),
+    new URLSearchParams({ date, ...(branchId && { branchId }) }),
     actor,
-    { currentDate, excludedAppointmentId, timeZone },
+    { currentDate, excludedAppointmentId, timeZone, ...(branchId === null && { trustedBranch: null }) },
   );
   const matchingSlot = availability.slots.find(
     (slot) => new Date(slot.startAt).getTime() === startAt.getTime(),
@@ -133,9 +142,10 @@ export async function createAppointment(input, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.APPOINTMENTS_CREATE]);
   // Normalizar y validar los datos recibidos antes de consultar la base de datos
   const data = validateCreateAppointmentInput(input, dependencies.currentDate);
+  const branchId = dependencies.createAppointment ? undefined : await operationBranch(actor, input.branchId);
   // Consultar paciente y profesional en paralelo porque ninguna búsqueda depende de la otra
   const [patient, professional] = await Promise.all([
-    patientRepository(data.patientId),
+    patientRepository(data.patientId, ...(dependencies.findPatientById ? [] : [{ ...actor, activeBranchId: branchId }])),
     professionalRepository(data.professionalId),
   ]);
 
@@ -158,6 +168,7 @@ export async function createAppointment(input, actor, dependencies = {}) {
   // Verificar que el horario solicitado siga disponible antes de crear la reserva
   const endAt = await requireBookableSlot({
     actor,
+    branchId,
     currentDate: dependencies.currentDate,
     getAvailability: availabilityService,
     professionalId: data.professionalId,
@@ -166,9 +177,10 @@ export async function createAppointment(input, actor, dependencies = {}) {
   });
   // Delegar la persistencia al repositorio, que también registra historial y notificaciones
   const result = await createRepository(
-    { ...data, endAt },
+    { ...data, endAt, ...(branchId && { branchId }) },
     actor.userId,
     {
+      ...(!dependencies.createAppointment && { actor }),
       reminderHours: dependencies.reminderHours
         ?? getAppointmentReminderHours(dependencies.environment),
     },
@@ -191,6 +203,7 @@ export async function getAppointment(
   const appointment = await requireAppointment(normalizedId, findRepository);
 
   requireAppointmentRead(actor, appointment);
+  if (!dependencies.findAppointmentById) await requireAppointmentBranch(appointment, actor);
   return appointment;
 }
 
@@ -203,7 +216,15 @@ export async function getAppointmentList(
   const query = validateAppointmentListQuery(searchParams);
   const ownProfessionalId = getOwnProfessionalFilter(actor);
 
-  return listRepository({ ...query, ownProfessionalId });
+  const branchId = searchParams.get("branchId");
+  const location = dependencies.listAppointments ? {} : await branchFilter(actor, branchId ? inventoryId(branchId) : actor.activeBranchId);
+  return listRepository({ ...query, ownProfessionalId, ...(!dependencies.listAppointments && { location }) });
+}
+
+function requireSameAppointmentBranch(input, appointment) {
+  if (Object.hasOwn(input ?? {}, "branchId") && input.branchId !== appointment.branchId) {
+    throw new AppError({ code: "APPOINTMENT_BRANCH_IMMUTABLE", message: "No se puede trasladar una cita mediante esta operación.", status: 409 });
+  }
 }
 
 export async function updateAppointment(
@@ -222,6 +243,10 @@ export async function updateAppointment(
   requirePermissions(actor, [PERMISSIONS.APPOINTMENTS_UPDATE]);
   const normalizedId = validateAppointmentId(appointmentId);
   const current = await requireAppointment(normalizedId, findRepository);
+  if (!dependencies.findAppointmentById) {
+    await requireAppointmentBranch(current, actor);
+    requireSameAppointmentBranch(input, current);
+  }
   const changes = validateUpdateAppointmentInput(input, dependencies.currentDate);
 
   if (current.status !== "CONFIRMED") {
@@ -232,6 +257,7 @@ export async function updateAppointment(
   const endAt = changes.startAt
     ? await requireBookableSlot({
         actor,
+        branchId: current.branchId,
         currentDate: dependencies.currentDate,
         excludedAppointmentId: normalizedId,
         getAvailability: availabilityService,
@@ -244,6 +270,7 @@ export async function updateAppointment(
     normalizedId,
     { ...changes, endAt },
     actor.userId,
+    ...(dependencies.updateAppointment ? [] : [actor]),
   );
 
   if (!result.appointment && result.currentStatus === null) {
@@ -273,6 +300,10 @@ export async function changeAppointmentStatus(
   const normalizedId = validateAppointmentId(appointmentId);
   const statusData = validateAppointmentStatusInput(input);
   const current = await requireAppointment(normalizedId, findRepository);
+  if (!dependencies.findAppointmentById) {
+    await requireAppointmentBranch(current, actor);
+    requireSameAppointmentBranch(input, current);
+  }
 
   // Impedir que una reserva se complete fuera del flujo de atención clínica finalizada
   if (statusData.status === "COMPLETED") {
@@ -314,6 +345,7 @@ export async function changeAppointmentStatus(
       changedAt: dependencies.currentDate ?? new Date(),
     },
     actor.userId,
+    ...(dependencies.changeAppointmentStatus ? [] : [actor]),
   );
 
   if (!result.appointment && result.currentStatus === null) {
@@ -339,6 +371,7 @@ export async function getAppointmentHistory(
   const appointment = await requireAppointment(normalizedId, findRepository);
 
   requireAppointmentRead(actor, appointment);
+  if (!dependencies.findAppointmentById) await requireAppointmentBranch(appointment, actor);
 
   return {
     appointmentId: normalizedId,

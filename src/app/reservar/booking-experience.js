@@ -42,6 +42,7 @@ async function readApi(response) {
 export default function BookingExperience({ accountProfile, accountHoursHref, onBooked } = {}) {
   const [professionals, setProfessionals] = useState([]);
   const [professionalId, setProfessionalId] = useState("");
+  const [branchId, setBranchId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [slots, setSlots] = useState([]);
@@ -98,7 +99,7 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
     prefilled.current = { ...prefilled.current, ...details };
   }
 
-  const loadSlots = useCallback(async (nextProfessionalId, nextDate, previousStartAt = null) => {
+  const loadSlots = useCallback(async (nextProfessionalId, nextDate, previousStartAt = null, location = "") => {
     // Invalidar siempre la selección anterior, incluso si se limpia profesional o fecha.
     availabilityRequest.current?.abort();
     setMessage(""); setSelectedSlot(null); setSlots([]); setSelectionNotice("");
@@ -107,7 +108,7 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
     availabilityRequest.current = controller;
     setStatus("loading-slots");
     try {
-      const data = await readApi(await fetch(`/api/store/booking/professionals/${nextProfessionalId}/availability?date=${nextDate}`, {
+      const data = await readApi(await fetch(`/api/store/booking/professionals/${nextProfessionalId}/availability?${new URLSearchParams({ date: nextDate, ...(location && { branchId: location }) })}`, {
         cache: "no-store",
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
       }));
@@ -138,7 +139,10 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
         setStatus("ready");
         return;
       }
-      if (!data.some((item) => item.id === draft.professionalId) || draft.date < chileDate(1) || draft.date > chileDate(60)) {
+      const professional = data.find((item) => item.id === draft.professionalId);
+      const branches = professional?.branches;
+      const location = branches?.find((branch) => branch.id === draft.branchId)?.id ?? (branches?.length === 1 ? branches[0].id : "");
+      if (!professional || (branches?.length && !location) || draft.date < chileDate(1) || draft.date > chileDate(60)) {
         clearBookingDraft();
         setSelectedSlot(null);
         setSlots([]);
@@ -147,8 +151,9 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
         return;
       }
       setProfessionalId(draft.professionalId);
+      setBranchId(location);
       setSelectedDate(draft.date);
-      return loadSlots(draft.professionalId, draft.date, draft.startAt);
+      return loadSlots(draft.professionalId, draft.date, draft.startAt, location);
     }
 
     function onPageShow(event) {
@@ -174,18 +179,27 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
 
   function chooseProfessional(value) {
     clearBookingDraft();
+    const branches = professionals.find(({ id }) => id === value)?.branches;
+    const location = branches?.length === 1 ? branches[0].id : "";
     setProfessionalId(value);
-    loadSlots(value, selectedDate);
+    setBranchId(location);
+    loadSlots(branches?.length && !location ? "" : value, selectedDate, null, location);
+  }
+
+  function chooseBranch(value) {
+    clearBookingDraft();
+    setBranchId(value);
+    loadSlots(value ? professionalId : "", selectedDate, null, value);
   }
 
   function chooseDate(value) {
     clearBookingDraft();
     setSelectedDate(value);
-    loadSlots(professionalId, value);
+    loadSlots(selectedProfessional?.branches?.length && !branchId ? "" : professionalId, value, null, branchId);
   }
 
   function chooseSlot(slot) {
-    saveBookingDraft({ professionalId, date: selectedDate, startAt: slot.startAt });
+    saveBookingDraft({ professionalId, branchId, date: selectedDate, startAt: slot.startAt });
     setSelectedSlot(slot);
   }
 
@@ -204,7 +218,7 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
     setStatus("submitting"); setMessage(""); setIdentityConflict(false);
     try {
       const data = await readStoreResponse(await fetch("/api/store/booking", {
-        body: JSON.stringify({ acceptsPrivacy: form.get("acceptsPrivacy") === "on", patient, professionalId, startAt: selectedSlot.startAt, website: form.get("website") }),
+        body: JSON.stringify({ acceptsPrivacy: form.get("acceptsPrivacy") === "on", patient, professionalId, ...(branchId && { branchId }), startAt: selectedSlot.startAt, website: form.get("website") }),
         headers: { "content-type": "application/json" }, method: "POST",
       }));
       clearBookingDraft();
@@ -228,6 +242,7 @@ export default function BookingExperience({ accountProfile, accountHoursHref, on
         {status === "loading-professionals" && <div className={styles.inlineState}>Cargando profesionales…</div>}
         {status === "error" && <div className={styles.inlineError}><Icon name="shield" /><p>{message}</p></div>}
         {status !== "loading-professionals" && <div className={styles.field}><label htmlFor="professional">Profesional</label><select id="professional" onChange={(event) => chooseProfessional(event.target.value)} required value={professionalId}><option value="">Selecciona un profesional</option>{professionals.map((item) => <option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></div>}
+        {selectedProfessional?.branches?.length > 0 && <div className={styles.field}><label htmlFor="booking-branch">Sucursal de atención</label><select id="booking-branch" required value={branchId} onChange={(event) => chooseBranch(event.target.value)}><option value="">Selecciona una sucursal</option>{selectedProfessional.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></div>}
         <div className={styles.field}><label htmlFor="booking-date">Fecha</label><input id="booking-date" max={chileDate(60)} min={chileDate(1)} onChange={(event) => chooseDate(event.target.value)} required type="date" value={selectedDate} /></div>
         <div className={styles.slotArea}><div className={styles.slotLabel}><span>Horas disponibles</span>{selectedDate && <small>{formatLongDate(selectedDate)}</small>}</div>{status === "loading-slots" && <div className={styles.inlineState}>Consultando agenda…</div>}{status === "error-slots" && <div className={styles.inlineError}><Icon name="shield" /><p>{message}</p></div>}{status === "ready" && professionalId && selectedDate && slots.length === 0 && <div className={styles.inlineState}>No hay horas disponibles para esta fecha.</div>}{slots.length > 0 && <div className={styles.slots}>{slots.map((slot) => <button className={selectedSlot?.startAt === slot.startAt ? styles.slotActive : ""} key={slot.startAt} onClick={() => chooseSlot(slot)} type="button">{formatTime(slot.startAt)}</button>)}</div>}</div>
         {selectionNotice && !selectedSlot && <p className={styles.inlineState} role="status">{selectionNotice}</p>}

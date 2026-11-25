@@ -12,6 +12,7 @@ export async function DELETE(request, { params }) {
       professionalId,
       blockId,
       actor,
+      { branchId: new URL(request.url).searchParams.get("branchId") },
     );
     return new Response(null, { status: 204 });
   });

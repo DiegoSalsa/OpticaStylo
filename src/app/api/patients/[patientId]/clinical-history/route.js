@@ -8,7 +8,10 @@ export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
     const { patientId } = await params;
-    const history = await getPatientClinicalHistory(patientId, actor,{page:new URL(request.url).searchParams.get("page")??1});
+    const query = new URL(request.url).searchParams;
+    const history = await getPatientClinicalHistory(patientId, actor, {
+      page: query.get("page") ?? 1, branchId: query.get("branchId"),
+    });
 
     return createSuccessResponse(history);
   });

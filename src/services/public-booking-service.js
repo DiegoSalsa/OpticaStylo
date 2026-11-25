@@ -1,3 +1,5 @@
+import { prisma } from "../db/prisma.js";
+import { inventoryId } from "../validations/inventory-validation.js";
 import { formatInTimeZone } from "date-fns-tz";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { createSessionToken, hashSessionToken } from "../auth/session-token.js";
@@ -39,19 +41,44 @@ function throwUnavailableSlot() {
   });
 }
 
+async function publicLocations(ids) {
+  const rows = await prisma.user_branches.findMany({
+    where: { user_id: { in: ids }, branches: { is_active: true }, users: { is_active: true,
+      professional_profiles_professional_profiles_user_idTousers: { is: { is_bookable: true } },
+    } },
+    select: { user_id: true, branches: { select: { id: true, name: true } } },
+    orderBy: [{ branches: { name: "asc" } }, { branch_id: "asc" }],
+  });
+  return rows;
+}
+
+async function publicLocation(professionalId, branchId) {
+  const locations = await publicLocations([professionalId]);
+  const id = branchId ? inventoryId(branchId) : locations.length === 1 ? locations[0].branches.id : null;
+  if (!locations.some((row) => row.branches.id === id)) throwProfessionalNotFound();
+  return id;
+}
+
 export async function getPublicProfessionals(dependencies = {}) {
   const listRepository = dependencies.listProfessionalProfiles ?? listProfessionalProfiles;
   const professionals = await listRepository();
-  return professionals.filter((professional) => professional.isBookable).map(publicProfessional);
+  const available = professionals.filter((professional) => professional.isBookable);
+  if (dependencies.listProfessionalProfiles) return available.map(publicProfessional);
+  const rows = await publicLocations(available.map(({ id }) => id));
+  return available.map((professional) => ({
+    ...publicProfessional(professional), branches: rows.filter((row) => row.user_id === professional.id).map((row) => row.branches),
+  })).filter((professional) => professional.branches.length > 0);
 }
 
 export async function getPublicAvailability(professionalId, searchParams, dependencies = {}) {
   const availabilityService = dependencies.getProfessionalAvailability ?? getProfessionalAvailability;
+  const branch = Object.hasOwn(dependencies, "appointmentBranch") ? { trustedBranch: dependencies.appointmentBranch }
+    : !dependencies.getProfessionalAvailability ? { trustedBranch: await publicLocation(professionalId, searchParams.get("branchId")) } : {};
   const availability = await availabilityService(
     professionalId,
     searchParams,
     PUBLIC_SCHEDULE_ACTOR,
-    { currentDate: dependencies.currentDate, timeZone: dependencies.timeZone },
+    { currentDate: dependencies.currentDate, timeZone: dependencies.timeZone, ...branch },
   );
   return availability;
 }
@@ -63,13 +90,14 @@ export async function createPublicBooking(input, dependencies = {}) {
   const professional = await findRepository(data.professionalId);
   if (!professional?.isBookable) throwProfessionalNotFound();
 
+  const branchId = dependencies.createPublicBooking ? undefined : await publicLocation(data.professionalId, input.branchId);
   const timeZone = dependencies.timeZone ?? getSchedulingTimeZone();
   const date = formatInTimeZone(data.startAt, timeZone, "yyyy-MM-dd");
   const availability = await (dependencies.getProfessionalAvailability ?? getProfessionalAvailability)(
     data.professionalId,
     new URLSearchParams({ date }),
     PUBLIC_SCHEDULE_ACTOR,
-    { currentDate, timeZone },
+    { currentDate, timeZone, ...(branchId && { trustedBranch: branchId }) },
   );
   const slot = availability.slots.find(
     (candidate) => new Date(candidate.startAt).getTime() === data.startAt.getTime(),
@@ -79,7 +107,7 @@ export async function createPublicBooking(input, dependencies = {}) {
   const manageToken = (dependencies.createManageToken ?? createSessionToken)();
   const result = await (dependencies.createPublicBooking ?? createPublicBookingRepository)(
     {
-      endAt: new Date(slot.endAt),
+      ...(branchId && { branchId }), endAt: new Date(slot.endAt),
       manageTokenHash: (dependencies.hashManageToken ?? hashSessionToken)(manageToken),
       patient: data.patient,
       professionalId: data.professionalId,

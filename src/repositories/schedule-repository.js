@@ -39,13 +39,13 @@ function mapBlock(row) {
   return row ? { createdAt: row.created_at, endAt: row.end_at, id: row.id, reason: row.reason, startAt: row.start_at } : null;
 }
 
-export async function getWeeklySchedule(professionalId) {
+export async function getWeeklySchedule(professionalId, branchId = null) {
   return (await prisma.professional_weekly_schedules.findMany({
-    orderBy: { day_of_week: "asc" }, where: { professional_id: professionalId },
+    orderBy: { day_of_week: "asc" }, where: { professional_id: professionalId, branch_id: branchId },
   })).map(mapSchedule);
 }
 
-export async function saveWeeklySchedule(professionalId, days) {
+export async function saveWeeklySchedule(professionalId, days, branchId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     for (const day of days) {
@@ -54,51 +54,51 @@ export async function saveWeeklySchedule(professionalId, days) {
         end_time: time(day.endTime), is_working: day.isWorking, start_time: time(day.startTime),
       };
       await client.professional_weekly_schedules.upsert({
-        create: { ...data, day_of_week: day.dayOfWeek, professional_id: professionalId },
+        create: { ...data, day_of_week: day.dayOfWeek, professional_id: professionalId, branch_id: branchId },
         update: data,
-        where: { professional_id_day_of_week: { day_of_week: day.dayOfWeek, professional_id: professionalId } },
+        where: { professional_id_branch_id_day_of_week: { day_of_week: day.dayOfWeek, professional_id: professionalId, branch_id: branchId } },
       });
     }
     return (await client.professional_weekly_schedules.findMany({
-      orderBy: { day_of_week: "asc" }, where: { professional_id: professionalId },
+      orderBy: { day_of_week: "asc" }, where: { professional_id: professionalId, branch_id: branchId },
     })).map(mapSchedule);
   });
 }
 
-export async function getScheduleOverrides(professionalId, from, to) {
+export async function getScheduleOverrides(professionalId, from, to, branchId) {
   return (await prisma.professional_schedule_overrides.findMany({
     orderBy: { date: "asc" },
-    where: { date: { gte: dateOnly(from), lte: dateOnly(to) }, professional_id: professionalId },
+    where: { date: { gte: dateOnly(from), lte: dateOnly(to) }, professional_id: professionalId, branch_id: branchId },
   })).map(mapOverride);
 }
 
-export async function findScheduleOverride(professionalId, date) {
-  return mapOverride(await prisma.professional_schedule_overrides.findUnique({
-    where: { professional_id_date: { date: dateOnly(date), professional_id: professionalId } },
+export async function findScheduleOverride(professionalId, date, branchId = null) {
+  return mapOverride(await prisma.professional_schedule_overrides.findFirst({
+    where: { date: dateOnly(date), professional_id: professionalId, branch_id: branchId },
   }));
 }
 
-export async function upsertScheduleOverride(professionalId, date, override, actorUserId) {
+export async function upsertScheduleOverride(professionalId, date, override, actorUserId, branchId) {
   const data = {
     break_end: time(override.breakEnd), break_start: time(override.breakStart),
     end_time: time(override.endTime), is_working: override.isWorking, start_time: time(override.startTime),
   };
   return mapOverride(await prisma.professional_schedule_overrides.upsert({
-    create: { ...data, created_by: actorUserId, date: dateOnly(date), professional_id: professionalId },
+    create: { ...data, created_by: actorUserId, date: dateOnly(date), professional_id: professionalId, branch_id: branchId },
     update: data,
-    where: { professional_id_date: { date: dateOnly(date), professional_id: professionalId } },
+    where: { professional_id_branch_id_date: { date: dateOnly(date), professional_id: professionalId, branch_id: branchId } },
   }));
 }
 
 // Eliminar o cancelar remove agenda override de forma controlada y consistente
-export async function removeScheduleOverride(professionalId, date) {
+export async function removeScheduleOverride(professionalId, date, branchId) {
   const result = await prisma.professional_schedule_overrides.deleteMany({
-    where: { date: dateOnly(date), professional_id: professionalId },
+    where: { date: dateOnly(date), professional_id: professionalId, branch_id: branchId },
   });
   return result.count > 0;
 }
 
-export async function createScheduleBlock(professionalId, block, actorUserId) {
+export async function createScheduleBlock(professionalId, block, actorUserId, branchId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     const conflict = await client.appointments.findFirst({
@@ -110,7 +110,7 @@ export async function createScheduleBlock(professionalId, block, actorUserId) {
     });
     if (conflict) return { block: null, conflict: "APPOINTMENT" };
     const created = await client.professional_schedule_blocks.create({ data: {
-      created_by: actorUserId, end_at: block.endAt, professional_id: professionalId,
+      branch_id: branchId, created_by: actorUserId, end_at: block.endAt, professional_id: professionalId,
       reason: block.reason, start_at: block.startAt,
     } });
     return { block: mapBlock(created), conflict: null };
@@ -118,16 +118,16 @@ export async function createScheduleBlock(professionalId, block, actorUserId) {
   }, { isolationLevel: "Serializable" });
 }
 
-export async function getScheduleBlocks(professionalId, from, to) {
+export async function getScheduleBlocks(professionalId, from, to, branchId) {
   return (await prisma.professional_schedule_blocks.findMany({
     orderBy: [{ start_at: "asc" }, { id: "asc" }],
-    where: { end_at: { gt: from }, professional_id: professionalId, start_at: { lt: to } },
+    where: { end_at: { gt: from }, professional_id: professionalId, start_at: { lt: to }, branch_id: branchId },
   })).map(mapBlock);
 }
 
 // Eliminar o cancelar remove agenda block de forma controlada y consistente
-export async function removeScheduleBlock(professionalId, blockId) {
+export async function removeScheduleBlock(professionalId, blockId, branchId) {
   return (await prisma.professional_schedule_blocks.deleteMany({
-    where: { id: blockId, professional_id: professionalId },
+    where: { id: blockId, professional_id: professionalId, branch_id: branchId },
   })).count > 0;
 }

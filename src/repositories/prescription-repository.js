@@ -1,3 +1,4 @@
+import { hasClinicalAssignment } from "./clinical-repository.js";
 import { prisma } from "../db/prisma.js";
 import {retryTransaction} from "../db/retry-transaction.js";
 
@@ -43,7 +44,7 @@ function withContext(row) {
   if (!row) return null;
   return {
     ...mapPrescription(row), encounterStatus: row.clinical_encounters.status,
-    professionalId: row.clinical_encounters.professional_id,
+    professionalId: row.clinical_encounters.professional_id, branchId: row.clinical_encounters.branch_id,
   };
 }
 
@@ -57,11 +58,11 @@ export async function findPrescriptionById(prescriptionId) {
   return findPrescriptionWithClient(prisma, prescriptionId);
 }
 
-export async function listPrescriptionsByPatientId(patientId) {
+export async function listPrescriptionsByPatientId(patientId, branchId) {
   return (await prisma.optical_prescriptions.findMany({
     include: prescriptionInclude,
     orderBy: [{ issued_at: "desc" }, { version: "desc" }],
-    where: { clinical_encounters: { patient_id: patientId } },
+    where: { clinical_encounters: { patient_id: patientId, branch_id: branchId } },
   })).map(withContext);
 }
 
@@ -82,7 +83,7 @@ export async function createOrReplacePrescription(encounterId, prescription, act
     await client.$queryRaw`SELECT id FROM clinical_encounters WHERE id=${encounterId}::uuid FOR UPDATE`;
     const encounter = await client.clinical_encounters.findUnique({ where: { id: encounterId } });
     if (!encounter) return { prescription: null, reason: "ENCOUNTER_NOT_FOUND" };
-    if (encounter.professional_id !== actorUserId) return { prescription: null, reason: "NOT_ASSIGNED" };
+    if (encounter.professional_id !== actorUserId || !await hasClinicalAssignment(encounter.patient_id, actorUserId, undefined, client, encounter.branch_id)) return { prescription: null, reason: "NOT_ASSIGNED" };
     const active = await client.optical_prescriptions.findFirst({
       where: { encounter_id: encounterId, status: "ACTIVE" },
     });
@@ -117,7 +118,7 @@ export async function updatePrescription(prescriptionId, changes, actorUserId) {
       include: { clinical_encounters: true }, where: { id: prescriptionId },
     });
     if (!current) return { prescription: null, reason: "NOT_FOUND" };
-    if (current.clinical_encounters.professional_id !== actorUserId) return { prescription: null, reason: "NOT_ASSIGNED" };
+    if (current.clinical_encounters.professional_id !== actorUserId || !await hasClinicalAssignment(current.clinical_encounters.patient_id, actorUserId, undefined, client, current.clinical_encounters.branch_id)) return { prescription: null, reason: "NOT_ASSIGNED" };
     if (current.status !== "ACTIVE" || current.clinical_encounters.status !== "DRAFT") {
       return { prescription: null, reason: "IMMUTABLE" };
     }
