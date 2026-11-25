@@ -12,7 +12,11 @@ import { readJsonBody } from "@/utils/http-request";
 export async function GET(request) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
-    const professionals = await getProfessionals(actor);
+    const query = new URL(request.url).searchParams;
+    const professionals = await getProfessionals(actor, {
+      branchId: query.get("branchId"),
+      global: query.get("view") === "general",
+    });
 
     return createSuccessResponse(professionals);
   });

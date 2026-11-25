@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { agendaContracts, readAgendaResponse } from "./agenda-api";
 
 function chileDate(offsetDays = 1) {
@@ -13,7 +13,7 @@ function time(value) {
   return new Intl.DateTimeFormat("es-CL", { hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" }).format(new Date(value));
 }
 
-export default function InternalBooking({ onCreated, professionals }) {
+export default function InternalBooking({ branchId, onCreated, professionals }) {
   const [query, setQuery] = useState("");
   const [patients, setPatients] = useState([]);
   const [patientId, setPatientId] = useState("");
@@ -23,38 +23,67 @@ export default function InternalBooking({ onCreated, professionals }) {
   const [startAt, setStartAt] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
+  const pending = useRef(null);
+
+  useEffect(() => () => pending.current?.abort(), []);
+
+  function begin(nextStatus) {
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    setStatus(nextStatus);
+    setMessage("");
+    return controller.signal;
+  }
 
   async function searchPatients(event) {
     event.preventDefault();
-    setStatus("searching"); setMessage("");
+    const signal = begin("searching");
+    const filters = new URLSearchParams({ branchId, search: query.trim(), pageSize: "20" });
     try {
-      const data = await readAgendaResponse(await fetch(`/api/patients?search=${encodeURIComponent(query.trim())}&pageSize=20`, { cache: "no-store" }), agendaContracts.patients);
+      const data = await readAgendaResponse(await fetch(`/api/patients?${filters}`, { cache: "no-store", signal }), agendaContracts.patients);
+      if (signal.aborted) return;
       setPatients(data.items); setPatientId(data.items[0]?.id ?? "");
-      if (!data.items.length) setMessage("No se encontraron pacientes. Créalo primero en Pacientes.");
-    } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
+      if (!data.items.length) setMessage("No se encontraron pacientes en esta sucursal.");
+    } catch (error) {
+      if (!signal.aborted) setMessage(error.message);
+    } finally {
+      if (!signal.aborted) setStatus("idle");
+    }
   }
 
-  async function loadSlots(nextProfessionalId = professionalId, nextDate = date) {
+  async function loadSlots(nextProfessionalId, nextDate, successMessage = "") {
     setProfessionalId(nextProfessionalId); setDate(nextDate); setStartAt(""); setSlots([]);
-    if (!nextProfessionalId || !nextDate) return;
-    setStatus("loading"); setMessage("");
+    if (!nextProfessionalId || !nextDate) { begin("idle"); return; }
+    const signal = begin("loading");
+    const filters = new URLSearchParams({ branchId, date: nextDate });
     try {
-      const data = await readAgendaResponse(await fetch(`/api/professionals/${nextProfessionalId}/availability?date=${nextDate}`, { cache: "no-store" }), agendaContracts.availability);
+      const data = await readAgendaResponse(await fetch(`/api/professionals/${nextProfessionalId}/availability?${filters}`, { cache: "no-store", signal }), agendaContracts.availability);
+      if (signal.aborted) return;
       setSlots(data.slots);
-      if (!data.slots.length) setMessage("No hay horas disponibles para esa fecha.");
-    } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
+      if (successMessage || !data.slots.length) setMessage(successMessage || "No hay horas disponibles para esa fecha.");
+    } catch (error) {
+      if (!signal.aborted) setMessage(error.message);
+    } finally {
+      if (!signal.aborted) setStatus("idle");
+    }
   }
 
   async function submit(event) {
     event.preventDefault();
     if (!patientId || !professionalId || !startAt) { setMessage("Selecciona paciente, profesional y hora."); return; }
     const form = new FormData(event.currentTarget);
-    setStatus("saving"); setMessage("");
+    const signal = begin("saving");
     try {
-      await readAgendaResponse(await fetch("/api/appointments", { body: JSON.stringify({ internalNotes: form.get("internalNotes") || null, patientId, professionalId, startAt }), headers: { "Content-Type": "application/json" }, method: "POST" }), agendaContracts.appointment);
-      setMessage("Reserva interna creada correctamente."); setStartAt("");
-      await loadSlots(); await onCreated();
-    } catch (error) { setMessage(error.message); } finally { setStatus("idle"); }
+      await readAgendaResponse(await fetch("/api/appointments", { body: JSON.stringify({ branchId, internalNotes: form.get("internalNotes") || null, patientId, professionalId, startAt }), headers: { "Content-Type": "application/json" }, method: "POST", signal }), agendaContracts.appointment);
+      if (signal.aborted) return;
+      onCreated();
+      await loadSlots(professionalId, date, "Reserva interna creada correctamente.");
+    } catch (error) {
+      if (!signal.aborted) setMessage(error.message);
+    } finally {
+      if (!signal.aborted) setStatus("idle");
+    }
   }
 
   return <form className="app-card internal-booking" onSubmit={submit}>
@@ -62,8 +91,8 @@ export default function InternalBooking({ onCreated, professionals }) {
     <div className="internal-booking-grid">
       <label className="field booking-patient"><span>Buscar paciente</span><span className="inline-search"><input onChange={(event)=>setQuery(event.target.value)} placeholder="RUT o nombre" value={query} /><button className="app-button app-button--soft" disabled={status!=="idle"} onClick={searchPatients} type="button">Buscar</button></span></label>
       <label className="field"><span>Paciente</span><select onChange={(event)=>setPatientId(event.target.value)} required value={patientId}><option value="">Selecciona</option>{patients.map((item)=><option key={item.id} value={item.id}>{item.firstNames} {item.lastNames} · {item.rut}</option>)}</select></label>
-      <label className="field"><span>Profesional</span><select onChange={(event)=>loadSlots(event.target.value,date)} required value={professionalId}><option value="">Selecciona</option>{professionals.filter((item)=>item.isBookable).map((item)=><option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></label>
-      <label className="field"><span>Fecha</span><input min={chileDate()} onChange={(event)=>loadSlots(professionalId,event.target.value)} required type="date" value={date} /></label>
+      <label className="field"><span>Profesional</span><select disabled={status === "saving" || status === "searching"} onChange={(event)=>loadSlots(event.target.value,date)} required value={professionalId}><option value="">Selecciona</option>{professionals.filter((item)=>item.isBookable).map((item)=><option key={item.id} value={item.id}>{item.firstName} {item.lastName}</option>)}</select></label>
+      <label className="field"><span>Fecha</span><input disabled={status === "saving" || status === "searching"} min={chileDate()} onChange={(event)=>loadSlots(professionalId,event.target.value)} required type="date" value={date} /></label>
       <label className="field"><span>Hora disponible</span><select onChange={(event)=>setStartAt(event.target.value)} required value={startAt}><option value="">Selecciona</option>{slots.map((slot)=><option key={slot.startAt} value={slot.startAt}>{time(slot.startAt)}</option>)}</select></label>
       <label className="field booking-notes"><span>Notas internas opcionales</span><input maxLength="1000" name="internalNotes" placeholder="Ej: Observación del paciente" /></label>
     </div>

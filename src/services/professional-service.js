@@ -1,5 +1,5 @@
 import { requireGlobalBranchAccess } from "../auth/branch-access.js";
-import { identityBranchIds } from "../auth/branch-identity.js";
+import { identityBranchIds, operationBranch } from "../auth/branch-identity.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -77,6 +77,12 @@ export async function getProfessionals(actor, dependencies = {}) {
     dependencies.listProfessionalProfiles ?? listProfessionalProfiles;
 
   requirePermissions(actor, [PERMISSIONS.SCHEDULES_READ]);
+  if (dependencies.global) {
+    requirePermissions(actor, [PERMISSIONS.SCHEDULES_MANAGE_ALL]);
+    requireGlobalBranchAccess(actor);
+    return listRepository();
+  }
+  if (dependencies.branchId) return listRepository([await operationBranch(actor, dependencies.branchId)]);
   return listRepository(...(dependencies.listProfessionalProfiles ? [] : [await identityBranchIds(actor)]));
 }
 

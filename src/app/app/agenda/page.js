@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { hasGlobalBranchAccess, PERMISSIONS } from "@/auth/permissions";
 import { useInternalActor } from "@/components/internal/internal-shell";
 import { agendaContracts, readAgendaResponse } from "./agenda-api";
 import { addCalendarDays, buildAgendaDays } from "./agenda-calendar-model";
@@ -39,6 +40,27 @@ const dateOnly = (value) =>
 
 export default function AgendaPage() {
   const actor = useInternalActor();
+  if (!actor) return null;
+  if (!actor.permissions.includes(PERMISSIONS.SCHEDULES_READ)) {
+    return (
+      <section className="app-card empty-module">
+        <h2>Acceso no disponible</h2>
+        <p>Ventas no administra agenda ni pacientes.</p>
+      </section>
+    );
+  }
+  const global = hasGlobalBranchAccess(actor);
+  const branches = actor.branches ?? [];
+  const branch = branches.find((item) => item.id === actor.activeBranchId)
+    ?? (!global && branches.length === 1 ? branches[0] : null);
+  return <BranchAgenda key={branch?.id ?? ""} actor={actor} branch={branch} global={global} />;
+}
+
+function BranchAgenda({ actor, branch, global }) {
+  const branchId = branch?.id;
+  const branchQuery = branchId ? new URLSearchParams({ branchId }).toString() : "";
+  const canManageAll = actor.permissions.includes(PERMISSIONS.SCHEDULES_MANAGE_ALL);
+  const canManageProfiles = canManageAll && global;
   const today = useMemo(() => new Date(), []);
   const [from, setFrom] = useState(dateOnly(today));
   const [to, setTo] = useState(() => addCalendarDays(dateOnly(today), 6));
@@ -57,11 +79,9 @@ export default function AgendaPage() {
   const professionalId = professionals.some((item) => item.id === selectedProfessionalId)
     ? selectedProfessionalId
     : professionals.find((item) => item.id === actor?.userId)?.id ?? professionals[0]?.id ?? "";
-  const canManageAll = actor?.permissions.includes("schedules.manage_all");
-  const canManageSelected =
-    actor &&
-    professionalId &&
-    (canManageAll || professionalId === actor.userId);
+  const canManageSelected = Boolean(professionalId && (canManageAll || (
+    actor.permissions.includes(PERMISSIONS.SCHEDULES_MANAGE_OWN) && professionalId === actor.userId
+  )));
   const range = useMemo(
     () => ({
       from: new Date(`${from}T00:00:00`).toISOString(),
@@ -82,14 +102,14 @@ export default function AgendaPage() {
   );
 
   useEffect(() => {
-    if (!actor?.permissions.includes("schedules.read")) return;
+    if (!branchId) return;
     const controller = new AbortController();
     const { signal } = controller;
-    fetch("/api/professionals", { cache: "no-store", signal })
+    fetch(`/api/professionals?${branchQuery}`, { cache: "no-store", signal })
       .then((response) => readAgendaResponse(response, agendaContracts.professionals))
       .then((items) => {
         if (signal.aborted) return;
-        setProfessionals(items);
+        setProfessionals(canManageAll ? items : items.filter((item) => item.id === actor.userId));
         setProfessionalsStatus("ready");
       })
       .catch((error) => {
@@ -98,11 +118,11 @@ export default function AgendaPage() {
         setNotice({ kind: "error", text: error.message });
       });
     return () => controller.abort();
-  }, [actor, professionalsReload]);
+  }, [actor.userId, branchId, branchQuery, canManageAll, professionalsReload]);
 
   const loadAppointments = useCallback(
     async (signal) => {
-      const params = new URLSearchParams({ from: range.from, to: range.to });
+      const params = new URLSearchParams({ ...range, branchId });
       if (professionalId) params.set("professionalId", professionalId);
       if (filterStatus) params.set("status", filterStatus);
       return readAgendaResponse(
@@ -110,15 +130,15 @@ export default function AgendaPage() {
         agendaContracts.appointments,
       );
     },
-    [filterStatus, professionalId, range],
+    [branchId, filterStatus, professionalId, range],
   );
 
   const loadSchedule = useCallback(
     async (signal) => {
       const url = `/api/professionals/${professionalId}/schedule`;
-      const params = new URLSearchParams(range);
+      const params = new URLSearchParams({ ...range, branchId });
       const [schedule, scheduleBlocks] = await Promise.all([
-        fetch(url, { cache: "no-store", signal })
+        fetch(`${url}?${branchQuery}`, { cache: "no-store", signal })
           .then((response) => readAgendaResponse(response, agendaContracts.schedule)),
         fetch(`${url}/blocks?${params}`, { cache: "no-store", signal })
           .then((response) => readAgendaResponse(response, agendaContracts.blocks)),
@@ -132,11 +152,11 @@ export default function AgendaPage() {
         })),
       };
     },
-    [professionalId, range],
+    [branchId, branchQuery, professionalId, range],
   );
 
   useEffect(() => {
-    if (!actor?.permissions.includes("schedules.read") || professionalsStatus !== "ready" || !professionalId) return;
+    if (!branchId || professionalsStatus !== "ready" || !professionalId) return;
     const controller = new AbortController();
     const { signal } = controller;
     Promise.all([loadAppointments(signal), loadSchedule(signal)])
@@ -154,21 +174,27 @@ export default function AgendaPage() {
         setStatus("error");
       });
     return () => controller.abort();
-  }, [actor, agendaReload, loadAppointments, loadSchedule, professionalId, professionalsStatus]);
+  }, [branchId, agendaReload, loadAppointments, loadSchedule, professionalId, professionalsStatus]);
 
   function startLoading() {
     setStatus("loading");
     setNotice(null);
   }
 
-  function refresh() {
+  function reloadProfessionals() {
+    if (!branchId) return;
     startLoading();
+    setProfessionalsStatus("loading");
+    setProfessionalsReload((revision) => revision + 1);
+  }
+
+  function refresh() {
     if (professionalsStatus !== "ready" || !professionalId) {
-      setProfessionalsStatus("loading");
-      setProfessionalsReload((revision) => revision + 1);
-    } else {
-      setAgendaReload((revision) => revision + 1);
+      reloadProfessionals();
+      return;
     }
+    startLoading();
+    setAgendaReload((revision) => revision + 1);
   }
   async function changeAppointment(appointment, nextStatus) {
     let cancellationReason;
@@ -180,7 +206,7 @@ export default function AgendaPage() {
     try {
       const saved = await readAgendaResponse(
         await fetch(`/api/appointments/${appointment.id}/status`, {
-          body: JSON.stringify({ cancellationReason, status: nextStatus }),
+          body: JSON.stringify({ branchId, cancellationReason, status: nextStatus }),
           headers: { "Content-Type": "application/json" },
           method: "PATCH",
         }),
@@ -241,7 +267,7 @@ export default function AgendaPage() {
     try {
       const saved = await readAgendaResponse(
         await fetch(`/api/professionals/${professionalId}/schedule`, {
-          body: JSON.stringify({ days: week }),
+          body: JSON.stringify({ branchId, days: week }),
           headers: { "Content-Type": "application/json" },
           method: "PUT",
         }),
@@ -264,6 +290,7 @@ export default function AgendaPage() {
       const saved = await readAgendaResponse(
         await fetch(`/api/professionals/${professionalId}/schedule/blocks`, {
           body: JSON.stringify({
+            branchId,
             endAt: new Date(form.get("endAt")).toISOString(),
             reason: form.get("reason") || null,
             startAt: new Date(form.get("startAt")).toISOString(),
@@ -292,7 +319,7 @@ export default function AgendaPage() {
     setStatus("saving");
     try {
       const response = await fetch(
-        `/api/professionals/${professionalId}/schedule/blocks/${block.id}`,
+        `/api/professionals/${professionalId}/schedule/blocks/${block.id}?${branchQuery}`,
         { method: "DELETE" },
       );
       if (!response.ok) await readAgendaResponse(response, agendaContracts.block);
@@ -305,14 +332,7 @@ export default function AgendaPage() {
     }
   }
 
-  if (actor && !actor.permissions.includes("schedules.read"))
-    return (
-      <section className="app-card empty-module">
-        <h2>Acceso no disponible</h2>
-        <p>Ventas no administra agenda ni pacientes.</p>
-      </section>
-    );
-  const viewStatus = professionalsStatus !== "ready"
+  const viewStatus = !branchId ? "needs-branch" : professionalsStatus !== "ready"
     ? professionalsStatus
     : professionalId ? status : "empty";
   const hasAgenda = viewStatus === "ready" || viewStatus === "saving";
@@ -325,9 +345,11 @@ export default function AgendaPage() {
         actor,
         appointments,
         blocks: hasAgenda ? blocks : [],
+        branch,
         calendarDays,
         calendarView,
         canManageAll,
+        canManageProfiles,
         canManageSelected,
         changeAppointment,
         changeCalendarView,
@@ -342,7 +364,7 @@ export default function AgendaPage() {
         saveWeek,
         setFilterStatus: changeFilterStatus,
         setProfessionalId: selectProfessional,
-        setProfessionals,
+        reloadProfessionals,
         setTo: updateCalendarEnd,
         status: viewStatus,
         to,

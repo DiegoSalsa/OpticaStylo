@@ -14,9 +14,11 @@ export default function AgendaInterface({ model }) {
     actor,
     appointments,
     blocks,
+    branch,
     calendarDays,
     calendarView,
     canManageAll,
+    canManageProfiles,
     canManageSelected,
     changeAppointment,
     changeCalendarView,
@@ -31,7 +33,7 @@ export default function AgendaInterface({ model }) {
     saveWeek,
     setFilterStatus,
     setProfessionalId,
-    setProfessionals,
+    reloadProfessionals,
     setTo,
     status,
     to,
@@ -58,14 +60,25 @@ export default function AgendaInterface({ model }) {
           <Icon name="arrow" size={16} /> Abrir reserva pública
         </Link>
       </header>
-      <nav className="agenda-tabs" aria-label="Vistas de agenda">
-        <a href="#agenda-operativa">
-          <Icon name="calendar" size={16} /> Agenda
-        </a>
-        <a href="#configuracion-profesionales">
-          <Icon name="settings" size={16} /> Configuración de profesionales
-        </a>
-      </nav>
+      {(branch || canManageProfiles) && (
+        <nav className="agenda-tabs" aria-label="Vistas de agenda">
+          {branch && <>
+            <a href="#agenda-operativa"><Icon name="calendar" size={16} /> Agenda</a>
+            <a href="#horarios-y-bloqueos"><Icon name="settings" size={16} /> Horarios y bloqueos</a>
+          </>}
+          {canManageProfiles && <a href="#perfiles-profesionales">Perfiles profesionales</a>}
+        </nav>
+      )}
+      {!branch && (
+        <section className="app-card empty-module" role="status">
+          <h2>Agenda por sucursal</h2>
+          <p>{actor.branches?.length
+            ? "Selecciona una sucursal en Sucursal activa para consultar reservas, disponibilidad, horarios y bloqueos."
+            : "Tu cuenta no tiene sucursales habilitadas para Agenda."}</p>
+        </section>
+      )}
+      {branch && <>
+      <p>Sucursal de Agenda <strong>{branch.name}</strong></p>
       {notice && (
         <p
           className={
@@ -76,7 +89,7 @@ export default function AgendaInterface({ model }) {
           {notice.text}
         </p>
       )}
-      <section className="app-card agenda-toolbar">
+      <section className="app-card agenda-toolbar" aria-label={`Agenda de ${branch.name}`}>
         <label className="field">
           <span>Profesional</span>
           <select
@@ -143,7 +156,7 @@ export default function AgendaInterface({ model }) {
       </section>
       {status === "empty" && <p role="status">No hay profesionales disponibles.</p>}
       {professionals.length > 0 && actor?.permissions.includes("appointments.create") && (
-        <InternalBooking onCreated={refresh} professionals={professionals} />
+        <InternalBooking branchId={branch.id} onCreated={refresh} professionals={professionals} />
       )}
       <div className="agenda-layout" id="agenda-operativa">
         <div className="agenda-calendar-area">
@@ -251,7 +264,7 @@ export default function AgendaInterface({ model }) {
             ))}
           </section>
         </div>
-        <aside className="schedule-panel" id="configuracion-profesionales">
+        <aside className="schedule-panel" id="horarios-y-bloqueos">
           <form className="app-card schedule-card" onSubmit={saveWeek}>
             <h2>Horario semanal</h2>
             <p>Configura únicamente horarios confirmados por la óptica.</p>
@@ -365,12 +378,10 @@ export default function AgendaInterface({ model }) {
           </form>
         </aside>
       </div>
-      {canManageAll && (
-        <div className="professional-config-panel">
-          <ProfessionalManager
-            onChanged={setProfessionals}
-            professionals={professionals}
-          />
+      </>}
+      {canManageProfiles && (
+        <div className="professional-config-panel" id="perfiles-profesionales">
+          <ProfessionalManager onChanged={reloadProfessionals} />
         </div>
       )}
     </>
