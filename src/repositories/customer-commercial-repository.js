@@ -10,7 +10,9 @@ export const commercialNumber = value => {
 export function commercialScope(scope, alias = "f") {
   if (!scope.allowedBranchIds) return Prisma.sql`TRUE`;
   const prefix = Prisma.raw(alias);
-  return Prisma.sql`((${scope.allowedBranchIds.length ? Prisma.sql`${prefix}.branch_id IN (${Prisma.join(scope.allowedBranchIds.map(id => Prisma.sql`${id}::uuid`))})` : Prisma.sql`FALSE`}) OR (${prefix}.branch_id IS NULL AND ${prefix}.created_by=${scope.legacyActorId}::uuid))`;
+  return scope.allowedBranchIds.length
+    ? Prisma.sql`${prefix}.branch_id IN (${Prisma.join(scope.allowedBranchIds.map((id) => Prisma.sql`${id}::uuid`))})`
+    : Prisma.sql`FALSE`;
 }
 const stats = Prisma.sql`count(*) FILTER(WHERE f.is_valid_purchase)::int AS purchase_count,
  COALESCE(sum(f.total_cents) FILTER(WHERE f.is_valid_purchase),0)::text AS total_spent,
@@ -46,7 +48,11 @@ function searchSql(search) {
 export async function commercialCustomers(query, scope) {
   const cutoff = new Date(Date.now() - query.days * 86400000);
   const segment = query.segment === "NEW" ? Prisma.sql`c.created_at>=${cutoff}` : query.segment === "PREVIOUS" ? Prisma.sql`COALESCE(a.purchase_count,0)>=1` : query.segment === "REPEAT" ? Prisma.sql`COALESCE(a.purchase_count,0)>=2` : query.segment === "INACTIVE" ? Prisma.sql`a.last_purchase_at<${cutoff}` : query.segment === "QUOTED" ? Prisma.sql`a.quotation_count>0` : Prisma.sql`TRUE`;
-  const cte = Prisma.sql`WITH candidates AS (SELECT c.* FROM customers c WHERE ${searchSql(query.search)}), a AS (SELECT f.customer_id,${stats} FROM commercial_purchase_facts f JOIN candidates c ON c.id=f.customer_id WHERE ${commercialScope(scope)} GROUP BY f.customer_id)`;
+  const visibility = scope.allowedBranchIds ? Prisma.sql`AND (
+    EXISTS (SELECT 1 FROM customer_branches cb WHERE cb.customer_id=c.id AND ${commercialScope(scope, "cb")})
+    OR EXISTS (SELECT 1 FROM sales s WHERE s.customer_id=c.id AND ${commercialScope(scope, "s")})
+  )` : Prisma.empty;
+  const cte = Prisma.sql`WITH candidates AS (SELECT c.* FROM customers c WHERE ${searchSql(query.search)} ${visibility}), a AS (SELECT f.customer_id,${stats} FROM commercial_purchase_facts f JOIN candidates c ON c.id=f.customer_id WHERE ${commercialScope(scope)} GROUP BY f.customer_id)`;
   const [rows, counts] = await prisma.$transaction([prisma.$queryRaw`${cte} SELECT c.*,a.purchase_count,a.total_spent,a.first_purchase_at,a.last_purchase_at,a.quotation_count,a.pending_count,a.refund_review_count FROM candidates c LEFT JOIN a ON a.customer_id=c.id WHERE ${segment} ORDER BY c.last_names NULLS LAST,c.first_names,c.id LIMIT ${query.pageSize} OFFSET ${(query.page - 1) * query.pageSize}`, prisma.$queryRaw`${cte} SELECT count(*)::int AS total FROM candidates c LEFT JOIN a ON a.customer_id=c.id WHERE ${segment}`]);
   return {
     items: rows.map(r => ({
@@ -83,16 +89,7 @@ export async function customerCommercialSummary(id, scope) {
 export async function customerCommercialHistory(id, query, scope) {
   const where = {
     customer_id: id,
-    ...(scope.allowedBranchIds ? {
-      OR: [{
-        branch_id: {
-          in: scope.allowedBranchIds
-        }
-      }, {
-        branch_id: null,
-        created_by: scope.legacyActorId
-      }]
-    } : {}),
+    ...(scope.allowedBranchIds && { branch_id: { in: scope.allowedBranchIds } }),
     ...(query.status ? {
       status: query.status
     } : {}),

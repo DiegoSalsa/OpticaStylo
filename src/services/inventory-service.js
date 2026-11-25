@@ -1,17 +1,25 @@
 import { createHash } from "node:crypto";
 import { prisma } from "../db/prisma.js";
 import { retryTransaction } from "../db/retry-transaction.js";
+import { requireGlobalBranchAccess } from "../auth/branch-access.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { inventoryId, inventoryQuantity, inventoryText, validateInventoryMovement, validateInventoryTransfer } from "../validations/inventory-validation.js";
 import { normalizeInventorySku, parseInventoryCsv } from "../utils/inventory-import.js";
 import { INTERNAL_PAGE_SIZE } from "../utils/pagination.js";
 import { assertBranch, expireInventoryReservations, inventoryBranchAccess, inventoryError, inventoryOverview, listInventoryBranches, mapBranch, mapStock, mutateInventory, reserveSaleInventory, transferInventory } from "../repositories/inventory-repository.js";
 
-export async function getInventoryBranches(actor, destinations = false) { requirePermissions(actor, ["inventory.read"]); return listInventoryBranches(destinations ? null : actor); }
+export async function getInventoryBranches(actor, destinations = false) {
+  requirePermissions(actor, [destinations ? "inventory.write" : "inventory.read"]);
+  const branches = await listInventoryBranches(destinations ? null : actor);
+  return destinations ? branches.map(({ id, name }) => ({ id, name })) : branches;
+}
 export async function getInventory(query, actor) {
   requirePermissions(actor, ["inventory.read"]);
   const consolidated = query.get("consolidated") === "true";
-  if (consolidated) requirePermissions(actor, ["inventory.manage_all"]);
+  if (consolidated) {
+    requirePermissions(actor, ["inventory.manage_all"]);
+    requireGlobalBranchAccess(actor);
+  }
   const branchId = consolidated ? null : inventoryId(query.get("branchId"));
   if (branchId) await inventoryBranchAccess(actor, branchId);
   const page = Number(query.get("page") ?? 1);
@@ -147,6 +155,7 @@ export async function getInventoryMovementProducts(query, actor) {
 
 export async function configureInventoryBranch(input, actor) {
   requirePermissions(actor, ["inventory.manage_all"]);
+  requireGlobalBranchAccess(actor);
   if (input.action === "ASSIGN") {
     const branchId = inventoryId(input.branchId), userId = inventoryId(input.userId);
     await assertBranch(prisma, branchId);
@@ -155,6 +164,27 @@ export async function configureInventoryBranch(input, actor) {
     if (!user?.is_active) inventoryError("USER_NOT_FOUND", "No se encontró el empleado activo.", 404);
     await prisma.user_branches.upsert({ where: { user_id_branch_id: { user_id: userId, branch_id: branchId } }, create: { user_id: userId, branch_id: branchId }, update: {} });
     return { assigned: true };
+  }
+  if (input.action === "LINK_CUSTOMER" || input.action === "LINK_PATIENT") {
+    const branchId = inventoryId(input.branchId), identityId = inventoryId(input.identityId);
+    if (input.identityVerified !== true) inventoryError("IDENTITY_VERIFICATION_REQUIRED", "Confirme la identidad y su relación con la sucursal.", 400);
+    return prisma.$transaction(async (client) => {
+      await assertBranch(client, branchId);
+      if (input.action === "LINK_CUSTOMER") {
+        if (!await client.customers.findUnique({ where: { id: identityId }, select: { id: true } })) {
+          inventoryError("CUSTOMER_NOT_FOUND", "No se encontró el cliente.", 404);
+        }
+        const link = { customer_id: identityId, branch_id: branchId };
+        await client.customer_branches.upsert({ where: { customer_id_branch_id: link }, create: link, update: {} });
+      } else {
+        if (!await client.patients.findUnique({ where: { id: identityId }, select: { id: true } })) {
+          inventoryError("PATIENT_NOT_FOUND", "No se encontró el paciente.", 404);
+        }
+        const link = { patient_id: identityId, branch_id: branchId };
+        await client.patient_branches.upsert({ where: { patient_id_branch_id: link }, create: link, update: {} });
+      }
+      return { linked: true };
+    });
   }
   const data = { name: inventoryText(input.name, "El nombre", 200), address: input.address ? inventoryText(input.address, "La dirección") : null,
     information_source: inventoryText(input.informationSource, "La fuente de la información"), pickup_enabled: input.pickupEnabled === true };

@@ -1,3 +1,4 @@
+import { identityBranchIds, operationBranch, patientIdentityScope } from "../auth/branch-identity.js";
 import { prisma } from "../db/prisma.js";
 import { rutSearchValues } from "../utils/rut-search.js";
 
@@ -32,20 +33,22 @@ function guardianData(value) {
   };
 }
 
-async function findPatientByIdWithClient(client, patientId) {
-  return mapPatient(await client.patients.findUnique({
-    include: { patient_guardians: true }, where: { id: patientId },
+async function findPatientByIdWithClient(client, patientId, scope = {}) {
+  return mapPatient(await client.patients.findFirst({
+    include: { patient_guardians: true }, where: { id: patientId, ...scope },
   }));
 }
 
-export async function createPatientWithGuardian(patientData, actorUserId) {
+export async function createPatientWithGuardian(patientData, actorUserId, actor, requestedBranch) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
+    const branchId = actor ? await operationBranch(actor, requestedBranch, { client, allowUnassigned: true }) : null;
     const created = await client.patients.create({ data: {
       address: patientData.address, birth_date: dateOnly(patientData.birthDate),
       created_by: actorUserId, email: patientData.email, first_names: patientData.firstNames,
       last_names: patientData.lastNames, phone: patientData.phone,
       rut: patientData.rut, updated_by: actorUserId,
+      ...(branchId && { patient_branches: { create: { branch_id: branchId } } }),
     } });
     if (patientData.guardian) {
       await client.patient_guardians.create({
@@ -56,18 +59,20 @@ export async function createPatientWithGuardian(patientData, actorUserId) {
   });
 }
 
-export async function findPatientById(patientId) {
-  return findPatientByIdWithClient(prisma, patientId);
+export async function findPatientById(patientId, actor, client = prisma) {
+  const bounds = actor ? await identityBranchIds(actor, client) : null;
+  return findPatientByIdWithClient(client, patientId, patientIdentityScope(bounds));
 }
 
-export async function listPatients({ page, pageSize, search }) {
-  const where = search ? { OR: [
+export async function listPatients({ page, pageSize, search }, actor) {
+  const scope = patientIdentityScope(actor ? await identityBranchIds(actor) : null);
+  const where = { ...scope, ...(search && { OR: [
     { first_names: { contains: search, mode: "insensitive" } },
     { last_names: { contains: search, mode: "insensitive" } },
     { email: { contains: search, mode: "insensitive" } },
     { phone: { contains: search, mode: "insensitive" } },
     ...rutSearchValues(search).map((value) => ({ rut: { contains: value, mode: "insensitive" } })),
-  ] } : {};
+  ] }) };
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   const [rows, total] = await prisma.$transaction([
     prisma.patients.findMany({
@@ -82,15 +87,16 @@ export async function listPatients({ page, pageSize, search }) {
   };
 }
 
-export async function updatePatientWithGuardian(patientId, patientData, actorUserId) {
+export async function updatePatientWithGuardian(patientId, patientData, actorUserId, actor) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
+    const scope = patientIdentityScope(actor ? await identityBranchIds(actor, client) : null);
     const result = await client.patients.updateMany({ data: {
       address: patientData.address, birth_date: dateOnly(patientData.birthDate),
       email: patientData.email, first_names: patientData.firstNames,
       last_names: patientData.lastNames, phone: patientData.phone,
       rut: patientData.rut, updated_by: actorUserId,
-    }, where: { id: patientId } });
+    }, where: { id: patientId, ...scope } });
     if (!result.count) return null;
     if (patientData.guardian) {
       await client.patient_guardians.upsert({

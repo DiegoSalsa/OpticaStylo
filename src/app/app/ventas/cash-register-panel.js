@@ -92,7 +92,7 @@ export default function CashRegisterPanel({branchId,onChange,revision=0}) {
           onReverse={(reversalOf,reason)=>request(`/api/cash-register/${current.id}/movements`,{movementType:"REVERSAL",reversalOf,reason},"Reverso registrado con trazabilidad.")}
         />
       </div>}
-      <CashRegisterHistory branchId={branchId} canManage={canManage} onSelect={showHistorical}
+      <CashRegisterHistory branchId={branchId} canManage={canManage && actor.permissions.includes("branches.access_all")} onSelect={showHistorical}
         revision={`${revision}:${counter}:${ledgerRevision}`} />
     </>}
   </section>;

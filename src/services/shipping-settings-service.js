@@ -1,3 +1,4 @@
+import { requireGlobalBranchAccess } from "../auth/branch-access.js";
 import { prisma } from "../db/prisma.js";
 import { SHIPPING_SETTINGS_PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
@@ -6,7 +7,10 @@ import { shippingProvider } from "../integrations/shipping/chilexpress.js";
 import { shippingText, validateDestination, validatedLogistics } from "./shipping-policy.js";
 import { validateSaleId } from "../validations/sale-validation.js";
 
-function authorize(actor) { requirePermissions(actor, SHIPPING_SETTINGS_PERMISSIONS); }
+function authorize(actor) {
+  requirePermissions(actor, SHIPPING_SETTINGS_PERMISSIONS);
+  requireGlobalBranchAccess(actor);
+}
 export async function shippingSettings(actor) {
   authorize(actor);
   const config = shippingConfiguration();

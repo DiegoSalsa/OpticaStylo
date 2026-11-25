@@ -136,7 +136,7 @@ export async function createSale(input, actor, dependencies = {}) {
   const operation = validateSaleOperation(input.operation);
   if (!dependencies.createSale) {
     await expireInventoryReservations();
-    if (draft.branchId) await inventoryBranchAccess(actor, draft.branchId);
+    await inventoryBranchAccess(actor, draft.branchId);
   }
   return unwrap(await (dependencies.createSale ?? createSaleRepository)(
     draft,
@@ -192,7 +192,7 @@ export async function updateSaleDraft(saleId, input, actor, dependencies = {}) {
   if (!dependencies.updateSaleDraft) {
     const current = await getSale(saleId, actor);
     if (current.branchId) await inventoryBranchAccess(actor, current.branchId);
-    if (draft.branchId) await inventoryBranchAccess(actor, draft.branchId);
+    await inventoryBranchAccess(actor, draft.branchId);
   }
   return unwrap(await (dependencies.updateSaleDraft ?? updateSaleDraftRepository)(
     validateSaleId(saleId), draft, actor.userId, actor,
@@ -235,6 +235,7 @@ export async function changeSaleStatus(saleId, input, actor, dependencies = {}) 
   return unwrap(await (dependencies.changeSaleStatus ?? changeSaleStatusRepository)(
     validateSaleId(saleId), validateSaleStatusInput(input), actor.userId,
     dependencies.currentDate ?? new Date(),
+    ...(dependencies.changeSaleStatus ? [] : [actor]),
   ));
 }
 
@@ -250,6 +251,7 @@ export async function issueSaleReceipt(saleId, input, actor, dependencies = {}) 
   const receiptInput = validateReceiptInput(input);
   const result = await (dependencies.issueSaleReceipt ?? issueSaleReceiptRepository)(
     id, receiptInput, actor.userId,
+    ...(dependencies.issueSaleReceipt ? [] : [actor]),
   );
   if (result.reason) throwRepositoryReason(result.reason);
   return result.receipt;

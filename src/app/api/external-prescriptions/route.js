@@ -34,6 +34,7 @@ export async function POST(request) {
       if (form.has("file")) {
         input = {
           customerId: form.get("customerId"),
+          branchId: form.get("branchId") || undefined,
           file: form.get("file"),
           notes: form.get("notes"),
           patientId: form.get("patientId"),
@@ -43,6 +44,7 @@ export async function POST(request) {
         input = {
           confirmedData: parseConfirmedData(form.get("confirmedData")),
           customerId: form.get("customerId"),
+          branchId: form.get("branchId") || undefined,
           image: form.get("image"),
           patientId: form.get("patientId"),
         };

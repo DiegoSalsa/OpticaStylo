@@ -1,3 +1,4 @@
+import { customerIdentityScope, identityBranchIds, operationBranch, patientIdentityScope } from "../auth/branch-identity.js";
 import { prisma } from "../db/prisma.js";
 import { rutSearchValues } from "../utils/rut-search.js";
 import {findCustomerByNormalizedRut} from "./customer-identity.js";
@@ -21,8 +22,12 @@ function mapCustomer(row) {
   };
 }
 
-export async function createCustomer(customer, actorUserId) {
+export async function createCustomer(customer, actorUserId, actor, requestedBranch) {
   return retryTransaction(prisma,async(client)=>{
+  const branchId = actor ? await operationBranch(actor, requestedBranch, { client, allowUnassigned: true }) : null;
+  if (branchId && customer.patientId && !await client.patients.findFirst({ where: { id: customer.patientId, ...patientIdentityScope([branchId]) }, select: { id: true } })) {
+    throw new AppError({ code: "PATIENT_NOT_FOUND", message: "No se encontró el paciente.", status: 404 });
+  }
   await client.$queryRaw`SELECT set_config('stylo.customer_actor',${actorUserId},true)`;
   if(await findCustomerByNormalizedRut(client,customer.rut,{lock:true}))throw new AppError({code:"CUSTOMER_RUT_ALREADY_EXISTS",message:"Ya existe un cliente registrado con ese RUT.",status:409});
   return mapCustomer(await client.customers.create({ data: {
@@ -35,12 +40,14 @@ export async function createCustomer(customer, actorUserId) {
     phone: customer.phone,
     rut: customer.rut,
     updated_by: actorUserId,
+    ...(branchId && { customer_branches: { create: { branch_id: branchId } } }),
   } }));
   });
 }
 
-export async function findCustomerById(customerId) {
-  return mapCustomer(await prisma.customers.findUnique({ where: { id: customerId } }));
+export async function findCustomerById(customerId, actor, client = prisma) {
+  const bounds = actor ? await identityBranchIds(actor, client) : null;
+  return mapCustomer(await client.customers.findFirst({ where: { id: customerId, ...customerIdentityScope(bounds) } }));
 }
 
 export async function listCustomers({ page, pageSize, search }) {
@@ -67,11 +74,12 @@ export async function listCustomers({ page, pageSize, search }) {
   };
 }
 
-export async function updateCustomer(customerId, customer, actorUserId,expectedVersion) {
+export async function updateCustomer(customerId, customer, actorUserId, expectedVersion, actor) {
   return retryTransaction(prisma,async(client)=>{
   await client.$queryRaw`SELECT set_config('stylo.customer_actor',${actorUserId},true)`;
   await client.$queryRaw`SELECT id FROM customers WHERE id=${customerId}::uuid FOR UPDATE`;
-  const existing = await client.customers.findUnique({ where: { id: customerId } });
+  const bounds = actor ? await identityBranchIds(actor, client) : null;
+  const existing = await client.customers.findFirst({ where: { id: customerId, ...customerIdentityScope(bounds) } });
   if (!existing) return null;
   if(expectedVersion!=null&&expectedVersion!==existing.record_version)throw new AppError({code:"CUSTOMER_VERSION_CONFLICT",message:"El cliente cambió en otra sesión. Recargue sus datos antes de guardar.",status:409});
   const duplicate=await findCustomerByNormalizedRut(client,customer.rut,{lock:true});

@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { requireGlobalBranchAccess } from "../auth/branch-access.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { inventoryBranchAccess, assertBranch } from "../repositories/inventory-repository.js";
 import {
@@ -20,7 +21,7 @@ export async function getCashTerminals(branchId, actor) {
   return rows.map((row)=>({id:row.id,name:row.name,branchId:row.branch_id,occupied:row.cash_register_sessions.length>0,own:row.cash_register_sessions[0]?.opened_by===actor.userId,responsible:row.cash_register_sessions[0] ? `${row.cash_register_sessions[0].users_cash_register_sessions_opened_byTousers.first_name} ${row.cash_register_sessions[0].users_cash_register_sessions_opened_byTousers.last_name}` : null}));
 }
 export async function createCashTerminal(input,actor) {
-  requirePermissions(actor,["cash.manage_all"]); const branchId=id(input?.branchId); await assertBranch(prisma,branchId);
+  requirePermissions(actor,["cash.manage_all"]); const branchId=id(input?.branchId); await inventoryBranchAccess(actor, branchId); await assertBranch(prisma,branchId);
   const name=typeof input.name==="string"?input.name.trim():"";
   if(!name || name.length>100) cashError("INVALID_CASH_TERMINAL","Indique un nombre de caja de hasta 100 caracteres.",400);
   try{return await prisma.cash_register_terminals.create({data:{branch_id:branchId,name},select:{id:true,name:true}});}
@@ -28,7 +29,10 @@ export async function createCashTerminal(input,actor) {
 }
 async function getCashHistory(query, actor) {
   const consolidated = query.get("consolidated") === "true";
-  if (consolidated) requirePermissions(actor, ["cash.manage_all"]);
+  if (consolidated) {
+    requirePermissions(actor, ["cash.manage_all"]);
+    requireGlobalBranchAccess(actor);
+  }
   const branchId = consolidated ? null : id(query.get("branchId"));
   const pagination = validateCashPage(query, 30);
 

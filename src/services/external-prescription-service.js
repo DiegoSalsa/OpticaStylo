@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { operationBranch } from "../auth/branch-identity.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import {saleBranchScope} from "../auth/sale-branch-access.js";
 import {canAccessExternalPrescription} from "../repositories/external-prescription-repository.js";
@@ -44,9 +45,9 @@ function normalizeNotes(value) {
   return notes;
 }
 
-async function ensurePatient(patientId, dependencies) {
+async function ensurePatient(patientId, dependencies, actor) {
   const id = validatePatientId(patientId);
-  const patient = await (dependencies.findPatientById ?? findPatientById)(id);
+  const patient = await (dependencies.findPatientById ? dependencies.findPatientById(id) : findPatientById(id, actor));
   if (!patient) {
     throw new AppError({ code: "PATIENT_NOT_FOUND", message: "No se encontró el paciente.", status: 404 });
   }
@@ -122,7 +123,8 @@ export async function createPointOfSaleExternalPrescription(input, actor, depend
     throw new AppError({ code: "INVALID_PRESCRIPTION_IMAGE", message: "Los datos de la receta no son válidos.", status: 400 });
   }
   const customerId = validateExternalPrescriptionId(input.customerId);
-  const patientId = await ensurePatient(input.patientId, dependencies);
+  const branchId = dependencies.createPrescription ? undefined : await operationBranch(actor, input.branchId);
+  const patientId = await ensurePatient(input.patientId, dependencies, branchId ? { ...actor, activeBranchId: branchId } : actor);
   const confirmedData = validateExternalPrescriptionData(input.confirmedData);
   let file = { data: null, filename: null, mediaType: null, sha256: null, size: null, source: "MANUAL" };
   if (input.image) {
@@ -134,6 +136,7 @@ export async function createPointOfSaleExternalPrescription(input, actor, depend
   }
   return createUploadedPrescription({
     ...file,
+    ...(branchId && { branchId }),
     confirmedAt: dependencies.currentDate ?? new Date(),
     confirmedData,
     customerId,
@@ -159,12 +162,13 @@ export async function createExternalPrescription(input, actor, dependencies = {}
     throw new AppError({ code: "INVALID_PRESCRIPTION_DATA", message: "Los datos de la receta no son válidos.", status: 400 });
   }
   const customerId = validateExternalPrescriptionId(input.customerId);
-  const patientId = await ensurePatient(input.patientId, dependencies);
+  const branchId = dependencies.createPrescription ? undefined : await operationBranch(actor, input.branchId);
+  const patientId = await ensurePatient(input.patientId, dependencies, branchId ? { ...actor, activeBranchId: branchId } : actor);
   const source = typeof input.source === "string" ? input.source.trim().toUpperCase() : "";
   const confirmedAt = dependencies.currentDate ?? new Date();
   if (source === "MANUAL") {
     return createWithRepository({
-      confirmedAt,
+      ...(branchId && { branchId }), confirmedAt,
       confirmedData: validateExternalPrescriptionData(input.data),
       customerId,
       data: null,
@@ -179,7 +183,7 @@ export async function createExternalPrescription(input, actor, dependencies = {}
   if (source === "IMAGE") {
     const image = validatePrescriptionImage(input.file);
     return createUploadedPrescription({
-      confirmedAt,
+      ...(branchId && { branchId }), confirmedAt,
       confirmedData: { notes: normalizeNotes(input.notes) },
       customerId,
       ...(await uploadPrescriptionImage(image, dependencies)),
@@ -201,7 +205,7 @@ export async function getExternalPrescriptionList(searchParams, actor, dependenc
     }
     return (dependencies.listByCustomer ?? listExternalPrescriptionsByCustomer)(validateExternalPrescriptionId(searchParams.get("customerId")),dependencies.listByCustomer?undefined:await saleBranchScope(actor),pagination);
   }
-  const patientId = await ensurePatient(searchParams.get("patientId"), dependencies);
+  const patientId = await ensurePatient(searchParams.get("patientId"), dependencies, actor);
   return (dependencies.listByPatient ?? listExternalPrescriptionsByPatient)(patientId,dependencies.listByPatient?undefined:await saleBranchScope(actor));
 }
 

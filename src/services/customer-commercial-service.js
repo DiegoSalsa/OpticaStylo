@@ -1,22 +1,16 @@
+import { requireGlobalBranchAccess } from "../auth/branch-access.js";
+import { customerIdentityScope, identityBranchIds, operationBranch } from "../auth/branch-identity.js";
+import { hasGlobalBranchAccess } from "../auth/permissions.js";
 import { prisma } from "../db/prisma.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { saleBranchScope } from "../auth/sale-branch-access.js";
-import { inventoryBranchAccess } from "../repositories/inventory-repository.js";
 import { getCustomer } from "./customer-service.js";
+import { inventoryId } from "../validations/inventory-validation.js";
 import { validateCustomerId } from "../validations/customer-validation.js";
 import { commercialError, commercialQuery, commercialReportQuery, commercialText, preferencesInput, contactInput, CONTACT_STATEMENT } from "../validations/customer-commercial-validation.js";
 import { customerCommercialHistory, customerCommercialSummary, commercialReport } from "../repositories/customer-commercial-repository.js";
 import { retryTransaction } from "../db/retry-transaction.js";
-const scopeWhere = scope => scope.allowedBranchIds ? {
-  OR: [{
-    branch_id: {
-      in: scope.allowedBranchIds
-    }
-  }, {
-    branch_id: null,
-    created_by: scope.legacyActorId
-  }]
-} : {};
+const scopeWhere = (scope) => scope.allowedBranchIds ? { branch_id: { in: scope.allowedBranchIds } } : {};
 export async function contactState(customerId, client = prisma) {
   const customer = await client.customers.findUnique({
     where: {
@@ -71,6 +65,7 @@ export async function commercialProfile(id, actor) {
   const customer = await getCustomer(id, actor),
     scope = await saleBranchScope(actor);
   requirePermissions(actor, ["sales.read"]);
+  const branchId = scope.allowedBranchIds?.length === 1 ? scope.allowedBranchIds[0] : null;
   const [summary, account, details, contact] = await Promise.all([customerCommercialSummary(customer.id, scope), prisma.customer_accounts.findUnique({
     where: {
       customer_id: customer.id
@@ -80,14 +75,11 @@ export async function commercialProfile(id, actor) {
       email_verified_at: true,
       created_at: true
     }
-  }), prisma.customers.findUnique({
-    where: {
-      id: customer.id
-    },
-    select: {
-      commercial_preferences: true
-    }
-  }), contactState(customer.id)]);
+  }), branchId ? prisma.customer_branches.findUnique({
+    where: { customer_id_branch_id: { customer_id: customer.id, branch_id: branchId } }, select: { preferences: true },
+  }) : !scope.allowedBranchIds ? prisma.customers.findUnique({
+    where: { id: customer.id }, select: { commercial_preferences: true },
+  }) : null, contactState(customer.id)]);
   return {
     customer,
     summary,
@@ -99,12 +91,14 @@ export async function commercialProfile(id, actor) {
     } : {
       exists: false
     },
-    preferences: details.commercial_preferences ?? {
+    preferences: (details?.preferences ?? details?.commercial_preferences) ?? {
       brands: [],
       models: [],
       notes: null
     },
-    contact
+    contact: hasGlobalBranchAccess(actor) ? contact : { ...contact, channels: contact.channels.map((channel) => ({
+      ...channel, evidence: null,
+    })) },
   };
 }
 export async function commercialHistory(id, params, actor) {
@@ -120,6 +114,8 @@ export async function saveCommercialPreferences(id, input, actor) {
   requirePermissions(actor, ["customers.manage"]);
   const customerId = validateCustomerId(id),
     data = preferencesInput(input);
+  const branchId = await operationBranch(actor, input.branchId, { allowUnassigned: true });
+  await getCustomer(customerId, branchId ? { ...actor, activeBranchId: branchId } : actor);
   return retryTransaction(prisma, async c => {
     await c.$queryRaw`SELECT set_config('stylo.customer_actor',${actor.userId},true)`;
     await c.$queryRaw`SELECT id FROM customers WHERE id=${customerId}::uuid FOR UPDATE`;
@@ -135,13 +131,16 @@ export async function saveCommercialPreferences(id, input, actor) {
         id: customerId
       },
       data: {
-        commercial_preferences: data.preferences,
+        ...(branchId ? { record_version: { increment: 1 } } : { commercial_preferences: data.preferences }),
         updated_by: actor.userId
       }
     });
-    return {
-      saved: true
-    };
+    if (branchId) await c.customer_branches.upsert({
+      where: { customer_id_branch_id: { customer_id: customerId, branch_id: branchId } },
+      create: { customer_id: customerId, branch_id: branchId, preferences: data.preferences },
+      update: { preferences: data.preferences },
+    });
+    return { saved: true };
   });
 }
 export async function commercialNotes(id, params, actor) {
@@ -194,11 +193,8 @@ export async function commercialNotes(id, params, actor) {
 }
 export async function addCommercialNote(id, input, actor) {
   requirePermissions(actor, ["customers.manage"]);
-  await getCustomer(id, actor);
-  const scope = await saleBranchScope(actor);
-  const branchId = input?.branchId ? validateCustomerId(input.branchId) : null;
-  if (branchId) await inventoryBranchAccess(actor, branchId);
-  if (scope.allowedBranchIds && !branchId) commercialError("Seleccione la sucursal de la nota comercial.");
+  const branchId = await operationBranch(actor, input?.branchId, { allowUnassigned: true });
+  await getCustomer(id, branchId ? { ...actor, activeBranchId: branchId } : actor);
   return prisma.customer_commercial_notes.create({
     data: {
       customer_id: validateCustomerId(id),
@@ -219,12 +215,9 @@ export async function saveContactEvent(customerId, input, actor, {
       self: !!account
     });
   return retryTransaction(prisma, async c => {
+    const bounds = account ? null : await identityBranchIds(actor, c);
     await c.$queryRaw`SELECT id FROM customers WHERE id=${id}::uuid FOR UPDATE`;
-    const customer = await c.customers.findUnique({
-      where: {
-        id
-      }
-    });
+    const customer = await c.customers.findFirst({ where: { id, ...customerIdentityScope(bounds) } });
     if (!customer) commercialError("No se encontró el cliente.", "CUSTOMER_NOT_FOUND", 404);
     if (account) {
       const current = await c.customer_accounts.findUnique({
@@ -250,15 +243,18 @@ export async function saveContactEvent(customerId, input, actor, {
         account_id: account?.id ?? null
       }
     });
-    return contactState(id, c);
+    const result = await contactState(id, c);
+    return account || hasGlobalBranchAccess(actor) ? result : { ...result, channels: result.channels.map((channel) => ({ ...channel, evidence: null })) };
   });
 }
 export async function customerReport(params, actor) {
   if (!actor.permissions.some(p => ["reports.read", "sales.reports_read"].includes(p))) requirePermissions(actor, ["reports.read"]);
-  return commercialReport(commercialReportQuery(params), await saleBranchScope(actor));
+  const branchId = params.get("branchId");
+  return commercialReport(commercialReportQuery(params), await saleBranchScope(actor, branchId ? inventoryId(branchId) : null));
 }
 export async function customerConflicts(params, actor) {
   requirePermissions(actor, ["reports.read"]);
+  requireGlobalBranchAccess(actor);
   const q = commercialQuery(params);
   const cte = "SELECT ltrim(upper(regexp_replace(rut,'[^0-9kK]','','g')),'0') AS identity,count(*)::int AS count,array_agg(id) AS ids FROM customers WHERE rut IS NOT NULL GROUP BY 1 HAVING count(*)>1";
   const [rows, total] = await prisma.$transaction([prisma.$queryRawUnsafe(`SELECT * FROM (${cte}) conflicts ORDER BY identity LIMIT $1 OFFSET $2`, q.pageSize, (q.page - 1) * q.pageSize), prisma.$queryRawUnsafe(`SELECT count(*)::int AS total FROM (${cte}) conflicts`)]);

@@ -1,5 +1,12 @@
+import { customerIdentityScope, patientIdentityScope } from "../auth/branch-identity.js";
 import { prisma } from "../db/prisma.js";
-export const externalPrescriptionScope=scope=>!scope?.allowedBranchIds?{}:{OR:[{sales:{some:{OR:[{branch_id:{in:scope.allowedBranchIds}},{branch_id:null,created_by:scope.legacyActorId}]}}},{created_by:scope.legacyActorId,sales:{none:{}}}]};
+export function externalPrescriptionScope(scope) {
+  const branch = scope?.allowedBranchIds ? { in: scope.allowedBranchIds } : { not: null };
+  return { OR: [
+    { sales: { some: { branch_id: branch } } },
+    { branch_id: branch, created_by: { not: null } },
+  ] };
+}
 export async function canAccessExternalPrescription(id,scope){return !!await prisma.external_prescriptions.findFirst({where:{id,...externalPrescriptionScope(scope)},select:{id:true}});}
 
 function mapPrescription(row) {
@@ -27,9 +34,10 @@ async function findExternalPrescriptionWithClient(client, id) {
 export async function createPointOfSaleExternalPrescription(input, actorUserId) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
+    const branches = input.branchId ? [input.branchId] : null;
     const [customer, patient] = await Promise.all([
-      client.customers.findUnique({ select: { id: true }, where: { id: input.customerId } }),
-      client.patients.findUnique({ select: { id: true }, where: { id: input.patientId } }),
+      client.customers.findFirst({ select: { id: true }, where: { id: input.customerId, ...customerIdentityScope(branches) } }),
+      client.patients.findFirst({ select: { id: true }, where: { id: input.patientId, ...patientIdentityScope(branches) } }),
     ]);
     if (!customer) return { prescription: null, reason: "CUSTOMER_NOT_FOUND" };
     if (!patient) return { prescription: null, reason: "PATIENT_NOT_FOUND" };
@@ -39,7 +47,7 @@ export async function createPointOfSaleExternalPrescription(input, actorUserId) 
       cloudinary_public_id: input.cloudinary?.publicId ?? null,
       cloudinary_version: input.cloudinary?.version ?? null,
       confirmed_at: input.confirmedAt, confirmed_data: input.confirmedData,
-      created_by: actorUserId, customer_id: input.customerId,
+      branch_id: input.branchId, created_by: actorUserId, customer_id: input.customerId,
       extraction_status: input.source === "IMAGE" ? "NOT_CONFIGURED" : "NOT_REQUESTED",
       file_data: input.data, file_sha256: input.sha256, file_size_bytes: input.size,
       media_type: input.mediaType, original_filename: input.filename,

@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
   return executeApiHandler(async () => {
     const actor = await authenticateRequest(request);
     const { patientId } = await params;
-    const patient = await getPatient(patientId, actor);
+    const patient = await getPatient(patientId, actor, { branchId: new URL(request.url).searchParams.get("branchId") });
 
     return createSuccessResponse(patient);
   });

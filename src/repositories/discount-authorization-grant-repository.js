@@ -1,3 +1,4 @@
+import { PERMISSIONS } from "../auth/permissions.js";
 import { prisma } from "../db/prisma.js";
 
 function mapGrant(row) {
@@ -15,7 +16,7 @@ export async function createDiscountAuthorizationGrant(grant) {
   } }));
 }
 
-export async function lockDiscountAuthorizationWithClient(client, { amountCents, authorizationId, reason, requestedBy }) {
+export async function lockDiscountAuthorizationWithClient(client, { amountCents, authorizationId, reason, requestedBy, branchId }) {
   const row = await client.discount_authorization_grants.findFirst({
     select: { authorized_by: true },
     where: {
@@ -23,7 +24,17 @@ export async function lockDiscountAuthorizationWithClient(client, { amountCents,
       id: authorizationId, reason, requested_by: requestedBy,
     },
   });
-  return row?.authorized_by ?? null;
+  if (!row || !branchId) return null;
+  const roles = "user_roles_user_roles_user_idTousers";
+  const grants = (code) => ({ some: { roles: { role_permissions: { some: { permissions: { code } } } } } });
+  const authorizer = await client.users.findFirst({
+    where: { id: row.authorized_by, is_active: true, [roles]: grants(PERMISSIONS.SALES_DISCOUNTS_AUTHORIZE), OR: [
+      { [roles]: grants(PERMISSIONS.BRANCHES_ACCESS_ALL) },
+      { user_branches: { some: { branch_id: branchId, branches: { is_active: true } } } },
+    ] },
+    select: { id: true },
+  });
+  return authorizer?.id ?? null;
 }
 
 export async function consumeDiscountAuthorizationWithClient(client, authorizationId, saleId) {

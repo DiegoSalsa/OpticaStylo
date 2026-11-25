@@ -20,19 +20,20 @@ export default function InventoryPage() {
   const [users, setUsers] = useState([]);
   const [historyRevision, setHistoryRevision] = useState(0);
   const pending = useRef(false), requestKeys = useRef(new Map());
-  const canWrite = actor?.permissions.includes("inventory.write"), canManage = actor?.permissions.includes("inventory.manage_all");
+  const canWrite = actor?.permissions.includes("inventory.write"), canManage = actor?.permissions.includes("branches.access_all") && actor.permissions.includes("inventory.manage_all");
+  const activeBranchId = actor?.activeBranchId;
   const loadBranches = useCallback(async () => {
     const rows = await readResponse(await fetch("/api/inventory/branches", { cache: "no-store" }));
-    setBranches(rows); setBranchId((value) => value || rows[0]?.id || "");
-  }, []);
+    setBranches(rows); setBranchId((value) => value || rows.find((row) => row.id === activeBranchId)?.id || rows[0]?.id || "");
+  }, [activeBranchId]);
   useEffect(() => {
     if (!actor?.permissions.includes("inventory.read")) return;
     let active = true;
-    fetch("/api/inventory/branches", { cache: "no-store" }).then(readResponse).then((rows) => { if (active) { setBranches(rows); setBranchId((value) => value || rows[0]?.id || ""); } }).catch((failure) => { if (active) setError(failure.message); });
+    fetch("/api/inventory/branches", { cache: "no-store" }).then(readResponse).then((rows) => { if (active) { setBranches(rows); setBranchId((value) => value || rows.find((row) => row.id === activeBranchId)?.id || rows[0]?.id || ""); } }).catch((failure) => { if (active) setError(failure.message); });
     fetch("/api/inventory/branches?destinations=true", { cache: "no-store" }).then(readResponse).then((rows) => { if (active) setTransferBranches(rows); }).catch((failure) => { if (active) setError(failure.message); });
     if (canManage) fetch("/api/users?pageSize=100", { cache: "no-store" }).then(readResponse).then((result) => { if (active) setUsers(result.items); }).catch((failure) => { if (active) setError(failure.message); });
     return () => { active = false; };
-  }, [actor, canManage, loadBranches]);
+  }, [actor, activeBranchId, canManage]);
   useEffect(() => {
     if (!branchId) return;
     const controller = new AbortController();

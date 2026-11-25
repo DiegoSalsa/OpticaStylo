@@ -1,4 +1,4 @@
-import { PERMISSIONS } from "../auth/permissions.js";
+import { hasGlobalBranchAccess, PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import { availabilityForProducts, expireInventoryReservations, listInventoryBranches } from "../repositories/inventory-repository.js";
 import { listActiveProductImages } from "../repositories/product-image-repository.js";
@@ -19,7 +19,7 @@ import {
 
 async function scopedAvailability(products,actor) {
   const result=await availabilityForProducts(products,undefined,true);
-  if(actor.permissions.includes(PERMISSIONS.INVENTORY_MANAGE_ALL))return result;
+  if(hasGlobalBranchAccess(actor))return result;
   const allowed=new Set((await listInventoryBranches(actor)).map((branch)=>branch.id));
   for(const data of result.values()){
     data.branches=data.branches.filter((branch)=>allowed.has(branch.id));

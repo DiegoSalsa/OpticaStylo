@@ -1,20 +1,18 @@
 import { prisma } from "../db/prisma.js";
 import { retryTransaction } from "../db/retry-transaction.js";
+import { assertBranchAccess } from "../auth/branch-access.js";
+import { hasGlobalBranchAccess } from "../auth/permissions.js";
 import { AppError } from "../utils/app-error.js";
 
 export function inventoryError(code, message, status = 409) { throw new AppError({ code, message, status }); }
 export const mapBranch = (row) => ({ id: row.id, code: row.code, name: row.name, address: row.address, pickupEnabled: row.pickup_enabled, isActive: row.is_active, informationSource: row.information_source });
 export const mapStock = (row) => row ? { onHand: row.on_hand, reserved: row.reserved, available: row.on_hand - row.reserved, version: row.version, countedAt: row.counted_at } : { onHand: null, reserved: 0, available: null, version: null, countedAt: null };
 
-export async function inventoryBranchAccess(actor, branchId, client = prisma) {
-  if (!(actor?.permissions ?? []).includes("inventory.manage_all") && !await client.user_branches.findUnique({ where: { user_id_branch_id: { user_id: actor.userId, branch_id: branchId } } })) {
-    inventoryError("BRANCH_ACCESS_DENIED", "No tiene acceso a esa sucursal.", 403);
-  }
-}
+export const inventoryBranchAccess = assertBranchAccess;
 export async function listInventoryBranches(actor = null) {
   const rows = await prisma.branches.findMany({ where: {
     is_active: true,
-    ...(actor && !actor.permissions.includes("inventory.manage_all") ? { user_branches: { some: { user_id: actor.userId } } } : {}),
+    ...(actor && !hasGlobalBranchAccess(actor) ? { user_branches: { some: { user_id: actor.userId } } } : {}),
   }, orderBy: { name: "asc" } });
   return rows.map(mapBranch);
 }

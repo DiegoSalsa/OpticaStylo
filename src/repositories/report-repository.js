@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
 const n = value => Number(value ?? 0);
-export async function getSalesReportData({ fromDate, origin, status, toDate, allowedBranchIds, legacyActorId }, client = prisma) {
-  const scope = allowedBranchIds ? Prisma.sql`AND (s.branch_id IN (${allowedBranchIds.length ? Prisma.join(allowedBranchIds.map(id=>Prisma.sql`${id}::uuid`)) : Prisma.sql`NULL::uuid`}) OR (s.branch_id IS NULL AND s.created_by=${legacyActorId ?? null}::uuid))` : Prisma.empty;
+export async function getSalesReportData({ fromDate, origin, status, toDate, allowedBranchIds }, client = prisma) {
+  const scope = allowedBranchIds ? Prisma.sql`AND s.branch_id IN (${allowedBranchIds.length ? Prisma.join(allowedBranchIds.map((id) => Prisma.sql`${id}::uuid`)) : Prisma.sql`NULL::uuid`})` : Prisma.empty;
   const base = Prisma.sql`WITH matched AS (SELECT s.id,s.status,s.created_at,s.total_cents,s.discount_cents,s.shipping_fee_cents FROM sales s WHERE s.created_at>=${fromDate} AND s.created_at<${toDate} ${scope} ${origin ? Prisma.sql`AND s.origin=${origin}` : Prisma.empty} ${status ? Prisma.sql`AND s.status=${status}` : Prisma.empty}), included AS (SELECT * FROM matched WHERE status NOT IN ('QUOTATION','CANCELLED'))`;
   // Agrupar días en Santiago dentro de PostgreSQL conserva el corte local sin cargar todo el historial.
   const [summaryRows,statuses,daily,methods,products] = await client.$transaction([

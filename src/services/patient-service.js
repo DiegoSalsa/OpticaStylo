@@ -1,3 +1,4 @@
+import { operationBranch } from "../auth/branch-identity.js";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
@@ -47,7 +48,7 @@ export async function createPatient(input, actor, dependencies = {}) {
   );
 
   try {
-    return await createPatientRepository(patientData, actor.userId);
+    return await createPatientRepository(patientData, actor.userId, ...(dependencies.createPatientWithGuardian ? [] : [actor, input.branchId]));
   } catch (error) {
     return convertUniqueViolation(error);
   }
@@ -60,7 +61,9 @@ export async function getPatient(patientId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PATIENTS_READ_BASIC]);
 
   const normalizedPatientId = validatePatientId(patientId);
-  const patient = await findPatientRepository(normalizedPatientId);
+  const branchId = dependencies.branchId ? await operationBranch(actor, dependencies.branchId) : null;
+  const scopeActor = branchId ? { ...actor, activeBranchId: branchId } : actor;
+  const patient = await findPatientRepository(normalizedPatientId, ...(dependencies.findPatientById ? [] : [scopeActor]));
 
   if (!patient) {
     throwPatientNotFound();
@@ -75,7 +78,9 @@ export async function getPatientList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.PATIENTS_READ_BASIC]);
 
   const query = validatePatientListQuery(searchParams);
-  return listPatientRepository(query);
+  const requested = searchParams.get("branchId");
+  const scopeActor = requested ? { ...actor, activeBranchId: await operationBranch(actor, requested) } : actor;
+  return listPatientRepository(query, ...(dependencies.listPatients ? [] : [scopeActor]));
 }
 
 export async function updatePatient(
@@ -92,7 +97,7 @@ export async function updatePatient(
   requirePermissions(actor, [PERMISSIONS.PATIENTS_MANAGE_BASIC]);
 
   const normalizedPatientId = validatePatientId(patientId);
-  const currentPatient = await findPatientRepository(normalizedPatientId);
+  const currentPatient = await findPatientRepository(normalizedPatientId, ...(dependencies.findPatientById ? [] : [actor]));
 
   if (!currentPatient) {
     throwPatientNotFound();
@@ -109,6 +114,7 @@ export async function updatePatient(
       normalizedPatientId,
       patientData,
       actor.userId,
+      ...(dependencies.updatePatientWithGuardian ? [] : [actor]),
     );
 
     if (!patient) {

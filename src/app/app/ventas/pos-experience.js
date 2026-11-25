@@ -28,14 +28,18 @@ export default function PosExperience() {
   useEffect(() => {
     if (!actor?.permissions.includes("inventory.read")) return;
     const controller = new AbortController();
-    fetch("/api/inventory/branches", { cache: "no-store", signal: controller.signal }).then(readResponse).then((rows) => { if (!controller.signal.aborted) setBranches(rows); }).catch((error) => { if (!controller.signal.aborted) setError(error.message); });
+    fetch("/api/inventory/branches", { cache: "no-store", signal: controller.signal }).then(readResponse).then((rows) => { if (!controller.signal.aborted) {
+      setBranches(rows);
+      setBranchId((selected) => selected || rows.find((row) => row.id === actor.activeBranchId)?.id || (rows.length === 1 ? rows[0].id : ""));
+    } }).catch((error) => { if (!controller.signal.aborted) setError(error.message); });
     return () => controller.abort();
   }, [actor]);
   const [customerSearch, setCustomerSearch] = useState("");
   const [patientSearch, setPatientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
-  const customers = useResourceSearch("/api/customers", customerSearch);
-  const patients = useResourceSearch("/api/patients", patientSearch);
+  const branchParams = branchId ? new URLSearchParams({ branchId }).toString() : "";
+  const customers = useResourceSearch("/api/customers", customerSearch, branchParams);
+  const patients = useResourceSearch("/api/patients", patientSearch, branchParams);
   const products = useResourceSearch(
     "/api/products",
     productSearch,
@@ -167,7 +171,8 @@ export default function PosExperience() {
       return;
     }
     const controller = new AbortController();
-    fetch(`/api/prescriptions?patientId=${patient.id}`, {
+    const filters = new URLSearchParams({ patientId: patient.id, ...(branchId && { branchId }) });
+    fetch(`/api/prescriptions?${filters}`, {
       cache: "no-store",
       signal: controller.signal,
     })
@@ -187,6 +192,7 @@ export default function PosExperience() {
     return () => controller.abort();
   }, [
     attachPrescription,
+    branchId,
     offersPrescriptionAttachment,
     patient,
     prescriptionMode,
@@ -197,7 +203,7 @@ export default function PosExperience() {
     choosePatient(null);
     setExternalPrescriptionId(null);
     if (value?.patientId) {
-      fetch(`/api/patients/${value.patientId}`, { cache: "no-store" })
+      fetch(`/api/patients/${value.patientId}?${branchParams}`, { cache: "no-store" })
         .then(readResponse)
         .then(choosePatient)
         .catch(() => {});
@@ -324,7 +330,7 @@ export default function PosExperience() {
     try {
       const created = await readResponse(
         await fetch("/api/customers", {
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, ...(branchId && { branchId }) }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
@@ -367,7 +373,7 @@ export default function PosExperience() {
     try {
       const created = await readResponse(
         await fetch("/api/patients", {
-          body: JSON.stringify(input),
+          body: JSON.stringify({ ...input, ...(branchId && { branchId }) }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         }),
@@ -489,6 +495,7 @@ export default function PosExperience() {
       const body = new FormData();
       body.set("confirmedData", JSON.stringify(confirmedData));
       body.set("customerId", customer.id);
+      if (branchId) body.set("branchId", branchId);
       body.set("image", prescriptionFile);
       body.set("patientId", patient.id);
       response = await fetch("/api/external-prescriptions", {
@@ -500,6 +507,7 @@ export default function PosExperience() {
         body: JSON.stringify({
           confirmedData,
           customerId: customer.id,
+          ...(branchId && { branchId }),
           patientId: patient.id,
         }),
         headers: { "Content-Type": "application/json" },

@@ -4,7 +4,11 @@ import { cashError, lockPaymentSession } from "./cash-register-repository.js";
 import { rutSearchValues } from "../utils/rut-search.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
 import { retryTransaction } from "../db/retry-transaction.js";
-import { inventoryBranchAccess, reserveSaleInventory, settleSaleInventory } from "./inventory-repository.js";
+import { customerIdentityScope, patientIdentityScope } from "../auth/branch-identity.js";
+import { hasGlobalBranchAccess } from "../auth/permissions.js";
+import { externalPrescriptionScope } from "./external-prescription-repository.js";
+import { assertSaleBranch } from "../auth/sale-branch-access.js";
+import { assertBranch, inventoryBranchAccess, reserveSaleInventory, settleSaleInventory } from "./inventory-repository.js";
 import {
   consumeDiscountAuthorizationWithClient,
   lockDiscountAuthorizationWithClient,
@@ -52,7 +56,7 @@ export const saleListInclude = {
 
 export const ORDER_STATUSES = ["PENDING", "PAID", "IN_PREPARATION", "READY", "DELIVERED", "CANCELLED"];
 
-export function saleListWhere({ customerId, origin, search = "", status, view, branchId, allowedBranchIds, legacyActorId } = {}) {
+export function saleListWhere({ customerId, origin, search = "", status, view, branchId, allowedBranchIds } = {}) {
   const statuses = view === "active" ? ["PENDING", "PAID", "IN_PREPARATION", "READY"]
     : view === "delivered" ? ["DELIVERED"] : view === "history" ? ORDER_STATUSES : null;
   const where = {
@@ -65,7 +69,7 @@ export function saleListWhere({ customerId, origin, search = "", status, view, b
     if (statuses) where.AND = [{ status }];
     else where.status = status;
   }
-  if (allowedBranchIds) where.AND=[...(where.AND??[]),{OR:[{branch_id:{in:allowedBranchIds}},{branch_id:null,created_by:legacyActorId}]}];
+  if (allowedBranchIds) where.AND = [...(where.AND ?? []), { branch_id: { in: allowedBranchIds } }];
   if (!search) return where;
   const number = search.replace(/^#\s*/, "");
   // Short numeric queries identify a sale number; matching them inside every
@@ -205,11 +209,12 @@ export async function findSaleById(saleId) {
   return findSaleWithClient(prisma, saleId);
 }
 
-async function loadDraftReferences(client, draft) {
-  if (draft.customerId && !(await client.customers.findUnique({ select: { id: true }, where: { id: draft.customerId } }))) {
+async function loadDraftReferences(client, draft, actor) {
+  const branches = actor && !hasGlobalBranchAccess(actor) ? [draft.branchId] : null;
+  if (draft.customerId && !(await client.customers.findFirst({ select: { id: true }, where: { id: draft.customerId, ...customerIdentityScope(branches) } }))) {
     return { reason: "CUSTOMER_NOT_FOUND" };
   }
-  if (draft.patientId && !(await client.patients.findUnique({ select: { id: true }, where: { id: draft.patientId } }))) {
+  if (draft.patientId && !(await client.patients.findFirst({ select: { id: true }, where: { id: draft.patientId, ...patientIdentityScope(branches) } }))) {
     return { reason: "PATIENT_NOT_FOUND" };
   }
   const productIds = draft.items.map((item) => item.productId);
@@ -229,12 +234,14 @@ async function loadDraftReferences(client, draft) {
     const prescription = await client.optical_prescriptions.findUnique({
       include: { clinical_encounters: true }, where: { id: draft.prescriptionId },
     });
-    if (!prescription) return { reason: "PRESCRIPTION_NOT_FOUND" };
+    if (!prescription || (actor && prescription.clinical_encounters.branch_id !== draft.branchId)) return { reason: "PRESCRIPTION_NOT_FOUND" };
     if (prescription.status !== "ACTIVE" || prescription.clinical_encounters.status !== "FINALIZED") return { reason: "PRESCRIPTION_NOT_USABLE" };
     if (prescription.clinical_encounters.patient_id !== draft.patientId) return { reason: "PRESCRIPTION_PATIENT_MISMATCH" };
   }
   if (draft.externalPrescriptionId) {
-    const external = await client.external_prescriptions.findUnique({ where: { id: draft.externalPrescriptionId } });
+    const external = await client.external_prescriptions.findFirst({ where: {
+      id: draft.externalPrescriptionId, ...(actor && externalPrescriptionScope({ allowedBranchIds: [draft.branchId] })),
+    } });
     if (!external) return { reason: "EXTERNAL_PRESCRIPTION_NOT_FOUND" };
     if (external.status !== "READY" || external.customer_id !== draft.customerId || external.patient_id !== draft.patientId) {
       return { reason: "EXTERNAL_PRESCRIPTION_NOT_USABLE" };
@@ -276,7 +283,7 @@ async function insertSaleEvent(client, saleId, eventType, actorUserId, { details
 
 async function authorizeDiscount(client, draft, actorUserId) {
   if (!draft.discount) return draft;
-  const authorizedBy = await lockDiscountAuthorizationWithClient(client, { ...draft.discount, requestedBy: actorUserId });
+  const authorizedBy = await lockDiscountAuthorizationWithClient(client, { ...draft.discount, requestedBy: actorUserId, branchId: draft.branchId });
   return authorizedBy ? { ...draft, discount: { ...draft.discount, authorizedAt: new Date(), authorizedBy } } : null;
 }
 
@@ -297,12 +304,16 @@ async function repeatSale(client,existing,draft) {
 export async function createSale(draft, actorUserId, options = {}) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
+    if (options.actor) {
+      await inventoryBranchAccess(options.actor, draft.branchId, client);
+      await assertBranch(client, draft.branchId);
+    }
     if (options.requestKey) {
       await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`sale:${actorUserId}:${options.requestKey}`},0))::text`;
       const existing = await client.sales.findFirst({ where: { created_by: actorUserId, request_key: options.requestKey } });
       if (existing) return repeatSale(client,existing,draft);
     }
-    const references = await loadDraftReferences(client, draft);
+    const references = await loadDraftReferences(client, draft, options.actor);
     if (references.reason) return { reason: references.reason, sale: null };
     const authorized = await authorizeDiscount(client, draft, actorUserId);
     if (!authorized) return { reason: "DISCOUNT_AUTHORIZATION_INVALID", sale: null };
@@ -349,9 +360,13 @@ export async function updateSaleDraft(saleId, draft, actorUserId, actor) {
     const sale = await client.sales.findUnique({ where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
     if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_EDITABLE", sale: null };
-    if(actor&&sale.branch_id) await inventoryBranchAccess(actor,sale.branch_id,client);
+    if (actor) {
+      await assertSaleBranch({ branchId: sale.branch_id }, actor, client);
+      await inventoryBranchAccess(actor, draft.branchId, client);
+      await assertBranch(client, draft.branchId);
+    }
     if(draft.cashSessionId) await lockPaymentSession(client,{branch_id:draft.branchId},draft.cashSessionId,actor);
-    let references = await loadDraftReferences(client, draft);
+    let references = await loadDraftReferences(client, draft, actor);
     if (references.reason) return { reason: references.reason, sale: null };
     const additions = await client.sale_optical_additions.findMany({ where: { sale_id: saleId } });
     const preserved = additions.reduce((sum, item) => sum + Number(item.line_total_cents ?? Number(item.unit_price_cents) * item.quantity), 0);
@@ -408,14 +423,15 @@ export async function confirmSale(saleId, actorUserId, actor) {
       }, where: { id: saleId },
     });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
+    if (actor) await assertSaleBranch({ branchId: sale.branch_id }, actor, client);
     if (sale.status === "PENDING") return { reason: null, sale: await findSaleWithClient(client, saleId) };
     if (sale.status !== "QUOTATION") return { reason: "SALE_NOT_CONFIRMABLE", sale: null };
-    if(actor&&sale.branch_id) await inventoryBranchAccess(actor,sale.branch_id,client);
     if(sale.cash_session_id) await lockPaymentSession(client,sale,sale.cash_session_id,actor);
     if (sale.quotation_valid_until && sale.quotation_valid_until < new Date()) return { reason: "QUOTATION_EXPIRED", sale: null };
     if (sale.sale_items.some((item) => !item.products_sale_items_product_idToproducts.is_active)) return { reason: "PRODUCT_INACTIVE", sale: null };
     if (sale.sale_items.some((item) => Number(item.unit_price_cents)!==Number(item.products_sale_items_product_idToproducts.unit_price_cents))) cashError("QUOTATION_PRICE_CHANGED","Los precios cambiaron. Actualice y revise la cotización antes de convertirla en venta.");
     if (sale.optical_prescriptions) {
+      if (actor && sale.optical_prescriptions.clinical_encounters.branch_id !== sale.branch_id) return { reason: "PRESCRIPTION_NOT_FOUND", sale: null };
       if (sale.optical_prescriptions.status !== "ACTIVE" || sale.optical_prescriptions.clinical_encounters.status !== "FINALIZED") return { reason: "PRESCRIPTION_NOT_USABLE", sale: null };
       if (sale.optical_prescriptions.clinical_encounters.patient_id !== sale.patient_id) return { reason: "PRESCRIPTION_PATIENT_MISMATCH", sale: null };
     }
@@ -438,6 +454,7 @@ export async function registerSalePayment(saleId, batch, actorUserId, options = 
     await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const sale = await client.sales.findUnique({ include: { customers: true, sale_payments: true }, where: { id: saleId } });
     if (!sale) return { reason: "SALE_NOT_FOUND", sale: null };
+    if (options.actor) await assertSaleBranch({ branchId: sale.branch_id }, options.actor, client);
     const previous = options.requestKey && sale.sale_payments.find((p) => p.request_key === options.requestKey);
     if (previous) {
       if (previous.request_hash && previous.request_hash !== fingerprint) cashError("IDEMPOTENCY_CONFLICT","La clave de cobro corresponde a otros importes, medios o caja.");
@@ -475,12 +492,13 @@ export async function registerSalePayment(saleId, batch, actorUserId, options = 
 
 const ALLOWED_TRANSITIONS = Object.freeze({ PAID: ["IN_PREPARATION"], IN_PREPARATION: ["READY"], READY: ["DELIVERED"] });
 
-export async function changeSaleStatus(saleId, change, actorUserId, changedAt) {
+export async function changeSaleStatus(saleId, change, actorUserId, changedAt, actor) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     await client.$queryRaw`SELECT id FROM sales WHERE id = ${saleId}::uuid FOR UPDATE`;
     const current = await client.sales.findUnique({ include: { sale_payments: true }, where: { id: saleId } });
     if (!current) return { reason: "SALE_NOT_FOUND", sale: null };
+    if (actor) await assertSaleBranch({ branchId: current.branch_id }, actor, client);
     if (change.status === "CANCELLED") {
       const shipment = await client.shipping_shipments.findUnique({ where: { sale_id: saleId } });
       if (shipment && !["PENDING_PREPARATION", "PREPARED", "CANCELLED"].includes(shipment.state)) return { reason: "SHIPMENT_CANCELLATION_REQUIRES_REVIEW", sale: null };
@@ -566,12 +584,13 @@ async function enqueueReceipt(client, receipt, emailedTo, saleId, paymentId, tem
   });
 }
 
-export async function issueSaleReceipt(saleId, request, actorUserId) {
+export async function issueSaleReceipt(saleId, request, actorUserId, actor) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return retryTransaction(prisma, async (client) => {
     await client.$queryRaw`SELECT id FROM sales WHERE id=${saleId}::uuid FOR UPDATE`;
     const locked = await client.sales.findUnique({ where: { id: saleId } });
     if (!locked) return { reason: "SALE_NOT_FOUND", receipt: null };
+    if (actor) await assertSaleBranch({ branchId: locked.branch_id }, actor, client);
     if (["QUOTATION", "CANCELLED"].includes(locked.status)) return { reason: "RECEIPT_NOT_AVAILABLE", receipt: null };
     const sale = await findSaleWithClient(client, saleId);
     const snapshot = buildPaymentReceiptSnapshot(sale, request.paymentId);

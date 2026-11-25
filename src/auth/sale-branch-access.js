@@ -1,12 +1,20 @@
-import { prisma } from "../db/prisma.js";
-import { inventoryBranchAccess, inventoryError } from "../repositories/inventory-repository.js";
-export async function saleBranchScope(actor,branchId) {
-  if(branchId) await inventoryBranchAccess(actor,branchId);
-  if(actor.permissions.includes("inventory.manage_all")) return {};
-  const rows=await prisma.user_branches.findMany({where:{user_id:actor.userId},select:{branch_id:true}});
-  return {allowedBranchIds:rows.map((r)=>r.branch_id),legacyActorId:actor.userId};
+import { assertBranchAccess, authorizedBranchIds } from "./branch-access.js";
+import { hasGlobalBranchAccess } from "./permissions.js";
+import { AppError } from "../utils/app-error.js";
+
+export async function saleBranchScope(actor, branchId = null, client) {
+  const selected = branchId ?? actor?.activeBranchId;
+  if (selected) {
+    await assertBranchAccess(actor, selected, client);
+    return { allowedBranchIds: [selected] };
+  }
+  const allowedBranchIds = await authorizedBranchIds(actor, client);
+  return allowedBranchIds ? { allowedBranchIds } : {};
 }
-export async function assertSaleBranch(sale,actor) {
-  if(sale.branchId) return inventoryBranchAccess(actor,sale.branchId);
-  if(!actor.permissions.includes("inventory.manage_all") && sale.createdBy!==actor.userId) inventoryError("SALE_BRANCH_ACCESS_DENIED","No tiene autorización para consultar esta venta histórica.",403);
+
+export async function assertSaleBranch(sale, actor, client) {
+  if (sale.branchId) return assertBranchAccess(actor, sale.branchId, client);
+  if (!hasGlobalBranchAccess(actor)) {
+    throw new AppError({ code: "SALE_BRANCH_ACCESS_DENIED", message: "La venta histórica está pendiente de conciliación.", status: 403 });
+  }
 }
