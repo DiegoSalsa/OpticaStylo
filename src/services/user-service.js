@@ -1,5 +1,7 @@
+import { authorizedBranchIds, branchAccessDenied } from "../auth/branch-access.js";
+import { inventoryId } from "../validations/inventory-validation.js";
 import { hashPassword } from "../auth/password.js";
-import { PERMISSIONS } from "../auth/permissions.js";
+import { hasGlobalBranchAccess, PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
   createUserWithRoles,
@@ -30,6 +32,13 @@ export async function createUser(input, actor, dependencies = {}) {
   ]);
 
   const userData = validateCreateUserInput(input);
+  if (!dependencies.createUserWithRoles && !hasGlobalBranchAccess(actor)) {
+    if (userData.roles.some((role) => !["SALES", "CLINICAL_PROFESSIONAL"].includes(role))) throw branchAccessDenied();
+    const allowed = await authorizedBranchIds(actor);
+    const selected = input.branchId ?? actor.activeBranchId ?? (allowed.length === 1 ? allowed[0] : null);
+    userData.branchId = inventoryId(selected);
+    if (!allowed.includes(userData.branchId)) throw branchAccessDenied();
+  }
   const passwordHash = await passwordHasher(userData.password);
 
   try {
@@ -40,6 +49,7 @@ export async function createUser(input, actor, dependencies = {}) {
         passwordHash,
       },
       actor.userId,
+      ...(dependencies.createUserWithRoles ? [] : [actor]),
     );
 
     if (!user) {
@@ -66,12 +76,14 @@ export async function createUser(input, actor, dependencies = {}) {
 
 export async function getUserList(searchParams, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.USERS_READ]);
-  return (dependencies.listUsers ?? listUsers)(validateUserListQuery(searchParams));
+  const query = validateUserListQuery(searchParams);
+  return dependencies.listUsers ? dependencies.listUsers(query) : listUsers(query, actor);
 }
 
 export async function getUser(userId, actor, dependencies = {}) {
   requirePermissions(actor, [PERMISSIONS.USERS_READ]);
-  const user = await (dependencies.findUserById ?? findUserById)(validateUserId(userId));
+  const id = validateUserId(userId);
+  const user = await (dependencies.findUserById ? dependencies.findUserById(id) : findUserById(id, actor));
   if (!user) {
     throw new AppError({ code: "USER_NOT_FOUND", message: "No se encontró el usuario.", status: 404 });
   }
@@ -88,7 +100,7 @@ export async function updateUser(userId, input, actor, dependencies = {}) {
   }
 
   const id = validateUserId(userId);
-  const current = await (dependencies.findUserById ?? findUserById)(id);
+  const current = await (dependencies.findUserById ? dependencies.findUserById(id) : findUserById(id, actor, { write: true }));
   if (!current) {
     throw new AppError({ code: "USER_NOT_FOUND", message: "No se encontró el usuario.", status: 404 });
   }
@@ -115,6 +127,7 @@ export async function updateUser(userId, input, actor, dependencies = {}) {
         revokeSessions: Boolean(passwordHash) || rolesChanged || data.isActive !== current.isActive,
       },
       actor.userId,
+      ...(dependencies.updateUserWithRoles ? [] : [actor]),
     );
     if (result.reason === "LAST_ACTIVE_ADMIN") {
       throw new AppError({

@@ -1,3 +1,4 @@
+import { assertBranchAccess, authorizedBranchIds, branchAccessDenied } from "../auth/branch-access.js";
 import { prisma } from "../db/prisma.js";
 
 const roleRelation = "user_roles_user_roles_user_idTousers";
@@ -17,8 +18,17 @@ function mapUser(row) {
 
 const includeRoles = { [roleRelation]: { include: { roles: true } } };
 
-async function findUserByIdWithClient(client, userId) {
-  return mapUser(await client.users.findUnique({ include: includeRoles, where: { id: userId } }));
+function staffScope(branchIds, { write = false } = {}) {
+  if (!branchIds) return {};
+  const matching = { branch_id: { in: branchIds }, branches: { is_active: true } };
+  return {
+    user_branches: { some: matching, ...(write && { every: { branch_id: { in: branchIds } } }) },
+    [roleRelation]: { none: { roles: { code: { in: ["ADMIN", "BRANCH_ADMIN"] } } } },
+  };
+}
+
+async function findUserByIdWithClient(client, userId, scope = {}) {
+  return mapUser(await client.users.findFirst({ include: includeRoles, where: { id: userId, ...scope } }));
 }
 
 async function insertUserWithRoles(client, userData, assignedBy) {
@@ -30,6 +40,7 @@ async function insertUserWithRoles(client, userData, assignedBy) {
     data: {
       email: userData.email, first_name: userData.firstName,
       last_name: userData.lastName, password_hash: userData.passwordHash,
+      ...(userData.branchId && { user_branches: { create: { branch_id: userData.branchId } } }),
       [roleRelation]: {
         create: roles.map((role) => ({ assigned_by: assignedBy, role_id: role.id })),
       },
@@ -39,17 +50,20 @@ async function insertUserWithRoles(client, userData, assignedBy) {
   return mapUser(created);
 }
 
-export async function createUserWithRoles(userData, assignedBy) {
-  // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
-  return prisma.$transaction((client) => insertUserWithRoles(client, userData, assignedBy));
+export async function createUserWithRoles(userData, assignedBy, actor) {
+  return prisma.$transaction(async (client) => {
+    if (actor && userData.branchId) await assertBranchAccess(actor, userData.branchId, client);
+    return insertUserWithRoles(client, userData, assignedBy);
+  }, { isolationLevel: "Serializable" });
 }
 
-export async function listUsers({ page, pageSize, search }) {
-  const where = search ? { OR: [
+export async function listUsers({ page, pageSize, search }, actor) {
+  const allowed = actor ? await authorizedBranchIds(actor) : null;
+  const where = { ...staffScope(allowed), ...(search && { OR: [
     { email: { contains: search, mode: "insensitive" } },
     { first_name: { contains: search, mode: "insensitive" } },
     { last_name: { contains: search, mode: "insensitive" } },
-  ] } : {};
+  ] }) };
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   const [items, total] = await prisma.$transaction([
     prisma.users.findMany({
@@ -65,14 +79,17 @@ export async function listUsers({ page, pageSize, search }) {
   };
 }
 
-export async function findUserById(userId) {
-  return findUserByIdWithClient(prisma, userId);
+export async function findUserById(userId, actor, options) {
+  const allowed = actor ? await authorizedBranchIds(actor) : null;
+  return findUserByIdWithClient(prisma, userId, staffScope(allowed, options));
 }
 
-export async function updateUserWithRoles(userId, userData, actorUserId) {
+export async function updateUserWithRoles(userId, userData, actorUserId, actor) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
-    const current = await findUserByIdWithClient(client, userId);
+    const allowed = actor ? await authorizedBranchIds(actor, client) : null;
+    if (allowed && userData.roles.some((role) => !["SALES", "CLINICAL_PROFESSIONAL"].includes(role))) throw branchAccessDenied();
+    const current = await findUserByIdWithClient(client, userId, staffScope(allowed, { write: true }));
     if (!current) return { reason: "USER_NOT_FOUND", user: null };
     const removesActiveAdmin = current.isActive && current.roles.includes("ADMIN")
       && (!userData.isActive || !userData.roles.includes("ADMIN"));

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { hasGlobalBranchAccess } from "@/auth/permissions";
 import BrandLogo from "@/components/brand/brand-logo";
 import Icon from "@/components/ui/icon";
 
@@ -35,6 +36,8 @@ export default function InternalShell({ children }) {
   const [actor, setActor] = useState(null);
   const [status, setStatus] = useState("loading");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [branchError, setBranchError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -46,6 +49,21 @@ export default function InternalShell({ children }) {
 
   const navigation = useMemo(() => NAVIGATION.filter((item) =>
     item.permissions.every((permission) => actor?.permissions.includes(permission))), [actor]);
+
+  async function changeBranch(event) {
+    const branchId = event.target.value || null;
+    setBranchSaving(true);
+    setBranchError("");
+    try {
+      await readResponse(await fetch("/api/auth/me", {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ branchId }),
+      }));
+      window.location.reload();
+    } catch (error) {
+      setBranchError(error.message);
+      setBranchSaving(false);
+    }
+  }
 
   async function logout() {
     try {
@@ -85,7 +103,16 @@ export default function InternalShell({ children }) {
           <button aria-label="Cerrar sesión" onClick={logout} type="button"><Icon name="logout" size={18} /></button>
         </div>
       </aside>
-      <div className="internal-content"><header className="internal-topbar"><Link aria-label="Ir al dashboard" className="internal-topbar__brand" href="/app"><BrandLogo compact /></Link><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>{children}</ActorContext.Provider></main></div>
+      <div className="internal-content"><header className="internal-topbar"><Link aria-label="Ir al dashboard" className="internal-topbar__brand" href="/app"><BrandLogo compact /></Link><nav aria-label="Accesos rápidos"><Link href="/" target="_blank">Ver tienda</Link><span>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeZone: "America/Santiago" }).format(new Date())}</span></nav></header><main className="internal-main"><ActorContext.Provider value={actor}>
+        {actor?.branches?.length > 0 && <label className="field"><span>Sucursal activa</span>
+          <select value={actor.activeBranchId ?? ""} onChange={changeBranch} disabled={branchSaving}>
+            <option value="">{hasGlobalBranchAccess(actor) ? "Vista general" : "Sucursales autorizadas"}</option>
+            {actor.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+          </select>
+        </label>}
+        {branchError && <p className="inline-error" role="alert">{branchError}</p>}
+        {children}
+      </ActorContext.Provider></main></div>
     </div>
   );
 }

@@ -13,11 +13,13 @@ import Icon from "@/components/ui/icon";
 import "../management.css";
 
 const ROLES = [
-  ["ADMIN", "Administración"],
+  ["ADMIN", "Administración general"],
+  ["BRANCH_ADMIN", "Administración de sucursal"],
   ["CLINICAL_PROFESSIONAL", "Profesional clínico"],
   ["SALES", "Ventas"],
 ];
 const EMPTY = {
+  branchId: "",
   email: "",
   firstName: "",
   isActive: true,
@@ -35,6 +37,10 @@ export default function UsersPage() {
   const [notice, setNotice] = useState(null);
   const canCreate = actor?.permissions.includes("users.create");
   const canUpdate = actor?.permissions.includes("users.update");
+  const hasGlobalAccess = actor?.permissions.includes("branches.access_all");
+  const selectableRoles = hasGlobalAccess ? ROLES : ROLES.filter(([code]) => code !== "ADMIN" && code !== "BRANCH_ADMIN");
+  const assignedBranches = actor?.branches ?? [];
+  const initialBranch = actor?.activeBranchId ?? (assignedBranches.length === 1 ? assignedBranches[0].id : "");
 
   const list = usePaginatedResource("/api/users", { enabled: Boolean(actor?.permissions.includes("users.read")) });
   const { items } = list;
@@ -91,7 +97,7 @@ export default function UsersPage() {
       roles: form.roles,
       ...(selectedId
         ? { isActive: form.isActive }
-        : { password: form.password }),
+        : { password: form.password, ...(!hasGlobalAccess && { branchId: form.branchId || initialBranch }) }),
       ...(selectedId && form.password ? { password: form.password } : {}),
     };
     try {
@@ -307,9 +313,19 @@ export default function UsersPage() {
                   />
                 </label>
               </div>
+              {!selectedId && !hasGlobalAccess && (
+                <label className="field">
+                  <span>Sucursal inicial</span>
+                  <select value={form.branchId || initialBranch} required disabled={status === "saving"}
+                    onChange={(event) => setForm({ ...form, branchId: event.target.value })}>
+                    <option value="" disabled>Selecciona una sucursal</option>
+                    {assignedBranches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+                  </select>
+                </label>
+              )}
               <fieldset className="role-picker">
                 <legend>Roles</legend>
-                {ROLES.map(([code, label]) => (
+                {selectableRoles.map(([code, label]) => (
                   <label key={code}>
                     <input
                       checked={form.roles.includes(code)}

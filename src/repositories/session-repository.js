@@ -1,3 +1,4 @@
+import { assertBranchAccess, authorizedBranchIds, branchAccessDenied } from "../auth/branch-access.js";
 import { prisma } from "../db/prisma.js";
 
 export async function findActiveSessionByTokenHash(tokenHash) {
@@ -32,10 +33,32 @@ export async function findActiveSessionByTokenHash(tokenHash) {
   const roles = session.users.user_roles_user_roles_user_idTousers.map((item) => item.roles.code);
   const permissions = [...new Set(session.users.user_roles_user_roles_user_idTousers
     .flatMap((item) => item.roles.role_permissions.map((entry) => entry.permissions.code)))];
+  const actor = { permissions, userId: session.user_id };
+  let activeBranchId = null;
+  if (session.active_branch_id) {
+    const branch = await client.branches.findFirst({ where: { id: session.active_branch_id, is_active: true }, select: { id: true } });
+    const allowed = branch ? await authorizedBranchIds(actor, client) : [];
+    if (branch && (!allowed || allowed.includes(branch.id))) activeBranchId = branch.id;
+  }
   return {
-    email: session.users.email, expiresAt: session.expires_at, permissions, roles,
+    activeBranchId, email: session.users.email, expiresAt: session.expires_at, permissions, roles,
     sessionId: session.id, userId: session.user_id,
   };
+}
+
+export async function selectActiveBranch(actor, branchId) {
+  return prisma.$transaction(async (client) => {
+    if (branchId) {
+      await assertBranchAccess(actor, branchId, client);
+      if (!await client.branches.findFirst({ where: { id: branchId, is_active: true }, select: { id: true } })) throw branchAccessDenied();
+    }
+    const result = await client.user_sessions.updateMany({
+      where: { id: actor.sessionId, user_id: actor.userId, revoked_at: null, expires_at: { gt: new Date() } },
+      data: { active_branch_id: branchId },
+    });
+    if (!result.count) throw branchAccessDenied();
+    return { activeBranchId: branchId };
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function createSessionForSuccessfulLogin({ expiresAt, ipAddress, tokenHash, userAgent, userId }) {

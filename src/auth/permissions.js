@@ -1,4 +1,5 @@
 export const PERMISSIONS = Object.freeze({
+  BRANCHES_ACCESS_ALL: "branches.access_all",
   MEDICAL_RECORDS_ASSIGN_CARE: "medical_records.assign_care",
   CASH_READ: "cash.read",
   CASH_OPERATE: "cash.operate",
@@ -46,11 +47,15 @@ export const PERMISSIONS = Object.freeze({
 
 export const PERMISSION_CODES = Object.freeze(Object.values(PERMISSIONS));
 
+export function hasGlobalBranchAccess(actor) {
+  return actor?.permissions?.includes(PERMISSIONS.BRANCHES_ACCESS_ALL) ?? false;
+}
+
 export const SHIPPING_SETTINGS_PERMISSIONS = Object.freeze([
   PERMISSIONS.INVENTORY_MANAGE_ALL,
   PERMISSIONS.PRODUCTS_MANAGE,
 ]);
 
 export function canManageShippingSettings(actor) {
-  return SHIPPING_SETTINGS_PERMISSIONS.every((permission) => actor?.permissions?.includes(permission));
+  return hasGlobalBranchAccess(actor) && SHIPPING_SETTINGS_PERMISSIONS.every((permission) => actor?.permissions?.includes(permission));
 }

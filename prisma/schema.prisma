@@ -32,6 +32,8 @@ model appointment_events {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio appointments {.
 model appointments {
+  branch_id                            String?                      @db.Uuid
+  branch                               branches?                    @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                                   String                       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   patient_id                           String                       @map("patient_id") @db.Uuid
   professional_id                      String                       @map("professional_id") @db.Uuid
@@ -163,6 +165,8 @@ model clinical_encounter_events {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio clinical encounters {.
 model clinical_encounters {
+  branch_id                                                                        String?                      @db.Uuid
+  branch                                                                           branches?                    @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   encounter_type                                                                   String                       @default("GENERAL") @db.VarChar(20)
   encounter_date                                                                   DateTime?                    @db.Date
   record_number                                                                    BigInt?                      @unique @default(autoincrement())
@@ -203,6 +207,8 @@ model clinical_encounters {
 }
 
 model clinical_care_assignments {
+  branch_id             String?               @db.Uuid
+  branch                branches?             @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   patient_id            String                @db.Uuid
   professional_id       String                @db.Uuid
@@ -326,7 +332,19 @@ model customer_password_resets {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio customers {.
+model customer_branches {
+  customer_id String    @db.Uuid
+  branch_id   String    @db.Uuid
+  preferences Json?
+  customer    customers @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  branch      branches  @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([customer_id, branch_id])
+  @@index([branch_id, customer_id], map: "customer_branches_branch_idx")
+}
+
 model customers {
+  customer_branches                 customer_branches[]
   record_version                    Int                            @default(1)
   commercial_preferences            Json?
   customer_commercial_notes         customer_commercial_notes[]
@@ -398,6 +416,8 @@ model discount_authorization_grants {
 /// Este modelo o alguno de sus campos tiene comentarios en la base de datos y requiere tratamiento adicional en las migraciones. Consulte https://pris.ly/d/database-comments.
 /// Entidad de datos del dominio external prescriptions {.
 model external_prescriptions {
+  branch_id            String?              @db.Uuid
+  branch               branches?            @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   dependant_id         String?              @db.Uuid
   dependant            customer_dependants? @relation(fields: [dependant_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                   String       @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
@@ -474,8 +494,10 @@ model medical_record_revisions {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio medical records {.
 model medical_records {
+  branch_id                                                               String?                    @db.Uuid
+  branch                                                                  branches?                  @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                                                                      String                     @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
-  patient_id                                                              String                     @unique @map("patient_id") @db.Uuid
+  patient_id                                                              String                     @map("patient_id") @db.Uuid
   general_medical_history                                                 String?                    @map("general_medical_history")
   ocular_history                                                          String?                    @map("ocular_history")
   family_ocular_history                                                   String?                    @map("family_ocular_history")
@@ -491,6 +513,7 @@ model medical_records {
   patients                                                                patients                   @relation(fields: [patient_id], references: [id], onUpdate: NoAction)
   professional_profiles_medical_records_updated_byToprofessional_profiles professional_profiles      @relation("medical_records_updated_byToprofessional_profiles", fields: [updated_by], references: [user_id], onUpdate: NoAction)
 
+  @@unique([patient_id, branch_id])
   @@map("medical_records")
 }
 
@@ -552,7 +575,18 @@ model patient_guardians {
 
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio patients {.
+model patient_branches {
+  patient_id String   @db.Uuid
+  branch_id  String   @db.Uuid
+  patient    patients @relation(fields: [patient_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  branch     branches @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([patient_id, branch_id])
+  @@index([branch_id, patient_id], map: "patient_branches_branch_idx")
+}
+
 model patients {
+  patient_branches                 patient_branches[]
   dependant_profiles               customer_dependants[]
   clinical_care_assignments        clinical_care_assignments[]
   id                               String                             @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
@@ -572,7 +606,7 @@ model patients {
   customers                        customers?
   customer_patient_link_challenges customer_patient_link_challenges[]
   external_prescriptions           external_prescriptions[]
-  medical_records                  medical_records?
+  medical_records                  medical_records[]
   patient_guardians                patient_guardians?
   users_patients_created_byTousers users?                             @relation("patients_created_byTousers", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
   users_patients_updated_byTousers users?                             @relation("patients_updated_byTousers", fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -761,6 +795,8 @@ model professional_profiles {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio professional schedule blocks {.
 model professional_schedule_blocks {
+  branch_id             String?               @db.Uuid
+  branch                branches?             @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
   start_at              DateTime              @map("start_at") @db.Timestamptz(6)
@@ -778,6 +814,8 @@ model professional_schedule_blocks {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio professional schedule overrides {.
 model professional_schedule_overrides {
+  branch_id             String?               @db.Uuid
+  branch                branches?             @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
   date                  DateTime              @map("date") @db.Date
@@ -792,7 +830,7 @@ model professional_schedule_overrides {
   users                 users                 @relation(fields: [created_by], references: [id], onUpdate: NoAction)
   professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onUpdate: NoAction)
 
-  @@unique([professional_id, date])
+  @@unique([professional_id, branch_id, date])
   @@index([professional_id, date], map: "professional_schedule_overrides_lookup_index")
   @@map("professional_schedule_overrides")
 }
@@ -800,6 +838,8 @@ model professional_schedule_overrides {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio professional weekly schedules {.
 model professional_weekly_schedules {
+  branch_id             String?               @db.Uuid
+  branch                branches?             @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   professional_id       String                @map("professional_id") @db.Uuid
   day_of_week           Int                   @map("day_of_week") @db.SmallInt
@@ -812,7 +852,7 @@ model professional_weekly_schedules {
   updated_at            DateTime              @default(now()) @map("updated_at") @db.Timestamptz(6)
   professional_profiles professional_profiles @relation(fields: [professional_id], references: [user_id], onUpdate: NoAction)
 
-  @@unique([professional_id, day_of_week])
+  @@unique([professional_id, branch_id, day_of_week])
   @@index([professional_id], map: "professional_weekly_schedules_professional_index")
   @@map("professional_weekly_schedules")
 }
@@ -1323,6 +1363,8 @@ model user_roles {
 /// Esta tabla contiene restricciones CHECK que requieren tratamiento adicional en las migraciones. Consulte https://pris.ly/d/check-constraints.
 /// Entidad de datos del dominio user sessions {.
 model user_sessions {
+  active_branch_id String?   @db.Uuid
+  active_branch    branches? @relation(fields: [active_branch_id], references: [id], onDelete: SetNull)
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
   user_id      String    @map("user_id") @db.Uuid
   token_hash   String    @unique @map("token_hash") @db.Char(64)
@@ -1335,6 +1377,7 @@ model user_sessions {
   users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([expires_at], map: "user_sessions_expiration_index")
+  @@index([active_branch_id], map: "user_sessions_active_branch_idx")
   @@index([user_id], map: "user_sessions_user_index")
   @@map("user_sessions")
 }
@@ -1438,6 +1481,17 @@ model virtual_try_on_3d_assets {
 }
 
 model branches {
+  appointments                    appointments[]
+  clinical_encounters             clinical_encounters[]
+  clinical_care_assignments       clinical_care_assignments[]
+  medical_records                 medical_records[]
+  professional_weekly_schedules   professional_weekly_schedules[]
+  professional_schedule_overrides professional_schedule_overrides[]
+  professional_schedule_blocks    professional_schedule_blocks[]
+  external_prescriptions          external_prescriptions[]
+  customer_branches               customer_branches[]
+  patient_branches                patient_branches[]
+  active_sessions                 user_sessions[]
   shipping_enabled         Boolean                     @default(false)
   shipping_origin          Json?
   customer_commercial_notes customer_commercial_notes[]
@@ -1488,6 +1542,7 @@ model shipping_quotes {
   expires_at     DateTime @db.Timestamptz(6)
   sale           sales?
   shipment       shipping_shipments?
+
   @@index([cart_id, expires_at])
 }
 
@@ -1514,6 +1569,7 @@ model shipping_shipments {
   updated_at      DateTime @updatedAt @db.Timestamptz(6)
   events          shipping_tracking_events[]
   operations      shipping_operations[]
+
   @@index([state, next_sync_at])
 }
 
@@ -1528,6 +1584,7 @@ model shipping_tracking_events {
   motive       String? @db.VarChar(300)
   occurred_at  DateTime? @db.Timestamptz(6)
   received_at  DateTime @default(now()) @db.Timestamptz(6)
+
   @@unique([shipment_id, fingerprint])
 }
 
@@ -1548,6 +1605,7 @@ model user_branches {
   branches  branches @relation(fields: [branch_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@id([user_id, branch_id])
+  @@index([branch_id, user_id], map: "user_branches_branch_user_idx")
 }
 
 model inventory_stocks {
