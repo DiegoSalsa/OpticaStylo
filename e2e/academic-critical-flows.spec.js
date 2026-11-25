@@ -441,6 +441,33 @@ test.describe("Accesos Configuración logística", () => {
   });
 });
 
+test("Agenda ajusta la vista diaria y permite recorrer la semana con el teclado", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await login(page, "administrador");
+  await activateClinicalBranch(page);
+  await page.goto("/app/agenda");
+  const view = page.getByRole("combobox", { name: "Vista de calendario" });
+  const calendar = page.locator(".agenda-calendar__scroll");
+  await view.selectOption("day");
+  await expect(calendar).toBeVisible();
+  expect(await calendar.evaluate((node) => node.scrollWidth === node.clientWidth)).toBe(true);
+  await expect(calendar).not.toHaveAttribute("tabindex", "0");
+
+  await view.selectOption("week");
+  const region = page.getByRole("region", { name: "Días del calendario de atención" });
+  await expect(region).toBeVisible();
+  await expect(region).toHaveAccessibleDescription(/flechas izquierda y derecha/);
+  await region.press("ArrowRight");
+  await expect(region).toBeFocused();
+  await expect.poll(() => region.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(calendar).not.toHaveAttribute("tabindex", "0");
+  const days = calendar.locator(".agenda-calendar__day");
+  await expect(days).toHaveCount(7);
+  expect(await days.evaluateAll((items) => items[0].getBoundingClientRect().bottom <= items[1].getBoundingClientRect().top)).toBe(true);
+});
+
 test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/profesional",async({page})=>{
   await login(page,"administrador");
   await activateClinicalBranch(page);

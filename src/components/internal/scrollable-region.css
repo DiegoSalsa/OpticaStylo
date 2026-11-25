@@ -1,16 +1,16 @@
-.scroll-table {
+.scroll-region {
   max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
 }
 
-.scroll-table:focus-visible {
+.scroll-region:focus-visible {
   outline: 2px solid var(--color-primary-dark);
   outline-offset: 2px;
 }
 
-.scroll-table-hint {
+.scroll-region-hint {
   color: var(--color-text-soft);
   font-size: 0.8rem;
   line-height: 1.4;

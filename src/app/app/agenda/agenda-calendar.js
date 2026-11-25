@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Icon from "@/components/ui/icon";
+import ScrollableRegion from "@/components/internal/scrollable-region";
 import {
   canOpenClinicalRecord,
   clinicalRecordHref,
@@ -50,7 +51,11 @@ export default function AgendaCalendar({
           <i className="agenda-calendar__legend-block" /> Bloqueo
         </span>
       </header>
-      <div className="agenda-calendar__scroll">
+      <ScrollableRegion
+        className="agenda-calendar__scroll"
+        hint="Desplaza el calendario para ver todos los días."
+        label="Días del calendario de atención"
+      >
         <div
           className="agenda-calendar__grid"
           style={{ "--agenda-days": Math.max(days.length, 1) }}
@@ -146,7 +151,7 @@ export default function AgendaCalendar({
             </article>
           ))}
         </div>
-      </div>
+      </ScrollableRegion>
     </section>
   );
 }

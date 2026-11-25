@@ -59,7 +59,7 @@
   min-width: 0;
 }
 .agenda-calendar {
-  overflow: hidden;
+  min-width: 0;
   padding: 1rem;
 }
 .agenda-calendar__heading {
@@ -103,15 +103,13 @@
   background: #d7874d;
 }
 .agenda-calendar__scroll {
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
   padding-bottom: 0.2rem;
 }
 .agenda-calendar__grid {
   display: grid;
   gap: 0.55rem;
   grid-template-columns: repeat(var(--agenda-days), minmax(132px, 1fr));
-  min-width: max(100%, 760px);
+  width: max(100%, calc(var(--agenda-days) * (132px + 0.55rem) - 0.55rem));
 }
 .agenda-calendar__day {
   background: #f7faf9;
@@ -476,10 +474,7 @@
   }
   .agenda-calendar__grid {
     grid-template-columns: 1fr;
-    min-width: 0;
-  }
-  .agenda-calendar__scroll {
-    overflow: visible;
+    width: 100%;
   }
   .agenda-calendar__day {
     min-height: 0;
