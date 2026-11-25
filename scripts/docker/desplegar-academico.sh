@@ -57,8 +57,7 @@ esac
 docker info --format 'CPU del motor: {{.NCPU}} | Memoria del motor en bytes: {{.MemTotal}}'
 docker_root=$(docker info --format '{{.DockerRootDir}}')
 printf 'Plataforma del motor: %s\n' "$platform"
-if [[ -d "$docker_root" ]]; then df -h -- "$docker_root"; else printf 'Almacén de Docker: %s (consulta el disco desde el host del motor).\n' "$docker_root"; fi
-df -h -- .
+printf 'Almacén de Docker: %s\n' "$docker_root"
 
 step 'Variables y puerto'
 [[ -f "$env_file" && -r "$env_file" ]] || fail 'Ejecuta preparar y completa el archivo privado.'
@@ -102,6 +101,12 @@ case "$bind_ip" in
 esac
 if [[ "$probe_host" == *:* ]]; then probe_url="http://[$probe_host]:$port"; else probe_url="http://$probe_host:$port"; fi
 step 'Verificar que los recursos pertenecen a esta instalación'
+existing_containers=$(docker ps -aq --filter "label=com.docker.compose.project=$project")
+for container in $existing_containers; do
+  working_dir=$(docker container inspect --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' "$container")
+  $resume && [[ "$working_dir" == "$PWD" ]] ||
+    fail "El proyecto $project ya contiene un contenedor ajeno a esta instalación: $container."
+done
 web_running=false
 for service in db web; do
   name="$project-$service-1"
@@ -147,11 +152,6 @@ elif command -v timeout >/dev/null &&
   fail "Ya hay un servicio escuchando en $probe_host:$port."
 fi
 printf 'Publicación solicitada: %s:%s. Docker confirmará el enlace al arrancar.\n' "$bind_ip" "$port"
-
-if ! $resume; then
-  existing_containers=$(docker ps -aq --filter "label=com.docker.compose.project=$project")
-  [[ -z "$existing_containers" ]] || fail 'El proyecto ya tiene contenedores.'
-fi
 
 read_offline_metadata() {
   local manifest=IMAGENES-AMD64.txt schema key arch extra
@@ -240,16 +240,28 @@ check_endpoint() {
 }
 
 check_resources() {
-  local memory disk
+  local memory available_memory disk filesystem
   memory=$(docker info --format '{{.MemTotal}}')
-  if [[ "$mode" == con-internet && "$need_web" == true ]] && ((memory < 2147483648)); then
-    fail 'Memoria del motor inferior a 2 GiB para compilar. Usa el paquete AMD64 o solicita más memoria.'
+  [[ "$memory" =~ ^[0-9]+$ ]] || fail 'Docker no reportó la memoria del motor. Ejecuta docker info.'
+  if [[ "$mode" == con-internet && "$need_web" == true ]]; then
+    if ((memory < 2147483648)); then
+      fail 'Memoria del motor inferior a 2 GiB para compilar. Usa el paquete AMD64 o solicita más memoria.'
+    fi
+    if [[ -r /proc/meminfo ]]; then
+      available_memory=$(awk '$1=="MemAvailable:" {print $2}' /proc/meminfo)
+      if [[ "$available_memory" =~ ^[0-9]+$ ]] && ((available_memory < 1048576)); then
+        fail 'Linux tiene menos de 1 GiB de memoria disponible para iniciar la compilación. Consulta free -h y solicita más memoria o usa el paquete AMD64.'
+      fi
+    fi
   fi
-  if [[ -d "$docker_root" ]]; then
-    disk=$(df -Pk -- "$docker_root" | awk 'END {print $4}')
-    if [[ "$disk" =~ ^[0-9]+$ ]] && ((disk < 2097152)); then
+  if filesystem=$(df -Pk -- "$docker_root" 2>/dev/null); then
+    disk=$(awk 'END {print $4}' <<< "$filesystem")
+    [[ "$disk" =~ ^[0-9]+$ ]] || fail 'No se pudo interpretar el espacio libre del almacén Docker. Consulta df -h.'
+    if ((disk < 2097152)); then
       fail 'Almacén Docker con menos de 2 GiB libres. Consulta df -h y solicita espacio.'
     fi
+  else
+    printf 'AVISO: el usuario no puede consultar el espacio de %s. Si Docker reporta falta de espacio, solicita revisar esa partición.\n' "$docker_root" >&2
   fi
 }
 

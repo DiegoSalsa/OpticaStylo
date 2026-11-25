@@ -17,7 +17,10 @@ prerrequisitos que falten. Para compilar se necesita acceso a Docker Hub, npm y
 los repositorios Debian de la imagen Node.
 
 Durante la primera ejecución el instalador propone la IP del lado Linux de SSH,
-un puerto libre entre 3000, 8080, 3001 y 8081, y el origen HTTP correspondiente.
+un puerto TCP libre y el origen HTTP correspondiente. Prueba 3000, 8080, 3001 y
+8081, seguido del rango 18000–18199. Si se agotan esas opciones, pide otro puerto
+autorizado o permite cancelar. Un servicio que ocupe el
+puerto después de la comprobación puede impedir el arranque de Next.js.
 Usa la IP de la interfaz autorizada del aula y el origen exacto que abrirá el
 navegador. Para HTTPS escribe el origen del proxy TLS existente. Next.js escucha
 HTTP y el proxy termina TLS. Los valores se guardan con una contraseña aleatoria
@@ -55,10 +58,21 @@ los contenedores y volúmenes del proyecto. Si la instalación principal dejó d
 ser utilizable, el paquete permite ejecutar `bash instalar.sh --alternativa` con
 un puerto libre y volúmenes nuevos. Sus datos parten de la demostración sintética.
 
-El directorio `~/.local/share/opticastylo-taller/instalacion` registra la edición,
-el motor y el proyecto. Una edición distinta o un motor distinto requieren
-otro entorno de instalación. Usa el nombre que muestra el instalador para
-consultar el estado o los logs:
+Bajo `~/.local/share/opticastylo-taller/` se guarda un directorio privado por
+edición, identificado por el commit de Git o el SHA-256 del manifiesto offline.
+Una edición conserva su ruta, puerto y volúmenes al reintentar. Las instalaciones
+anteriores en `instalacion` o `alternativa-offline` se reutilizan cuando coincide
+la edición y conservan sus archivos al instalar otra versión. Cada edición
+mantiene su propio proyecto Compose, redes y volúmenes.
+
+Para compilar, el motor debe reportar al menos 2 GiB de memoria y Linux debe
+tener al menos 1 GiB disponible cuando reporta ese dato. El instalador
+comprueba el espacio para preparar las fuentes y, cuando es accesible, el espacio
+libre en el almacén de Docker. Si la ruta del motor requiere permisos especiales,
+pide al administrador que compruebe su partición. El instalador funciona con un
+usuario normal autorizado a usar el socket.
+
+Usa el nombre que muestra el instalador para consultar el estado o los logs:
 
 ```bash
 docker ps -a --filter label=com.docker.compose.project=PROYECTO

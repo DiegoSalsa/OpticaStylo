@@ -13,11 +13,18 @@ if [[ "${1:-}" == --alternativa ]]; then
   slot=alternativa-offline
   shift
 fi
-installed="$base/$slot"
-app="$installed/opticastylo-academico"
-env_file="$app/.env.academico"
 archive_name=opticastylo-imagenes-linux-amd64-20261130.tar.gz
 source_name=opticastylo-fuentes-20261130.tar.gz
+action=${1:-instalar}
+case "$action" in
+  instalar) [[ $# -eq 0 ]] || fail 'Ejecuta el instalador sin argumentos.' ;;
+  estado) [[ $# -eq 1 ]] || fail 'Usa estado sin argumentos adicionales.' ;;
+  credenciales)
+    [[ $# -le 2 ]] || fail 'Usa credenciales [admin|profesional].'
+    role=${2:-admin}
+    [[ "$role" == admin || "$role" == profesional ]] || fail 'Cuenta de demostración desconocida.' ;;
+  *) fail 'Usa [--alternativa] sin argumentos, estado o credenciales [admin|profesional].' ;;
+esac
 
 for tool in docker flock sha256sum; do
   command -v "$tool" >/dev/null || fail "Falta $tool en el servidor."
@@ -34,12 +41,13 @@ docker compose version >/dev/null || fail 'Falta el plugin Docker Compose. Ejecu
 read_installation() {
   local -a state
   [[ -d "$installed" && ! -L "$installed" && -O "$installed" &&
-     -f "$installed/estado" && ! -L "$installed/estado" &&
+     -f "$installed/estado" && ! -L "$installed/estado" && -O "$installed/estado" &&
+     -d "$app" && ! -L "$app" && -O "$app" &&
      -f "$env_file" && ! -L "$env_file" && -O "$env_file" ]] ||
     fail 'La ruta de instalación está ocupada por archivos ajenos o incompletos.'
   mapfile -t state < "$installed/estado"
   [[ ${#state[@]} -eq 6 && "${state[0]}" == stylo-taller-v1 &&
-     "${state[1]}" =~ ^(sha256:[a-f0-9]{64}|git:[a-f0-9]{40,64})$ &&
+     "${state[1]}" =~ ^(sha256:[a-f0-9]{64}|git:([a-f0-9]{40}|[a-f0-9]{64}))$ &&
      "${state[2]}" == "$docker_id" &&
      "${state[3]}" =~ ^opticastylo-taller-[a-f0-9]{12}$ &&
      "${state[4]}" =~ ^(con-internet|sin-internet)$ &&
@@ -53,30 +61,107 @@ read_installation() {
   mode=${state[4]}
 }
 
+legacy_matches() {
+  local -a header
+  [[ -d "$legacy" && ! -L "$legacy" && -O "$legacy" &&
+     -f "$legacy/estado" && ! -L "$legacy/estado" && -O "$legacy/estado" ]] || return 1
+  mapfile -n 2 -t header < "$legacy/estado"
+  [[ "${header[0]:-}" == stylo-taller-v1 && "${header[1]:-}" == "$release" ]]
+}
+
+identify_release() {
+  stage='Verificar la edición'
+  if [[ -e "$source_dir/MANIFIESTO-PAQUETE.sha256" || -e "$source_dir/$source_name" || -e "$archive" ]]; then
+    packed=true
+    (
+      cd -- "$source_dir"
+      sha256sum --strict --check --quiet MANIFIESTO-PAQUETE.sha256
+    )
+    release=$(sha256sum -- "$source_dir/MANIFIESTO-PAQUETE.sha256")
+    release="sha256:${release%% *}"
+  else
+    [[ "$slot" != alternativa-offline ]] || fail 'Para --alternativa ejecuta instalar.sh de un paquete offline verificado.'
+    command -v git >/dev/null || fail 'Falta Git para preparar la edición del repositorio.'
+    release="git:$(git -C "$source_dir" rev-parse --verify HEAD)"
+  fi
+}
+
+# Consultar también las publicaciones que Docker gestiona sin docker-proxy.
+read_occupied_ports() {
+  local listeners publications port first last
+  listeners=$(ss -H -ltn) || fail 'No se pudieron consultar los puertos TCP con ss.'
+  publications=$(docker ps --format '{{.Ports}}') || fail 'No se pudieron consultar los puertos publicados por Docker.'
+  occupied=()
+  while read -r port; do
+    if [[ "$port" =~ ^[0-9]+$ ]]; then occupied[$port]=1; fi
+  done < <(awk '{ sub(/^.*:/, "", $4); print $4 }' <<< "$listeners")
+  while read -r first last; do
+    for ((port=first; port<=last; port++)); do occupied[$port]=1; done
+  done < <(awk '
+    { while (match($0, /:[0-9]+(-[0-9]+)?->[0-9]+(-[0-9]+)?\/tcp/)) {
+      split(substr($0, RSTART + 1, RLENGTH - 1), sides, "->")
+      endpoints = split(sides[1], ports, "-")
+      print ports[1], (endpoints == 2 ? ports[2] : ports[1])
+      $0 = substr($0, RSTART + RLENGTH)
+    } }
+  ' <<< "$publications")
+}
+
+suggest_port() {
+  local candidate
+  for candidate in 3000 8080 3001 8081; do
+    if [[ -z "${occupied[$candidate]:-}" ]]; then printf '%s\n' "$candidate"; return; fi
+  done
+  for ((candidate=18000; candidate<=18199; candidate++)); do
+    if [[ -z "${occupied[$candidate]:-}" ]]; then printf '%s\n' "$candidate"; return; fi
+  done
+  return 1
+}
+
 stage='Proteger la instalación'
 mkdir -p -- "$base"
 base_mode=$(stat -c %a -- "$base")
 [[ -d "$base" && ! -L "$base" && -O "$base" && "$base_mode" =~ ^[0-7]{3,4}$ ]] &&
   (( (8#$base_mode & 0777) == 0700 )) ||
   fail "La ruta $base debe pertenecer a este usuario y tener permisos 0700."
+base=$(cd -- "$base" && pwd -P)
 [[ ! -L "$base/.lock" ]] || fail 'Archivo de bloqueo inesperado.'
 exec 9>> "$base/.lock"
 flock -n 9 || fail 'Hay otro instalador ejecutándose para este usuario.'
 
-if [[ "${1:-}" == estado ]]; then
-  [[ $# -eq 1 ]] || fail 'Usa estado sin argumentos adicionales.'
+archive="$source_dir/$archive_name"
+packed=false
+release=''
+if [[ "$action" != instalar && "${source_dir%/*}" == "$base" ]]; then
+  case "${source_dir##*/}" in
+    instalacion|alternativa-offline|instalacion-*|alternativa-offline-*) installed=$source_dir ;;
+    *) fail 'La ruta no corresponde a una instalación académica.' ;;
+  esac
+else
+  identify_release
+  legacy="$base/$slot"
+  installed="$base/$slot-${release/:/-}"
+  # Una edición ya instalada con el formato nuevo tiene prioridad.
+  if [[ ! -e "$installed" && ! -L "$installed" ]] && legacy_matches; then installed=$legacy; fi
+fi
+app="$installed/opticastylo-academico"
+env_file="$app/.env.academico"
+
+resume=()
+if [[ -e "$installed" || -L "$installed" || "$action" != instalar ]]; then
   read_installation
+  [[ -z "$release" || "$stored_release" == "$release" ]] || fail 'La edición guardada no coincide con la ruta seleccionada.'
+  resume=(--reanudar)
+fi
+
+if [[ "$action" == estado ]]; then
   printf 'Proyecto: %s (%s)\n' "$project" "$mode"
   docker ps -a --filter "label=com.docker.compose.project=$project" --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
   exit 0
 fi
 
-if [[ "${1:-}" == credenciales ]]; then
+if [[ "$action" == credenciales ]]; then
   stage='Consultar la credencial solicitada'
-  [[ $# -le 2 ]] || fail 'Usa credenciales [admin|profesional].'
-  role=${2:-admin}
-  [[ "$role" == admin || "$role" == profesional ]] || fail 'Cuenta de demostración desconocida.'
-  read_installation
   cd -- "$app"
   unset ACADEMIC_BIND_IP ACADEMIC_PORT ACADEMIC_PUBLIC_URL ACADEMIC_ALLOW_HTTP \
     ACADEMIC_DB_USER ACADEMIC_DB_NAME ACADEMIC_DB_PASSWORD COMPOSE_PROFILES COMPOSE_REMOVE_ORPHANS
@@ -93,27 +178,6 @@ if [[ "${1:-}" == credenciales ]]; then
   printf '\n'
   exit 0
 fi
-[[ $# -eq 0 ]] || fail 'Usa [--alternativa] sin argumentos, estado o credenciales [admin|profesional].'
-
-stage='Verificar la edición'
-archive="$source_dir/$archive_name"
-packed=false
-if [[ -e "$source_dir/MANIFIESTO-PAQUETE.sha256" || -e "$source_dir/$source_name" || -e "$archive" ]]; then
-  packed=true
-  (
-    cd -- "$source_dir"
-    sha256sum --strict --check --quiet MANIFIESTO-PAQUETE.sha256
-  )
-  release=$(sha256sum -- "$source_dir/MANIFIESTO-PAQUETE.sha256")
-  release="sha256:${release%% *}"
-else
-  command -v git >/dev/null || fail 'Falta Git para preparar la edición del repositorio.'
-  release="git:$(git -C "$source_dir" rev-parse --verify HEAD)"
-fi
-
-if [[ "$slot" == alternativa-offline ]] && ! $packed; then
-  fail 'Para --alternativa ejecuta instalar.sh de un paquete offline verificado.'
-fi
 
 stage='Preparar la instalación académica'
 for tool in curl ip ss tar; do
@@ -124,16 +188,7 @@ case "$arch" in
   linux/x86_64|linux/amd64|linux/aarch64|linux/arm64) ;;
   *) fail "Arquitectura incompatible: $arch. Usa un motor Linux AMD64 o ARM64." ;;
 esac
-resume=()
-if [[ -e "$installed" || -L "$installed" ]]; then
-  read_installation
-  if [[ "$stored_release" != "$release" ]]; then
-    if $packed && [[ "$slot" == instalacion ]]; then
-      fail 'Otra edición ocupa la instalación principal. Ejecuta bash instalar.sh --alternativa desde la extracción para crear otro proyecto con volúmenes propios.'
-    fi
-    fail 'Otra edición ocupa esta ruta. Conserva los volúmenes y usa la edición original.'
-  fi
-  resume=(--reanudar)
+if ((${#resume[@]})); then
   printf 'Reanudando el proyecto %s con la configuración guardada.\n' "$project"
 else
   mode=con-internet
@@ -152,20 +207,27 @@ else
   detected=${detected:-127.0.0.1}
   addresses=$(ip -o addr show | awk '$3 == "inet" || $3 == "inet6" { sub(/\/.*/, "", $4); print $4 }')
   if ! grep -Fxq -- "$detected" <<< "$addresses"; then detected=127.0.0.1; fi
-  suggested_port=3000
-  for candidate in 3000 8080 3001 8081; do
-    if [[ -z "$(ss -H -ltn "sport = :$candidate")" ]]; then suggested_port=$candidate; break; fi
-  done
+  declare -A occupied
+  read_occupied_ports
+  if ! suggested_port=$(suggest_port); then
+    printf 'Sin puertos TCP libres en 3000, 8080, 3001, 8081 y 18000–18199.\n' >&2
+  fi
 
   printf 'IP local de escucha [%s] ' "$detected"
   read -r bind_ip
   bind_ip=${bind_ip:-$detected}
   grep -Fxq -- "$bind_ip" <<< "$addresses" || fail 'Selecciona una IP asignada a una interfaz local del servidor.'
-  printf 'Puerto de la aplicación [%s] ' "$suggested_port"
-  read -r port
+  if [[ -n "$suggested_port" ]]; then
+    printf 'Puerto de la aplicación [%s] ' "$suggested_port"
+  else
+    printf 'Otro puerto TCP autorizado por el administrador [vacío para cancelar] '
+  fi
+  read -r port || fail 'No se recibió un puerto. Repite el instalador en una terminal.'
   port=${port:-$suggested_port}
+  [[ -n "$port" ]] || fail 'No hay un puerto elegido. Solicita al administrador un puerto libre.'
   [[ "$port" =~ ^[1-9][0-9]{0,4}$ ]] && ((port <= 65535)) || fail 'El puerto debe estar entre 1 y 65535.'
-  [[ -z "$(ss -H -ltn "sport = :$port")" ]] || fail "El puerto $port ya está ocupado."
+  read_occupied_ports
+  [[ -z "${occupied[$port]:-}" ]] || fail "El puerto $port ya está ocupado. Repite el instalador para elegir otro."
 
   url_host=$bind_ip
   if [[ "$url_host" == *:* ]]; then url_host="[$url_host]"; fi
@@ -179,6 +241,10 @@ else
   if [[ "$public_url" == https://* ]]; then allow_http=false; fi
 
   stage='Guardar configuración privada'
+  available=$(df -Pk -- "$base" | awk 'END {print $4}') ||
+    fail "No se pudo consultar el espacio libre en $base."
+  [[ "$available" =~ ^[0-9]+$ ]] && ((available >= 102400)) ||
+    fail "Se requieren al menos 100 MiB libres para preparar la edición en $base. Consulta df -h."
   project="opticastylo-taller-$(od -An -N6 -tx1 /dev/urandom | tr -d '[:space:]')"
   draft=$(mktemp -d "$base/.nueva.XXXXXX")
   draft_app="$draft/opticastylo-academico"
@@ -214,13 +280,5 @@ fi
 printf '\nCuenta administrativa: admin-demo@example.invalid\n'
 printf 'Cuenta clínica: profesional-demo@example.invalid\n'
 printf 'En una terminal privada, consulta la contraseña elegida con:\n'
-credential_flag=''
-if [[ "$slot" == alternativa-offline ]]; then credential_flag='--alternativa '; fi
-printf '  bash %q ' "$installed/instalar.sh"
-printf '%s' "${credential_args[@]/%/ }"
-printf 'credenciales admin
-'
-printf 'Estado del proyecto: bash %q ' "$installed/instalar.sh"
-printf '%s' "${credential_args[@]/%/ }"
-printf 'estado
-'
+printf '  bash %q credenciales admin\n' "$installed/instalar.sh"
+printf 'Estado del proyecto: bash %q estado\n' "$installed/instalar.sh"
