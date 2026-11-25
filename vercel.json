@@ -6,6 +6,7 @@
     "deploymentEnabled": {
       "main": false,
       "integration/consolidacion-operativa": false,
+      "fix/aislamiento-sucursales": false,
       "feature/avance-2-web": false
     }
   }
