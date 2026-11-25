@@ -246,12 +246,14 @@ test("Paginación de Inventario reintenta un error y permite recibir y cancelar 
   await page.goto("/app/inventario");
   const shipments = transfers(page);
   const match = (url) => url.pathname === "/api/inventory/transfers" && url.searchParams.get("branchId") === sample.main.id;
-  await page.route(match, (route) => route.fulfill({
+  const unavailable = (route) => route.fulfill({
     status: 503,
     json: { success: false, error: { message: "Error temporal de traspasos" } },
-  }), { times: 1 });
+  });
+  await page.route(match, unavailable);
   await chooseBranch(page, sample.main.id);
   await expect(shipments.getByRole("alert")).toContainText("Error temporal de traspasos");
+  await page.unroute(match, unavailable);
   await shipments.getByRole("button", { name: "Reintentar" }).click();
   await expect(shipments.getByRole("alert")).toHaveCount(0);
   await pages(shipments, "transferencias").getByRole("button", { name: "Página 7" }).click();
