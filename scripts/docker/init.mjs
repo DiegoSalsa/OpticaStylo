@@ -25,7 +25,8 @@ function assertSyntheticDatabase(environment, academic) {
   throw new Error("La inicialización requiere la base sintética del servicio db de Compose.");
 }
 
-assertSyntheticDatabase(process.env, process.argv[2] === "--academico");
+const academic = process.argv[2] === "--academico";
+assertSyntheticDatabase(process.env, academic);
 
 const migrate = spawnSync(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], {
   stdio: "inherit",
@@ -67,19 +68,23 @@ try {
       user_id: professional.id, appointment_duration_minutes: 60, slot_interval_minutes: 60,
       created_by: admin.id, updated_by: admin.id,
     } });
-    await db.professional_weekly_schedules.createMany({
-      data: Array.from({ length: 7 }, (_, day_of_week) => ({
-        professional_id: professional.id, day_of_week,
-        start_time: new Date("1970-01-01T09:00:00Z"), end_time: new Date("1970-01-01T17:00:00Z"),
-      })),
-    });
-
     // Sustituye las ubicaciones reales que carga la migración de inventario.
     await db.branches.deleteMany({ where: { code: { in: ["BARROS_ROMANO", "GALERIA_PALET", "CENTRO_MEDICO"] } } });
     const branch = await db.branches.create({ data: {
       code: "DEMO-CENTRO", name: "Sucursal Demo Centro", address: "Calle de Demostración 100",
       information_source: "Datos sintéticos de Docker", pickup_enabled: true,
     } });
+    const branchContext = academic ? { branch_id: branch.id } : {};
+    if (academic) {
+      await db.user_branches.create({ data: { user_id: professional.id, branch_id: branch.id } });
+    }
+    await db.professional_weekly_schedules.createMany({
+      data: Array.from({ length: 7 }, (_, day_of_week) => ({
+        professional_id: professional.id, day_of_week, ...branchContext,
+        start_time: new Date("1970-01-01T09:00:00Z"), end_time: new Date("1970-01-01T17:00:00Z"),
+      })),
+    });
+
     const products = [];
     for (const [sku, name, category, price, quantity] of [
       ["DEMO-ESTUCHE", "Estuche Demo", "ACCESSORY", 5000, 15],
@@ -109,19 +114,24 @@ try {
       rut: fixtureRut(9752), first_names: "Cliente", last_names: "Demo", email: "cliente-demo@example.invalid",
       phone: "+56900000002", address: "Pasaje Sintético 2", created_by: admin.id,
     } });
+    if (academic) {
+      await db.patient_branches.create({ data: { patient_id: patient.id, branch_id: branch.id } });
+      await db.customer_branches.create({ data: { customer_id: customer.id, branch_id: branch.id } });
+    }
+
     const today = formatInTimeZone(new Date(), "America/Santiago", "yyyy-MM-dd");
     const appointment = await db.appointments.create({ data: {
-      patient_id: patient.id, professional_id: professional.id, created_by: admin.id,
+      patient_id: patient.id, professional_id: professional.id, created_by: admin.id, ...branchContext,
       start_at: fromZonedTime(`${today}T11:00:00`, "America/Santiago"),
       end_at: fromZonedTime(`${today}T12:00:00`, "America/Santiago"), status: "CONFIRMED",
       internal_notes: "Reserva ficticia para la demostración local",
     } });
     await db.clinical_care_assignments.create({ data: {
-      patient_id: patient.id, professional_id: professional.id, assigned_by: admin.id,
+      patient_id: patient.id, professional_id: professional.id, assigned_by: admin.id, ...branchContext,
       reason: "Atención de un paciente sintético para la demostración",
     } });
     const encounter = await db.clinical_encounters.create({ data: {
-      patient_id: patient.id, professional_id: professional.id, appointment_id: appointment.id,
+      patient_id: patient.id, professional_id: professional.id, appointment_id: appointment.id, ...branchContext,
       encounter_date: new Date(today), reason_for_visit: "Control visual de demostración",
       anamnesis: "Ejemplo ficticio sin validez clínica", created_by: professional.id, updated_by: professional.id,
     } });
