@@ -30,7 +30,7 @@ try {
       await updateMedicalRecord(patientId,{expectedRevision:0,generalMedicalHistory:"DEMO FICTICIA: sin antecedentes reales.",ocularHistory:"Antecedente ocular sintético",allergies:"Sin alergias declaradas en este ejercicio"},actors.professional);
       const encounter=await createEncounter({appointmentId:appointment.id,reasonForVisit:"DEMOSTRACIÓN FICTICIA: control visual",anamnesis:"Paciente sintético; no corresponde a una evaluación clínica real.",examination:"Examen simulado para verificar el registro del software.",diagnosis:"Diagnóstico ficticio; sin uso asistencial.",indications:"Ejercicio académico, no usar para atención ni fabricación."},actors.professional);
       await createPrescription(encounter.id,{rightEye:{sphere:-1,cylinder:-0.5,axis:90,addition:null},leftEye:{sphere:-1.25,cylinder:0,axis:null,addition:null},pupillaryDistance:62,fulfillmentNotes:"RECETA FICTICIA; sin validez clínica ni comercial."},actors.professional);
-      await finalizeEncounter(encounter.id,actors.professional,{expectedVersion:encounter.version,confirm:true});
+      await finalizeEncounter(encounter.id,{expectedVersion:encounter.version,confirm:true},actors.professional);
     }
   }
   await writeFile("tmp/academic-validation/demo-records.json",JSON.stringify({created,professionalEmail:"academic-profesional@example.invalid"},null,2));
