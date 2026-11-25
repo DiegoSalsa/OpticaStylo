@@ -49,6 +49,22 @@ function records(type, options = {}) {
 
 const pagination = (page, label) => page.getByRole("navigation", { name: "Paginación de " + label, exact: true });
 
+test("La ficha de producto mantiene accesibles la cantidad y la compra a 320 px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto("/tienda/" + sample.frame.id);
+  await expect(page.getByRole("heading", { name: sample.frame.name })).toBeVisible();
+  const increment = page.getByRole("button", { name: "Aumentar cantidad" });
+  const add = page.getByRole("button", { name: "Agregar al carrito" });
+  for (const control of [increment, add]) {
+    expect(await control.evaluate((element) => element.getBoundingClientRect().right)).toBeLessThanOrEqual(320);
+    expect(await control.evaluate((element) => element.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
+  }
+  await increment.click();
+  await add.click();
+  await expect(page).toHaveURL(/\/carrito$/);
+  await expect(page.getByText(sample.frame.name, { exact: true })).toBeVisible();
+});
+
 test("Paginación de Mi cuenta recupera los historiales completos sin exponer datos adicionales", async ({ page }) => {
   await login(page);
   const initial = await page.request.get(clinical);

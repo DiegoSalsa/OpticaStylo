@@ -26,6 +26,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-width: 0;
 }
 .detail-thumbnails {
   display: flex;
@@ -415,7 +416,7 @@
 }
 @media (max-width: 960px) {
   .detail-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .detail-copy {
     max-width: 720px;
