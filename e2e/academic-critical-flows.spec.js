@@ -225,26 +225,22 @@ test.describe("Agenda recuperable", () => {
     const agenda = page.getByRole("heading", { name: "Agenda", exact: true });
     const professionalsUrl = (url) => url.pathname === "/api/professionals" && url.searchParams.get("branchId") === ids.branch;
     const alert = page.getByRole("main").getByRole("alert");
-    const malformed = (route) => route.fulfill({ json: { success: true, data: {} } });
-    await page.route(professionalsUrl, malformed);
+    let response = { json: { success: true, data: {} } };
+    const intercept = (route) => route.fulfill(response);
+    await page.route(professionalsUrl, intercept);
     await page.goto("/app/agenda");
     await expect(agenda).toBeVisible();
     await expect(nav).toBeVisible();
     await expect(alert).toContainText("profesionales");
     await expect(page.getByText("No hay profesionales disponibles.")).toHaveCount(0);
-    await page.unroute(professionalsUrl, malformed);
-    await page.route(professionalsUrl, (route) => route.fulfill({
-      status: 503,
-      json: { success: false, error: { message: "Profesionales temporalmente no disponibles." } },
-    }), { times: 1 });
+    response = { status: 503, json: { success: false, error: { message: "Profesionales temporalmente no disponibles." } } };
     await page.getByRole("button", { name: "Actualizar", exact: true }).click();
     await expect(alert).toContainText("temporalmente no disponibles");
-    await page.route(professionalsUrl, (route) => route.fulfill({
-      json: { success: true, data: [] },
-    }), { times: 1 });
+    response = { json: { success: true, data: [] } };
     await page.getByRole("button", { name: "Actualizar", exact: true }).click();
     await expect(page.getByText("No hay profesionales disponibles.")).toBeVisible();
     await expect(alert).toHaveCount(0);
+    await page.unroute(professionalsUrl, intercept);
     await page.getByRole("button", { name: "Actualizar", exact: true }).click();
     await expect(page.locator(".agenda-toolbar select").first().locator("option")).toHaveCount(2);
   });
@@ -263,23 +259,24 @@ test.describe("Agenda recuperable", () => {
     const scheduleUrl = (url) => url.pathname === `/api/professionals/${current}/schedule` && url.searchParams.get("branchId") === ids.branch;
     const alert = page.getByRole("main").getByRole("alert");
     const update = page.getByRole("button", { name: "Actualizar", exact: true });
-    await page.route(scheduleUrl, (route) => route.fulfill({
-      json: { success: true, data: [null] },
-    }), { times: 1 });
+    const malformed = (route) => route.fulfill({ json: { success: true, data: [null] } });
+    await page.route(scheduleUrl, malformed);
     await update.click();
     await expect(alert).toContainText("horario semanal");
     await expect(save).toBeDisabled();
+    await page.unroute(scheduleUrl, malformed);
     await update.click();
     await expect(save).toBeEnabled();
     let markPending;
     let release;
     const pending = new Promise((resolve) => { markPending = resolve; });
     const resume = new Promise((resolve) => { release = resolve; });
-    await page.route(scheduleUrl, async (route) => {
+    const delayed = async (route) => {
       markPending();
       await resume;
       await route.fulfill({ status: 503, json: { success: false } });
-    }, { times: 1 });
+    };
+    await page.route(scheduleUrl, delayed);
     await update.click();
     await pending;
     try {
@@ -289,6 +286,7 @@ test.describe("Agenda recuperable", () => {
       await expect(save).toBeEnabled();
     } finally {
       release();
+      await page.unroute(scheduleUrl, delayed);
     }
     await expect(alert).toHaveCount(0);
     const morning = page.getByLabel("Lunes inicio", { exact: true });
