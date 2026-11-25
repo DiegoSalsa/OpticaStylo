@@ -164,23 +164,32 @@ test.describe("Agenda recuperable", () => {
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));
       await login(page, profile);
+      if (profile === "administrador") {
+        await activateClinicalBranch(page);
+        await page.reload();
+      }
       const nav = page.getByRole("navigation", { name: "Navegación interna" });
       const agenda = page.getByRole("heading", { name: "Agenda", exact: true });
       await expect(nav).toBeVisible();
 
       for (let visit = 0; visit < 3; visit += 1) {
-        // Demorar el cuerpo del primer HTTP 200 hasta que el cambio de sesión cancele la consulta.
+        // Mantener abierto el primer cuerpo HTTP 200 hasta que se abandone Agenda.
         await page.evaluate(() => {
           const originalFetch = window.fetch;
           window.fetch = async (resource, options) => {
             const response = await originalFetch(resource, options);
-            if (resource !== "/api/professionals") return response;
+            const url = new URL(resource, window.location.origin);
+            if (url.pathname !== "/api/professionals" || !url.searchParams.has("branchId")) return response;
             window.fetch = originalFetch;
             const { signal } = options;
             return new Response(new ReadableStream({
               start(controller) {
-                if (signal.aborted) controller.error(signal.reason);
-                else signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+                function abortReading() {
+                  console.debug("agenda: cuerpo cancelado");
+                  controller.error(signal.reason);
+                }
+                if (signal.aborted) abortReading();
+                else signal.addEventListener("abort", abortReading, { once: true });
               },
               pull() {
                 console.debug("agenda: cuerpo pendiente");
@@ -189,13 +198,16 @@ test.describe("Agenda recuperable", () => {
           };
         });
         const reading = page.waitForEvent("console", (message) => message.text() === "agenda: cuerpo pendiente");
-        await page.route("**/api/auth/me", async (route) => {
-          await reading;
-          await route.continue();
-        }, { times: 1 });
+        const cancelled = page.waitForEvent("console", (message) => message.text() === "agenda: cuerpo cancelado");
         await nav.getByRole("link", { name: "Agenda", exact: true }).click();
         await reading;
-        await expect(page.locator(".agenda-toolbar select").first().locator("option")).toHaveCount(2);
+        await nav.getByRole("link", { name: "Pacientes", exact: true }).click();
+        await cancelled;
+        await expect(page.getByRole("heading", { name: "Pacientes", exact: true })).toBeVisible();
+        await nav.getByRole("link", { name: "Agenda", exact: true }).click();
+        const professionals = page.locator(".agenda-toolbar select").first();
+        await expect(professionals.locator("option")).toHaveCount(profile === "administrador" ? 2 : 1);
+        if (profile === "profesional") await expect(professionals).toHaveValue(ids.professional);
         await expect(agenda).toBeVisible();
         const refreshedSession = page.waitForResponse("**/api/auth/me");
         await nav.getByRole("link", { name: "Pacientes", exact: true }).click();
@@ -208,9 +220,10 @@ test.describe("Agenda recuperable", () => {
 
   test("distingue un listado inválido de uno vacío y permite reintentar tras un 503", async ({ page }) => {
     await login(page, "administrador");
+    await activateClinicalBranch(page);
     const nav = page.getByRole("navigation", { name: "Navegación interna" });
     const agenda = page.getByRole("heading", { name: "Agenda", exact: true });
-    const professionalsUrl = "**/api/professionals";
+    const professionalsUrl = (url) => url.pathname === "/api/professionals" && url.searchParams.get("branchId") === ids.branch;
     const alert = page.getByRole("main").getByRole("alert");
     const malformed = (route) => route.fulfill({ json: { success: true, data: {} } });
     await page.route(professionalsUrl, malformed);
@@ -247,7 +260,7 @@ test.describe("Agenda recuperable", () => {
     await expect(save).toBeEnabled();
     const current = await professional.inputValue();
     const other = current === ids.professional ? ids.otherProfessional : ids.professional;
-    const scheduleUrl = `**/api/professionals/${current}/schedule`;
+    const scheduleUrl = (url) => url.pathname === `/api/professionals/${current}/schedule` && url.searchParams.get("branchId") === ids.branch;
     const alert = page.getByRole("main").getByRole("alert");
     const update = page.getByRole("button", { name: "Actualizar", exact: true });
     await page.route(scheduleUrl, (route) => route.fulfill({

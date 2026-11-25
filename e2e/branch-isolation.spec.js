@@ -5,6 +5,7 @@ import { shippingConfiguration } from "../src/config/shipping.js";
 import { quoteCart, quoteSnapshot, saveShippingQuotes } from "../src/repositories/shipping-repository.js";
 import { prisma } from "../src/db/prisma.js";
 import { seedAcademicData, requireAcademicIsolation } from "../tests/fixtures/academic-data.js";
+import { fixtureRut } from "../tests/fixtures/management-data.js";
 import { seedBranchIsolation } from "../tests/fixtures/branch-isolation-data.js";
 import { isolateBrowserNetwork } from "./isolated-network.js";
 
@@ -314,5 +315,232 @@ test("limitar transferencia a origen y destino y excluir su contenido de la terc
     expect(after.some((row) => row.branch_id === barros.id)).toBe(false);
   } finally {
     await Promise.all([to.close(), third.close()]);
+  }
+});
+
+test.describe("Agenda por sede", () => {
+  function agendaRequest(request) {
+    const path = new URL(request.url()).pathname;
+    return path === "/api/appointments" || /\/api\/professionals\/[^/]+\/(schedule|availability)/.test(path);
+  }
+
+  async function enter(page, staff, branch) {
+    const request = await login(page.context(), staff);
+    if (branch) await body(await selectBranch(request, branch.id));
+    const observed = [];
+    page.on("response", (response) => { if (agendaRequest(response.request())) observed.push(response); });
+    await page.goto("/app/agenda");
+    await expect(page.getByRole("heading", { name: "Agenda", exact: true })).toBeVisible();
+    return observed;
+  }
+
+  function expectBranch(response, branch) {
+    expect(new URL(response.url()).searchParams.get("branchId")).toBe(branch.id);
+    expect(response.ok()).toBe(true);
+  }
+
+  test("ADMIN en vista general elige una sucursal antes de consultar horarios", async ({ page }) => {
+    const observed = await enter(page);
+    await expect(page.getByText(/Selecciona una sucursal en Sucursal activa/)).toBeVisible({ timeout: 4000 });
+    await expect(page.getByRole("heading", { name: "Perfiles profesionales" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Guardar horario" })).toHaveCount(0);
+    await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+    expect(observed).toHaveLength(0);
+    const unscoped = await page.request.get("/api/professionals/" + sample.doctorAB.id + "/schedule");
+    expect(unscoped.status()).toBe(400);
+    expect((await unscoped.json()).error.code).toBe("BRANCH_REQUIRED");
+    await page.getByRole("combobox", { name: "Sucursal activa" }).selectOption(sample.romano.id);
+    await expect(page.getByRole("button", { name: "Guardar horario" })).toBeEnabled();
+  });
+
+  test("ADMIN en Romano carga su calendario y descarta una respuesta tardía al cambiar a Palet", async ({ page }) => {
+    const { romano, palet, doctorAB, patientAB, patientB } = sample;
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const hour = (value) => new Date(tomorrow + "T" + value + ":00Z");
+    await prisma.appointments.createMany({ data: [
+      { branch_id: romano.id, patient_id: patientAB, professional_id: doctorAB.id, start_at: hour("14:00"), end_at: hour("14:30") },
+      { branch_id: palet.id, patient_id: patientB, professional_id: doctorAB.id, start_at: hour("15:00"), end_at: hour("15:30") },
+    ] });
+    await prisma.professional_weekly_schedules.updateMany({
+      where: { professional_id: doctorAB.id, branch_id: palet.id },
+      data: { start_time: new Date("1970-01-01T10:00:00Z") },
+    });
+    const observed = await enter(page, null, romano);
+    const professional = page.locator(".agenda-toolbar select").first();
+    await professional.selectOption(doctorAB.id);
+    await expect(page.getByRole("button", { name: "Guardar horario" })).toBeEnabled();
+    const schedule = () => observed.find((response) => new URL(response.url()).pathname.endsWith("/schedule"));
+    await expect.poll(schedule).toBeDefined();
+    expectBranch(schedule(), romano);
+    for (const suffix of ["/blocks", "/appointments"]) {
+      const reply = observed.find((response) => new URL(response.url()).pathname.endsWith(suffix));
+      expectBranch(reply, romano);
+    }
+    await expect(page.getByLabel("Lunes inicio", { exact: true })).toHaveValue("09:00");
+    const reservations = page.getByRole("region", { name: "Detalle de reservas" });
+    await expect(reservations.getByText("Paciente compartido Sintético", { exact: true })).toBeVisible();
+    await expect(reservations.getByText("Paciente solo Palet Sintético", { exact: true })).toHaveCount(0);
+    const scheduledReads = (url) => url.pathname.endsWith("/schedule") && url.searchParams.get("branchId") === romano.id;
+    let markPending, release;
+    const pending = new Promise((resolve) => { markPending = resolve; });
+    const resume = new Promise((resolve) => { release = resolve; });
+    await page.route(scheduledReads, async (route) => {
+      markPending();
+      await resume;
+      await route.fulfill({ status: 503, json: { success: false, error: { message: "Respuesta antigua de Romano" } } }).catch(() => {});
+    }, { times: 1 });
+    await page.getByRole("button", { name: "Actualizar", exact: true }).click();
+    await pending;
+    try {
+      await page.getByRole("combobox", { name: "Sucursal activa" }).selectOption(palet.id);
+      await expect(page.getByRole("button", { name: "Guardar horario" })).toBeEnabled();
+      await expect(professional.locator("option")).toHaveCount(1);
+      await expect(professional).toHaveValue(doctorAB.id);
+      await expect(page.getByLabel("Lunes inicio", { exact: true })).toHaveValue("10:00");
+      await expect(reservations.getByText("Paciente solo Palet Sintético", { exact: true })).toBeVisible();
+      await expect(reservations.getByText("Paciente compartido Sintético", { exact: true })).toHaveCount(0);
+    } finally {
+      release();
+    }
+    await expect(page.getByText("Respuesta antigua de Romano")).toHaveCount(0);
+    expectBranch(observed.find((response) => new URL(response.url()).pathname.endsWith("/schedule") &&
+      new URL(response.url()).searchParams.get("branchId") === palet.id), palet);
+  });
+
+  test("BRANCH_ADMIN en Palet configura horario y bloqueos sin administrar perfiles generales", async ({ page }) => {
+    const { palet, romano, adminB, doctorAB } = sample;
+    const observed = await enter(page, adminB);
+    await expect(page.getByRole("heading", { name: "Perfiles profesionales" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Crear perfil", exact: true })).toHaveCount(0);
+    const save = page.getByRole("button", { name: "Guardar horario" });
+    await expect(save).toBeEnabled();
+    expectBranch(observed.find((response) => new URL(response.url()).pathname.endsWith("/schedule")), palet);
+    const monday = page.getByLabel("Lunes inicio", { exact: true });
+    await monday.fill("10:20");
+    const saved = page.waitForResponse((response) => response.request().method() === "PUT" && new URL(response.url()).pathname.endsWith("/schedule"));
+    await save.click();
+    const savedResponse = await saved;
+    expect(savedResponse.ok()).toBe(true);
+    expect(savedResponse.request().postDataJSON().branchId).toBe(palet.id);
+    const week = (branchId) => prisma.professional_weekly_schedules.findUniqueOrThrow({ where: {
+      professional_id_branch_id_day_of_week: { professional_id: doctorAB.id, branch_id: branchId, day_of_week: 1 },
+    } });
+    expect((await week(palet.id)).start_time.toISOString().slice(11, 16)).toBe("10:20");
+    expect((await week(romano.id)).start_time.toISOString().slice(11, 16)).toBe("09:00");
+
+    const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(Date.now() + 2 * 86400000);
+    const blocks = page.locator("form.schedule-card").filter({ has: page.getByRole("heading", { name: "Bloqueos", exact: true }) });
+    await blocks.getByLabel("Inicio", { exact: true }).fill(day + "T09:00");
+    await blocks.getByLabel("Término", { exact: true }).fill(day + "T09:30");
+    await blocks.getByLabel("Motivo opcional").fill("Bloqueo sintético Palet");
+    const added = page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/blocks"));
+    await blocks.getByRole("button", { name: "Agregar bloqueo" }).click();
+    const addedResponse = await added;
+    expect(addedResponse.request().postDataJSON().branchId).toBe(palet.id);
+    const { data: block } = await addedResponse.json();
+    expect((await prisma.professional_schedule_blocks.findUniqueOrThrow({ where: { id: block.id } })).branch_id).toBe(palet.id);
+    page.once("dialog", (dialog) => dialog.accept());
+    const removed = page.waitForResponse((response) => response.request().method() === "DELETE" && new URL(response.url()).pathname.endsWith(block.id));
+    await blocks.getByRole("button", { name: "Eliminar" }).click();
+    const removedResponse = await removed;
+    expectBranch(removedResponse, palet);
+
+    const form = page.locator(".internal-booking");
+    const patientSearch = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/patients");
+    await form.getByPlaceholder("RUT o nombre").fill("Paciente solo Palet");
+    await form.getByRole("button", { name: "Buscar", exact: true }).click();
+    expectBranch(await patientSearch, palet);
+    const available = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith("/availability"));
+    await form.getByRole("combobox", { name: "Profesional" }).selectOption(doctorAB.id);
+    expectBranch(await available, palet);
+    const firstSlot = form.getByRole("combobox", { name: "Hora disponible" }).locator("option").nth(1);
+    await expect(firstSlot).toHaveAttribute("value", /T/);
+    await form.getByRole("combobox", { name: "Hora disponible" }).selectOption(await firstSlot.getAttribute("value"));
+    const booked = page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/api/appointments");
+    await form.getByRole("button", { name: "Crear reserva" }).click();
+    const bookedResponse = await booked;
+    expect(bookedResponse.request().postDataJSON().branchId).toBe(palet.id);
+    expect((await bookedResponse.json()).data.branchId).toBe(palet.id);
+    await blocked(await page.request.get("/api/professionals?view=general"));
+    await blocked(await page.request.post("/api/professionals", { data: { userId: doctorAB.id, appointmentDurationMinutes: 30, slotIntervalMinutes: 30 } }));
+    await blocked(await page.request.patch("/api/professionals/" + doctorAB.id, { data: { isBookable: false } }));
+  });
+
+  test("profesional de dos sucursales elige la sede y conserva solo sus horarios", async ({ page }) => {
+    const { romano, palet, barros, doctorAB } = sample;
+    const observed = await enter(page, doctorAB);
+    await expect(page.getByText(/Selecciona una sucursal en Sucursal activa/)).toBeVisible({ timeout: 4000 });
+    expect(observed).toHaveLength(0);
+    const selector = page.getByRole("combobox", { name: "Sucursal activa" });
+    await expect(selector.locator("option", { hasText: barros.name })).toHaveCount(0);
+    for (const branch of [romano, palet]) await expect(selector.locator("option", { hasText: branch.name })).toHaveCount(1);
+    await selector.selectOption(palet.id);
+    await expect(page.getByRole("button", { name: "Guardar horario" })).toBeEnabled();
+    await expect(page.locator(".agenda-toolbar select").first()).toHaveValue(doctorAB.id);
+    await expect(page.getByRole("heading", { name: "Perfiles profesionales" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Nueva reserva interna" })).toHaveCount(0);
+    await blocked(await page.request.get("/api/professionals/" + doctorAB.id + "/schedule?branchId=" + barros.id));
+  });
+});
+
+test("Primera visita en Palet requiere una vinculación administrativa comprobada", async ({ context, page, browser }) => {
+  const romanoContext = await extraContext(browser);
+  const general = await extraContext(browser);
+  const { romano, palet, adminA, adminB, skuA } = sample;
+  try {
+    const rom = await login(romanoContext, adminA);
+    const pal = await login(context, adminB);
+    const admin = await login(general);
+    const data = {
+      rut: fixtureRut(6_000_000 + Number.parseInt(randomUUID().slice(0, 4), 16)), firstNames: "Visita nueva", lastNames: "Prueba",
+      email: "visita-" + randomUUID() + "@example.invalid", phone: "+56912345678", address: "Dirección de prueba", branchId: romano.id,
+    };
+    const customer = await body(await rom.post("/api/customers", { data }), 201);
+    const patient = await body(await rom.post("/api/patients", { data: { ...data, birthDate: "1990-01-01" } }), 201);
+    const product = await prisma.products.findUniqueOrThrow({ where: { sku: skuA } });
+    const draft = { branchId: palet.id, customerId: customer.id, patientId: patient.id, items: [{ productId: product.id, quantity: 1 }] };
+    const original = await body(await rom.post("/api/sales", { data: { ...draft, branchId: romano.id } }), 201);
+    const search = "?search=" + encodeURIComponent(data.rut) + "&branchId=" + palet.id;
+    await page.goto("/app/ventas");
+    await page.getByText("Cliente e historial (opcional)", { exact: true }).click();
+    await expect(page.getByRole("combobox", { name: "Sucursal de la venta" })).toHaveValue(palet.id);
+    const input = page.getByRole("textbox", { name: "Buscar cliente" });
+    const lookup = () => page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname === "/api/customers" && url.searchParams.get("search") === data.rut;
+    });
+    const beforeLink = lookup();
+    await input.fill(data.rut);
+    expect((await (await beforeLink).json()).data.items).toEqual([]);
+    await expect(page.getByRole("button", { name: /Visita nueva Prueba/ })).toHaveCount(0);
+    for (const [resource, id] of [["customers", customer.id], ["patients", patient.id]]) {
+      expect((await body(await pal.get("/api/" + resource + search))).items).toEqual([]);
+      await blocked(await pal.get("/api/" + resource + "/" + id));
+    }
+    await blocked(await pal.post("/api/sales", { data: draft }));
+    const duplicate = await pal.post("/api/customers", { data: { ...data, branchId: palet.id } });
+    expect(duplicate.status()).toBe(409);
+    expect(await prisma.customers.count({ where: { rut: data.rut } })).toBe(1);
+    expect(await prisma.patients.count({ where: { rut: data.rut } })).toBe(1);
+    const operation = { action: "LINK_CUSTOMER", branchId: palet.id, identityId: customer.id, identityVerified: true };
+    await blocked(await pal.post("/api/inventory/branches", { data: operation }));
+    expect((await admin.post("/api/inventory/branches", { data: { ...operation, identityVerified: false } })).status()).toBe(400);
+    await body(await admin.post("/api/inventory/branches", { data: operation }));
+    await blocked(await pal.get("/api/patients/" + patient.id));
+    await body(await admin.post("/api/inventory/branches", { data: { ...operation, action: "LINK_PATIENT", identityId: patient.id } }));
+    expect((await body(await pal.get("/api/customers" + search))).items.map((item) => item.id)).toEqual([customer.id]);
+    await body(await pal.get("/api/patients/" + patient.id));
+    const afterLink = lookup();
+    await input.clear();
+    await input.fill(data.rut);
+    expect((await (await afterLink).json()).data.items.map((item) => item.id)).toEqual([customer.id]);
+    await page.getByRole("button", { name: /Visita nueva Prueba/ }).click();
+    await expect(page.getByText("Cliente: Visita nueva Prueba", { exact: true })).toBeVisible();
+    await blocked(await pal.get("/api/sales/" + original.id));
+    const quote = await body(await pal.post("/api/sales", { data: draft }), 201);
+    expect(quote).toMatchObject({ branchId: palet.id, customer: { id: customer.id }, patient: { id: patient.id } });
+    expect((await body(await pal.get("/api/customers/" + customer.id + "/history"))).items.map((item) => item.id)).toEqual([quote.id]);
+  } finally {
+    await Promise.all([romanoContext.close(), general.close()]);
   }
 });
