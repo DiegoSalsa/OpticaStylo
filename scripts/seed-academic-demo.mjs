@@ -22,15 +22,15 @@ try {
   const created = [];
   for(const [time,patientId] of [["10:00",ids.patient],[clinicalTime,ids.otherPatient]]) {
     const startAt=fromZonedTime(`${date}T${time}:00`,"America/Santiago");
-    const existing=await prisma.appointments.findFirst({where:{professional_id:ids.professional,start_at:startAt}});
-    const appointment=existing??await createAppointment({patientId,professionalId:ids.professional,startAt:startAt.toISOString()},actors.admin);
+    const existing=await prisma.appointments.findFirst({where:{professional_id:ids.professional,branch_id:ids.branch,start_at:startAt}});
+    const appointment=existing??await createAppointment({patientId,professionalId:ids.professional,branchId:ids.branch,startAt:startAt.toISOString()},actors.admin);
     created.push({appointmentId:appointment.id,patientId,date,time});
     if(time==="10:00"&&!existing) {
       await changeAppointmentStatus(appointment.id,{status:"CHECKED_IN"},actors.professional);
-      await updateMedicalRecord(patientId,{generalMedicalHistory:"DEMO FICTICIA: sin antecedentes reales.",ocularHistory:"Antecedente ocular sintético",allergies:"Sin alergias declaradas en este ejercicio"},actors.professional);
+      await updateMedicalRecord(patientId,{expectedRevision:0,generalMedicalHistory:"DEMO FICTICIA: sin antecedentes reales.",ocularHistory:"Antecedente ocular sintético",allergies:"Sin alergias declaradas en este ejercicio"},actors.professional);
       const encounter=await createEncounter({appointmentId:appointment.id,reasonForVisit:"DEMOSTRACIÓN FICTICIA: control visual",anamnesis:"Paciente sintético; no corresponde a una evaluación clínica real.",examination:"Examen simulado para verificar el registro del software.",diagnosis:"Diagnóstico ficticio; sin uso asistencial.",indications:"Ejercicio académico, no usar para atención ni fabricación."},actors.professional);
       await createPrescription(encounter.id,{rightEye:{sphere:-1,cylinder:-0.5,axis:90,addition:null},leftEye:{sphere:-1.25,cylinder:0,axis:null,addition:null},pupillaryDistance:62,fulfillmentNotes:"RECETA FICTICIA; sin validez clínica ni comercial."},actors.professional);
-      await finalizeEncounter(encounter.id,actors.professional);
+      await finalizeEncounter(encounter.id,actors.professional,{expectedVersion:encounter.version,confirm:true});
     }
   }
   await writeFile("tmp/academic-validation/demo-records.json",JSON.stringify({created,professionalEmail:"academic-profesional@example.invalid"},null,2));

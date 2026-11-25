@@ -7,7 +7,7 @@ import { fixtureRut } from "./management-data.js";
 
 export const academicId = (index) => `20000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 export const ids = { admin: academicId(1), sales: academicId(2), professional: academicId(3), otherProfessional: academicId(4),
-  patient: academicId(10), otherPatient: academicId(11), customer: academicId(20) };
+  patient: academicId(10), otherPatient: academicId(11), customer: academicId(20), branch: academicId(30) };
 
 export function requireAcademicIsolation() {
   requireIsolatedStoreDatabase();
@@ -37,13 +37,26 @@ export async function seedAcademicData() {
     const storedRole = await prisma.roles.findUnique({where:{code:role}});
     await prisma.user_roles.upsert({where:{user_id_role_id:{user_id:id,role_id:storedRole.id}},update:{},create:{user_id:id,role_id:storedRole.id}});
   }
+  await prisma.branches.upsert({ where: { id: ids.branch }, update: {}, create: {
+    id: ids.branch, code: "ACADEMIC-CLINICAL", name: "Sucursal clínica de pruebas", information_source: "Datos sintéticos",
+  } });
+  for(const id of [ids.sales,ids.professional,ids.otherProfessional]) {
+    const key = { user_id: id, branch_id: ids.branch };
+    await prisma.user_branches.upsert({ where: { user_id_branch_id: key }, update: {}, create: key });
+  }
   for(const id of [ids.professional,ids.otherProfessional]) {
     await prisma.professional_profiles.upsert({where:{user_id:id},update:{},create:{user_id:id,appointment_duration_minutes:30,slot_interval_minutes:30,created_by:ids.admin,updated_by:ids.admin}});
-    for(let day=0;day<7;day++) await prisma.professional_weekly_schedules.upsert({where:{professional_id_day_of_week:{professional_id:id,day_of_week:day}},update:{},create:{professional_id:id,day_of_week:day,is_working:true,start_time:new Date("1970-01-01T09:00:00Z"),end_time:new Date("1970-01-01T18:00:00Z"),break_start:new Date("1970-01-01T13:00:00Z"),break_end:new Date("1970-01-01T14:00:00Z")}});
+    for(let day=0;day<7;day++) await prisma.professional_weekly_schedules.upsert({where:{professional_id_branch_id_day_of_week:{professional_id:id,day_of_week:day,branch_id:ids.branch}},update:{},create:{professional_id:id,day_of_week:day,branch_id:ids.branch,is_working:true,start_time:new Date("1970-01-01T09:00:00Z"),end_time:new Date("1970-01-01T18:00:00Z"),break_start:new Date("1970-01-01T13:00:00Z"),break_end:new Date("1970-01-01T14:00:00Z")}});
   }
   for(const [id,index,name] of [[ids.patient,22000,"PacienteFicticio"],[ids.otherPatient,22001,"PacienteAjeno"]]) {
     await prisma.patients.upsert({where:{id},update:{},create:{id,rut:fixtureRut(index),first_names:name,last_names:"Demostración",birth_date:new Date("1990-01-01"),phone:"+56912345678",email:`${name.toLowerCase()}@example.invalid`,address:"Dirección ficticia 123",created_by:ids.admin,updated_by:ids.admin}});
   }
+  for (const patient_id of [ids.patient, ids.otherPatient]) {
+    const key = { patient_id, branch_id: ids.branch };
+    await prisma.patient_branches.upsert({ where: { patient_id_branch_id: key }, update: {}, create: key });
+  }
   await prisma.customers.upsert({where:{id:ids.customer},update:{},create:{id:ids.customer,rut:fixtureRut(22002),first_names:"ClienteFicticio",last_names:"Demostración",email:"clienteficticio@example.invalid",phone:"+56912345678",address:"Dirección ficticia 123",created_by:ids.admin,updated_by:ids.admin}});
+  const commercialLink = { customer_id: ids.customer, branch_id: ids.branch };
+  await prisma.customer_branches.upsert({ where: { customer_id_branch_id: commercialLink }, update: {}, create: commercialLink });
   return {admin:await actorFor(ids.admin),sales:await actorFor(ids.sales),professional:await actorFor(ids.professional),otherProfessional:await actorFor(ids.otherProfessional)};
 }

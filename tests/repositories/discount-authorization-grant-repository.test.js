@@ -10,10 +10,12 @@ const authorizationId = "00000000-0000-4000-8000-000000000001";
 const requestedBy = "00000000-0000-4000-8000-000000000002";
 const authorizedBy = "00000000-0000-4000-8000-000000000003";
 const saleId = "00000000-0000-4000-8000-000000000004";
+const branchId = "00000000-0000-4000-8000-000000000005";
 
 test("bloquea una autorización temporal de descuento antes de consumirla", async () => {
-  let query;
+  let query, authorizerQuery;
   const client = {
+    users: { async findFirst(options) { authorizerQuery = options; return { id: authorizedBy }; } },
     discount_authorization_grants: {
       async findFirst(options) {
         query = options;
@@ -22,7 +24,7 @@ test("bloquea una autorización temporal de descuento antes de consumirla", asyn
     },
   };
   const result = await lockDiscountAuthorizationWithClient(client, {
-    amountCents: 5000, authorizationId, reason: "Convenio de prueba", requestedBy,
+    amountCents: 5000, authorizationId, reason: "Convenio de prueba", requestedBy, branchId,
   });
   assert.equal(result, authorizedBy);
   assert.deepEqual(query.where, {
@@ -30,6 +32,19 @@ test("bloquea una autorización temporal de descuento antes de consumirla", asyn
     id: authorizationId, reason: "Convenio de prueba", requested_by: requestedBy,
   });
   assert.ok(query.where.expires_at.gt instanceof Date);
+  assert.deepEqual(authorizerQuery.where.OR[1], {
+    user_branches: { some: { branch_id: branchId, branches: { is_active: true } } },
+  });
+});
+
+test("rechaza un descuento cuando el supervisor carece de alcance vigente", async () => {
+  const client = {
+    discount_authorization_grants: { findFirst: async () => ({ authorized_by: authorizedBy }) },
+    users: { findFirst: async () => null },
+  };
+  assert.equal(await lockDiscountAuthorizationWithClient(client, {
+    amountCents: 5000, authorizationId, reason: "Convenio de prueba", requestedBy, branchId,
+  }), null);
 });
 
 test("asocia la autorización consumida a una única venta", async () => {

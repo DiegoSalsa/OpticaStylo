@@ -12,6 +12,10 @@ test.beforeEach(async({context})=>{
   await prisma.public_request_rate_limits.deleteMany();
   await isolateBrowserNetwork(context);
 });
+async function activateClinicalBranch(page) {
+  const response = await page.request.patch("/api/auth/me", { data: { branchId: ids.branch } });
+  expect(response.ok()).toBe(true);
+}
 async function login(page,profile) {
   const {password}=JSON.parse(await readFile("tmp/academic-validation/demo-credentials.json","utf8"));
   await page.goto("/ingresar");
@@ -233,6 +237,7 @@ test.describe("Agenda recuperable", () => {
 
   test("descarta una carga anterior al cambiar de profesional y guarda el horario seleccionado", async ({ page }) => {
     await login(page, "administrador");
+    await activateClinicalBranch(page);
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/app/agenda");
@@ -401,6 +406,7 @@ test.describe("Accesos Configuración logística", () => {
 
 test("E2E-AG agenda crea una reserva en disponibilidad real y conserva paciente/profesional",async({page})=>{
   await login(page,"administrador");
+  await activateClinicalBranch(page);
   await page.goto("/app/agenda");
   const form=page.locator(".internal-booking");
   await form.getByPlaceholder("RUT o nombre",{exact:true}).fill("PacienteFicticio");
@@ -465,6 +471,11 @@ test("E2E-SEG ADMIN ve restricción clínica y profesional ajeno no ve la atenci
 
 test("E2E-POS cotización, cantidades, venta y abonos manuales conservan importes/comprobante sin proveedores",async({page})=>{
   await login(page,"ventas");
+  await activateClinicalBranch(page);
+  await prisma.products.update({ where: { sku: "ESTUCHE-TEST" }, data: { inventory_mode: "ON_DEMAND" } });
+  const terminal = await prisma.cash_register_terminals.create({ data: { branch_id: ids.branch, name: "Caja sintética POS" } });
+  const opened = await page.request.post("/api/cash-register", { data: { branchId: ids.branch, terminalId: terminal.id, openingAmountCents: 5000 } });
+  expect(opened.status()).toBe(201);
   await page.goto("/app/ventas");
   await page.getByLabel("Ingresar SKU con escáner",{exact:true}).fill("ESTUCHE-TEST");
   await page.getByLabel("Ingresar SKU con escáner",{exact:true}).press("Enter");

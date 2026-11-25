@@ -95,6 +95,7 @@ test("rechaza una hora que dejó de estar disponible", async () => {
           currentDate: now,
           findPatientById: async () => ({ id: patientId }),
           findProfessionalById: async () => ({ id: professionalId }),
+          createAppointment: async () => assert.fail("No se debe guardar una cita sin cupo"),
           getProfessionalAvailability: async () => ({ slots: [] }),
           timeZone: "America/Santiago",
         },

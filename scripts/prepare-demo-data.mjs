@@ -339,8 +339,8 @@ try {
       createdEncounter = true;
     }
 
-    let medicalRecord = await client.medical_records.findUnique({
-      where: { patient_id: patients.get(mainData.key).id },
+    let medicalRecord = await client.medical_records.findFirst({
+      where: { patient_id: patients.get(mainData.key).id, branch_id: null },
     });
     let createdMedicalRecord = false;
     if (!medicalRecord) {

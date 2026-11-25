@@ -139,24 +139,26 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
 
   await t.test("reagenda la propia hora usando disponibilidad real y la cancela sin exponer fichas ajenas", async () => {
     await db.professional_profiles.update({ where: { user_id: professionalId }, data: { is_bookable: true } });
+    const branch = await db.branches.create({ data: { code: "PORTAL-" + randomUUID(), name: "Sucursal portal sintética", information_source: "Pruebas" } });
+    await db.user_branches.create({ data: { user_id: professionalId, branch_id: branch.id } });
     const schedule = { start_time: new Date("1970-01-01T09:00:00Z"), end_time: new Date("1970-01-01T14:00:00Z"), is_working: true };
     for (let day = 0; day < 7; day++) {
       await db.professional_weekly_schedules.upsert({
-        where: { professional_id_day_of_week: { professional_id: professionalId, day_of_week: day } },
+        where: { professional_id_branch_id_day_of_week: { professional_id: professionalId, branch_id: branch.id, day_of_week: day } },
         update: schedule,
-        create: { ...schedule, professional_id: professionalId, day_of_week: day },
+        create: { ...schedule, professional_id: professionalId, branch_id: branch.id, day_of_week: day },
       });
     }
     const dateAt = (offset) => formatInTimeZone(new Date(Date.now() + offset * 86_400_000), "America/Santiago", "yyyy-MM-dd");
     async function firstSlot(date) {
-      const availability = await data(await request("/api/store/booking/professionals/" + professionalId + "/availability?date=" + date));
+      const availability = await data(await request("/api/store/booking/professionals/" + professionalId + "/availability?date=" + date + "&branchId=" + branch.id));
       assert.ok(availability.slots.length);
       return availability.slots[0];
     }
     const from = await firstSlot(dateAt(8));
     const to = await firstSlot(dateAt(9));
     const appointment = await db.appointments.create({
-      data: { patient_id: patient.id, professional_id: professionalId, start_at: new Date(from.startAt), end_at: new Date(from.endAt) },
+      data: { patient_id: patient.id, professional_id: professionalId, branch_id: branch.id, start_at: new Date(from.startAt), end_at: new Date(from.endAt) },
     });
     const endpoint = clinical + "/appointments/" + appointment.id;
     const reschedule = { action: "RESCHEDULE", expectedStartAt: from.startAt, startAt: to.startAt };

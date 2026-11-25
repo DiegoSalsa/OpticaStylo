@@ -95,6 +95,7 @@ test("rechaza una hora pública que dejó de estar disponible", async () => {
     () => createPublicBooking(input(), {
       currentDate: now,
       findProfessionalById: async () => ({ id: professionalId, isBookable: true }),
+      createPublicBooking: async () => assert.fail("No se debe guardar una reserva sin cupo"),
       getProfessionalAvailability: async () => ({ slots: [] }),
       timeZone: "America/Santiago",
     }),

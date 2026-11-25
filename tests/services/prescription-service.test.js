@@ -221,7 +221,10 @@ test("el profesional debe estar asignado para listar recetas", async () => {
       getPrescriptionList(
         new URLSearchParams({ patientId }),
         clinicalActor,
-        { hasClinicalAssignment: async () => false },
+        {
+          hasClinicalAssignment: async () => false,
+          listPrescriptionsByPatientId: async () => assert.fail("No se deben consultar recetas sin asignación"),
+        },
       ),
     (error) => error.code === "CLINICAL_ACCESS_NOT_ASSIGNED",
   );
