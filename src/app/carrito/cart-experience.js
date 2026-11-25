@@ -32,6 +32,22 @@ const EMPTY_PRESCRIPTION_DRAFT = Object.freeze({
 });
 
 
+const BUYER_CONTACT_FIELDS = ["address", "email", "firstNames", "lastNames", "phone", "rut"];
+
+function restoreBuyerDraft(cart, draft) {
+  const buyer = {
+    branchId: draft?.branchId ?? cart.fulfillment?.branchId ?? "",
+    notes: draft?.notes ?? cart.fulfillment?.notes ?? "",
+  };
+  for (const field of BUYER_CONTACT_FIELDS) {
+    const local = draft?.[field];
+    const saved = cart.buyer?.[field];
+    if (typeof local === "string" && local.trim()) buyer[field] = local;
+    else if (typeof saved === "string" && saved.trim()) buyer[field] = saved;
+  }
+  return buyer;
+}
+
 function mountName(item, items) {
   if (!item.mountFrameProductId) return null;
   return items.find((candidate) => candidate.productId === item.mountFrameProductId)?.name
@@ -55,6 +71,9 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
   const [fields, setFields] = useState(() => prescriptionFields(null));
   const [prescriptionDirty, setPrescriptionDirty] = useState(false);
   const [buyerDraft, setBuyerDraft] = useState({});
+  const [publicBuyerProfile, setPublicBuyerProfile] = useState(null);
+  const embedded = Boolean(accountProfile);
+  const buyerProfile = accountProfile ?? publicBuyerProfile;
   const [lensConfiguration, setLensConfiguration] = useState(null);
   const cartIdRef = useRef(null);
   const refreshRevisionRef = useRef(0);
@@ -84,12 +103,12 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
       setPrescriptionDraft(data.externalPrescription?.extractedData ?? null);
       setFields(draft?.fields ?? prescriptionFields(data.externalPrescription?.confirmedData ?? data.externalPrescription?.extractedData));
       setPrescriptionDirty(draft?.prescriptionDirty ?? false);
-      setBuyerDraft(draft?.buyer ?? { ...data.buyer, branchId: data.fulfillment?.branchId ?? "", notes: data.fulfillment?.notes ?? "" });
+      setBuyerDraft(restoreBuyerDraft(data, draft?.buyer));
       setStatus("ready");
     }
     function refresh() {
       const revision = ++refreshRevisionRef.current;
-      ensureStoreCart({ forShopping: Boolean(accountProfile) }).then((data) => {
+      ensureStoreCart({ forShopping: embedded }).then((data) => {
         if (revision === refreshRevisionRef.current) hydrate(data);
       })
       .catch((requestError) => {
@@ -115,7 +134,35 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
       window.removeEventListener("popstate", returned);
       window.removeEventListener("pageshow", returned);
     };
-  }, [accountProfile]);
+  }, [embedded]);
+
+  useEffect(() => {
+    if (embedded) return;
+    let controller;
+
+    function loadProfile() {
+      controller?.abort();
+      const request = new AbortController();
+      controller = request;
+      fetch("/api/store/accounts/me", { cache: "no-store", signal: request.signal })
+        .then((response) => response.ok ? readStoreResponse(response) : null)
+        .catch(() => null)
+        .then((profile) => {
+          if (!request.signal.aborted) setPublicBuyerProfile(profile);
+        });
+    }
+
+    function onPageShow(event) {
+      if (event.persisted) loadProfile();
+    }
+
+    loadProfile();
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      controller?.abort();
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [embedded]);
 
   useEffect(() => {
     if (cart) writeCartDraft(window.sessionStorage, cart, { fields, buyer: buyerDraft, prescriptionDirty, prescriptionMode });
@@ -262,6 +309,15 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
     setPrescriptionDirty(true);
   }
 
+  function buyerValue(field) {
+    return buyerDraft[field] ?? buyerProfile?.[field] ?? "";
+  }
+
+  function editBuyer(event) {
+    const { name, value } = event.currentTarget;
+    setBuyerDraft((current) => ({ ...current, [name]: value }));
+  }
+
   async function checkout(event) {
     event.preventDefault();
     setError("");
@@ -401,18 +457,18 @@ export default function CartExperience({ accountProfile, clinicalPrescriptions =
         <article className="cart-card">
           <h2>Datos para la compra</h2>
           <p className="card-lead">Puedes continuar como invitado. Selecciona retiro o calcula el despacho antes de confirmar.</p>
-          <form className="buyer-form" onChange={(event) => setBuyerDraft(Object.fromEntries(new FormData(event.currentTarget)))} onSubmit={checkout}>
-            <label className="field"><span>RUT</span><RutInput defaultValue={buyerDraft.rut ?? accountProfile?.rut ?? ""} name="rut" placeholder="12.345.678-5" required /></label>
-            <label className="field"><span>Nombres</span><input defaultValue={buyerDraft.firstNames ?? accountProfile?.firstNames ?? ""} name="firstNames" placeholder="Nombres" required /></label>
-            <label className="field"><span>Apellidos</span><input defaultValue={buyerDraft.lastNames ?? accountProfile?.lastNames ?? ""} name="lastNames" placeholder="Apellidos" required /></label>
-            <label className="field"><span>Teléfono</span><input defaultValue={buyerDraft.phone ?? accountProfile?.phone ?? ""} name="phone" placeholder="+56 9 1234 5678" required /></label>
-            <label className="field"><span>Correo</span><input defaultValue={buyerDraft.email ?? accountProfile?.email ?? ""} name="email" placeholder="nombre@correo.cl" required type="email" /></label>
-            <label className="field"><span>Dirección de contacto</span><input defaultValue={buyerDraft.address ?? accountProfile?.address ?? ""} name="address" placeholder="Dirección" required /></label>
+          <form className="buyer-form" onSubmit={checkout}>
+            <label className="field"><span>RUT</span><RutInput name="rut" onChange={editBuyer} placeholder="12.345.678-5" required value={buyerValue("rut")} /></label>
+            <label className="field"><span>Nombres</span><input name="firstNames" onChange={editBuyer} placeholder="Nombres" required value={buyerValue("firstNames")} /></label>
+            <label className="field"><span>Apellidos</span><input name="lastNames" onChange={editBuyer} placeholder="Apellidos" required value={buyerValue("lastNames")} /></label>
+            <label className="field"><span>Teléfono</span><input name="phone" onChange={editBuyer} placeholder="+56 9 1234 5678" required value={buyerValue("phone")} /></label>
+            <label className="field"><span>Correo</span><input name="email" onChange={editBuyer} placeholder="nombre@correo.cl" required type="email" value={buyerValue("email")} /></label>
+            <label className="field"><span>Dirección de contacto</span><input name="address" onChange={editBuyer} placeholder="Dirección" required value={buyerValue("address")} /></label>
             <DeliveryChoice selection={shipping} onChange={setShipping} signature={cartSignature} />
             {shipping.method === "PICKUP" && <><div className="pickup-choice field-full"><Icon name="check" /><div><strong>Retiro en una sucursal</strong><span>Todos los productos deben estar disponibles en el mismo local. La reserva sin pagos dura 30 minutos desde la creación del pedido.</span></div></div>
-            <label className="field field-full"><span>Sucursal de retiro</span><select name="branchId" required defaultValue={buyerDraft.branchId ?? ""}><option value="">Selecciona una sucursal</option>{pickupBranches.map((branch) => <option disabled={!branch.available} key={branch.id} value={branch.id}>{branch.name}{branch.available ? " — Disponible" : " — Sin disponibilidad conjunta"}</option>)}</select></label>
+            <label className="field field-full"><span>Sucursal de retiro</span><select name="branchId" onChange={editBuyer} required value={buyerDraft.branchId ?? ""}><option value="">Selecciona una sucursal</option>{pickupBranches.map((branch) => <option disabled={!branch.available} key={branch.id} value={branch.id}>{branch.name}{branch.available ? " — Disponible" : " — Sin disponibilidad conjunta"}</option>)}</select></label>
             {!pickupBranches.some((branch) => branch.available) && <p className="inline-error field-full" role="alert">Ninguna sucursal tiene todos los productos disponibles. Modifica las cantidades o productos del carrito.</p>}</>}
-            <label className="field field-full"><span>Notas opcionales</span><textarea defaultValue={buyerDraft.notes ?? ""} name="notes" placeholder="Ej: Entregar en horario de oficina" rows="3" /></label>
+            <label className="field field-full"><span>Notas opcionales</span><textarea name="notes" onChange={editBuyer} placeholder="Ej: Entregar en horario de oficina" rows="3" value={buyerDraft.notes ?? ""} /></label>
             <button className="button button--primary field-full" disabled={status === "saving" || Boolean(prescriptionImage) || (prescriptionRequired && (!prescriptionReady || prescriptionDirty))} type="submit">Continuar a Mercado Pago</button>{prescriptionRequired && (!prescriptionReady || prescriptionDirty || prescriptionImage) && <p className="field-full">Guarda y confirma la receta antes de continuar.</p>}
           </form>
         </article>
