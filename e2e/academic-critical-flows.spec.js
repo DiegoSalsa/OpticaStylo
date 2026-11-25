@@ -267,27 +267,33 @@ test.describe("Agenda recuperable", () => {
     await page.unroute(scheduleUrl, malformed);
     await update.click();
     await expect(save).toBeEnabled();
-    let markPending;
-    let release;
-    const pending = new Promise((resolve) => { markPending = resolve; });
-    const resume = new Promise((resolve) => { release = resolve; });
-    const delayed = async (route) => {
-      markPending();
-      await resume;
-      await route.fulfill({ status: 503, json: { success: false } });
-    };
-    await page.route(scheduleUrl, delayed);
+    await page.evaluate((id) => {
+      const nativeFetch = window.fetch;
+      const path = "/api/professionals/" + id + "/schedule";
+      window.fetch = async (resource, options) => {
+        const reply = await nativeFetch(resource, options);
+        if (new URL(resource, window.location.origin).pathname !== path) return reply;
+        window.fetch = nativeFetch;
+        return new Response(new ReadableStream({
+          start(controller) {
+            options.signal.addEventListener("abort", () => {
+              console.debug("agenda: horario cancelado");
+              controller.error(options.signal.reason);
+            }, { once: true });
+          },
+          pull() { console.debug("agenda: horario pendiente"); },
+        }), { status: reply.status, headers: reply.headers });
+      };
+    }, current);
+    const pending = page.waitForEvent("console", (message) => message.text() === "agenda: horario pendiente");
+    const cancelled = page.waitForEvent("console", (message) => message.text() === "agenda: horario cancelado");
     await update.click();
     await pending;
-    try {
-      await expect(page.getByText("Cargando agenda…").first()).toBeVisible();
-      await expect(save).toBeDisabled();
-      await professional.selectOption(other);
-      await expect(save).toBeEnabled();
-    } finally {
-      release();
-      await page.unroute(scheduleUrl, delayed);
-    }
+    await expect(page.getByText("Cargando agenda…").first()).toBeVisible();
+    await expect(save).toBeDisabled();
+    await professional.selectOption(other);
+    await cancelled;
+    await expect(save).toBeEnabled();
     await expect(alert).toHaveCount(0);
     const morning = page.getByLabel("Lunes inicio", { exact: true });
     const oldHour = await morning.inputValue();
