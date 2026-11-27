@@ -22,7 +22,7 @@ const clinicalOnly = process.argv.includes("--clinical-only")||customersOnly;
 const clinicalMode = process.argv.includes("--clinical") || clinicalOnly || customersMode;
 const posMode = process.argv.includes("--pos") || clinicalMode;
 const inventoryMode = process.argv.includes("--inventory") || posMode;
-const output = path.join(os.tmpdir(), releaseMode?(process.argv.includes("--demo")?"opticastylo-demo-main-reconciliada":"opticastylo-main-reconciliada"):shippingMode?"opticastylo-despachos-fase-6":customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
+const output = process.env.PRESCRIPTION_TEST_OUTPUT ? path.resolve(process.env.PRESCRIPTION_TEST_OUTPUT) : path.join(os.tmpdir(), releaseMode?(process.argv.includes("--demo")?"opticastylo-demo-main-reconciliada":"opticastylo-main-reconciliada"):shippingMode?"opticastylo-despachos-fase-6":customersMode?"opticastylo-clientes-fase-5":clinicalMode ? "opticastylo-clinica-fase-4" : posMode ? "opticastylo-pos-caja-fase-3" : inventoryMode ? "opticastylo-inventario-fase-2" : "opticastylo-recetas-fase-1");
 const runRoot = path.join(os.tmpdir(), `stylo-prescriptions-${randomBytes(8).toString("hex")}`);
 const appRoot = path.join(runRoot, "app");
 const pgData = path.join(runRoot, "postgres");
@@ -133,9 +133,11 @@ try {
   if(!process.argv.includes("--migrations-only")) {
   const passwordResetMigration = "20261114000000_customer_password_reset";
   const accountDependantsMigration = "20261115000000_account_dependants";
+  const professionalEmailMigration = "20261127000000_professional_appointment_email";
   if (clinicalMode) {
     await rename(path.join(appRoot, "prisma/migrations", passwordResetMigration), path.join(runRoot, "password-reset-migration"));
     await rename(path.join(appRoot, "prisma/migrations", accountDependantsMigration), path.join(runRoot, "account-dependants-migration"));
+    await rename(path.join(appRoot, "prisma/migrations", professionalEmailMigration), path.join(runRoot, "professional-email-migration"));
   }
   if(releaseMode) await rename(path.join(appRoot,"prisma/migrations/20261106010000_legacy_migration_ledger"),path.join(runRoot,"ledger-migration"));
   if(shippingMode) await rename(path.join(appRoot,"prisma/migrations/20261106000000_shipping_chilexpress"),path.join(runRoot,"shipping-migration"));
@@ -167,6 +169,7 @@ try {
   if (clinicalMode) {
     await rename(path.join(runRoot, "password-reset-migration"), path.join(appRoot, "prisma/migrations", passwordResetMigration));
     await rename(path.join(runRoot, "account-dependants-migration"), path.join(appRoot, "prisma/migrations", accountDependantsMigration));
+    await rename(path.join(runRoot, "professional-email-migration"), path.join(appRoot, "prisma/migrations", professionalEmailMigration));
     await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], { cwd: appRoot });
   }
   if (inventoryMode) await run(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "diff", "--from-url", databaseUrl, "--to-schema-datamodel", "prisma/schema.prisma", "--script"], { cwd: appRoot, record: "migration-diff.txt" });

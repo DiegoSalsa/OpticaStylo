@@ -253,22 +253,29 @@ export async function updateAppointment(
     throwInvalidTransition(current.status, "UPDATED");
   }
 
-  // Si cambia la hora, volver a comprobar disponibilidad excluyendo la propia reserva
-  const endAt = changes.startAt
+  // Comprobar la agenda del destinatario antes de cambiar la hora o el profesional.
+  const professionalId = changes.professionalId ?? current.professional.id;
+  const recheckSlot = Boolean(changes.startAt || professionalId !== current.professional.id);
+  const endAt = recheckSlot
     ? await requireBookableSlot({
         actor,
         branchId: current.branchId,
         currentDate: dependencies.currentDate,
         excludedAppointmentId: normalizedId,
         getAvailability: availabilityService,
-        professionalId: current.professional.id,
-        startAt: changes.startAt,
+        professionalId,
+        startAt: changes.startAt ?? current.startAt,
         timeZone: dependencies.timeZone ?? getSchedulingTimeZone(),
       })
     : undefined;
   const result = await updateRepository(
     normalizedId,
-    { ...changes, endAt },
+    {
+      ...changes, endAt,
+      ...(recheckSlot && !dependencies.updateAppointment && {
+        expectedSlot: { startAt: current.startAt, professionalId: current.professional.id },
+      }),
+    },
     actor.userId,
     ...(dependencies.updateAppointment ? [] : [actor]),
   );

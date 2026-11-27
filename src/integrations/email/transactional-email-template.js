@@ -11,6 +11,7 @@ export const TRANSACTIONAL_EMAIL_TEMPLATE_CODES = Object.freeze([
   ...OTP_EMAIL_TEMPLATE_CODES,
   "APPOINTMENT_CONFIRMED",
   "APPOINTMENT_REMINDER",
+  "APPOINTMENT_PROFESSIONAL",
   "ORDER_CONFIRMED",
   "PAYMENT_CONFIRMED",
   "POS_PAYMENT_RECEIPT",
@@ -56,6 +57,30 @@ function receiptReference(payload) {
   return Number.isSafeInteger(value) && value > 0 ? `N.º ${value}` : null;
 }
 
+const professionalAppointmentMessages = {
+  confirmed: ["Nueva reserva", "Se confirmó una reserva en tu agenda."],
+  rescheduled: ["Reserva reprogramada", "Se actualizó el horario de una reserva de tu agenda."],
+  assigned: ["Reserva asignada", "Se te asignó una reserva. Revisa el horario que quedó en tu agenda."],
+  released: ["Reserva reasignada", "Esta reserva se asignó a otro profesional y se liberó el horario en tu agenda."],
+  cancelled: ["Reserva cancelada", "Se canceló una reserva de tu agenda."],
+};
+
+function professionalAppointmentContent(payload, timeZone) {
+  const [title, intro] = professionalAppointmentMessages[payload.action];
+  return {
+    title,
+    intro,
+    facts: [
+      ["Referencia de reserva", payload.appointmentId],
+      ["Paciente", payload.patientName],
+      ["Tipo de atención", "Atención clínica"],
+      ["Sucursal", payload.branchName],
+      ["Horario anterior", payload.previousStartAt && localDate(payload.previousStartAt, timeZone)],
+      [payload.previousStartAt ? "Nuevo horario" : "Fecha y hora", localDate(payload.startAt, timeZone)],
+    ],
+  };
+}
+
 function contentFor(email, timeZone) {
   const payload = email.payload ?? {};
   switch (email.templateCode) {
@@ -95,6 +120,8 @@ function contentFor(email, timeZone) {
         intro: "Te recordamos que tienes una reserva próxima.",
         title: "Recordatorio de reserva",
       };
+    case "APPOINTMENT_PROFESSIONAL":
+      return professionalAppointmentContent(payload, timeZone);
     case "ORDER_CONFIRMED":
       return {
         facts: [["Pedido", saleReference(payload)], ["Total", clp(payload.totalCents)]],

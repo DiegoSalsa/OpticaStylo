@@ -16,6 +16,7 @@ if (phase === "prepare") {
     lint: ["node_modules/eslint/bin/eslint.js", "."],
     general: ["--test"],
     integration: ["--test", "tests/integration/academic-critical-flows.test.js"],
+    "professional-emails": ["--test", "tests/integration/professional-appointment-email.test.js"],
     management: ["--test", "tests/integration/management-pagination.test.js"],
     store: ["--test", "tests/integration/store-guest-checkout.test.js"],
     catalog: ["--test", "tests/integration/store-catalog.test.js"],
@@ -44,7 +45,7 @@ if (phase === "prepare") {
     let transientSchema=null;
     try {
       // Cada suite PostgreSQL recibe tablas nuevas sin alterar la demostración del servidor.
-      if(["integration","store","management","catalog","reports"].includes(phase)) {
+      if(["integration","professional-emails","store","management","catalog","reports"].includes(phase)) {
         transientSchema=`stylo_e2e_${randomBytes(8).toString("hex")}`;
         await execute("docker",["exec",state.container,"psql","-U","stylo_test","-d",state.database,"-v","ON_ERROR_STOP=1","-c",`CREATE SCHEMA "${transientSchema}";`]);
         const url=new URL(state.databaseUrl);url.searchParams.set("schema",transientSchema);

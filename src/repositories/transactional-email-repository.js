@@ -4,6 +4,7 @@ import { prisma } from "../db/prisma.js";
 import { OTP_EMAIL_TEMPLATE_CODES } from "../integrations/email/transactional-email-template.js";
 import { CUSTOMER_PATIENT_OTP_MAX_ATTEMPTS } from "../utils/customer-patient-otp.js";
 import { PASSWORD_RESET_MAX_ATTEMPTS } from "./store-password-reset-repository.js";
+import { PROFESSIONAL_APPOINTMENT_EMAIL, professionalAppointmentEmailEligibility } from "./appointment-email-repository.js";
 
 const FINAL_STATUSES = new Set(["SENT", "TEST_SENT", "SIMULATED", "DEAD_LETTER", "DELIVERED", "BOUNCED", "COMPLAINED", "SUPPRESSED"]);
 const WEBHOOK_STATUSES = Object.freeze({
@@ -286,6 +287,9 @@ export async function getTransactionalEmailEligibility(email, dependencies = {})
       },
     });
     return challenge ? { eligible: true, reason: null } : { eligible: false, reason: "OTP_CHALLENGE_INVALID" };
+  }
+  if (email.templateCode === PROFESSIONAL_APPOINTMENT_EMAIL) {
+    return professionalAppointmentEmailEligibility(database, email, now);
   }
   if (!["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"].includes(email.templateCode) || !email.appointmentId) return { eligible: true, reason: null };
   // Conservar el control existente para no enviar recordatorios cancelados o ya iniciados.

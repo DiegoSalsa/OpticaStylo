@@ -11,6 +11,7 @@ const payloadByCode = {
   CUSTOMER_PATIENT_OTP: { code: "123456" },
   APPOINTMENT_CONFIRMED: { startAt: "2026-08-24T13:00:00.000Z" },
   APPOINTMENT_REMINDER: { startAt: "2026-08-24T13:00:00.000Z" },
+  APPOINTMENT_PROFESSIONAL: { action: "confirmed", startAt: "2026-08-24T13:00:00.000Z" },
   ORDER_CONFIRMED: { saleNumber: 21, totalCents: 45000 },
   PAYMENT_CONFIRMED: { amountCents: 20000, saleNumber: 21 },
   POS_PAYMENT_RECEIPT: { balanceCents: 25000, paidCents: 20000, receiptNumber: 8, saleNumber: 21 },
@@ -72,4 +73,22 @@ test("ignora campos clínicos aunque aparezcan en el payload", () => {
     { mode: "live" },
   );
   assert.equal(`${rendered.html}${rendered.text}`.includes("dato-prohibido"), false);
+});
+
+test("el aviso profesional distingue horarios en Chile y solo incluye datos de agenda permitidos", () => {
+  const { html, text } = renderTransactionalEmail({
+    templateCode: "APPOINTMENT_PROFESSIONAL",
+    payload: {
+      action: "rescheduled", appointmentId: "reserva-sintética", patientName: "<Paciente> Sintético",
+      branchName: "Sucursal de prueba", previousStartAt: "2026-08-24T13:00:00.000Z",
+      startAt: "2026-12-01T13:00:00.000Z", rut: "dato-privado", diagnosis: "dato-privado",
+      internalNotes: "dato-privado", cancellationReason: "dato-privado",
+    },
+  }, { mode: "test" });
+  assert.match(text, /Horario anterior: .*9:00/);
+  assert.match(text, /Nuevo horario: .*10:00/);
+  assert.match(text, /Sucursal de prueba/);
+  assert.match(text, /Atención clínica/);
+  assert.match(html, /&lt;Paciente&gt; Sintético/);
+  assert.doesNotMatch(html + text, /dato-privado/);
 });

@@ -127,8 +127,9 @@ export function validateUpdateAppointmentInput(input, currentDate = new Date()) 
   const hasStartAt = Object.hasOwn(input, "startAt");
   const hasInternalNotes = Object.hasOwn(input, "internalNotes");
 
-  if (!hasStartAt && !hasInternalNotes) {
-    throwValidationError("Debe indicar la hora o las notas que desea actualizar.");
+  const hasProfessionalId = Object.hasOwn(input, "professionalId");
+  if (!hasStartAt && !hasInternalNotes && !hasProfessionalId) {
+    throwValidationError("Debe indicar la hora, el profesional o las notas que desea actualizar.");
   }
 
   const startAt = hasStartAt
@@ -140,6 +141,7 @@ export function validateUpdateAppointmentInput(input, currentDate = new Date()) 
   }
 
   return {
+    ...(hasProfessionalId && { professionalId: validateProfessionalId(input.professionalId) }),
     internalNotes: hasInternalNotes
       ? validateOptionalText(input.internalNotes, "Las notas internas", 1000)
       : undefined,

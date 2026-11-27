@@ -11,6 +11,7 @@ import {
   createResendEmailProvider,
 } from "../integrations/email/resend-email-provider.js";
 import { OTP_EMAIL_TEMPLATE_CODES, renderTransactionalEmail } from "../integrations/email/transactional-email-template.js";
+import { PROFESSIONAL_APPOINTMENT_EMAIL } from "../repositories/appointment-email-repository.js";
 import { decryptPasswordResetCode, PasswordResetEncryptionConfigError } from "../utils/store-password-reset-code.js";
 import {
   claimTransactionalEmailBatch,
@@ -144,7 +145,8 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
     try {
       // Revalidar códigos y reservas justo antes de entregarlos al proveedor.
-      const appointmentEmail = ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"].includes(email.templateCode);
+      const appointmentEmail = ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER", PROFESSIONAL_APPOINTMENT_EMAIL].includes(email.templateCode);
+      let renderInput = email;
       if (OTP_EMAIL_TEMPLATE_CODES.includes(email.templateCode) || appointmentEmail) {
         const current = await (dependencies.getEmailEligibility ?? getTransactionalEmailEligibility)(email);
         if (!current.eligible) {
@@ -152,8 +154,8 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
           logTransition(logger, email.id, "SUPPRESSED", current.reason);
           continue;
         }
+        if (current.payload) renderInput = { ...email, payload: { ...email.payload, ...current.payload } };
       }
-      let renderInput = email;
       if (email.templateCode === "CUSTOMER_PASSWORD_RESET" && email.payload.encryptedCode) {
         const code = decryptPasswordResetCode(email.payload.challengeId, email.payload.encryptedCode, dependencies.environment);
         renderInput = { ...email, payload: { code } };

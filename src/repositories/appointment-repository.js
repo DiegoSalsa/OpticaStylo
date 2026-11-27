@@ -8,6 +8,11 @@ import { customerAppointmentChangeDeadline } from "../config/customer-appointmen
 import { verifiedPatientForAccount } from "./customer-clinical-repository.js";
 import { retryTransaction } from "../db/retry-transaction.js";
 import { transactionalEmailDeduplicationKey } from "../utils/transactional-email-key.js";
+import {
+  enqueueProfessionalAppointmentEmail,
+  lockOutdatedAppointmentEmails,
+  suppressOutdatedAppointmentEmails,
+} from "./appointment-email-repository.js";
 
 const professionalUser = "users_professional_profiles_user_idTousers";
 const appointmentInclude = {
@@ -147,7 +152,7 @@ export async function createAppointment(appointmentData, actorUserId, options = 
       updated_by: actorUserId,
     } });
     // Registrar el evento de creación para conservar la trazabilidad histórica
-    await client.appointment_events.create({ data: {
+    const event = await client.appointment_events.create({ data: {
       appointment_id: created.id, event_type: "CREATED", new_end_at: appointmentData.endAt,
       new_start_at: appointmentData.startAt, new_status: "CONFIRMED", performed_by: actorUserId,
     } });
@@ -157,6 +162,7 @@ export async function createAppointment(appointmentData, actorUserId, options = 
       recipientEmail: patient.email, reminderHours: options.reminderHours ?? 24,
       startAt: appointmentData.startAt,
     });
+    await enqueueProfessionalAppointmentEmail(client, { action: "confirmed", appointment: created, eventId: String(event.id) });
     return { appointment: await findAppointmentByIdWithClient(client, created.id), conflict: null };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
@@ -204,7 +210,7 @@ export async function createPublicBooking(bookingData, options = {}) {
       start_at: bookingData.startAt, updated_by: null,
     } });
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
-    await client.appointment_events.create({ data: {
+    const event = await client.appointment_events.create({ data: {
       appointment_id: created.id, event_type: "CREATED", new_end_at: bookingData.endAt,
       new_start_at: bookingData.startAt, new_status: "CONFIRMED", performed_by: null,
     } });
@@ -213,6 +219,7 @@ export async function createPublicBooking(bookingData, options = {}) {
       recipientEmail: bookingData.patient.email, reminderHours: options.reminderHours ?? 24,
       startAt: bookingData.startAt,
     });
+    await enqueueProfessionalAppointmentEmail(client, { action: "confirmed", appointment: created, eventId: String(event.id) });
     return { appointment: await findAppointmentByIdWithClient(client, created.id), conflict: null };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
@@ -230,26 +237,48 @@ export async function updateAppointment(appointmentId, changes, actorUserId, act
     if (!current) return { appointment: null, conflict: null, currentStatus: null };
     await requireAppointmentWriteScope(client, current, actor);
     if (current.status !== "CONFIRMED") return { appointment: null, conflict: null, currentStatus: current.status };
-    if (changes.startAt) {
-      if (current.branch_id) await requireProfessionalBranch(current.professional_id, current.branch_id, client);
-      const conflict = await findCollision(client, {
-        branchId: current.branch_id, professionalId: current.professional_id, startAt: changes.startAt, endAt: changes.endAt,
-      }, appointmentId);
-      if (conflict) return { appointment: null, conflict, currentStatus: current.status };
+    if (changes.expectedSlot && (
+      current.start_at.getTime() !== changes.expectedSlot.startAt.getTime()
+      || current.professional_id !== changes.expectedSlot.professionalId
+    )) {
+      throw new AppError({ code: "APPOINTMENT_CHANGED", message: "La reserva cambió. Actualízala antes de volver a intentarlo.", status: 409 });
     }
     const newStartAt = changes.startAt ?? current.start_at;
     const newEndAt = changes.endAt ?? current.end_at;
+    const newProfessionalId = changes.professionalId ?? current.professional_id;
+    const professionalChanged = newProfessionalId !== current.professional_id;
+    const timeChanged = newStartAt.getTime() !== current.start_at.getTime() || newEndAt.getTime() !== current.end_at.getTime();
+    const rescheduled = professionalChanged || timeChanged;
+    let emails;
+    if (rescheduled) {
+      if (current.branch_id) await requireProfessionalBranch(newProfessionalId, current.branch_id, client);
+      const conflict = await findCollision(client, {
+        branchId: current.branch_id, professionalId: newProfessionalId, startAt: newStartAt, endAt: newEndAt,
+      }, appointmentId);
+      if (conflict) return { appointment: null, conflict, currentStatus: current.status };
+      emails = await lockOutdatedAppointmentEmails(client, {
+        id: appointmentId, professionalId: newProfessionalId, includePatientEmails: timeChanged,
+      });
+      requireNoActiveEmailClaim(emails);
+    }
     const newNotes = changes.internalNotes === undefined ? current.internal_notes : changes.internalNotes;
-    await client.appointments.update({ data: {
-      end_at: newEndAt, internal_notes: newNotes, start_at: newStartAt, updated_by: actorUserId,
+    const updated = await client.appointments.update({ data: {
+      end_at: newEndAt, internal_notes: newNotes, professional_id: newProfessionalId, start_at: newStartAt, updated_by: actorUserId,
     }, where: { id: appointmentId } });
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
-    if (changes.startAt) await client.appointment_events.create({ data: {
-      appointment_id: appointmentId, event_type: "RESCHEDULED",
-      new_end_at: newEndAt, new_start_at: newStartAt, new_status: current.status,
-      performed_by: actorUserId, previous_end_at: current.end_at,
-      previous_start_at: current.start_at, previous_status: current.status,
-    } });
+    if (rescheduled) {
+      const event = await client.appointment_events.create({ data: {
+        appointment_id: appointmentId, event_type: "RESCHEDULED",
+        details: professionalChanged ? "Cambió el profesional asignado." : null,
+        new_end_at: newEndAt, new_start_at: newStartAt, new_status: current.status,
+        performed_by: actorUserId, previous_end_at: current.end_at,
+        previous_start_at: current.start_at, previous_status: current.status,
+      } });
+      await suppressOutdatedAppointmentEmails(client, emails, "APPOINTMENT_RESCHEDULED", new Date());
+      const context = { appointment: updated, eventId: String(event.id), previous: current };
+      await enqueueProfessionalAppointmentEmail(client, { ...context, action: professionalChanged ? "assigned" : "rescheduled" });
+      if (professionalChanged) await enqueueProfessionalAppointmentEmail(client, { ...context, action: "released" });
+    }
     if (changes.internalNotes !== undefined && changes.internalNotes !== current.internal_notes) {
       // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
       await client.appointment_events.create({ data: {
@@ -264,27 +293,49 @@ export async function updateAppointment(appointmentId, changes, actorUserId, act
   }, { isolationLevel: "Serializable" });
 }
 
+function hasActiveEmailClaim(emails) {
+  return emails.some((email) => email.active_claim);
+}
+
+function requireNoActiveEmailClaim(emails) {
+  if (hasActiveEmailClaim(emails)) {
+    throw new AppError({
+      code: "APPOINTMENT_EMAIL_PROCESSING",
+      message: "Se está enviando un aviso para esta reserva. Espera unos segundos y vuelve a intentarlo.",
+      status: 409,
+    });
+  }
+}
+
 export async function changeAppointmentStatus(appointmentId, allowedCurrentStatuses, statusData, actorUserId, actor) {
   // Cambiar el estado y registrar el evento dentro de una transacción atómica
-  return prisma.$transaction(async (client) => {
+  return retryTransaction(prisma, async (client) => {
     const current = await client.appointments.findUnique({ where: { id: appointmentId } });
     if (!current) return { appointment: null, currentStatus: null };
     await requireAppointmentWriteScope(client, current, actor);
     if (!allowedCurrentStatuses.includes(current.status)) return { appointment: null, currentStatus: current.status };
     const isCancellation = statusData.status === "CANCELLED";
-    await client.appointments.update({ data: {
+    const emails = isCancellation ? await lockOutdatedAppointmentEmails(client, {
+      id: appointmentId, professionalId: current.professional_id, includePatientEmails: true,
+    }) : [];
+    requireNoActiveEmailClaim(emails);
+    const updated = await client.appointments.update({ data: {
       cancellation_reason: isCancellation ? statusData.cancellationReason : null,
       cancelled_at: isCancellation ? statusData.changedAt : null,
       status: statusData.status, updated_by: actorUserId,
     }, where: { id: appointmentId } });
     // Registrar el evento de dominio para conservar la trazabilidad histórica de la operación
-    await client.appointment_events.create({ data: {
+    const event = await client.appointment_events.create({ data: {
       appointment_id: appointmentId,
       details: isCancellation ? statusData.cancellationReason : null,
       event_type: isCancellation ? "CANCELLED" : "STATUS_CHANGED",
       new_status: statusData.status, performed_by: actorUserId,
       previous_status: current.status,
     } });
+    if (isCancellation) {
+      await suppressOutdatedAppointmentEmails(client, emails, "APPOINTMENT_CANCELLED", statusData.changedAt);
+      await enqueueProfessionalAppointmentEmail(client, { action: "cancelled", appointment: updated, eventId: String(event.id) });
+    }
     return { appointment: await findAppointmentByIdWithClient(client, appointmentId), currentStatus: current.status };
   // Usar aislamiento serializable para reducir conflictos entre operaciones concurrentes
   }, { isolationLevel: "Serializable" });
@@ -308,14 +359,14 @@ export async function updateCustomerAppointment(accountId, id, { expectedStart, 
     if (slot && await findCollision(client, {
       ...slot, branchId: current.branch_id, professionalId: current.professional_id,
     }, id)) return { reason: "SLOT_TAKEN" };
+    if (slot && current.start_at.getTime() === slot.startAt.getTime() && current.end_at.getTime() === slot.endAt.getTime()) {
+      return { reason: null };
+    }
     // Reclamar un correo y cambiar su hora compiten por las mismas filas de la cola.
-    const emails = await client.$queryRaw`SELECT id, status, attempt_count, lock_expires_at
-      FROM transactional_email_outbox
-      WHERE appointment_id = ${id}::uuid
-        AND template_code IN ('APPOINTMENT_CONFIRMED', 'APPOINTMENT_REMINDER')
-        AND status IN ('PENDING', 'FAILED', 'PROCESSING')
-      ORDER BY id FOR UPDATE`;
-    if (emails.some((email) => email.status === "PROCESSING" && email.lock_expires_at > now)) {
+    const emails = await lockOutdatedAppointmentEmails(client, {
+      id, professionalId: current.professional_id, includePatientEmails: true,
+    });
+    if (hasActiveEmailClaim(emails)) {
       return { reason: "EMAIL_PROCESSING" };
     }
     const updated = await client.appointments.updateMany({
@@ -339,25 +390,16 @@ export async function updateCustomerAppointment(accountId, id, { expectedStart, 
         new_end_at: slot?.endAt,
       },
     });
-    if (emails.length) {
-      const reason = slot ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_CANCELLED";
-      await client.transactional_email_outbox.updateMany({
-        where: { id: { in: emails.map((email) => email.id) } },
-        data: {
-          status: "SUPPRESSED", skip_reason: reason, processing_finished_at: now,
-          locked_at: null, locked_by: null, lock_expires_at: null,
-        },
-      });
-      await client.transactional_email_transitions.createMany({
-        data: emails.map((email) => ({
-          email_id: email.id, from_status: email.status, to_status: "SUPPRESSED",
-          attempt_count: email.attempt_count, reason_code: reason,
-        })),
-      });
-    }
+    await suppressOutdatedAppointmentEmails(client, emails, slot ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_CANCELLED", now);
     if (slot) await enqueueAppointmentEmails(client, {
       appointmentId: id, endAt: slot.endAt, startAt: slot.startAt,
       recipientEmail: current.patients.email, reminderHours, revision: String(event.id),
+    });
+    await enqueueProfessionalAppointmentEmail(client, {
+      action: slot ? "rescheduled" : "cancelled",
+      appointment: { ...current, start_at: slot?.startAt ?? current.start_at },
+      eventId: String(event.id),
+      previous: slot ? current : undefined,
     });
     return { reason: null };
   }, { isolationLevel: "Serializable" });

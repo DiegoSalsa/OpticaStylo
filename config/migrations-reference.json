@@ -1262,6 +1262,101 @@
         "table:external_prescriptions": "d3222e51fddcdddd4f9ab844688435c9b883c3cf713bbdbf956db0864855be68",
         "table:patient_guardians": "5efcef9fc0c4315b87068657f1f8e54d13cf70f1683572e97830569363415e63"
       }
+    },
+    {
+      "name": "20261124000000_branch_access",
+      "checksums": [
+        "de59f10768fdd9810f4a551b92469ede41d786a48c7bd5850a9807c1f50bb427",
+        "10c4ccaf5da3d8df40e580c778cd4d99201f14f681e4a07127275cda801c501a"
+      ],
+      "changes": {
+        "constraint:user_sessions:user_sessions_active_branch_id_fkey": "87c588f4babb61d9826b4c52ddda7f571b09b1977e71533420d7e25cee41e58d",
+        "index:user_branches:user_branches_branch_user_idx": "372da65e3ba3f08ef45923bdc117cde46abebce200bc21e7f7d45ea15057fc00",
+        "index:user_sessions:user_sessions_active_branch_idx": "343785ff4562e5beef0eeb4264293531e6a55d9e9b393a75d2abbb6979d9fcce",
+        "table:user_sessions": "c1e2d1f396a16e25887137b9b23fd78c4529ac93cb8cb53930cf97e82bdbf5e7"
+      }
+    },
+    {
+      "name": "20261124001000_branch_identity",
+      "checksums": [
+        "f146f3d436cf557b80fca502b46845dd75a950b7777ba401b292893aa3529554",
+        "dd1936631eae34dcad24b41c562f60123f0231f5fad36c3cc0584fd3f0e00f46"
+      ],
+      "changes": {
+        "constraint:customer_branches:customer_branches_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:customer_branches:customer_branches_customer_id_fkey": "db00d0fe69a60ece70d3ddaa88c13cc9c1843650393ee38d4cb22d5ae3fd8907",
+        "constraint:customer_branches:customer_branches_pkey": "0b8ee531e0fddc4e1a967d30470f2fef215f3379465821b3e4065ce64554b5f1",
+        "constraint:patient_branches:patient_branches_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:patient_branches:patient_branches_patient_id_fkey": "50f0ed44cae0938b7963f5b494990ee2988882313738eb227af1d433f49db395",
+        "constraint:patient_branches:patient_branches_pkey": "3e2fd099457890ee6f02f7b93c30ae66411145ee9e6a2481e9d02be43677eb53",
+        "index:customer_branches:customer_branches_branch_idx": "3c353590385eb3c4ebfd698674796b03920b37e3c607b6ea1b70904a59c6fd3f",
+        "index:customer_branches:customer_branches_pkey": "466b61a22a9c90927db92d60607e17795d0871eead0b245610b9bd0e43cde71f",
+        "index:patient_branches:patient_branches_branch_idx": "a8c595eac1a1e2cf79bb9ded462424a89a53be9cd312537f823307642efd35c8",
+        "index:patient_branches:patient_branches_pkey": "616eaab73580b73b96ecb40d669b685d86d9790fc446bc03f90b1050ccce893b",
+        "table:customer_branches": "58a837f043cfb1c4ad95301dfdcbe5668c872ce916b64aee061f4c70a20ae20c",
+        "table:patient_branches": "beac98f8cdb64621dc79750c599fa815387b11fa17a1ed2e2bc17708b887b462"
+      }
+    },
+    {
+      "name": "20261124002000_clinical_branch_context",
+      "checksums": [
+        "1b2148a93b2e2bc4e23bac117742b82f99ca528ef5c749dcea7153cd7b053b85",
+        "69cc3e6d5810aa3cb2f29d20a390b70f2c380114b49bdc3a97b6c311ec4725fb"
+      ],
+      "changes": {
+        "constraint:appointments:appointments_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:clinical_care_assignments:clinical_care_assignments_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:clinical_encounters:clinical_encounters_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:external_prescriptions:external_prescriptions_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:medical_records:medical_records_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:medical_records:medical_records_patient_id_branch_id_key": "c978b577cfe2f0cc882a1e026fa1ad7403b7177a58d83952cc3d3a694c3689cd",
+        "constraint:medical_records:medical_records_patient_id_key": null,
+        "constraint:professional_schedule_blocks:professional_schedule_blocks_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:professional_schedule_overrides:professional_schedule_overrid_professional_id_branch_id_dat_key": "57106e98c9ed5c2a9e4c5229771f2c50cd07aac9376e18483d7cf1c7cb79c5c1",
+        "constraint:professional_schedule_overrides:professional_schedule_overrides_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:professional_schedule_overrides:professional_schedule_overrides_professional_id_date_key": null,
+        "constraint:professional_weekly_schedules:professional_weekly_schedules_branch_id_fkey": "6044ce61f88db95d84f8ca0a517c3a44c04e0ff869b56d89ad10da7f0afb9b68",
+        "constraint:professional_weekly_schedules:professional_weekly_schedules_professional_id_branch_id_day_key": "e1072c7b2526ddca5d6d9e86af7279daa4a17ccd20fb6b1e45095e1889d67c99",
+        "constraint:professional_weekly_schedules:professional_weekly_schedules_professional_id_day_of_week_key": null,
+        "function:protect_clinical_branch()": "cee9bd248a4734c609eb202e8ce90512f8410ad8b28abdad5e272b39c645e3c2",
+        "index:appointments:appointments_branch_scope_idx": "abf5ea4875d3e7f4bd22a4b47a9ee02cf9010af786b5eb27e9ce7f12c6a35217",
+        "index:clinical_care_assignments:clinical_care_active": "d2c1addec50f21e1931bfe22016ec0805514c137af933c5d0e9774464965c088",
+        "index:clinical_care_assignments:clinical_care_active_unassigned_idx": "a362f8ac6f18541a35672f7849ad86b224571f8344e13e26d9875d517c459582",
+        "index:clinical_care_assignments:clinical_care_assignments_branch_scope_idx": "52126d1d8824b336b3432046bd610a2c67d418cd4fd8bfa5336c5fdb2c06cbd6",
+        "index:clinical_encounters:clinical_encounters_branch_scope_idx": "14dc0422d101e12792560367546680e7d966b5e7758347148f50249c2345e263",
+        "index:external_prescriptions:external_prescriptions_branch_scope_idx": "6a99b6144744ea1c768f09bf740f135f2af99ba2a856daf6670d4380ae9d217e",
+        "index:medical_records:medical_records_patient_id_branch_id_key": "39ea720939c386b630d14377b743e0f7b4df9037d46da441374c2665b4cbb0a4",
+        "index:medical_records:medical_records_patient_id_key": null,
+        "index:medical_records:medical_records_unassigned_patient_idx": "d6f8c958e04b5dda0120b8da4503927ed9ed17aff21dff9c3fdaaa8381f4219c",
+        "index:professional_schedule_blocks:professional_schedule_blocks_branch_scope_idx": "cf40e722bd4098a35cc2901682452661a58fbf5c4c5483357bcacd86226902c6",
+        "index:professional_schedule_overrides:overrides_unassigned_idx": "d63d01cf8c977daf71e652c7b65f821076fcbf7157c0607e6441d37ae71e303f",
+        "index:professional_schedule_overrides:professional_schedule_overrid_professional_id_branch_id_dat_key": "6805e881cbf4169e87b24a2e8fe90782d3249316c15a3bf0713c218a2297e448",
+        "index:professional_schedule_overrides:professional_schedule_overrides_professional_id_date_key": null,
+        "index:professional_weekly_schedules:professional_weekly_schedules_professional_id_branch_id_day_key": "803e849c71aae3b5bd8befbb678c9a1972f9dcb04e9fa7e98a6f3bf58e5de1d8",
+        "index:professional_weekly_schedules:professional_weekly_schedules_professional_id_day_of_week_key": null,
+        "index:professional_weekly_schedules:weekly_schedule_unassigned_idx": "f277ca32161aaff0ffd4f08d38bf43dc20ad6e5668927ef5bda8bf08e5128f6a",
+        "table:appointments": "17fa95b47bd243973a2e162d99950ad84a6b97eef08e006b921aba482b27d5b8",
+        "table:clinical_care_assignments": "84ba28e352b33363e82e3d466d17f8802f415cc2986df82ed6797f91fbefcb0d",
+        "table:clinical_encounters": "dcf54d9ecd393263ccad4d6c96b3238db90846cdacda41b098295ad31d120f7e",
+        "table:external_prescriptions": "9becece866e92a4528925bff797e71906ab95dfc401bf9b1f22c946bf1c79ca5",
+        "table:medical_records": "1370392c2688ce57d25396e8ab633ce7d7cdb4410850216314b49c1fb3394406",
+        "table:professional_schedule_blocks": "a214ecaa55c7baa44f0030b35cdbca1916aa717aa6aab473c55a91287f864056",
+        "table:professional_schedule_overrides": "5f1cec22bd66466f56e274854f5f699f0f166fb71319d2475f00cfb02125a240",
+        "table:professional_weekly_schedules": "5bb4158ef3d6be663c5a3030bc533f7a3421dfa7cfe3c0b4ba61a157090ef97b",
+        "trigger:clinical_care_assignments:clinical_assignment_branch_guard": "45d10f56007fecce7f82367c75914edd394913c83c0fba9a079ab7acbc8f71fe",
+        "trigger:clinical_encounters:clinical_encounter_branch_guard": "e0c2c5d2031d98cf1e703f71c2b9f876fba1467c29181c3d5e96e580ea416b88",
+        "trigger:medical_records:medical_record_branch_guard": "b2395d770c43a3d57a9cc8bb7c90ef73af1bd29b5d694cda0f15a32951345d0f"
+      }
+    },
+    {
+      "name": "20261127000000_professional_appointment_email",
+      "checksums": [
+        "7eee37086a76434b4af3efa4eddd668f91779f4514761b54dd2f040d7383844d",
+        "9d4a616e68fa3f78e2a0f24774a4f810b0a22d3ffb408fc8e93cf2bb480f49a6"
+      ],
+      "changes": {
+        "constraint:transactional_email_outbox:transactional_email_template": "910080c9b4913080fa7e6078226bd190e84b96e85dbb1d82a6b375f57c262b21"
+      }
     }
   ],
   "legacyShape": {

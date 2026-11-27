@@ -3,6 +3,7 @@ const PREFIXES = Object.freeze({
   CUSTOMER_PATIENT_OTP: "customer-patient-otp",
   APPOINTMENT_CONFIRMED: "appointment-confirmed",
   APPOINTMENT_REMINDER: "appointment-reminder",
+  APPOINTMENT_PROFESSIONAL: "appointment-professional",
   ORDER_CONFIRMED: "order-confirmed",
   PAYMENT_CONFIRMED: "payment-confirmed",
   POS_FINAL_RECEIPT: "receipt-final",

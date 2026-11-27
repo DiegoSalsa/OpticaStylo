@@ -69,7 +69,12 @@ test("validación crítica PostgreSQL dedicado: agenda, clínica y POS", {skip:p
       assert.equal(success.length,1);assert.equal(failures.length,1);
       assert.equal(failures[0].reason.code,"APPOINTMENT_TIME_NOT_AVAILABLE");
       assert.equal(await prisma.appointments.count({where:{professional_id:ids.professional,start_at:new Date("2030-01-11T12:00:00Z")}}),1);
-      assert.equal(await prisma.transactional_email_outbox.count({where:{appointment_id:success[0].value.id}}),2);
+      const emails = await prisma.transactional_email_outbox.findMany({
+        where: { appointment_id: success[0].value.id }, select: { template_code: true },
+      });
+      assert.deepEqual(emails.map((email) => email.template_code).sort(), [
+        "APPOINTMENT_CONFIRMED", "APPOINTMENT_PROFESSIONAL", "APPOINTMENT_REMINDER",
+      ]);
       assert.equal(await prisma.appointment_events.count({where:{appointment_id:success[0].value.id,event_type:"CREATED"}}),1);
     });
     await t.test("CL-01 ADMIN aislado y profesional no asignado no leen ficha",async()=>{

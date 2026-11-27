@@ -227,7 +227,16 @@ test("Mi cuenta conserva los permisos al descargar y usar recetas, cambiar horas
     assert.equal(saved.status, "CANCELLED");
     assert.equal(saved.start_at.toISOString(), to.startAt);
     assert.equal(await db.appointment_events.count({ where: { appointment_id: appointment.id } }), 2);
-    assert.equal(await db.transactional_email_outbox.count({ where: { appointment_id: appointment.id, status: "SUPPRESSED" } }), 3);
+    assert.equal(await db.transactional_email_outbox.count({
+      where: { appointment_id: appointment.id, status: "SUPPRESSED", template_code: { in: ["APPOINTMENT_CONFIRMED", "APPOINTMENT_REMINDER"] } },
+    }), 3);
+    const professionalNotices = await db.transactional_email_outbox.findMany({
+      where: { appointment_id: appointment.id, template_code: "APPOINTMENT_PROFESSIONAL" },
+      orderBy: { created_at: "asc" },
+    });
+    assert.deepEqual(professionalNotices.map((row) => [row.payload.action, row.status]), [
+      ["rescheduled", "SUPPRESSED"], ["cancelled", "PENDING"],
+    ]);
   });
 
   await t.test("guarda una receta externa sin agendar, reutiliza la lectura de OpenAI y conserva su copia al usarla en el carrito", async () => {

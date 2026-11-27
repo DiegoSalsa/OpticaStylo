@@ -9,6 +9,7 @@ const expected = Object.freeze({
   CUSTOMER_PATIENT_OTP: `customer-patient-otp:${entityId}`,
   APPOINTMENT_CONFIRMED: `appointment-confirmed:${entityId}`,
   APPOINTMENT_REMINDER: `appointment-reminder:${entityId}`,
+  APPOINTMENT_PROFESSIONAL: `appointment-professional:${entityId}`,
   ORDER_CONFIRMED: `order-confirmed:${entityId}`,
   PAYMENT_CONFIRMED: `payment-confirmed:${entityId}`,
   POS_FINAL_RECEIPT: `receipt-final:${entityId}`,
