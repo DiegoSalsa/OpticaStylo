@@ -13,6 +13,18 @@ export function getAppointmentReminderHours(environment = process.env) {
   return integer(environment, "EMAIL_APPOINTMENT_REMINDER_HOURS", 24, 1, 168);
 }
 
+export function getTransactionalEmailCronStart(environment = process.env) {
+  const raw = environment.EMAIL_CRON_START_AT?.trim();
+  const start = new Date(raw);
+  if (!raw || !Number.isFinite(start.getTime()) || start.toISOString() !== raw) {
+    throw new EmailConfigurationError(
+      "INVALID_EMAIL_CRON_START",
+      "EMAIL_CRON_START_AT debe contener el inicio del despacho en formato ISO UTC.",
+    );
+  }
+  return start;
+}
+
 function integer(environment, name, fallback, minimum, maximum) {
   const raw = environment[name];
   if (raw == null || raw === "") return fallback;

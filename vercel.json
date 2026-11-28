@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run prisma:validate && npm run build",
   "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/internal/transactional-emails/process",
+      "schedule": "*/2 * * * *"
+    }
+  ],
   "git": {
     "deploymentEnabled": {
       "main": false,

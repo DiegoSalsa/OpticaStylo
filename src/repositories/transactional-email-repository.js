@@ -89,11 +89,11 @@ async function updateReceiptStatus(client, receiptId, status, providerId = null,
   }, where: { id: receiptId } });
 }
 
-async function recoverExpiredLocks(client, limit) {
+async function recoverExpiredLocks(client, limit, scope) {
   const now = new Date();
   const expired = await client.transactional_email_outbox.findMany({
     orderBy: [{ lock_expires_at: "asc" }, { id: "asc" }], take: limit,
-    where: { lock_expires_at: { lte: now }, status: "PROCESSING" },
+    where: { ...scope, lock_expires_at: { lte: now }, status: "PROCESSING" },
   });
   let recovered = 0;
   for (const email of expired) {
@@ -114,17 +114,18 @@ async function recoverExpiredLocks(client, limit) {
   return recovered;
 }
 
-export async function claimTransactionalEmailBatch({ deliveryMode, effectiveTestRecipient = null, emailId = null, limit, lockSeconds, workerId }) {
+export async function claimTransactionalEmailBatch({ createdSince = null, deliveryMode, effectiveTestRecipient = null, emailId = null, limit, lockSeconds, workerId }) {
   // Ejecutar las operaciones relacionadas en una transacción para evitar estados parciales
   return prisma.$transaction(async (client) => {
     // Limitar el claim a un correo puntual cuando la solicitud interactiva lo requiere.
-    const recoveredCount = emailId ? 0 : await recoverExpiredLocks(client, limit);
+    const scope = createdSince ? { created_at: { gte: createdSince } } : {};
+    const recoveredCount = emailId ? 0 : await recoverExpiredLocks(client, limit, scope);
     const now = new Date();
     const candidates = await client.transactional_email_outbox.findMany({
       include: { sale_receipts: true },
       orderBy: [{ next_attempt_at: "asc" }, { created_at: "asc" }, { id: "asc" }],
       take: emailId ? 1 : limit * 2,
-      where: { ...(emailId ? { id: emailId } : {}), next_attempt_at: { lte: now }, status: { in: ["PENDING", "FAILED"] } },
+      where: { ...scope, ...(emailId ? { id: emailId } : {}), next_attempt_at: { lte: now }, status: { in: ["PENDING", "FAILED"] } },
     });
     const claimed = [];
     for (const email of candidates) {

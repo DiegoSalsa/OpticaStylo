@@ -7,6 +7,7 @@ import {
   POST,
 } from "../../src/app/api/internal/transactional-emails/process/route.js";
 import { processRequest } from "../../src/app/api/internal/transactional-emails/process/process-request.js";
+import { processTransactionalEmailBatch } from "../../src/services/transactional-email-service.js";
 
 const route = (path) => readFile(new URL(`../../src/app/api/${path}`, import.meta.url), "utf8");
 
@@ -50,7 +51,7 @@ test("la ejecución autorizada devuelve solo el resumen operativo", async () => 
   });
   const response = await processRequest(request, {
     processBatch: async (options) => {
-      assert.deepEqual(options, { triggerSource: "cron" });
+      assert.deepEqual(options, { triggerSource: "cron", limit: 4 });
       return {
         claimed: 2,
         deadLetter: 0,
@@ -94,6 +95,31 @@ test("la ejecución autorizada oculta los errores internos", async () => {
 
   assert.equal(response.status, 500);
   assert.deepEqual(await response.json(), { success: false });
+});
+
+test("el cron informa una fecha de activación ausente sin iniciar el lote", async () => {
+  const config = { mode: "live" };
+  const response = await processRequest(new Request(workerUrl, {
+    headers: { Authorization: `Bearer ${workerSecret}` },
+  }), {
+    processBatch: (options) => processTransactionalEmailBatch(options, {
+      config,
+      environment: { VERCEL_ENV: "production" },
+      startRun: async () => assert.fail("El cron no debe acceder a la cola sin corte"),
+    }),
+    secret: workerSecret,
+  });
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { success: false, code: "INVALID_EMAIL_CRON_START" });
+});
+
+test("el cron de producción no redirige reservas a un buzón de prueba", async () => {
+  await assert.rejects(processTransactionalEmailBatch({ triggerSource: "cron" }, {
+    config: { mode: "test" },
+    environment: { VERCEL_ENV: "production", EMAIL_CRON_START_AT: "2026-11-28T04:56:34.192Z" },
+    startRun: async () => assert.fail("El cron no debe tocar la cola en modo de prueba"),
+  }), { code: "EMAIL_CRON_TEST_MODE_IN_PRODUCTION" });
 });
 
 test("las operaciones globales autentican y delegan la autorización administrativa", async () => {

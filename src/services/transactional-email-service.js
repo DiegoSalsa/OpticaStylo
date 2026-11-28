@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { PERMISSIONS } from "../auth/permissions.js";
 import { requirePermissions } from "../auth/require-permission.js";
 import {
+  EmailConfigurationError,
   getTransactionalEmailConfig,
+  getTransactionalEmailCronStart,
   getTransactionalEmailDiagnostic,
 } from "../config/transactional-email.js";
 import {
@@ -71,8 +73,18 @@ function logTransition(logger, emailId, status, code = null) {
 }
 
 export async function processTransactionalEmailBatch(options = {}, dependencies = {}) {
+  const environment = dependencies.environment ?? process.env;
   const config = dependencies.config
-    ?? getTransactionalEmailConfig(dependencies.environment);
+    ?? getTransactionalEmailConfig(environment);
+  if (options.triggerSource === "cron" && environment.VERCEL_ENV === "production" && config.mode === "test") {
+    throw new EmailConfigurationError(
+      "EMAIL_CRON_TEST_MODE_IN_PRODUCTION",
+      "El despacho programado de producción no puede redirigir correos a un buzón de prueba.",
+    );
+  }
+  const createdSince = options.triggerSource === "cron" && config.mode !== "disabled"
+    ? getTransactionalEmailCronStart(environment)
+    : null;
   const summary = emptySummary(config.mode);
   const workerId = dependencies.workerId ?? randomUUID();
   const startRun = dependencies.startRun ?? startTransactionalEmailWorkerRun;
@@ -91,6 +103,7 @@ export async function processTransactionalEmailBatch(options = {}, dependencies 
 
   try {
     const claim = await (dependencies.claimBatch ?? claimTransactionalEmailBatch)({
+      createdSince,
       deliveryMode: config.mode,
       effectiveTestRecipient: config.testRecipient,
       emailId: options.emailId ?? null,

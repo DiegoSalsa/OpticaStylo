@@ -1,7 +1,7 @@
 // Capa HTTP para internal/transactional-emails/process/route.js, delegando autenticación y reglas de negocio a las capas internas.
 import { processRequest } from "./process-request.js";
 
-export const maxDuration = 30;
+export const maxDuration = 150;
 
 // GET /api/internal/transactional-emails/process/route.js - consultar el recurso aplicando autenticación, validaciones y reglas de negocio
 export async function GET(request) {

@@ -6,7 +6,7 @@ import { claimTransactionalEmailBatch, mapEmail, getTransactionalEmailEligibilit
 import { changeAppointmentStatus, createAppointment, updateAppointment } from "../../src/services/appointment-service.js";
 import { manageCustomerAppointment } from "../../src/services/customer-appointment-service.js";
 import { createPublicBooking } from "../../src/services/public-booking-service.js";
-import { processTransactionalEmailById } from "../../src/services/transactional-email-service.js";
+import { processTransactionalEmailBatch, processTransactionalEmailById } from "../../src/services/transactional-email-service.js";
 import { ids, seedAcademicData } from "../fixtures/academic-data.js";
 
 const first = "academic-profesional@example.invalid";
@@ -36,6 +36,47 @@ test("avisos a profesionales con una cola PostgreSQL exclusiva y proveedor simul
   }, admin, dependencies);
 
   try {
+    await t.test("el despacho programado envía solo avisos nuevos y deja los anteriores intactos", async () => {
+      const previous = await create("10");
+      const appointment = await create("11");
+      const rows = await rowsFor(appointment.id);
+      const confirmation = rows.find((row) => row.template_code === "APPOINTMENT_CONFIRMED");
+      const reminder = rows.find((row) => row.template_code === "APPOINTMENT_REMINDER");
+      const professionalEmail = rows.find((row) => row.template_code === template);
+      const start = new Date();
+      const beforeStart = new Date(start.getTime() - 1);
+      await prisma.transactional_email_outbox.updateMany({
+        where: { appointment_id: previous.id },
+        data: { created_at: beforeStart },
+      });
+      await prisma.transactional_email_outbox.updateMany({
+        where: { appointment_id: appointment.id },
+        data: { created_at: start },
+      });
+      const sent = [];
+      const summary = await processTransactionalEmailBatch({ triggerSource: "cron" }, {
+        ...dispatchDependencies,
+        config: { ...dispatchDependencies.config, batchSize: 4 },
+        environment: { EMAIL_CRON_START_AT: start.toISOString() },
+        provider: {
+          async send({ email, recipient }) {
+            sent.push({ id: email.id, recipient });
+            return { provider: "RESEND", providerMessageId: `sintetico-cron-${email.id}` };
+          },
+        },
+      });
+      assert.deepEqual(new Map(sent.map(({ id, recipient }) => [id, recipient])), new Map([
+        [confirmation.id, "pacienteficticio@example.invalid"],
+        [professionalEmail.id, first],
+      ]));
+      assert.equal(summary.sent, 2);
+      const status = new Map((await rowsFor(appointment.id)).map((row) => [row.id, row.status]));
+      assert.equal(status.get(confirmation.id), "SENT");
+      assert.equal(status.get(reminder.id), "PENDING");
+      assert.equal(status.get(professionalEmail.id), "SENT");
+      assert.ok((await rowsFor(previous.id)).every((row) => row.status === "PENDING" && row.attempt_count === 0));
+    });
+
     await t.test("crear en Agenda agrega solo un aviso profesional y conserva el par del paciente", async () => {
       const appointment = await create("12");
       const rows = await rowsFor(appointment.id);

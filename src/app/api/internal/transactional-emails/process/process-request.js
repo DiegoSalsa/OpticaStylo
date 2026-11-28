@@ -17,7 +17,7 @@ export async function processRequest(request, dependencies = {}) {
     return noStoreJson({ success: false }, 401);
   }
   try {
-    const summary = await processBatch({ triggerSource: "cron" });
+    const summary = await processBatch({ triggerSource: "cron", limit: 4 });
     return noStoreJson({
       success: true,
       summary: {
@@ -31,7 +31,10 @@ export async function processRequest(request, dependencies = {}) {
         status: summary.status,
       },
     });
-  } catch {
+  } catch (error) {
+    if (["INVALID_EMAIL_CRON_START", "EMAIL_CRON_TEST_MODE_IN_PRODUCTION"].includes(error?.code)) {
+      return noStoreJson({ success: false, code: error.code }, 503);
+    }
     return noStoreJson({ success: false }, 500);
   }
 }
